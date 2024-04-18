@@ -1,0 +1,8 @@
+version: "3"
+services:
+  app:
+    image: node:20
+    volumes:
+      - .:/workspace:delegated
+    command: tail -f /dev/null
+    working_dir: /workspace
