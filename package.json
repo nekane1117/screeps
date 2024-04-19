@@ -26,8 +26,12 @@
   },
   "lint-staged": {
     "*.{js,ts,mjs}": [
+      "yarn build",
       "npx prettier --write",
       "eslint --cache --fix"
     ]
+  },
+  "dependencies": {
+    "@types/screeps": "^3.3.8"
   }
 }
