@@ -116,6 +116,11 @@
   dependencies:
     undici-types "~5.26.4"
 
+"@types/screeps@^3.3.8":
+  version "3.3.8"
+  resolved "https://registry.yarnpkg.com/@types/screeps/-/screeps-3.3.8.tgz#64ca98d10e250ef454508db17919b1927c744cb6"
+  integrity sha512-PlZRi5l0RaYNI67BgH4AUxhPeK9fKOyPNdFOVYiT66Olj1RtTjEaPY/REUNTSFKREczKM4oeLuVebJh6uorxzw==
+
 "@types/semver@^7.5.8":
   version "7.5.8"
   resolved "https://registry.yarnpkg.com/@types/semver/-/semver-7.5.8.tgz#8268a8c57a3e4abd25c165ecd36237db7948a55e"
