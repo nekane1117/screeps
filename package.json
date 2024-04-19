@@ -4,8 +4,8 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "build": "tsc",
-    "prepare": "husky install",
+    "build": "rm -rf dist/* && tsc",
+    "prepare": "husky",
     "format": "npx prettier --write .",
     "lint": "eslint --cache"
   },
@@ -26,7 +26,6 @@
   },
   "lint-staged": {
     "*.{js,ts,mjs}": [
-      "yarn build",
       "npx prettier --write",
       "eslint --cache --fix"
     ]
