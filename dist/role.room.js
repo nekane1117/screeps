@@ -4,7 +4,7 @@ exports.roomBehavior = void 0;
 const util_creep_1 = require("./util.creep");
 function roomBehavior(room) {
     // Roomとしてやっておくこと
-    room.memory.activeSource = room
+    room.memory.activeSource = _(room
         .find(FIND_SOURCES_ACTIVE, {
         filter: (s) => {
             return !!_(util_creep_1.squareDiff)
@@ -19,7 +19,15 @@ function roomBehavior(room) {
                 // がある
                 .size();
         },
+    })).sortBy(source => {
+        const spawn = Object.entries(Game.spawns).find(([_, spawn]) => spawn.room.name === room.name);
+        if (spawn) {
+            return spawn[1].pos.findPathTo(source).length;
+        }
+        else {
+            return 0;
+        }
     })
-        .map((s) => s.id);
+        .map((s) => s.id).value();
 }
 exports.roomBehavior = roomBehavior;
