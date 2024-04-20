@@ -18,6 +18,6 @@ function roomBehavior(room) {
                 // がある
                 .size();
         },
-    });
+    }).map(s => s.id);
 }
 exports.roomBehavior = roomBehavior;

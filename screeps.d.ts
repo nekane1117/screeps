@@ -22,7 +22,7 @@ declare type StoreTarget =
 
 declare interface HarvesterMemory extends CreepMemory {
   role: "harvester";
-  target?: Source | null;
+  target?: Source["id"] | null;
 }
 
 declare interface Harvester extends Creep {
@@ -31,5 +31,5 @@ declare interface Harvester extends Creep {
 
 declare interface RoomMemory {
   /** このtickでアクティブなソース */
-  activeSource: Source[];
+  activeSource: Source["id"][];
 }
