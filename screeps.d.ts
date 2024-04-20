@@ -22,6 +22,7 @@ declare type StoreTarget =
 
 declare interface HarvesterMemory extends CreepMemory {
   role: "harvester";
+  target?: Source | null;
 }
 
 declare interface Harvester extends Creep {

@@ -30,34 +30,26 @@ const behavior = (creep) => {
     }
     else {
         // 空きがあるとき
-        const target = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE, {
-            ignoreCreeps: true,
-            filter: (s) => {
-                return !!_(util_creep_1.squareDiff)
-                    // 8近傍の位置を取得する
-                    .map(([dx, dy]) => {
-                    return creep.room.getPositionAt(s.pos.x + dx, s.pos.y + dy);
-                })
-                    .compact()
-                    // 壁以外かつcreepのいないマス
-                    .filter((pos) => pos.lookFor(LOOK_TERRAIN)[0] !== "wall" &&
-                    !pos.lookFor(LOOK_CREEPS).length)
-                    // がある
-                    .size();
-            },
-        });
-        if (!target) {
-            return creep.say("no target");
+        if (!creep.memory.target) {
+            creep.memory.target = creep.room.memory.activeSource[0];
         }
-        if (creep.pos.isNearTo(target)) {
-            creep.harvest(target);
+        if (creep.pos.isNearTo(creep.memory.target)) {
+            const returnVal = creep.harvest(creep.memory.target);
+            if (returnVal !== OK) {
+                creep.memory.target = undefined;
+            }
+            return returnVal;
         }
         else {
             // 離れてるときは移動する
-            return creep.moveTo(target, {
+            const returnVal = creep.moveTo(creep.memory.target, {
                 // 3マスより離れているときはcreepを無視する
-                ignoreCreeps: !creep.pos.inRangeTo(target, 3)
+                ignoreCreeps: !creep.pos.inRangeTo(creep.memory.target, 3),
             });
+            if (returnVal !== OK) {
+                creep.memory.target = undefined;
+            }
+            return returnVal;
         }
     }
 };
