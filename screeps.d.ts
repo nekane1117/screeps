@@ -42,5 +42,6 @@ declare interface Upgrader extends Creep {
 declare interface UpgraderMemory extends CreepMemory {
   role: "upgrader";
   upgrading?: boolean;
-  target?: StoreTarget | null;
+  /** 資源をもらいに行く先 */
+  targetId?: StoreTarget["id"] | null;
 }

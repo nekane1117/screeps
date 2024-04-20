@@ -7,5 +7,6 @@ exports.behaviors = void 0;
 const role_harvester_1 = __importDefault(require("./role.harvester"));
 const role_upgrader_1 = __importDefault(require("./role.upgrader"));
 exports.behaviors = {
-    harvester: role_harvester_1.default, upgrader: role_upgrader_1.default
+    harvester: role_harvester_1.default,
+    upgrader: role_upgrader_1.default,
 };
