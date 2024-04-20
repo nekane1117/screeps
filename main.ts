@@ -1,11 +1,25 @@
-// import roleHarvester from "role.harvester";
-// import roleUpgrader from "role.upgrader";
+import "./lodash_4_17_15";
+import { behaviors } from "./roles";
+import { roomBehavior } from "./roles/room";
+import spawnBehavior from "./roles/spawn";
 
 module.exports.loop = function () {
-  for (const name in Game.creeps) {
-    const creep = Game.creeps[name];
-    if (creep.memory.role == "harvester") {
-      console.log("harvester");
+  //死んだcreepは削除する
+  Object.keys(Memory.creeps).forEach((name) => {
+    if (!Game.creeps[name]) {
+      delete Memory.creeps[name];
+      console.log("Clearing non-existing creep memory:", name);
     }
-  }
+  });
+  // Room -> Spawn -> Creep
+  const spawnGroup = _.groupBy(Object.values(Game.spawns), (c) => c.room.name);
+  const creepGroup = _.groupBy(Object.values(Game.creeps), (c) => c.room.name);
+
+  Object.entries(Game.rooms).forEach(([_roomName, room]) => {
+    roomBehavior(room);
+
+    spawnGroup[room.name]?.map(spawnBehavior);
+
+    creepGroup[room.name]?.map((c) => behaviors[c.memory.role]?.(c));
+  });
 };
