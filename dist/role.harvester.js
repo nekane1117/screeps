@@ -17,7 +17,16 @@ const behavior = (creep) => {
         });
         if (!target) {
             creep.say("all container is full");
-            const directions = [TOP_LEFT, TOP, TOP_RIGHT, LEFT, RIGHT, BOTTOM_LEFT, BOTTOM, BOTTOM_RIGHT];
+            const directions = [
+                TOP_LEFT,
+                TOP,
+                TOP_RIGHT,
+                LEFT,
+                RIGHT,
+                BOTTOM_LEFT,
+                BOTTOM,
+                BOTTOM_RIGHT,
+            ];
             return creep.move(directions[_.random(0, directions.length - 1)]);
         }
         // この辺から実際の動き
