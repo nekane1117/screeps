@@ -19,7 +19,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     });
 
     if (!target) {
-      return;
+      return creep.say("all container is full");
     }
 
     // この辺から実際の動き

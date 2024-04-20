@@ -16,7 +16,7 @@ const behavior = (creep) => {
             },
         });
         if (!target) {
-            return;
+            return creep.say("all container is full");
         }
         // この辺から実際の動き
         if (creep.pos.isNearTo(target)) {
