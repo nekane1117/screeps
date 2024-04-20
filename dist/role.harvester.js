@@ -45,6 +45,9 @@ const behavior = (creep) => {
             return returnVal;
         }
         else {
+            if (creep.fatigue) {
+                return OK;
+            }
             // 離れてるときは移動する
             const returnVal = creep.moveTo(sources, {
                 // 3マスより離れているときはcreepを無視する
