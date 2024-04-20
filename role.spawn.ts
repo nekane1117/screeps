@@ -1,11 +1,16 @@
 import _ from "lodash";
-import { HARVESTER_MIN_ENERGY } from "./const";
+import { HARVESTER_MIN_COST, UPGRADER_MIN_COST } from "./const";
 import { bodyMaker } from "./util.creep";
 
 const behavior = (spawn: StructureSpawn) => {
-  const creeps = Object.entries(Game.creeps).map((e) => e[1]);
+  if (spawn.spawning) {
+    return;
+  }
+  const creepsInRoom = Object.entries(Game.creeps)
+    .map((e) => e[1])
+    .filter((c) => c.room.name === spawn.room.name);
   // １匹もいないときはとにかく作る
-  if (creeps.length === 0) {
+  if (creepsInRoom.length === 0) {
     return spawn.spawnCreep(
       // とりあえず最小単位
       [MOVE, WORK, CARRY],
@@ -18,33 +23,27 @@ const behavior = (spawn: StructureSpawn) => {
     );
   }
 
-  // 資源から2マス離れた所にコンテナを置く
-  const sources = spawn.room.find(FIND_SOURCES);
+  // upgraderが居ないときもとりあえず作る
   if (
-    spawn.room.find(FIND_STRUCTURES, {
-      filter: (s) => s.structureType === STRUCTURE_CONTAINER,
-    }).length < sources.length
+    creepsInRoom.filter((c) => c.memory.role === "upgrader").length === 0 &&
+    spawn.store[RESOURCE_ENERGY] > UPGRADER_MIN_COST
   ) {
-    sources.forEach((s) => {
-      const pathStep = s.pos.findPathTo(spawn.pos, {
-        ignoreCreeps: true,
-        swampCost: 1,
-      })[1];
-      if (pathStep) {
-        spawn.room.createConstructionSite(
-          pathStep.x,
-          pathStep.y,
-          STRUCTURE_CONTAINER,
-        );
-      }
-    });
+    return spawn.spawnCreep(
+      bodyMaker("upgrader", spawn.store[RESOURCE_ENERGY]),
+      generateCreepName(spawn, "upgrader"),
+      {
+        memory: {
+          role: "upgrader",
+        } as UpgraderMemory,
+      },
+    );
   }
 
   // harvesterが不足しているとき
   if (
-    creeps.filter((c) => c.memory.role === "harvester").length <
+    creepsInRoom.filter((c) => c.memory.role === "harvester").length <
       spawn.room.find(FIND_SOURCES).length * 2 &&
-    spawn.store[RESOURCE_ENERGY] > HARVESTER_MIN_ENERGY
+    spawn.store[RESOURCE_ENERGY] > HARVESTER_MIN_COST
   ) {
     return spawn.spawnCreep(
       bodyMaker("harvester", spawn.store[RESOURCE_ENERGY]),
@@ -66,6 +65,7 @@ const generateCreepName = (spawn: StructureSpawn, role: ROLES) => {
     defender: "DEF",
     harvester: "HAV",
     repairer: "REP",
+    upgrader: "UPG",
   };
 
   return (

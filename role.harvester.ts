@@ -66,6 +66,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
 export default behavior;
 
-function isHarvester(creep: Creep): creep is Harvester {
+function isHarvester(creep: Creeps): creep is Harvester {
   return creep.memory.role === "harvester";
 }

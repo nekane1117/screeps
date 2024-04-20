@@ -5,13 +5,14 @@ declare type ROLES =
   | "carrier"
   | "builder"
   | "repairer"
-  | "defender";
+  | "defender"
+  | "upgrader";
 declare interface CreepMemory {
   role: ROLES;
 }
 
 /** 全部のCreepの型 */
-declare type Creeps = Creep | Harvester;
+declare type Creeps = Creep | Harvester | Upgrader;
 
 declare type StoreTarget =
   | StructureContainer
@@ -20,16 +21,26 @@ declare type StoreTarget =
   | StructureStorage
   | StructureLink;
 
+declare interface Harvester extends Creep {
+  memory: HarvesterMemory;
+}
+
 declare interface HarvesterMemory extends CreepMemory {
   role: "harvester";
   target?: Source["id"] | null;
 }
 
-declare interface Harvester extends Creep {
-  memory: HarvesterMemory;
-}
-
 declare interface RoomMemory {
   /** このtickでアクティブなソース */
   activeSource: Source["id"][];
+}
+
+declare interface Upgrader extends Creep {
+  memory: UpgraderMemory;
+}
+
+declare interface UpgraderMemory extends CreepMemory {
+  role: "upgrader";
+  upgrading?: boolean;
+  target?: StoreTarget | null;
 }

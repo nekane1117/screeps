@@ -22,7 +22,7 @@ exports.squareDiff = Object.freeze([
     [1, 1],
 ]);
 function bodyMaker(role, cost) {
-    if (role === "harvester") {
+    if (role === "harvester" || role === "upgrader") {
         // harvesterのbody定義
         const bodiesDefinition = [WORK, CARRY, MOVE];
         // 入れ物

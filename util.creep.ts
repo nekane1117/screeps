@@ -20,7 +20,7 @@ export const squareDiff = Object.freeze([
 ] as [number, number][]);
 
 export function bodyMaker(role: ROLES, cost: number): BodyPartConstant[] {
-  if (role === "harvester") {
+  if (role === "harvester" || role === "upgrader") {
     // harvesterのbody定義
     const bodiesDefinition: BodyPartConstant[] = [WORK, CARRY, MOVE];
     // 入れ物
