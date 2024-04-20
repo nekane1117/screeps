@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const creep_1 = require("../utils/creep");
+const util_creep_1 = require("./util.creep");
 const behavior = (creep) => {
     if (!isHarvester(creep)) {
         return console.log(`${creep.name} is not Harvester`);
@@ -12,7 +12,7 @@ const behavior = (creep) => {
             ignoreCreeps: true,
             filter: (s) => {
                 // StorageTargetかつ空きがある
-                return (0, creep_1.isStoreTarget)(s) && !!s.store.getFreeCapacity(RESOURCE_ENERGY);
+                return (0, util_creep_1.isStoreTarget)(s) && !!s.store.getFreeCapacity(RESOURCE_ENERGY);
             },
         });
         if (!target) {
@@ -33,7 +33,7 @@ const behavior = (creep) => {
         const target = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE, {
             ignoreCreeps: true,
             filter: (s) => {
-                return !!_(creep_1.squareDiff)
+                return !!_(util_creep_1.squareDiff)
                     // 8近傍の位置を取得する
                     .map(([dx, dy]) => {
                     return creep.room.getPositionAt(s.pos.x + dx, s.pos.y + dy);

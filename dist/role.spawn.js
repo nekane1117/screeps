@@ -4,8 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const lodash_1 = __importDefault(require("lodash"));
-const const_1 = require("../const");
-const creep_1 = require("../utils/creep");
+const const_1 = require("./const");
+const util_creep_1 = require("./util.creep");
 const behavior = (spawn) => {
     const creeps = Object.entries(Game.creeps).map((e) => e[1]);
     // １匹もいないときはとにかく作る
@@ -37,7 +37,7 @@ const behavior = (spawn) => {
     if (creeps.filter((c) => c.memory.role === "harvester").length <
         spawn.room.find(FIND_SOURCES).length * 2 &&
         spawn.store[RESOURCE_ENERGY] > const_1.HARVESTER_MIN_ENERGY) {
-        return spawn.spawnCreep((0, creep_1.bodyMaker)("harvester", spawn.store[RESOURCE_ENERGY]), generateCreepName(spawn, "harvester"), {
+        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("harvester", spawn.store[RESOURCE_ENERGY]), generateCreepName(spawn, "harvester"), {
             memory: {
                 role: "harvester",
             },

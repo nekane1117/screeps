@@ -1,4 +1,4 @@
-import { squareDiff } from "../utils/creep";
+import { squareDiff } from "./util.creep";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと

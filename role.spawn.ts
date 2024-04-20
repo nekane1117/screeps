@@ -1,6 +1,6 @@
 import _ from "lodash";
-import { HARVESTER_MIN_ENERGY } from "../const";
-import { bodyMaker } from "../utils/creep";
+import { HARVESTER_MIN_ENERGY } from "./const";
+import { bodyMaker } from "./util.creep";
 
 const behavior = (spawn: StructureSpawn) => {
   const creeps = Object.entries(Game.creeps).map((e) => e[1]);
