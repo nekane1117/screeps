@@ -28,7 +28,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       return creep.transfer(target, RESOURCE_ENERGY);
     } else {
       // 離れてるときはpathに従って移動して終わる
-      return creep.moveTo(target);
+      return creep.moveTo(target, { ignoreCreeps: true });
     }
   } else {
     // 空きがあるとき
@@ -59,7 +59,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.harvest(target);
     } else {
       // 離れてるときは移動する
-      return creep.moveTo(target);
+      return creep.moveTo(target, {
+        // 3マスより離れているときはcreepを無視する
+        ignoreCreeps: !creep.pos.inRangeTo(target, 3),
+      });
     }
   }
 };
