@@ -1,4 +1,4 @@
-import harvester from "./harvester";
+import harvester from "./role.harvester";
 export type CreepBehavior = (creep: Creeps) => void;
 
 export const behaviors: Partial<Record<ROLES, CreepBehavior>> = {

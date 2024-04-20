@@ -1,5 +1,5 @@
-import { CreepBehavior } from ".";
-import { isStoreTarget, squareDiff } from "../utils/creep";
+import { CreepBehavior } from "./roles";
+import { isStoreTarget, squareDiff } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isHarvester(creep)) {
