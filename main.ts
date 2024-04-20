@@ -1,4 +1,3 @@
-import "./lodash_4_17_15";
 import { behaviors } from "./roles";
 import { roomBehavior } from "./role.room";
 import spawnBehavior from "./role.spawn";

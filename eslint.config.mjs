@@ -8,7 +8,7 @@ export default [
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ["**/*.d.ts", "dist", "lodash_4_17_15.js"],
+    ignores: ["**/*.d.ts", "dist"],
   },
   {
     rules: {

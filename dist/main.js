@@ -3,7 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-require("./lodash_4_17_15");
 const roles_1 = require("./roles");
 const role_room_1 = require("./role.room");
 const role_spawn_1 = __importDefault(require("./role.spawn"));

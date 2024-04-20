@@ -4,7 +4,8 @@ exports.roomBehavior = void 0;
 const util_creep_1 = require("./util.creep");
 function roomBehavior(room) {
     // Roomとしてやっておくこと
-    room.memory.activeSource = room.find(FIND_SOURCES_ACTIVE, {
+    room.memory.activeSource = room
+        .find(FIND_SOURCES_ACTIVE, {
         filter: (s) => {
             return !!_(util_creep_1.squareDiff)
                 // 8近傍の位置を取得する
@@ -18,6 +19,7 @@ function roomBehavior(room) {
                 // がある
                 .size();
         },
-    }).map(s => s.id);
+    })
+        .map((s) => s.id);
 }
 exports.roomBehavior = roomBehavior;
