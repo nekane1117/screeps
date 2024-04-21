@@ -30,32 +30,7 @@ const behavior = (creep) => {
         }
     }
     else {
-        // 空きがあるとき
-        if (!creep.memory.harvestTargetId) {
-            creep.memory.harvestTargetId = creep.room.memory.activeSource[0];
-        }
-        const sources = Game.getObjectById(creep.memory.harvestTargetId);
-        if (!sources) {
-            return ERR_NOT_FOUND;
-        }
-        if (creep.pos.isNearTo(sources)) {
-            const returnVal = creep.harvest(sources);
-            if (returnVal !== OK) {
-                creep.memory.harvestTargetId = undefined;
-            }
-            return returnVal;
-        }
-        else {
-            if (creep.fatigue) {
-                return OK;
-            }
-            // 離れてるときは移動する
-            const returnVal = (0, util_creep_1.customMove)(creep, sources);
-            if (returnVal !== OK) {
-                creep.memory.harvestTargetId = undefined;
-            }
-            return returnVal;
-        }
+        return (0, util_creep_1.commonHarvest)(creep);
     }
 };
 exports.default = behavior;

@@ -1,5 +1,10 @@
 import { CreepBehavior } from "./roles";
-import { customMove, isStoreTarget, randomWalk } from "./util.creep";
+import {
+  commonHarvest,
+  customMove,
+  isStoreTarget,
+  randomWalk,
+} from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isHarvester(creep)) {
@@ -32,33 +37,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       return customMove(creep, target);
     }
   } else {
-    // 空きがあるとき
-    if (!creep.memory.harvestTargetId) {
-      creep.memory.harvestTargetId = creep.room.memory.activeSource[0];
-    }
-    const sources = Game.getObjectById(creep.memory.harvestTargetId);
-
-    if (!sources) {
-      return ERR_NOT_FOUND;
-    }
-
-    if (creep.pos.isNearTo(sources)) {
-      const returnVal = creep.harvest(sources);
-      if (returnVal !== OK) {
-        creep.memory.harvestTargetId = undefined;
-      }
-      return returnVal;
-    } else {
-      if (creep.fatigue) {
-        return OK;
-      }
-      // 離れてるときは移動する
-      const returnVal = customMove(creep, sources);
-      if (returnVal !== OK) {
-        creep.memory.harvestTargetId = undefined;
-      }
-      return returnVal;
-    }
+    return commonHarvest(creep);
   }
 };
 

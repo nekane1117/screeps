@@ -122,11 +122,13 @@ function commonHarvest(creep) {
         // 離れていた時は向かう
         case ERR_NOT_IN_RANGE:
             return (0, exports.customMove)(creep, source);
+        case ERR_NOT_ENOUGH_RESOURCES:
+        case ERR_NOT_FOUND:
+        case ERR_INVALID_TARGET:
+            creep.memory.harvestTargetId = undefined;
+            return returnVal;
         case ERR_NOT_OWNER:
         case ERR_BUSY:
-        case ERR_NOT_FOUND:
-        case ERR_NOT_ENOUGH_RESOURCES:
-        case ERR_INVALID_TARGET:
         case ERR_TIRED:
         case ERR_NO_BODYPART:
         default:
