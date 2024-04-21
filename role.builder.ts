@@ -2,6 +2,7 @@ import { CreepBehavior } from "./roles";
 import { complexOrder } from "./util.array";
 import {
   RETURN_CODE_DECODER,
+  commonHarvest,
   customMove,
   isStoreTarget,
   randomWalk,
@@ -12,7 +13,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return console.log(`${creep.name} is not Builder`);
   }
 
-  if (creep.memory.building) {
+  if (creep.memory.mode === "working") {
     // 建設モード
     if (!creep.memory.buildingId) {
       // 対象が無いときはいい感じの対象を探す
@@ -55,7 +56,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           return customMove(creep, site);
         case ERR_NOT_ENOUGH_RESOURCES:
           // 色々初期化して資源収集モードへ
-          creep.memory.building = false;
+          creep.memory.mode =
+            creep.room.energyAvailable / creep.room.energyCapacityAvailable >
+            0.8
+              ? "collecting"
+              : "harvesting";
           creep.memory.buildingId = undefined;
           creep.memory.storeId = undefined;
           return;
@@ -75,7 +80,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.say("site not found");
       creep.memory.buildingId = undefined;
     }
-  } else {
+  } else if (creep.memory.mode === "collecting") {
     // 資源収集モード
 
     // 対象が無ければ入れる
@@ -114,14 +119,24 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         creep.memory.storeId = undefined;
         randomWalk(creep);
     }
-    // 適当に容量が8割を超えてたらアップグレードモードにする
+    // 適当に容量が8割を超えてたら建築モードにする
     if (
       creep.store.getUsedCapacity(RESOURCE_ENERGY) /
         creep.store.getCapacity(RESOURCE_ENERGY) >
       0.8
     ) {
-      creep.memory.building = true;
+      creep.memory.mode = "working";
       creep.memory.storeId = undefined;
+      creep.memory.harvestTargetId = undefined;
+    }
+  } else {
+    // 自力収集モード
+    commonHarvest(creep);
+
+    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+      creep.memory.mode = "working";
+      creep.memory.storeId = undefined;
+      creep.memory.harvestTargetId = undefined;
     }
   }
 };

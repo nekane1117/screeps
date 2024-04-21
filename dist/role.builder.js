@@ -7,7 +7,7 @@ const behavior = (creep) => {
     if (!isBuilder(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
-    if (creep.memory.building) {
+    if (creep.memory.mode === "working") {
         // 建設モード
         if (!creep.memory.buildingId) {
             // 対象が無いときはいい感じの対象を探す
@@ -41,7 +41,11 @@ const behavior = (creep) => {
                     return (0, util_creep_1.customMove)(creep, site);
                 case ERR_NOT_ENOUGH_RESOURCES:
                     // 色々初期化して資源収集モードへ
-                    creep.memory.building = false;
+                    creep.memory.mode =
+                        creep.room.energyAvailable / creep.room.energyCapacityAvailable >
+                            0.8
+                            ? "collecting"
+                            : "harvesting";
                     creep.memory.buildingId = undefined;
                     creep.memory.storeId = undefined;
                     return;
@@ -62,7 +66,7 @@ const behavior = (creep) => {
             creep.memory.buildingId = undefined;
         }
     }
-    else {
+    else if (creep.memory.mode === "collecting") {
         // 資源収集モード
         // 対象が無ければ入れる
         if (!creep.memory.storeId) {
@@ -96,12 +100,22 @@ const behavior = (creep) => {
                 creep.memory.storeId = undefined;
                 (0, util_creep_1.randomWalk)(creep);
         }
-        // 適当に容量が8割を超えてたらアップグレードモードにする
+        // 適当に容量が8割を超えてたら建築モードにする
         if (creep.store.getUsedCapacity(RESOURCE_ENERGY) /
             creep.store.getCapacity(RESOURCE_ENERGY) >
             0.8) {
-            creep.memory.building = true;
+            creep.memory.mode = "working";
             creep.memory.storeId = undefined;
+            creep.memory.harvestTargetId = undefined;
+        }
+    }
+    else {
+        // 自力収集モード
+        (0, util_creep_1.commonHarvest)(creep);
+        if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+            creep.memory.mode = "working";
+            creep.memory.storeId = undefined;
+            creep.memory.harvestTargetId = undefined;
         }
     }
 };

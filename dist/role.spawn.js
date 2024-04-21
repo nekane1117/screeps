@@ -9,11 +9,9 @@ const behavior = (spawn) => {
     if (spawn.spawning) {
         return;
     }
-    const creepsInRoom = Object.entries(Game.creeps)
-        .map((e) => e[1])
-        .filter((c) => c.room.name === spawn.room.name);
+    const creepsInRoom = lodash_1.default.groupBy((0, util_creep_1.getCreepsInRoom)(spawn.room).map((name) => Game.creeps[name]), (c) => c.memory.role);
     // １匹もいないときはとにかく作る
-    if (creepsInRoom.length === 0) {
+    if ((creepsInRoom.harvester || []).length === 0) {
         return spawn.spawnCreep(
         // とりあえず最小単位
         [MOVE, WORK, CARRY], generateCreepName(spawn, "harvester"), {
@@ -23,7 +21,7 @@ const behavior = (spawn) => {
         });
     }
     // upgraderが居ないときもとりあえず作る
-    if (creepsInRoom.filter((c) => c.memory.role === "upgrader").length === 0 &&
+    if ((creepsInRoom.upgrader || []).length === 0 &&
         spawn.room.energyAvailable > (0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["upgrader"])) {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("upgrader", spawn.room.energyAvailable), generateCreepName(spawn, "upgrader"), {
             memory: {
@@ -32,7 +30,7 @@ const behavior = (spawn) => {
         });
     }
     // harvesterが不足しているとき
-    if (creepsInRoom.filter((c) => c.memory.role === "harvester").length <
+    if ((creepsInRoom.harvester || []).length <
         spawn.room.find(FIND_SOURCES).length * 2 &&
         spawn.room.energyAvailable >
             Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["harvester"]), spawn.room.energyCapacityAvailable * 0.6)) {
@@ -47,12 +45,13 @@ const behavior = (spawn) => {
     // 建設がある
     spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length &&
         // builder足らない(適当に最大４とする)
-        creepsInRoom.filter((c) => c.memory.role === "builder").length < 4 &&
+        (creepsInRoom.builder || []).length === 0 &&
         spawn.room.energyAvailable >
             Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.8)) {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("builder", spawn.room.energyAvailable), generateCreepName(spawn, "builder"), {
             memory: {
                 role: "builder",
+                mode: "working",
             },
         });
     }

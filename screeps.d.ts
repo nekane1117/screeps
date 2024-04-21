@@ -45,7 +45,12 @@ declare interface Upgrader extends Creep {
 
 declare interface UpgraderMemory extends HarvesterMemory {
   role: "upgrader";
-  upgrading?: boolean;
+  /** 今何してるか
+   * working    : 作業中
+   * collecting : 資源取得中
+   * harvesting : 自力で収集中
+   */
+  mode: "working" | "collecting" | "harvesting";
   /** 資源をもらいに行く先 */
   storeId?: StoreTarget["id"] | null;
 }
@@ -56,8 +61,12 @@ declare interface Builder extends Creep {
 
 declare interface BuilderMemory extends HarvesterMemory {
   role: "builder";
-  /** 建築中？ */
-  building?: boolean;
+  /** 今何してるか
+   * working    : 作業中
+   * collecting : 資源取得中
+   * harvesting : 自力で収集中
+   */
+  mode: "working" | "collecting" | "harvesting";
   /** 今建てたいもの */
   buildingId?: ConstructionSite["id"] | null;
   /** 資源をもらいに行く先 */

@@ -1,15 +1,22 @@
 import _ from "lodash";
-import { MIN_BODY, bodyMaker, getBodyCost } from "./util.creep";
+import {
+  MIN_BODY,
+  bodyMaker,
+  getBodyCost,
+  getCreepsInRoom,
+} from "./util.creep";
 
 const behavior = (spawn: StructureSpawn) => {
   if (spawn.spawning) {
     return;
   }
-  const creepsInRoom = Object.entries(Game.creeps)
-    .map((e) => e[1])
-    .filter((c) => c.room.name === spawn.room.name);
+
+  const creepsInRoom = _.groupBy(
+    getCreepsInRoom(spawn.room).map((name) => Game.creeps[name]),
+    (c) => c.memory.role,
+  ) as Partial<Record<ROLES, Creeps[]>>;
   // １匹もいないときはとにかく作る
-  if (creepsInRoom.length === 0) {
+  if ((creepsInRoom.harvester || []).length === 0) {
     return spawn.spawnCreep(
       // とりあえず最小単位
       [MOVE, WORK, CARRY],
@@ -24,7 +31,7 @@ const behavior = (spawn: StructureSpawn) => {
 
   // upgraderが居ないときもとりあえず作る
   if (
-    creepsInRoom.filter((c) => c.memory.role === "upgrader").length === 0 &&
+    (creepsInRoom.upgrader || []).length === 0 &&
     spawn.room.energyAvailable > getBodyCost(MIN_BODY["upgrader"])
   ) {
     return spawn.spawnCreep(
@@ -40,7 +47,7 @@ const behavior = (spawn: StructureSpawn) => {
 
   // harvesterが不足しているとき
   if (
-    creepsInRoom.filter((c) => c.memory.role === "harvester").length <
+    (creepsInRoom.harvester || []).length <
       spawn.room.find(FIND_SOURCES).length * 2 &&
     spawn.room.energyAvailable >
       Math.max(
@@ -63,7 +70,7 @@ const behavior = (spawn: StructureSpawn) => {
     // 建設がある
     spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length &&
     // builder足らない(適当に最大４とする)
-    creepsInRoom.filter((c) => c.memory.role === "builder").length < 4 &&
+    (creepsInRoom.builder || []).length === 0 &&
     spawn.room.energyAvailable >
       Math.max(
         getBodyCost(MIN_BODY["builder"]),
@@ -76,6 +83,7 @@ const behavior = (spawn: StructureSpawn) => {
       {
         memory: {
           role: "builder",
+          mode: "working",
         } as BuilderMemory,
       },
     );

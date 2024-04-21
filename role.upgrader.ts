@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { customMove, isStoreTarget } from "./util.creep";
+import { commonHarvest, customMove, isStoreTarget } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isUpgrader(creep)) {
@@ -9,16 +9,19 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!creep.room.controller) {
     return creep.suicide();
   }
-  if (creep.memory.upgrading) {
+  if (creep.memory.mode === "working") {
     // アップグレード中の時
     switch (creep.upgradeController(creep.room.controller)) {
       case ERR_NOT_IN_RANGE:
         return customMove(creep, creep.room.controller);
       case ERR_NOT_ENOUGH_ENERGY:
-        creep.memory.upgrading = false;
+        creep.memory.mode =
+          creep.room.energyAvailable / creep.room.energyCapacityAvailable > 0.6
+            ? "collecting"
+            : "harvesting";
         return;
     }
-  } else {
+  } else if (creep.memory.mode === "collecting") {
     // 資源収集モード
 
     // 対象が無ければ入れる
@@ -62,8 +65,17 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         creep.store.getCapacity(RESOURCE_ENERGY) >
       0.8
     ) {
-      creep.memory.upgrading = true;
+      creep.memory.mode = "working";
       creep.memory.storeId = undefined;
+      creep.memory.harvestTargetId = undefined;
+    }
+  } else {
+    commonHarvest(creep);
+    // 満タンの時はアップグレードモードにする
+    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+      creep.memory.mode = "working";
+      creep.memory.storeId = undefined;
+      creep.memory.harvestTargetId = undefined;
     }
   }
 };
