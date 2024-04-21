@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { isStoreTarget } from "./util.creep";
+import { isStoreTarget, randomWalk } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isHarvester(creep)) {
@@ -20,17 +20,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     if (!target) {
       creep.say("all container is full");
-      const directions = [
-        TOP_LEFT,
-        TOP,
-        TOP_RIGHT,
-        LEFT,
-        RIGHT,
-        BOTTOM_LEFT,
-        BOTTOM,
-        BOTTOM_RIGHT,
-      ];
-      return creep.move(directions[_.random(0, directions.length - 1)]);
+      return randomWalk(creep);
     }
 
     // この辺から実際の動き

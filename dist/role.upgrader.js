@@ -26,8 +26,8 @@ const behavior = (creep) => {
     else {
         // 資源収集モード
         // 対象が無ければ入れる
-        if (!creep.memory.targetId) {
-            creep.memory.targetId = (_a = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        if (!creep.memory.storeId) {
+            creep.memory.storeId = (_a = creep.pos.findClosestByPath(FIND_STRUCTURES, {
                 // 複数種類のfindが出来ないのでStructureでfindしてfilterで絞る
                 ignoreCreeps: true,
                 filter: (s) => {
@@ -37,10 +37,10 @@ const behavior = (creep) => {
             })) === null || _a === void 0 ? void 0 : _a.id;
         }
         // 対象が全くない時
-        if (!creep.memory.targetId) {
+        if (!creep.memory.storeId) {
             return creep.say("empty all");
         }
-        const target = Game.getObjectById(creep.memory.targetId);
+        const target = Game.getObjectById(creep.memory.storeId);
         if (!target) {
             return ERR_NOT_FOUND;
         }
@@ -57,14 +57,14 @@ const behavior = (creep) => {
             case ERR_NOT_ENOUGH_RESOURCES: // 無いとき
             case ERR_FULL: // 満タンの時
                 // 満タンになったか、空になったかのどっちかしかないので消す
-                creep.memory.targetId = undefined;
+                creep.memory.storeId = undefined;
         }
         // 適当に容量が8割を超えてたらアップグレードモードにする
         if (creep.store.getUsedCapacity(RESOURCE_ENERGY) /
             creep.store.getCapacity(RESOURCE_ENERGY) >
             0.8) {
             creep.memory.upgrading = true;
-            creep.memory.targetId = undefined;
+            creep.memory.storeId = undefined;
         }
     }
 };

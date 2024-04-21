@@ -12,7 +12,7 @@ declare interface CreepMemory {
 }
 
 /** 全部のCreepの型 */
-declare type Creeps = Creep | Harvester | Upgrader;
+declare type Creeps = Creep | Harvester | Upgrader | Builder;
 
 declare type StoreTarget =
   | StructureContainer
@@ -43,5 +43,19 @@ declare interface UpgraderMemory extends CreepMemory {
   role: "upgrader";
   upgrading?: boolean;
   /** 資源をもらいに行く先 */
-  targetId?: StoreTarget["id"] | null;
+  storeId?: StoreTarget["id"] | null;
+}
+
+declare interface Builder extends Creep {
+  memory: BuilderMemory;
+}
+
+declare interface BuilderMemory extends CreepMemory {
+  role: "builder";
+  /** 建築中？ */
+  building?: boolean;
+  /** 今建てたいもの */
+  buildingId?: ConstructionSite["id"] | null;
+  /** 資源をもらいに行く先 */
+  storeId?: StoreTarget["id"] | null;
 }
