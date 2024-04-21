@@ -37,6 +37,11 @@ declare interface RoomMemory {
     tick: number;
     names: string[];
   };
+  spawns?: {
+    tick: number;
+    names: string[];
+  };
+  roadLayed: number;
 }
 
 declare interface Upgrader extends Creep {

@@ -124,8 +124,8 @@ function isBuilder(creep) {
     return creep.memory.role === "builder";
 }
 const buildPriority = [
-    STRUCTURE_EXTENSION,
     STRUCTURE_ROAD,
+    STRUCTURE_EXTENSION,
 ];
 const getBuildPriority = (s) => {
     const priority = buildPriority.findIndex((p) => s === p);

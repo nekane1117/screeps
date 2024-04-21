@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.commonHarvest = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.commonHarvest = exports.getSpawnsInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
 function isStoreTarget(x) {
     return [
         STRUCTURE_CONTAINER,
@@ -101,10 +101,32 @@ function getCreepsInRoom(room) {
     }
 }
 exports.getCreepsInRoom = getCreepsInRoom;
+function getSpawnsInRoom(room) {
+    var _a;
+    if (((_a = room.memory.spawns) === null || _a === void 0 ? void 0 : _a.tick) === Game.time) {
+        return room.memory.spawns.names;
+    }
+    else {
+        room.memory.creeps = {
+            tick: Game.time,
+            names: Object.entries(Game.spawns)
+                .filter(([_, spawns]) => spawns.room.name === room.name)
+                .map((entry) => entry[0]),
+        };
+        return room.memory.creeps.names;
+    }
+}
+exports.getSpawnsInRoom = getSpawnsInRoom;
 function commonHarvest(creep) {
+    var _a;
     // 対象が見つからない場合
     if (!(creep.memory.harvestTargetId ||
-        (creep.memory.harvestTargetId = _.first(creep.room.memory.activeSource)))) {
+        (creep.memory.harvestTargetId = (_a = creep.pos.findClosestByPath(_(creep.room.memory.activeSource)
+            .map((id) => Game.getObjectById(id))
+            .compact()
+            .value(), {
+            ignoreCreeps: true,
+        })) === null || _a === void 0 ? void 0 : _a.id))) {
         // うろうろしておく
         return randomWalk(creep);
     }
@@ -120,8 +142,20 @@ function commonHarvest(creep) {
         case OK:
             return OK;
         // 離れていた時は向かう
-        case ERR_NOT_IN_RANGE:
-            return (0, exports.customMove)(creep, source);
+        case ERR_NOT_IN_RANGE: {
+            const returnVal = (0, exports.customMove)(creep, source);
+            switch (returnVal) {
+                // 問題のない者たち
+                case OK:
+                case ERR_BUSY:
+                case ERR_TIRED:
+                    return returnVal;
+                default:
+                    creep.say(exports.RETURN_CODE_DECODER[returnVal.toString()]);
+                    creep.memory.harvestTargetId = undefined;
+                    return returnVal;
+            }
+        }
         case ERR_NOT_ENOUGH_RESOURCES:
         case ERR_NOT_FOUND:
         case ERR_INVALID_TARGET:

@@ -148,8 +148,8 @@ function isBuilder(creep: Creep): creep is Builder {
 }
 
 const buildPriority: StructureConstant[] = [
-  STRUCTURE_EXTENSION,
   STRUCTURE_ROAD,
+  STRUCTURE_EXTENSION,
 ];
 const getBuildPriority = (s: StructureConstant) => {
   const priority = buildPriority.findIndex((p) => s === p);

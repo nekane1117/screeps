@@ -110,12 +110,34 @@ export function getCreepsInRoom(room: Room) {
   }
 }
 
+export function getSpawnsInRoom(room: Room) {
+  if (room.memory.spawns?.tick === Game.time) {
+    return room.memory.spawns.names;
+  } else {
+    room.memory.creeps = {
+      tick: Game.time,
+      names: Object.entries(Game.spawns)
+        .filter(([_, spawns]) => spawns.room.name === room.name)
+        .map((entry) => entry[0]),
+    };
+    return room.memory.creeps.names;
+  }
+}
+
 export function commonHarvest(creep: Harvester | Builder | Upgrader) {
   // 対象が見つからない場合
   if (
     !(
       creep.memory.harvestTargetId ||
-      (creep.memory.harvestTargetId = _.first(creep.room.memory.activeSource))
+      (creep.memory.harvestTargetId = creep.pos.findClosestByPath(
+        _(creep.room.memory.activeSource)
+          .map((id) => Game.getObjectById(id))
+          .compact()
+          .value(),
+        {
+          ignoreCreeps: true,
+        },
+      )?.id)
     )
   ) {
     // うろうろしておく
@@ -136,8 +158,20 @@ export function commonHarvest(creep: Harvester | Builder | Upgrader) {
     case OK:
       return OK;
     // 離れていた時は向かう
-    case ERR_NOT_IN_RANGE:
-      return customMove(creep, source);
+    case ERR_NOT_IN_RANGE: {
+      const returnVal = customMove(creep, source);
+      switch (returnVal) {
+        // 問題のない者たち
+        case OK:
+        case ERR_BUSY:
+        case ERR_TIRED:
+          return returnVal;
+        default:
+          creep.say(RETURN_CODE_DECODER[returnVal.toString()]);
+          creep.memory.harvestTargetId = undefined;
+          return returnVal;
+      }
+    }
     case ERR_NOT_ENOUGH_RESOURCES:
     case ERR_NOT_FOUND:
     case ERR_INVALID_TARGET:

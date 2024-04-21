@@ -1,17 +1,21 @@
-import { squareDiff } from "./util.creep";
+import { getSpawnsInRoom, squareDiff } from "./util.creep";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
 
-  // 今使えるソースspawnに近い順
-  room.memory.activeSource = findActiceSourceOrderByPath(room);
+  // 今使えるソース
+  room.memory.activeSource = findActiceSource(room);
+
+  if (!room.memory.roadLayed || Game.time - room.memory.roadLayed > 5000) {
+    roadLayer(room);
+  }
 
   // エクステンション建てる
   creteExtensions(room);
 }
 
-/** 今使えるソースspawnに近い順 */
-function findActiceSourceOrderByPath(room: Room) {
+/** 今使えるソース */
+function findActiceSource(room: Room) {
   return _(
     room.find(FIND_SOURCES_ACTIVE, {
       filter: (s) => {
@@ -32,16 +36,6 @@ function findActiceSourceOrderByPath(room: Room) {
       },
     }),
   )
-    .sortBy((source) => {
-      const spawn = Object.entries(Game.spawns).find(
-        ([_, spawn]) => spawn.room.name === room.name,
-      );
-      if (spawn) {
-        return spawn[1].pos.findPathTo(source).length;
-      } else {
-        return 0;
-      }
-    })
     .map((s) => s.id)
     .value();
 }
@@ -81,4 +75,32 @@ function creteExtensions(room: Room) {
       }
     }
   }
+}
+
+// 全てのspawnからsourceまでの道を引く
+function roadLayer(room: Room) {
+  _(getSpawnsInRoom(room).map((name) => Game.spawns[name]))
+    .compact()
+    .value()
+    .forEach((spawn) => {
+      return room.find(FIND_SOURCES).forEach((source) => {
+        room
+          .findPath(spawn.pos, source.pos, {
+            ignoreCreeps: true,
+            swampCost: 1,
+          })
+          .map((path) => {
+            // そこに道が無ければ敷く
+            const pos = room.getPositionAt(path.x, path.y);
+            return (
+              !pos?.lookFor(LOOK_TERRAIN).some((t) => t !== "wall") &&
+              !pos
+                ?.lookFor(LOOK_STRUCTURES)
+                .some((s) => s.structureType === STRUCTURE_ROAD) &&
+              room.createConstructionSite(path.x, path.y, STRUCTURE_ROAD)
+            );
+          });
+      });
+    });
+  room.memory.roadLayed = Game.time;
 }

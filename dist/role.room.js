@@ -4,14 +4,17 @@ exports.roomBehavior = void 0;
 const util_creep_1 = require("./util.creep");
 function roomBehavior(room) {
     // Roomとしてやっておくこと
-    // 今使えるソースspawnに近い順
-    room.memory.activeSource = findActiceSourceOrderByPath(room);
+    // 今使えるソース
+    room.memory.activeSource = findActiceSource(room);
+    if (!room.memory.roadLayed || Game.time - room.memory.roadLayed > 5000) {
+        roadLayer(room);
+    }
     // エクステンション建てる
     creteExtensions(room);
 }
 exports.roomBehavior = roomBehavior;
-/** 今使えるソースspawnに近い順 */
-function findActiceSourceOrderByPath(room) {
+/** 今使えるソース */
+function findActiceSource(room) {
     return _(room.find(FIND_SOURCES_ACTIVE, {
         filter: (s) => {
             return !!_(util_creep_1.squareDiff)
@@ -27,15 +30,6 @@ function findActiceSourceOrderByPath(room) {
                 .size();
         },
     }))
-        .sortBy((source) => {
-        const spawn = Object.entries(Game.spawns).find(([_, spawn]) => spawn.room.name === room.name);
-        if (spawn) {
-            return spawn[1].pos.findPathTo(source).length;
-        }
-        else {
-            return 0;
-        }
-    })
         .map((s) => s.id)
         .value();
 }
@@ -64,4 +58,27 @@ function creteExtensions(room) {
             }
         }
     }
+}
+// 全てのspawnからsourceまでの道を引く
+function roadLayer(room) {
+    _((0, util_creep_1.getSpawnsInRoom)(room).map((name) => Game.spawns[name]))
+        .compact()
+        .value()
+        .forEach((spawn) => {
+        return room.find(FIND_SOURCES).forEach((source) => {
+            room
+                .findPath(spawn.pos, source.pos, {
+                ignoreCreeps: true,
+                swampCost: 1,
+            })
+                .map((path) => {
+                // そこに道が無ければ敷く
+                const pos = room.getPositionAt(path.x, path.y);
+                return (!(pos === null || pos === void 0 ? void 0 : pos.lookFor(LOOK_TERRAIN).some((t) => t !== "wall")) &&
+                    !(pos === null || pos === void 0 ? void 0 : pos.lookFor(LOOK_STRUCTURES).some((s) => s.structureType === STRUCTURE_ROAD)) &&
+                    room.createConstructionSite(path.x, path.y, STRUCTURE_ROAD));
+            });
+        });
+    });
+    room.memory.roadLayed = Game.time;
 }
