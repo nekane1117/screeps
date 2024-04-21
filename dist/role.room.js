@@ -51,8 +51,8 @@ function creteExtensions(room) {
         if (extensions.length <
             CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][room.controller.level]) {
             for (const dist of _.range(1, 25)) {
-                for (const dy of _.range(-dist, dist + 1, 2)) {
-                    for (const dx of _.range(-dist, dist + 1, 2)) {
+                for (const dy of _.range(-dist, dist + 1)) {
+                    for (const dx of _.range(-dist, dist + 1)) {
                         if (Math.abs(dx) + Math.abs(dy) === dist && (dx + dy) % 2 === 0) {
                             if (room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, STRUCTURE_EXTENSION) === OK) {
                                 // つくれた場合抜ける

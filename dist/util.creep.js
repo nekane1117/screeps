@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.commonHarvest = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
 function isStoreTarget(x) {
     return [
         STRUCTURE_CONTAINER,
@@ -63,19 +63,76 @@ const getBodyCost = (bodies) => _(bodies)
     .sum();
 exports.getBodyCost = getBodyCost;
 exports.RETURN_CODE_DECODER = Object.freeze({
-    [OK]: "OK",
-    [ERR_NOT_OWNER]: "ERR_NOT_OWNER",
-    [ERR_NO_PATH]: "ERR_NO_PATH",
-    [ERR_NAME_EXISTS]: "ERR_NAME_EXISTS",
-    [ERR_BUSY]: "ERR_BUSY",
-    [ERR_NOT_FOUND]: "ERR_NOT_FOUND",
-    [ERR_NOT_ENOUGH_RESOURCES]: "ERR_NOT_ENOUGH",
-    [ERR_INVALID_TARGET]: "ERR_INVALID_TARGET",
-    [ERR_FULL]: "ERR_FULL",
-    [ERR_NOT_IN_RANGE]: "ERR_NOT_IN_RANGE",
-    [ERR_INVALID_ARGS]: "ERR_INVALID_ARGS",
-    [ERR_TIRED]: "ERR_TIRED",
-    [ERR_NO_BODYPART]: "ERR_NO_BODYPART",
-    [ERR_RCL_NOT_ENOUGH]: "ERR_RCL_NOT_ENOUGH",
-    [ERR_GCL_NOT_ENOUGH]: "ERR_GCL_NOT_ENOUGH",
+    [OK.toString()]: "OK",
+    [ERR_NOT_OWNER.toString()]: "ERR_NOT_OWNER",
+    [ERR_NO_PATH.toString()]: "ERR_NO_PATH",
+    [ERR_NAME_EXISTS.toString()]: "ERR_NAME_EXISTS",
+    [ERR_BUSY.toString()]: "ERR_BUSY",
+    [ERR_NOT_FOUND.toString()]: "ERR_NOT_FOUND",
+    [ERR_NOT_ENOUGH_RESOURCES.toString()]: "ERR_NOT_ENOUGH",
+    [ERR_INVALID_TARGET.toString()]: "ERR_INVALID_TARGET",
+    [ERR_FULL.toString()]: "ERR_FULL",
+    [ERR_NOT_IN_RANGE.toString()]: "ERR_NOT_IN_RANGE",
+    [ERR_INVALID_ARGS.toString()]: "ERR_INVALID_ARGS",
+    [ERR_TIRED.toString()]: "ERR_TIRED",
+    [ERR_NO_BODYPART.toString()]: "ERR_NO_BODYPART",
+    [ERR_RCL_NOT_ENOUGH.toString()]: "ERR_RCL_NOT_ENOUGH",
+    [ERR_GCL_NOT_ENOUGH.toString()]: "ERR_GCL_NOT_ENOUGH",
 });
+const customMove = (creep, target) => {
+    return creep.moveTo(target, {
+        ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length),
+    });
+};
+exports.customMove = customMove;
+function getCreepsInRoom(room) {
+    var _a;
+    if (((_a = room.memory.creeps) === null || _a === void 0 ? void 0 : _a.tick) === Game.time) {
+        return room.memory.creeps.names;
+    }
+    else {
+        room.memory.creeps = {
+            tick: Game.time,
+            names: Object.entries(Game.creeps)
+                .filter(([_, creep]) => creep.room.name === room.name)
+                .map((entry) => entry[0]),
+        };
+        return room.memory.creeps.names;
+    }
+}
+exports.getCreepsInRoom = getCreepsInRoom;
+function commonHarvest(creep) {
+    // 対象が見つからない場合
+    if (!(creep.memory.harvestTargetId ||
+        (creep.memory.harvestTargetId = _.first(creep.room.memory.activeSource)))) {
+        // うろうろしておく
+        return randomWalk(creep);
+    }
+    const source = Game.getObjectById(creep.memory.harvestTargetId);
+    if (!source) {
+        // 指定されていたソースが見つからないとき
+        // 対象をクリアしてうろうろしておく
+        creep.memory.harvestTargetId = undefined;
+        return randomWalk(creep);
+    }
+    const returnVal = creep.harvest(source);
+    switch (returnVal) {
+        case OK:
+            return OK;
+        // 離れていた時は向かう
+        case ERR_NOT_IN_RANGE:
+            return (0, exports.customMove)(creep, source);
+        case ERR_NOT_OWNER:
+        case ERR_BUSY:
+        case ERR_NOT_FOUND:
+        case ERR_NOT_ENOUGH_RESOURCES:
+        case ERR_INVALID_TARGET:
+        case ERR_TIRED:
+        case ERR_NO_BODYPART:
+        default:
+            // 無視するやつは戻り値をそのまま返す
+            creep.say(exports.RETURN_CODE_DECODER[returnVal.toString()]);
+            return returnVal;
+    }
+}
+exports.commonHarvest = commonHarvest;

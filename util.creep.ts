@@ -66,19 +66,88 @@ export const getBodyCost = (bodies: BodyPartConstant[]) =>
     .sum();
 
 export const RETURN_CODE_DECODER = Object.freeze({
-  [OK]: "OK",
-  [ERR_NOT_OWNER]: "ERR_NOT_OWNER",
-  [ERR_NO_PATH]: "ERR_NO_PATH",
-  [ERR_NAME_EXISTS]: "ERR_NAME_EXISTS",
-  [ERR_BUSY]: "ERR_BUSY",
-  [ERR_NOT_FOUND]: "ERR_NOT_FOUND",
-  [ERR_NOT_ENOUGH_RESOURCES]: "ERR_NOT_ENOUGH",
-  [ERR_INVALID_TARGET]: "ERR_INVALID_TARGET",
-  [ERR_FULL]: "ERR_FULL",
-  [ERR_NOT_IN_RANGE]: "ERR_NOT_IN_RANGE",
-  [ERR_INVALID_ARGS]: "ERR_INVALID_ARGS",
-  [ERR_TIRED]: "ERR_TIRED",
-  [ERR_NO_BODYPART]: "ERR_NO_BODYPART",
-  [ERR_RCL_NOT_ENOUGH]: "ERR_RCL_NOT_ENOUGH",
-  [ERR_GCL_NOT_ENOUGH]: "ERR_GCL_NOT_ENOUGH",
+  [OK.toString()]: "OK",
+  [ERR_NOT_OWNER.toString()]: "ERR_NOT_OWNER",
+  [ERR_NO_PATH.toString()]: "ERR_NO_PATH",
+  [ERR_NAME_EXISTS.toString()]: "ERR_NAME_EXISTS",
+  [ERR_BUSY.toString()]: "ERR_BUSY",
+  [ERR_NOT_FOUND.toString()]: "ERR_NOT_FOUND",
+  [ERR_NOT_ENOUGH_RESOURCES.toString()]: "ERR_NOT_ENOUGH",
+  [ERR_INVALID_TARGET.toString()]: "ERR_INVALID_TARGET",
+  [ERR_FULL.toString()]: "ERR_FULL",
+  [ERR_NOT_IN_RANGE.toString()]: "ERR_NOT_IN_RANGE",
+  [ERR_INVALID_ARGS.toString()]: "ERR_INVALID_ARGS",
+  [ERR_TIRED.toString()]: "ERR_TIRED",
+  [ERR_NO_BODYPART.toString()]: "ERR_NO_BODYPART",
+  [ERR_RCL_NOT_ENOUGH.toString()]: "ERR_RCL_NOT_ENOUGH",
+  [ERR_GCL_NOT_ENOUGH.toString()]: "ERR_GCL_NOT_ENOUGH",
 });
+
+type CustomMove = (
+  creep: Creep,
+  target: RoomPosition | { pos: RoomPosition },
+) => ReturnType<Creep["moveTo"]>;
+export const customMove: CustomMove = (creep, target) => {
+  return creep.moveTo(target, {
+    ignoreCreeps: !creep.pos.inRangeTo(
+      target,
+      getCreepsInRoom(creep.room).length,
+    ),
+  });
+};
+
+export function getCreepsInRoom(room: Room) {
+  if (room.memory.creeps?.tick === Game.time) {
+    return room.memory.creeps.names;
+  } else {
+    room.memory.creeps = {
+      tick: Game.time,
+      names: Object.entries(Game.creeps)
+        .filter(([_, creep]) => creep.room.name === room.name)
+        .map((entry) => entry[0]),
+    };
+    return room.memory.creeps.names;
+  }
+}
+
+export function commonHarvest(creep: Harvester | Builder | Upgrader) {
+  // 対象が見つからない場合
+  if (
+    !(
+      creep.memory.harvestTargetId ||
+      (creep.memory.harvestTargetId = _.first(creep.room.memory.activeSource))
+    )
+  ) {
+    // うろうろしておく
+    return randomWalk(creep);
+  }
+
+  const source = Game.getObjectById(creep.memory.harvestTargetId);
+
+  if (!source) {
+    // 指定されていたソースが見つからないとき
+    // 対象をクリアしてうろうろしておく
+    creep.memory.harvestTargetId = undefined;
+    return randomWalk(creep);
+  }
+
+  const returnVal = creep.harvest(source);
+  switch (returnVal) {
+    case OK:
+      return OK;
+    // 離れていた時は向かう
+    case ERR_NOT_IN_RANGE:
+      return customMove(creep, source);
+    case ERR_NOT_OWNER:
+    case ERR_BUSY:
+    case ERR_NOT_FOUND:
+    case ERR_NOT_ENOUGH_RESOURCES:
+    case ERR_INVALID_TARGET:
+    case ERR_TIRED:
+    case ERR_NO_BODYPART:
+    default:
+      // 無視するやつは戻り値をそのまま返す
+      creep.say(RETURN_CODE_DECODER[returnVal.toString()]);
+      return returnVal;
+  }
+}

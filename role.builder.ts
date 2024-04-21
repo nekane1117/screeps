@@ -1,6 +1,11 @@
 import { CreepBehavior } from "./roles";
 import { complexOrder } from "./util.array";
-import { RETURN_CODE_DECODER, isStoreTarget, randomWalk } from "./util.creep";
+import {
+  RETURN_CODE_DECODER,
+  customMove,
+  isStoreTarget,
+  randomWalk,
+} from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isBuilder(creep)) {
@@ -47,9 +52,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       const returnVal = creep.build(site);
       switch (returnVal) {
         case ERR_NOT_IN_RANGE:
-          return creep.moveTo(site, {
-            ignoreCreeps: !creep.pos.inRangeTo(site, 3),
-          });
+          return customMove(creep, site);
         case ERR_NOT_ENOUGH_RESOURCES:
           // 色々初期化して資源収集モードへ
           creep.memory.building = false;
@@ -101,10 +104,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     switch (creep.withdraw(target, RESOURCE_ENERGY)) {
       // 離れていた時
       case ERR_NOT_IN_RANGE:
-        creep.moveTo(target, {
-          // 3マス以上離れてるうちはcreepを無視
-          ignoreCreeps: !creep.pos.inRangeTo(target, 3),
-        });
+        customMove(creep, target);
         break;
 
       case OK: // 取れたとき

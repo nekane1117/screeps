@@ -26,22 +26,22 @@ const behavior = (creep) => {
         }
         else {
             // 離れてるときはpathに従って移動して終わる
-            return creep.moveTo(target, { ignoreCreeps: true });
+            return (0, util_creep_1.customMove)(creep, target);
         }
     }
     else {
         // 空きがあるとき
-        if (!creep.memory.target) {
-            creep.memory.target = creep.room.memory.activeSource[0];
+        if (!creep.memory.harvestTargetId) {
+            creep.memory.harvestTargetId = creep.room.memory.activeSource[0];
         }
-        const sources = Game.getObjectById(creep.memory.target);
+        const sources = Game.getObjectById(creep.memory.harvestTargetId);
         if (!sources) {
             return ERR_NOT_FOUND;
         }
         if (creep.pos.isNearTo(sources)) {
             const returnVal = creep.harvest(sources);
             if (returnVal !== OK) {
-                creep.memory.target = undefined;
+                creep.memory.harvestTargetId = undefined;
             }
             return returnVal;
         }
@@ -50,12 +50,9 @@ const behavior = (creep) => {
                 return OK;
             }
             // 離れてるときは移動する
-            const returnVal = creep.moveTo(sources, {
-                // 3マスより離れているときはcreepを無視する
-                ignoreCreeps: !creep.pos.inRangeTo(sources, 3),
-            });
+            const returnVal = (0, util_creep_1.customMove)(creep, sources);
             if (returnVal !== OK) {
-                creep.memory.target = undefined;
+                creep.memory.harvestTargetId = undefined;
             }
             return returnVal;
         }

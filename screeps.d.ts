@@ -27,19 +27,23 @@ declare interface Harvester extends Creep {
 
 declare interface HarvesterMemory extends CreepMemory {
   role: "harvester";
-  target?: Source["id"] | null;
+  harvestTargetId?: Source["id"] | null;
 }
 
 declare interface RoomMemory {
   /** このtickでアクティブなソース */
   activeSource: Source["id"][];
+  creeps?: {
+    tick: number;
+    names: string[];
+  };
 }
 
 declare interface Upgrader extends Creep {
   memory: UpgraderMemory;
 }
 
-declare interface UpgraderMemory extends CreepMemory {
+declare interface UpgraderMemory extends HarvesterMemory {
   role: "upgrader";
   upgrading?: boolean;
   /** 資源をもらいに行く先 */
@@ -50,7 +54,7 @@ declare interface Builder extends Creep {
   memory: BuilderMemory;
 }
 
-declare interface BuilderMemory extends CreepMemory {
+declare interface BuilderMemory extends HarvesterMemory {
   role: "builder";
   /** 建築中？ */
   building?: boolean;

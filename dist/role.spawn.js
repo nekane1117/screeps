@@ -34,7 +34,8 @@ const behavior = (spawn) => {
     // harvesterが不足しているとき
     if (creepsInRoom.filter((c) => c.memory.role === "harvester").length <
         spawn.room.find(FIND_SOURCES).length * 2 &&
-        spawn.room.energyAvailable > (0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["harvester"])) {
+        spawn.room.energyAvailable >
+            Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["harvester"]), spawn.room.energyCapacityAvailable * 0.6)) {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("harvester", spawn.room.energyAvailable), generateCreepName(spawn, "harvester"), {
             memory: {
                 role: "harvester",
@@ -47,7 +48,8 @@ const behavior = (spawn) => {
     spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length &&
         // builder足らない(適当に最大４とする)
         creepsInRoom.filter((c) => c.memory.role === "builder").length < 4 &&
-        spawn.room.energyAvailable > (0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["builder"])) {
+        spawn.room.energyAvailable >
+            Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.8)) {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("builder", spawn.room.energyAvailable), generateCreepName(spawn, "builder"), {
             memory: {
                 role: "builder",

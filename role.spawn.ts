@@ -42,7 +42,11 @@ const behavior = (spawn: StructureSpawn) => {
   if (
     creepsInRoom.filter((c) => c.memory.role === "harvester").length <
       spawn.room.find(FIND_SOURCES).length * 2 &&
-    spawn.room.energyAvailable > getBodyCost(MIN_BODY["harvester"])
+    spawn.room.energyAvailable >
+      Math.max(
+        getBodyCost(MIN_BODY["harvester"]),
+        spawn.room.energyCapacityAvailable * 0.6,
+      )
   ) {
     return spawn.spawnCreep(
       bodyMaker("harvester", spawn.room.energyAvailable),
@@ -60,7 +64,11 @@ const behavior = (spawn: StructureSpawn) => {
     spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length &&
     // builder足らない(適当に最大４とする)
     creepsInRoom.filter((c) => c.memory.role === "builder").length < 4 &&
-    spawn.room.energyAvailable > getBodyCost(MIN_BODY["builder"])
+    spawn.room.energyAvailable >
+      Math.max(
+        getBodyCost(MIN_BODY["builder"]),
+        spawn.room.energyCapacityAvailable * 0.8,
+      )
   ) {
     return spawn.spawnCreep(
       bodyMaker("builder", spawn.room.energyAvailable),

@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { isStoreTarget } from "./util.creep";
+import { customMove, isStoreTarget } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isUpgrader(creep)) {
@@ -13,11 +13,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // アップグレード中の時
     switch (creep.upgradeController(creep.room.controller)) {
       case ERR_NOT_IN_RANGE:
-        creep.moveTo(creep.room.controller, {
-          // 3マス以上離れてるうちはcreepを無視
-          ignoreCreeps: !creep.pos.inRangeTo(creep.room.controller, 6),
-        });
-        return;
+        return customMove(creep, creep.room.controller);
       case ERR_NOT_ENOUGH_ENERGY:
         creep.memory.upgrading = false;
         return;
@@ -51,10 +47,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     switch (creep.withdraw(target, RESOURCE_ENERGY)) {
       // 離れていた時
       case ERR_NOT_IN_RANGE:
-        creep.moveTo(target, {
-          // 3マス以上離れてるうちはcreepを無視
-          ignoreCreeps: !creep.pos.inRangeTo(target, 3),
-        });
+        customMove(creep, target);
         break;
 
       case OK: // 取れたとき

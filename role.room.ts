@@ -62,8 +62,8 @@ function creteExtensions(room: Room) {
       CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][room.controller.level]
     ) {
       for (const dist of _.range(1, 25)) {
-        for (const dy of _.range(-dist, dist + 1, 2)) {
-          for (const dx of _.range(-dist, dist + 1, 2)) {
+        for (const dy of _.range(-dist, dist + 1)) {
+          for (const dx of _.range(-dist, dist + 1)) {
             if (Math.abs(dx) + Math.abs(dy) === dist && (dx + dy) % 2 === 0) {
               if (
                 room.createConstructionSite(
