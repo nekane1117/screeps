@@ -22,9 +22,13 @@ const behavior = (creep) => {
                     return (c1.progressTotal - c1.progress - (c2.progressTotal - c2.progress));
                 },
                 (c1, c2) => {
-                    // 一番近いやつ
-                    return (creep.pos.findPathTo(c1, { ignoreCreeps: true }).length -
-                        creep.pos.findPathTo(c2, { ignoreCreeps: true }).length);
+                    // spawnに一番近いやつ
+                    const spawn = _((0, util_creep_1.getSpawnNamesInRoom)(creep.room))
+                        .map((name) => Game.spawns[name])
+                        .compact()
+                        .first();
+                    return (spawn.pos.findPathTo(c1, { ignoreCreeps: true }).length -
+                        spawn.pos.findPathTo(c2, { ignoreCreeps: true }).length);
                 },
             ]))) === null || _a === void 0 ? void 0 : _a.id;
         }

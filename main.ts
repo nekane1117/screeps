@@ -19,6 +19,8 @@ module.exports.loop = function () {
 
     spawnGroup[room.name]?.map(spawnBehavior);
 
-    creepGroup[room.name]?.map((c) => behaviors[c.memory.role]?.(c));
+    creepGroup[room.name]?.map(
+      (c) => !c.spawning && behaviors[c.memory.role]?.(c),
+    );
   });
 };

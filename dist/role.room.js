@@ -8,7 +8,7 @@ function roomBehavior(room) {
     room.memory.activeSource = findActiceSource(room);
     if (!room.memory.roadLayed ||
         Game.time - room.memory.roadLayed > (room.name === "sim" ? 100 : 5000)) {
-        console.log("roadLayer");
+        console.log("roadLayer in " + Game.time);
         roadLayer(room);
     }
     // エクステンション建てる
@@ -63,7 +63,7 @@ function creteExtensions(room) {
 }
 // 全てのspawnからsourceまでの道を引く
 function roadLayer(room) {
-    _((0, util_creep_1.getSpawnsInRoom)(room).map((name) => Game.spawns[name]))
+    _((0, util_creep_1.getSpawnNamesInRoom)(room).map((name) => Game.spawns[name]))
         .compact()
         .value()
         .forEach((spawn) => {
@@ -82,6 +82,5 @@ function roadLayer(room) {
             });
         });
     });
-    console.log(Game.time);
     room.memory.roadLayed = Game.time;
 }

@@ -4,6 +4,7 @@ import {
   RETURN_CODE_DECODER,
   commonHarvest,
   customMove,
+  getSpawnNamesInRoom,
   isStoreTarget,
   randomWalk,
 } from "./util.creep";
@@ -33,10 +34,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             );
           },
           (c1, c2) => {
-            // 一番近いやつ
+            // spawnに一番近いやつ
+            const spawn = _(getSpawnNamesInRoom(creep.room))
+              .map((name) => Game.spawns[name])
+              .compact()
+              .first();
             return (
-              creep.pos.findPathTo(c1, { ignoreCreeps: true }).length -
-              creep.pos.findPathTo(c2, { ignoreCreeps: true }).length
+              spawn.pos.findPathTo(c1, { ignoreCreeps: true }).length -
+              spawn.pos.findPathTo(c2, { ignoreCreeps: true }).length
             );
           },
         ]),

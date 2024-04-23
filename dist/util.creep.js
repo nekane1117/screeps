@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.commonHarvest = exports.getSpawnsInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.commonHarvest = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
 function isStoreTarget(x) {
     return [
         STRUCTURE_CONTAINER,
@@ -101,7 +101,7 @@ function getCreepsInRoom(room) {
     }
 }
 exports.getCreepsInRoom = getCreepsInRoom;
-function getSpawnsInRoom(room) {
+function getSpawnNamesInRoom(room) {
     var _a;
     if (((_a = room.memory.spawns) === null || _a === void 0 ? void 0 : _a.tick) === Game.time) {
         return room.memory.spawns.names;
@@ -116,7 +116,7 @@ function getSpawnsInRoom(room) {
         return room.memory.creeps.names;
     }
 }
-exports.getSpawnsInRoom = getSpawnsInRoom;
+exports.getSpawnNamesInRoom = getSpawnNamesInRoom;
 function commonHarvest(creep) {
     var _a;
     // 対象が見つからない場合

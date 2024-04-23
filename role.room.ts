@@ -1,4 +1,4 @@
-import { getSpawnsInRoom, squareDiff } from "./util.creep";
+import { getSpawnNamesInRoom, squareDiff } from "./util.creep";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
@@ -10,7 +10,7 @@ export function roomBehavior(room: Room) {
     !room.memory.roadLayed ||
     Game.time - room.memory.roadLayed > (room.name === "sim" ? 100 : 5000)
   ) {
-    console.log("roadLayer");
+    console.log("roadLayer in " + Game.time);
     roadLayer(room);
   }
 
@@ -83,7 +83,7 @@ function creteExtensions(room: Room) {
 
 // 全てのspawnからsourceまでの道を引く
 function roadLayer(room: Room) {
-  _(getSpawnsInRoom(room).map((name) => Game.spawns[name]))
+  _(getSpawnNamesInRoom(room).map((name) => Game.spawns[name]))
     .compact()
     .value()
     .forEach((spawn) => {
@@ -106,6 +106,5 @@ function roadLayer(room: Room) {
           });
       });
     });
-  console.log(Game.time);
   room.memory.roadLayed = Game.time;
 }

@@ -66,12 +66,17 @@ const behavior = (creep) => {
             ignoreCreeps: true,
         })) === null || _b === void 0 ? void 0 : _b.id))) {
         // 完全に見つからなければうろうろしておく
-        return (0, util_creep_1.randomWalk)(creep);
+        if (creep.memory.mode === "working") {
+            (0, util_creep_1.randomWalk)(creep);
+        }
     }
     else {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
             const returnVal = creep.transfer(store, RESOURCE_ENERGY);
+            if (creep.name.endsWith("_0")) {
+                console.log(`${creep.name} transfer returns ${util_creep_1.RETURN_CODE_DECODER[returnVal.toString()]}`);
+            }
             switch (returnVal) {
                 // 遠い
                 case ERR_NOT_IN_RANGE:
@@ -114,7 +119,7 @@ const behavior = (creep) => {
             // 指定されていたソースが見つからないとき
             // 対象をクリアしてうろうろしておく
             creep.memory.storeId = undefined;
-            return (0, util_creep_1.randomWalk)(creep);
+            (0, util_creep_1.randomWalk)(creep);
         }
     }
 };

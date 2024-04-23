@@ -110,7 +110,7 @@ export function getCreepsInRoom(room: Room) {
   }
 }
 
-export function getSpawnsInRoom(room: Room) {
+export function getSpawnNamesInRoom(room: Room) {
   if (room.memory.spawns?.tick === Game.time) {
     return room.memory.spawns.names;
   } else {
