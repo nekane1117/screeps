@@ -27,7 +27,13 @@ declare interface Harvester extends Creep {
 
 declare interface HarvesterMemory extends CreepMemory {
   role: "harvester";
+  /** 今何してるか
+   * working    : 資源を持ってきてるところ
+   * harvesting : 収集中
+   */
+  mode: "working" | "harvesting";
   harvestTargetId?: Source["id"] | null;
+  storeId?: StoreTarget["id"] | null;
 }
 
 declare interface RoomMemory {

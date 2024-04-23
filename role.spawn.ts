@@ -11,10 +11,13 @@ const behavior = (spawn: StructureSpawn) => {
     return;
   }
 
-  const creepsInRoom = _.groupBy(
-    getCreepsInRoom(spawn.room).map((name) => Game.creeps[name]),
-    (c) => c.memory.role,
-  ) as Partial<Record<ROLES, Creeps[]>>;
+  const creepsInRoom: _.Dictionary<Creep[] | undefined> = _(
+    getCreepsInRoom(spawn.room),
+  )
+    .map((name) => Game.creeps[name])
+    .compact()
+    .groupBy((c) => c.memory.role)
+    .value();
   // １匹もいないときはとにかく作る
   if ((creepsInRoom.harvester || []).length === 0) {
     return spawn.spawnCreep(

@@ -9,7 +9,11 @@ const behavior = (spawn) => {
     if (spawn.spawning) {
         return;
     }
-    const creepsInRoom = lodash_1.default.groupBy((0, util_creep_1.getCreepsInRoom)(spawn.room).map((name) => Game.creeps[name]), (c) => c.memory.role);
+    const creepsInRoom = (0, lodash_1.default)((0, util_creep_1.getCreepsInRoom)(spawn.room))
+        .map((name) => Game.creeps[name])
+        .compact()
+        .groupBy((c) => c.memory.role)
+        .value();
     // １匹もいないときはとにかく作る
     if ((creepsInRoom.harvester || []).length === 0) {
         return spawn.spawnCreep(

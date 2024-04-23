@@ -6,7 +6,9 @@ function roomBehavior(room) {
     // Roomとしてやっておくこと
     // 今使えるソース
     room.memory.activeSource = findActiceSource(room);
-    if (!room.memory.roadLayed || Game.time - room.memory.roadLayed > 5000) {
+    if (!room.memory.roadLayed ||
+        Game.time - room.memory.roadLayed > (room.name === "sim" ? 100 : 5000)) {
+        console.log("roadLayer");
         roadLayer(room);
     }
     // エクステンション建てる
@@ -74,11 +76,12 @@ function roadLayer(room) {
                 .map((path) => {
                 // そこに道が無ければ敷く
                 const pos = room.getPositionAt(path.x, path.y);
-                return (!(pos === null || pos === void 0 ? void 0 : pos.lookFor(LOOK_TERRAIN).some((t) => t !== "wall")) &&
+                return (!(pos === null || pos === void 0 ? void 0 : pos.lookFor(LOOK_TERRAIN).some((t) => t === "wall")) &&
                     !(pos === null || pos === void 0 ? void 0 : pos.lookFor(LOOK_STRUCTURES).some((s) => s.structureType === STRUCTURE_ROAD)) &&
                     room.createConstructionSite(path.x, path.y, STRUCTURE_ROAD));
             });
         });
     });
+    console.log(Game.time);
     room.memory.roadLayed = Game.time;
 }
