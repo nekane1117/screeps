@@ -72,8 +72,6 @@ const behavior = (spawn: StructureSpawn) => {
   if (
     // 建設がある
     spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length &&
-    // builder足らない(適当に最大４とする)
-    (creepsInRoom.builder || []).length === 0 &&
     spawn.room.energyAvailable >
       Math.max(
         getBodyCost(MIN_BODY["builder"]),
