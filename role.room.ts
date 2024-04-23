@@ -6,10 +6,7 @@ export function roomBehavior(room: Room) {
   // 今使えるソース
   room.memory.activeSource = findActiceSource(room);
 
-  if (
-    !room.memory.roadLayed ||
-    Game.time - room.memory.roadLayed > (room.name === "sim" ? 100 : 5000)
-  ) {
+  if (!room.memory.roadLayed || Game.time - room.memory.roadLayed > 5000) {
     console.log("roadLayer in " + Game.time);
     roadLayer(room);
   }
@@ -87,11 +84,30 @@ function roadLayer(room: Room) {
     .compact()
     .value()
     .forEach((spawn) => {
-      return room.find(FIND_SOURCES).forEach((source) => {
+      return [
+        ...room.find(FIND_SOURCES),
+        ...room.find(FIND_MY_STRUCTURES, {
+          filter: (s) => s.structureType === STRUCTURE_CONTROLLER,
+        }),
+      ].forEach((source) => {
         room
           .findPath(spawn.pos, source.pos, {
             ignoreCreeps: true,
             swampCost: 1,
+            // これから道を引く予定のところは1にする
+            costCallback: (roomName, matrix) => {
+              _.range(50).forEach((x) => {
+                _.range(50).forEach((y) => {
+                  if (
+                    room
+                      .lookForAt(LOOK_CONSTRUCTION_SITES, x, y)
+                      .some((site) => site.structureType === STRUCTURE_ROAD)
+                  ) {
+                    matrix.set(x, y, 1);
+                  }
+                });
+              });
+            },
           })
           .map((path) => {
             // そこに道が無ければ敷く

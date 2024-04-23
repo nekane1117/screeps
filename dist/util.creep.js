@@ -80,8 +80,12 @@ exports.RETURN_CODE_DECODER = Object.freeze({
     [ERR_GCL_NOT_ENOUGH.toString()]: "ERR_GCL_NOT_ENOUGH",
 });
 const customMove = (creep, target) => {
+    if (creep.fatigue) {
+        return OK;
+    }
     return creep.moveTo(target, {
         ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length),
+        serializeMemory: false,
     });
 };
 exports.customMove = customMove;

@@ -35,12 +35,26 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // 対象が見つかった時
     const source = Game.getObjectById(creep.memory.harvestTargetId);
     if (source) {
-      const returnVal = creep.harvest(source);
-      switch (returnVal) {
+      creep.memory.harvested = {
+        tick: Game.time,
+        result: creep.harvest(source),
+      };
+      switch (creep.memory.harvested.result) {
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "harvesting") {
             // 収集モードで近くにいないときは近寄る
-            customMove(creep, source);
+            const moved = customMove(creep, source);
+            switch (moved) {
+              case OK:
+                break;
+              case ERR_NO_PATH:
+                creep.memory.harvestTargetId = undefined;
+                break;
+
+              default:
+                creep.say(RETURN_CODE_DECODER[moved.toString()]);
+                break;
+            }
           }
           break;
 
@@ -54,9 +68,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         case ERR_NOT_FOUND: // mineralは対象外
         case ERR_NO_BODYPART: // WORKが無い
           console.log(
-            `${creep.name} harvest returns ${RETURN_CODE_DECODER[returnVal.toString()]}`,
+            `${creep.name} harvest returns ${RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]}`,
           );
-          creep.say(RETURN_CODE_DECODER[returnVal.toString()]);
+          creep.say(
+            RETURN_CODE_DECODER[creep.memory.harvested.result.toString()],
+          );
           break;
         // 大丈夫なやつ
         case OK: // OK
@@ -69,6 +85,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       // 指定されていたソースが見つからないとき
       // 対象をクリアしてうろうろしておく
       creep.memory.harvestTargetId = undefined;
+      creep.memory.harvested = undefined;
       randomWalk(creep);
     }
   }
@@ -92,11 +109,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
       const returnVal = creep.transfer(store, RESOURCE_ENERGY);
-      if (creep.name.endsWith("_0")) {
-        console.log(
-          `${creep.name} transfer returns ${RETURN_CODE_DECODER[returnVal.toString()]}`,
-        );
-      }
       switch (returnVal) {
         // 遠い
         case ERR_NOT_IN_RANGE:
@@ -113,7 +125,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
         // 対象が変
         case ERR_INVALID_TARGET: // 対象が変
+          creep.memory.storeId = undefined;
+          break;
         case ERR_FULL: // 満タン
+          randomWalk(creep);
           creep.memory.storeId = undefined;
           break;
 
@@ -132,20 +147,20 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         default:
           break;
       }
-      // 空っぽになったら収集モードに切り替える
-      if (creep.store[RESOURCE_ENERGY] === 0) {
-        changeMode(creep, "harvesting");
-      }
-      // 満タンだったら分配モードに切り替える
-      if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-        changeMode(creep, "working");
-      }
     } else {
       // 指定されていたソースが見つからないとき
       // 対象をクリアしてうろうろしておく
       creep.memory.storeId = undefined;
       randomWalk(creep);
     }
+  }
+  // 空っぽになったら収集モードに切り替える
+  if (creep.store[RESOURCE_ENERGY] === 0) {
+    changeMode(creep, "harvesting");
+  }
+  // 満タンだったら分配モードに切り替える
+  if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+    changeMode(creep, "working");
   }
 };
 
@@ -156,9 +171,11 @@ function isHarvester(creep: Creeps): creep is Harvester {
 }
 
 function changeMode(creep: Harvester, mode: HarvesterMemory["mode"]) {
-  Object.assign(creep.memory, {
-    mode,
-    harvestTargetId: undefined,
-    storeId: undefined,
-  } as HarvesterMemory);
+  if (creep.memory.mode !== mode) {
+    Object.assign(creep.memory, {
+      mode,
+      harvestTargetId: undefined,
+      storeId: undefined,
+    } as HarvesterMemory);
+  }
 }

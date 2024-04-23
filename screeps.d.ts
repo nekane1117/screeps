@@ -34,6 +34,10 @@ declare interface HarvesterMemory extends CreepMemory {
   mode: "working" | "harvesting";
   harvestTargetId?: Source["id"] | null;
   storeId?: StoreTarget["id"] | null;
+  harvested?: {
+    tick: number;
+    result: ReturnType<Creep["harvest"]>;
+  };
 }
 
 declare interface RoomMemory {

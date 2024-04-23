@@ -88,11 +88,15 @@ type CustomMove = (
   target: RoomPosition | { pos: RoomPosition },
 ) => ReturnType<Creep["moveTo"]>;
 export const customMove: CustomMove = (creep, target) => {
+  if (creep.fatigue) {
+    return OK;
+  }
   return creep.moveTo(target, {
     ignoreCreeps: !creep.pos.inRangeTo(
       target,
       getCreepsInRoom(creep.room).length,
     ),
+    serializeMemory: false,
   });
 };
 
