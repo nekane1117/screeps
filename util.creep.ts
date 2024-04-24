@@ -181,3 +181,16 @@ export function commonHarvest(creep: Harvester | Builder | Upgrader) {
     }
   }
 }
+
+export function pickUpAll(creep: Creep) {
+  //withdraw
+  // 通りがかりに落っこちてるリソースを拾う
+  creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1).forEach((resource) => {
+    creep.pickup(resource)
+  })
+
+  // 通りがかりの墓から拾う
+  creep.pos.findInRange(FIND_TOMBSTONES, 1).forEach((tombstone) => {
+    creep.withdraw(tombstone, RESOURCE_ENERGY)
+  })
+}

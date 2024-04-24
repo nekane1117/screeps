@@ -57,12 +57,12 @@ const behavior = (spawn) => {
 };
 const generateCreepName = (spawn, role) => {
     const shortName = {
-        builder: "BLD",
-        carrier: "CAR",
-        defender: "DEF",
-        harvester: "HAV",
-        repairer: "REP",
-        upgrader: "UPG",
+        builder: "B",
+        carrier: "C",
+        defender: "D",
+        harvester: "H",
+        repairer: "R",
+        upgrader: "U",
     };
     return (lodash_1.default.range(100)
         .map((i) => `${spawn.room.name}_${shortName[role]}_${i}`)

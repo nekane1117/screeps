@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles"
-import { RETURN_CODE_DECODER, commonHarvest, customMove, isStoreTarget, randomWalk } from "./util.creep"
+import { RETURN_CODE_DECODER, commonHarvest, customMove, isStoreTarget, pickUpAll, randomWalk } from "./util.creep"
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isHarvester(creep)) {
@@ -10,17 +10,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // harvest
   commonHarvest(creep)
-
-  //withdraw
-  // 通りがかりに落っこちてるリソースを拾う
-  creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1).forEach((resource) => {
-    creep.pickup(resource)
-  })
-
-  // 通りがかりの墓から拾う
-  creep.pos.findInRange(FIND_TOMBSTONES, 1).forEach((tombstone) => {
-    creep.withdraw(tombstone, RESOURCE_ENERGY)
-  })
 
   // transfer
   // 対象設定処理
@@ -84,6 +73,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       randomWalk(creep)
     }
   }
+
+  // 落っこちてるものを拾う
+  pickUpAll(creep)
+
   // 空っぽになったら収集モードに切り替える
   if (creep.store[RESOURCE_ENERGY] === 0) {
     changeMode(creep, "harvesting")
@@ -102,6 +95,7 @@ function isHarvester(creep: Creeps): creep is Harvester {
 
 function changeMode(creep: Harvester, mode: HarvesterMemory["mode"]) {
   if (creep.memory.mode !== mode) {
+    creep.say(mode)
     Object.assign(creep.memory, {
       mode,
       harvestTargetId: undefined,

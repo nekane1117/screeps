@@ -3,10 +3,12 @@
 declare type ROLES = "harvester" | "carrier" | "builder" | "repairer" | "defender" | "upgrader"
 declare interface CreepMemory {
   role: ROLES
+  // 担当作業の作業結果
+  worked?: ScreepsReturnCode
 }
 
 /** 全部のCreepの型 */
-declare type Creeps = Creep | Harvester | Upgrader | Builder
+declare type Creeps = Creep | Harvester | Upgrader | Builder | Carrier
 
 declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink
 
@@ -77,4 +79,22 @@ declare interface BuilderMemory extends HarvesterMemory {
   built?: ReturnType<Creeps["build"]>
   /** 資源をもらいに行く先 */
   storeId?: StoreTarget["id"] | null
+}
+
+declare interface Carrier extends Creep {
+  memory: CarrierMemory
+}
+
+declare interface CarrierMemory extends HarvesterMemory {
+  role: "carrier"
+  /** 今何してるか
+   * working    : 作業中
+   * collecting : 資源取得中
+   * harvesting : 自力で収集中
+   */
+  mode: "working" | "collecting"
+  /** 担当倉庫 */
+  storeId: StructureContainer["id"]
+  /** 配送先 */
+  transferId?: StoreTarget["id"] | null
 }

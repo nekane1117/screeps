@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.commonHarvest = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.pickUpAll = exports.commonHarvest = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -171,3 +171,15 @@ function commonHarvest(creep) {
     }
 }
 exports.commonHarvest = commonHarvest;
+function pickUpAll(creep) {
+    //withdraw
+    // 通りがかりに落っこちてるリソースを拾う
+    creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1).forEach((resource) => {
+        creep.pickup(resource);
+    });
+    // 通りがかりの墓から拾う
+    creep.pos.findInRange(FIND_TOMBSTONES, 1).forEach((tombstone) => {
+        creep.withdraw(tombstone, RESOURCE_ENERGY);
+    });
+}
+exports.pickUpAll = pickUpAll;

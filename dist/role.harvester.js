@@ -9,15 +9,6 @@ const behavior = (creep) => {
     // https://docs.screeps.com/simultaneous-actions.html
     // harvest
     (0, util_creep_1.commonHarvest)(creep);
-    //withdraw
-    // 通りがかりに落っこちてるリソースを拾う
-    creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1).forEach((resource) => {
-        creep.pickup(resource);
-    });
-    // 通りがかりの墓から拾う
-    creep.pos.findInRange(FIND_TOMBSTONES, 1).forEach((tombstone) => {
-        creep.withdraw(tombstone, RESOURCE_ENERGY);
-    });
     // transfer
     // 対象設定処理
     if (!(creep.memory.storeId ||
@@ -74,6 +65,8 @@ const behavior = (creep) => {
             (0, util_creep_1.randomWalk)(creep);
         }
     }
+    // 落っこちてるものを拾う
+    (0, util_creep_1.pickUpAll)(creep);
     // 空っぽになったら収集モードに切り替える
     if (creep.store[RESOURCE_ENERGY] === 0) {
         changeMode(creep, "harvesting");
@@ -89,6 +82,7 @@ function isHarvester(creep) {
 }
 function changeMode(creep, mode) {
     if (creep.memory.mode !== mode) {
+        creep.say(mode);
         Object.assign(creep.memory, {
             mode,
             harvestTargetId: undefined,
