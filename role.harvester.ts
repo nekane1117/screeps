@@ -17,7 +17,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     !(
       creep.memory.storeId ||
       (creep.memory.storeId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: isStoreTarget,
+        filter: (s): s is StoreTarget => isStoreTarget(s) && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
         ignoreCreeps: true,
       })?.id)
     )
@@ -49,7 +49,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           creep.memory.storeId = undefined
           break
         case ERR_FULL: // 満タン
-          randomWalk(creep)
           creep.memory.storeId = undefined
           break
 

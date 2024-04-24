@@ -13,7 +13,7 @@ const behavior = (creep) => {
     // 対象設定処理
     if (!(creep.memory.storeId ||
         (creep.memory.storeId = (_a = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-            filter: util_creep_1.isStoreTarget,
+            filter: (s) => (0, util_creep_1.isStoreTarget)(s) && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
             ignoreCreeps: true,
         })) === null || _a === void 0 ? void 0 : _a.id))) {
         // 完全に見つからなければうろうろしておく
@@ -42,7 +42,6 @@ const behavior = (creep) => {
                     creep.memory.storeId = undefined;
                     break;
                 case ERR_FULL: // 満タン
-                    (0, util_creep_1.randomWalk)(creep);
                     creep.memory.storeId = undefined;
                     break;
                 // 有りえない系

@@ -7,10 +7,6 @@ const behavior = (creep) => {
         return console.log(`${creep.name} is not Harvester`);
     }
     // https://docs.screeps.com/simultaneous-actions.html
-    const spawn = _((0, util_creep_1.getSpawnNamesInRoom)(creep.room))
-        .map((name) => Game.spawns[name])
-        .compact()
-        .first();
     // withdraw
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
@@ -46,6 +42,10 @@ const behavior = (creep) => {
         }
     }
     else {
+        const spawn = _((0, util_creep_1.getSpawnNamesInRoom)(creep.room))
+            .map((name) => Game.spawns[name])
+            .compact()
+            .first();
         if (spawn) {
             if (creep.pos.isNearTo(spawn)) {
                 // Spawnまでたどり着いたら処分
@@ -63,10 +63,11 @@ const behavior = (creep) => {
     // transfer
     // 対象設定処理
     if (!(creep.memory.transferId ||
-        (creep.memory.transferId = (_a = spawn.pos.findClosestByPath(FIND_STRUCTURES, {
+        (creep.memory.transferId = (_a = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (s) => {
                 // 空きのあるSpawnから一番近いストレージ
-                return (0, util_creep_1.isStoreTarget)(s) && s.structureType !== STRUCTURE_CONTAINER && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
+                return ([STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) &&
+                    s.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
             },
             ignoreCreeps: true,
         })) === null || _a === void 0 ? void 0 : _a.id))) {

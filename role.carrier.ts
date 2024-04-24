@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles"
-import { RETURN_CODE_DECODER, customMove, getSpawnNamesInRoom, isStoreTarget, pickUpAll, randomWalk } from "./util.creep"
+import { RETURN_CODE_DECODER, customMove, getSpawnNamesInRoom, pickUpAll, randomWalk } from "./util.creep"
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isCarrier(creep)) {
@@ -7,11 +7,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // https://docs.screeps.com/simultaneous-actions.html
-
-  const spawn = _(getSpawnNamesInRoom(creep.room))
-    .map((name) => Game.spawns[name])
-    .compact()
-    .first()
 
   // withdraw
   const store = Game.getObjectById(creep.memory.storeId)
@@ -49,6 +44,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         break
     }
   } else {
+    const spawn = _(getSpawnNamesInRoom(creep.room))
+      .map((name) => Game.spawns[name])
+      .compact()
+      .first()
+
     if (spawn) {
       if (creep.pos.isNearTo(spawn)) {
         // Spawnまでたどり着いたら処分
@@ -66,10 +66,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (
     !(
       creep.memory.transferId ||
-      (creep.memory.transferId = spawn.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s): s is StoreTarget => {
+      (creep.memory.transferId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s): s is StructureExtension | StructureSpawn => {
           // 空きのあるSpawnから一番近いストレージ
-          return isStoreTarget(s) && s.structureType !== STRUCTURE_CONTAINER && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+          return (
+            [STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) &&
+            (s as StructureExtension | StructureSpawn).store.getFreeCapacity(RESOURCE_ENERGY) > 0
+          )
         },
         ignoreCreeps: true,
       })?.id)
