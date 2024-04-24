@@ -1,12 +1,6 @@
 /// <reference types="screeps" />
 
-declare type ROLES =
-  | "harvester"
-  | "carrier"
-  | "builder"
-  | "repairer"
-  | "defender"
-  | "upgrader";
+declare type ROLES = "harvester" | "carrier" | "builder" | "repairer" | "defender" | "upgrader";
 declare interface CreepMemory {
   role: ROLES;
 }
@@ -14,12 +8,7 @@ declare interface CreepMemory {
 /** 全部のCreepの型 */
 declare type Creeps = Creep | Harvester | Upgrader | Builder;
 
-declare type StoreTarget =
-  | StructureContainer
-  | StructureSpawn
-  | StructureExtension
-  | StructureStorage
-  | StructureLink;
+declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink;
 
 declare interface Harvester extends Creep {
   memory: HarvesterMemory;
@@ -52,7 +41,6 @@ declare interface RoomMemory {
     names: string[];
   };
   roadLayed: number;
-  priorityConstructionTarget: Id<ConstructionSite>[];
 }
 
 declare interface Upgrader extends Creep {

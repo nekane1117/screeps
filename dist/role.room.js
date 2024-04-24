@@ -6,9 +6,6 @@ function roomBehavior(room) {
     // Roomとしてやっておくこと
     // 今使えるソース
     room.memory.activeSource = findActiceSource(room);
-    // 建築が終わった対象を消しておく
-    room.memory.priorityConstructionTarget =
-        room.memory.priorityConstructionTarget.filter((id) => Game.getObjectById(id));
     if (!room.memory.roadLayed || Game.time - room.memory.roadLayed > 5000) {
         console.log("roadLayer in " + Game.time);
         roadLayer(room);
@@ -28,8 +25,7 @@ function findActiceSource(room) {
             })
                 .compact()
                 // 壁以外かつcreepのいないマス
-                .filter((pos) => pos.lookFor(LOOK_TERRAIN)[0] !== "wall" &&
-                !pos.lookFor(LOOK_CREEPS).length)
+                .filter((pos) => pos.lookFor(LOOK_TERRAIN)[0] !== "wall" && !pos.lookFor(LOOK_CREEPS).length)
                 // がある
                 .size();
         },
@@ -42,12 +38,8 @@ function creteExtensions(room) {
     var _a;
     const spawn = (_a = Object.entries(Game.spawns).find(([_, s]) => s.room.name === room.name)) === null || _a === void 0 ? void 0 : _a[1];
     if (room.controller && spawn) {
-        const extensions = [
-            ...room.find(FIND_MY_CONSTRUCTION_SITES),
-            ...room.find(FIND_MY_STRUCTURES),
-        ].filter((s) => s.structureType === STRUCTURE_EXTENSION);
-        if (extensions.length <
-            CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][room.controller.level]) {
+        const extensions = [...room.find(FIND_MY_CONSTRUCTION_SITES), ...room.find(FIND_MY_STRUCTURES)].filter((s) => s.structureType === STRUCTURE_EXTENSION);
+        if (extensions.length < CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][room.controller.level]) {
             for (const dist of _.range(1, 25)) {
                 for (const dy of _.range(-dist, dist + 1)) {
                     for (const dx of _.range(-dist, dist + 1)) {
@@ -81,10 +73,7 @@ function roadLayer(room) {
                         if (!pos) {
                             return;
                         }
-                        else if (pos
-                            .look()
-                            .some((s) => "structureType" in s &&
-                            s.structureType === STRUCTURE_ROAD)) {
+                        else if (pos.look().some((s) => "structureType" in s && s.structureType === STRUCTURE_ROAD)) {
                             // 道がある or 道を引く場合道と同じ値にする
                             costMatrix.set(x, y, 1);
                         }
@@ -102,15 +91,7 @@ function roadLayer(room) {
             .sortBy((s) => findCustomPath(s).length)
             .map((s) => {
             return findCustomPath(s).map((path) => {
-                var _a;
-                const returnVal = room.createConstructionSite(path.x, path.y, STRUCTURE_ROAD);
-                if (returnVal === OK) {
-                    const site = _.first(((_a = room
-                        .getPositionAt(path.x, path.y)) === null || _a === void 0 ? void 0 : _a.lookFor(LOOK_CONSTRUCTION_SITES)) || []);
-                    if (site) {
-                        room.memory.priorityConstructionTarget.push(site.id);
-                    }
-                }
+                room.createConstructionSite(path.x, path.y, STRUCTURE_ROAD);
             });
         })
             .run());

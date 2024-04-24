@@ -2,13 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.commonHarvest = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
 function isStoreTarget(x) {
-    return [
-        STRUCTURE_CONTAINER,
-        STRUCTURE_SPAWN,
-        STRUCTURE_EXTENSION,
-        STRUCTURE_STORAGE,
-        STRUCTURE_LINK,
-    ].some((t) => t === x.structureType);
+    return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
 exports.isStoreTarget = isStoreTarget;
 exports.squareDiff = Object.freeze([
@@ -37,16 +31,7 @@ function bodyMaker(role, cost) {
 }
 exports.bodyMaker = bodyMaker;
 function randomWalk(creep) {
-    const directions = [
-        TOP_LEFT,
-        TOP,
-        TOP_RIGHT,
-        LEFT,
-        RIGHT,
-        BOTTOM_LEFT,
-        BOTTOM,
-        BOTTOM_RIGHT,
-    ];
+    const directions = [TOP_LEFT, TOP, TOP_RIGHT, LEFT, RIGHT, BOTTOM_LEFT, BOTTOM, BOTTOM_RIGHT];
     return creep.move(directions[_.random(0, directions.length - 1)]);
 }
 exports.randomWalk = randomWalk;

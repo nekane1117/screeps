@@ -15,10 +15,7 @@ const behavior = (creep) => {
             case ERR_NOT_IN_RANGE:
                 return (0, util_creep_1.customMove)(creep, creep.room.controller);
             case ERR_NOT_ENOUGH_ENERGY:
-                creep.memory.mode =
-                    creep.room.energyAvailable / creep.room.energyCapacityAvailable > 0.6
-                        ? "collecting"
-                        : "harvesting";
+                creep.memory.mode = creep.room.energyAvailable / creep.room.energyCapacityAvailable > 0.6 ? "collecting" : "harvesting";
                 return;
         }
     }
@@ -56,9 +53,7 @@ const behavior = (creep) => {
                 creep.memory.storeId = undefined;
         }
         // 適当に容量が8割を超えてたらアップグレードモードにする
-        if (creep.store.getUsedCapacity(RESOURCE_ENERGY) /
-            creep.store.getCapacity(RESOURCE_ENERGY) >
-            0.8) {
+        if (creep.store.getUsedCapacity(RESOURCE_ENERGY) / creep.store.getCapacity(RESOURCE_ENERGY) > 0.8) {
             creep.memory.mode = "working";
             creep.memory.storeId = undefined;
             creep.memory.harvestTargetId = undefined;

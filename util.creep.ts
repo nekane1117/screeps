@@ -1,11 +1,5 @@
 export function isStoreTarget(x: Structure): x is StoreTarget {
-  return [
-    STRUCTURE_CONTAINER,
-    STRUCTURE_SPAWN,
-    STRUCTURE_EXTENSION,
-    STRUCTURE_STORAGE,
-    STRUCTURE_LINK,
-  ].some((t) => t === x.structureType);
+  return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
 
 export const squareDiff = Object.freeze([
@@ -38,16 +32,7 @@ export function bodyMaker(role: ROLES, cost: number): BodyPartConstant[] {
 }
 
 export function randomWalk(creep: Creep) {
-  const directions = [
-    TOP_LEFT,
-    TOP,
-    TOP_RIGHT,
-    LEFT,
-    RIGHT,
-    BOTTOM_LEFT,
-    BOTTOM,
-    BOTTOM_RIGHT,
-  ];
+  const directions = [TOP_LEFT, TOP, TOP_RIGHT, LEFT, RIGHT, BOTTOM_LEFT, BOTTOM, BOTTOM_RIGHT];
   return creep.move(directions[_.random(0, directions.length - 1)]);
 }
 
@@ -83,19 +68,13 @@ export const RETURN_CODE_DECODER = Object.freeze({
   [ERR_GCL_NOT_ENOUGH.toString()]: "ERR_GCL_NOT_ENOUGH",
 });
 
-type CustomMove = (
-  creep: Creep,
-  target: RoomPosition | { pos: RoomPosition },
-) => ReturnType<Creep["moveTo"]>;
+type CustomMove = (creep: Creep, target: RoomPosition | { pos: RoomPosition }) => ReturnType<Creep["moveTo"]>;
 export const customMove: CustomMove = (creep, target) => {
   if (creep.fatigue) {
     return OK;
   }
   return creep.moveTo(target, {
-    ignoreCreeps: !creep.pos.inRangeTo(
-      target,
-      getCreepsInRoom(creep.room).length,
-    ),
+    ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length),
     serializeMemory: false,
   });
 };

@@ -1,10 +1,5 @@
 import { CreepBehavior } from "./roles";
-import {
-  RETURN_CODE_DECODER,
-  customMove,
-  isStoreTarget,
-  randomWalk,
-} from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, isStoreTarget, randomWalk } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isHarvester(creep)) {
@@ -67,12 +62,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         case ERR_NOT_OWNER: // 自creepじゃない
         case ERR_NOT_FOUND: // mineralは対象外
         case ERR_NO_BODYPART: // WORKが無い
-          console.log(
-            `${creep.name} harvest returns ${RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]}`,
-          );
-          creep.say(
-            RETURN_CODE_DECODER[creep.memory.harvested.result.toString()],
-          );
+          console.log(`${creep.name} harvest returns ${RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]}`);
+          creep.say(RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]);
           break;
         // 大丈夫なやつ
         case OK: // OK
@@ -135,9 +126,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         // 有りえない系
         case ERR_NOT_OWNER: // 自creepじゃない
         case ERR_INVALID_ARGS: // 引数が変
-          console.log(
-            `${creep.name} transfer returns ${RETURN_CODE_DECODER[returnVal.toString()]}`,
-          );
+          console.log(`${creep.name} transfer returns ${RETURN_CODE_DECODER[returnVal.toString()]}`);
           creep.say(RETURN_CODE_DECODER[returnVal.toString()]);
           break;
 

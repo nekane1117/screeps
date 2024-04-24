@@ -1,19 +1,12 @@
 import _ from "lodash";
-import {
-  MIN_BODY,
-  bodyMaker,
-  getBodyCost,
-  getCreepsInRoom,
-} from "./util.creep";
+import { MIN_BODY, bodyMaker, getBodyCost, getCreepsInRoom } from "./util.creep";
 
 const behavior = (spawn: StructureSpawn) => {
   if (spawn.spawning) {
     return;
   }
 
-  const creepsInRoom: _.Dictionary<Creep[] | undefined> = _(
-    getCreepsInRoom(spawn.room),
-  )
+  const creepsInRoom: _.Dictionary<Creep[] | undefined> = _(getCreepsInRoom(spawn.room))
     .map((name) => Game.creeps[name])
     .compact()
     .groupBy((c) => c.memory.role)
@@ -33,61 +26,37 @@ const behavior = (spawn: StructureSpawn) => {
   }
 
   // upgraderが居ないときもとりあえず作る
-  if (
-    (creepsInRoom.upgrader || []).length === 0 &&
-    spawn.room.energyAvailable > getBodyCost(MIN_BODY["upgrader"])
-  ) {
-    return spawn.spawnCreep(
-      bodyMaker("upgrader", spawn.room.energyAvailable),
-      generateCreepName(spawn, "upgrader"),
-      {
-        memory: {
-          role: "upgrader",
-        } as UpgraderMemory,
-      },
-    );
+  if ((creepsInRoom.upgrader || []).length === 0 && spawn.room.energyAvailable > getBodyCost(MIN_BODY["upgrader"])) {
+    return spawn.spawnCreep(bodyMaker("upgrader", spawn.room.energyAvailable), generateCreepName(spawn, "upgrader"), {
+      memory: {
+        role: "upgrader",
+      } as UpgraderMemory,
+    });
   }
 
   // harvesterが不足しているとき
   if (
-    (creepsInRoom.harvester || []).length <
-      spawn.room.find(FIND_SOURCES).length * 2 &&
-    spawn.room.energyAvailable >
-      Math.max(
-        getBodyCost(MIN_BODY["harvester"]),
-        spawn.room.energyCapacityAvailable * 0.6,
-      )
+    (creepsInRoom.harvester || []).length < spawn.room.find(FIND_SOURCES).length * 2 &&
+    spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["harvester"]), spawn.room.energyCapacityAvailable * 0.6)
   ) {
-    return spawn.spawnCreep(
-      bodyMaker("harvester", spawn.room.energyAvailable),
-      generateCreepName(spawn, "harvester"),
-      {
-        memory: {
-          role: "harvester",
-        } as HarvesterMemory,
-      },
-    );
+    return spawn.spawnCreep(bodyMaker("harvester", spawn.room.energyAvailable), generateCreepName(spawn, "harvester"), {
+      memory: {
+        role: "harvester",
+      } as HarvesterMemory,
+    });
   }
   // builderが不足しているとき
   if (
-    // 建設がある
-    spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length &&
-    spawn.room.energyAvailable >
-      Math.max(
-        getBodyCost(MIN_BODY["builder"]),
-        spawn.room.energyCapacityAvailable * 0.8,
-      )
+    spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length && // 建設がある
+    !creepsInRoom.builder?.length && // いない
+    spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.8) // エネルギー余ってる
   ) {
-    return spawn.spawnCreep(
-      bodyMaker("builder", spawn.room.energyAvailable),
-      generateCreepName(spawn, "builder"),
-      {
-        memory: {
-          role: "builder",
-          mode: "working",
-        } as BuilderMemory,
-      },
-    );
+    return spawn.spawnCreep(bodyMaker("builder", spawn.room.energyAvailable), generateCreepName(spawn, "builder"), {
+      memory: {
+        role: "builder",
+        mode: "working",
+      } as BuilderMemory,
+    });
   }
   return OK;
 };

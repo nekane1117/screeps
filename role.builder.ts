@@ -1,13 +1,6 @@
 import { CreepBehavior } from "./roles";
 import { complexOrder } from "./util.array";
-import {
-  RETURN_CODE_DECODER,
-  commonHarvest,
-  customMove,
-  getSpawnNamesInRoom,
-  isStoreTarget,
-  randomWalk,
-} from "./util.creep";
+import { RETURN_CODE_DECODER, commonHarvest, customMove, getSpawnNamesInRoom, isStoreTarget, randomWalk } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isBuilder(creep)) {
@@ -22,16 +15,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         complexOrder(creep.room.find(FIND_MY_CONSTRUCTION_SITES), [
           (c1, c2) => {
             // 建築優先順位
-            return (
-              getBuildPriority(c1.structureType) -
-              getBuildPriority(c2.structureType)
-            );
+            return getBuildPriority(c1.structureType) - getBuildPriority(c2.structureType);
           },
           (c1, c2) => {
             // 残り作業が一番少ないやつ
-            return (
-              c1.progressTotal - c1.progress - (c2.progressTotal - c2.progress)
-            );
+            return c1.progressTotal - c1.progress - (c2.progressTotal - c2.progress);
           },
           (c1, c2) => {
             // spawnに一番近いやつ
@@ -39,10 +27,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
               .map((name) => Game.spawns[name])
               .compact()
               .first();
-            return (
-              spawn.pos.findPathTo(c1, { ignoreCreeps: true }).length -
-              spawn.pos.findPathTo(c2, { ignoreCreeps: true }).length
-            );
+            return spawn.pos.findPathTo(c1, { ignoreCreeps: true }).length - spawn.pos.findPathTo(c2, { ignoreCreeps: true }).length;
           },
         ]),
       )?.id;
@@ -61,11 +46,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           return customMove(creep, site);
         case ERR_NOT_ENOUGH_RESOURCES:
           // 色々初期化して資源収集モードへ
-          creep.memory.mode =
-            creep.room.energyAvailable / creep.room.energyCapacityAvailable >
-            0.8
-              ? "collecting"
-              : "harvesting";
+          creep.memory.mode = creep.room.energyAvailable / creep.room.energyCapacityAvailable > 0.8 ? "collecting" : "harvesting";
           creep.memory.buildingId = undefined;
           creep.memory.storeId = undefined;
           return;
@@ -125,11 +106,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         randomWalk(creep);
     }
     // 適当に容量が8割を超えてたら建築モードにする
-    if (
-      creep.store.getUsedCapacity(RESOURCE_ENERGY) /
-        creep.store.getCapacity(RESOURCE_ENERGY) >
-      0.8
-    ) {
+    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) / creep.store.getCapacity(RESOURCE_ENERGY) > 0.8) {
       creep.memory.mode = "working";
       creep.memory.storeId = undefined;
       creep.memory.harvestTargetId = undefined;
@@ -152,10 +129,7 @@ function isBuilder(creep: Creep): creep is Builder {
   return creep.memory.role === "builder";
 }
 
-const buildPriority: StructureConstant[] = [
-  STRUCTURE_EXTENSION,
-  STRUCTURE_ROAD,
-];
+const buildPriority: StructureConstant[] = [STRUCTURE_EXTENSION, STRUCTURE_ROAD];
 const getBuildPriority = (s: StructureConstant) => {
   const priority = buildPriority.findIndex((p) => s === p);
   return priority === -1 ? buildPriority.length : priority;
