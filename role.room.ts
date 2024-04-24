@@ -3,6 +3,10 @@ import { getSpawnNamesInRoom, squareDiff } from "./util.creep"
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
 
+  if (room.memory.harvesterLimit === undefined) {
+    room.memory.harvesterLimit = getHarvesterLimit(room)
+  }
+
   // 今使えるソース
   room.memory.activeSource = findActiceSource(room)
 
@@ -13,6 +17,21 @@ export function roomBehavior(room: Room) {
 
   // エクステンション建てる
   creteExtensions(room)
+}
+
+function getHarvesterLimit(room: Room) {
+  return _(room.find(FIND_SOURCES))
+    .map((source) => {
+      // 8近傍を取得
+      const terrain = room.getTerrain()
+      return _(squareDiff)
+        .map(([dx, dy]: readonly [number, number]) => {
+          return terrain.get(source.pos.x + dx, source.pos.y + dy) !== TERRAIN_MASK_WALL ? 1 : 0
+        })
+        .run()
+    })
+    .flatten()
+    .sum()
 }
 
 /** 今使えるソース */
@@ -98,7 +117,9 @@ function roadLayer(room: Room) {
           .sortBy((s) => findCustomPath(s).length)
           .map((s) => {
             return findCustomPath(s).map((path) => {
-              room.createConstructionSite(path.x, path.y, STRUCTURE_ROAD)
+              if (room.getTerrain().get(path.x, path.y) !== TERRAIN_MASK_WALL) {
+                room.createConstructionSite(path.x, path.y, STRUCTURE_ROAD)
+              }
             })
           })
           .run()

@@ -4,7 +4,7 @@ import spawnBehavior from "./role.spawn"
 
 module.exports.loop = function () {
   //死んだcreepは削除する
-  Object.keys(Memory.creeps).forEach((name) => {
+  Object.keys(Memory.creeps || {}).forEach((name) => {
     if (!Game.creeps[name]) {
       delete Memory.creeps[name]
       console.log("Clearing non-existing creep memory:", name)

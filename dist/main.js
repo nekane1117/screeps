@@ -8,7 +8,7 @@ const role_room_1 = require("./role.room");
 const role_spawn_1 = __importDefault(require("./role.spawn"));
 module.exports.loop = function () {
     //死んだcreepは削除する
-    Object.keys(Memory.creeps).forEach((name) => {
+    Object.keys(Memory.creeps || {}).forEach((name) => {
         if (!Game.creeps[name]) {
             delete Memory.creeps[name];
             console.log("Clearing non-existing creep memory:", name);

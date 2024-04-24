@@ -36,7 +36,7 @@ const behavior = (spawn: StructureSpawn) => {
 
   // harvesterが不足しているとき
   if (
-    (creepsInRoom.harvester || []).length < spawn.room.find(FIND_SOURCES).length * 2 &&
+    (creepsInRoom.harvester || []).length < spawn.room.memory.harvesterLimit &&
     spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["harvester"]), spawn.room.energyCapacityAvailable * 0.6)
   ) {
     return spawn.spawnCreep(bodyMaker("harvester", spawn.room.energyAvailable), generateCreepName(spawn, "harvester"), {
@@ -48,7 +48,6 @@ const behavior = (spawn: StructureSpawn) => {
   // builderが不足しているとき
   if (
     spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length && // 建設がある
-    !creepsInRoom.builder?.length && // いない
     spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.8) // エネルギー余ってる
   ) {
     return spawn.spawnCreep(bodyMaker("builder", spawn.room.energyAvailable), generateCreepName(spawn, "builder"), {

@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const lodash_1 = __importDefault(require("lodash"));
 const util_creep_1 = require("./util.creep");
 const behavior = (spawn) => {
-    var _a;
     if (spawn.spawning) {
         return;
     }
@@ -34,7 +33,7 @@ const behavior = (spawn) => {
         });
     }
     // harvesterが不足しているとき
-    if ((creepsInRoom.harvester || []).length < spawn.room.find(FIND_SOURCES).length * 2 &&
+    if ((creepsInRoom.harvester || []).length < spawn.room.memory.harvesterLimit &&
         spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["harvester"]), spawn.room.energyCapacityAvailable * 0.6)) {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("harvester", spawn.room.energyAvailable), generateCreepName(spawn, "harvester"), {
             memory: {
@@ -44,7 +43,6 @@ const behavior = (spawn) => {
     }
     // builderが不足しているとき
     if (spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length && // 建設がある
-        !((_a = creepsInRoom.builder) === null || _a === void 0 ? void 0 : _a.length) && // いない
         spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.8) // エネルギー余ってる
     ) {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("builder", spawn.room.energyAvailable), generateCreepName(spawn, "builder"), {

@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "build": "yarn format && rm -rf dist/* && tsc",
+    "postbuild": "rsync -rv --delete dist/ /mnt/c/Users/iridge/AppData/Local/Screeps/scripts/screeps.com/dist",
     "prepare": "husky",
     "format": "npx prettier --cache --write .",
     "lint": "eslint --cache"
