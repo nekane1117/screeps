@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles"
-import { RETURN_CODE_DECODER, customMove, isStoreTarget, randomWalk } from "./util.creep"
+import { RETURN_CODE_DECODER, commonHarvest, customMove, isStoreTarget, randomWalk } from "./util.creep"
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isHarvester(creep)) {
@@ -9,77 +9,18 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // https://docs.screeps.com/simultaneous-actions.html
 
   // harvest
-  // 対象設定処理
-  if (
-    !(
-      creep.memory.harvestTargetId ||
-      (creep.memory.harvestTargetId = creep.pos.findClosestByPath(
-        _(creep.room.memory.activeSource)
-          .map((id) => Game.getObjectById(id))
-          .compact()
-          .value(),
-        {
-          ignoreCreeps: true,
-        },
-      )?.id)
-    )
-  ) {
-    // 完全に見つからなければうろうろしておく
-    randomWalk(creep)
-  } else {
-    // 対象が見つかった時
-    const source = Game.getObjectById(creep.memory.harvestTargetId)
-    if (source) {
-      creep.memory.harvested = {
-        tick: Game.time,
-        result: creep.harvest(source),
-      }
-      switch (creep.memory.harvested.result) {
-        case ERR_NOT_IN_RANGE:
-          if (creep.memory.mode === "harvesting") {
-            // 収集モードで近くにいないときは近寄る
-            const moved = customMove(creep, source)
-            switch (moved) {
-              case OK:
-                break
-              case ERR_NO_PATH:
-                creep.memory.harvestTargetId = undefined
-                break
+  commonHarvest(creep)
 
-              default:
-                creep.say(RETURN_CODE_DECODER[moved.toString()])
-                break
-            }
-          }
-          break
+  //withdraw
+  // 通りがかりに落っこちてるリソースを拾う
+  creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1).forEach((resource) => {
+    creep.pickup(resource)
+  })
 
-        // 資源がダメ系
-        case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
-        case ERR_INVALID_TARGET: // 対象が変
-          creep.memory.harvestTargetId = undefined
-          break
-        // 来ないはずのやつ
-        case ERR_NOT_OWNER: // 自creepじゃない
-        case ERR_NOT_FOUND: // mineralは対象外
-        case ERR_NO_BODYPART: // WORKが無い
-          console.log(`${creep.name} harvest returns ${RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]}`)
-          creep.say(RETURN_CODE_DECODER[creep.memory.harvested.result.toString()])
-          break
-        // 大丈夫なやつ
-        case OK: // OK
-        case ERR_TIRED: // 疲れた
-        case ERR_BUSY: // spawning
-        default:
-          break
-      }
-    } else {
-      // 指定されていたソースが見つからないとき
-      // 対象をクリアしてうろうろしておく
-      creep.memory.harvestTargetId = undefined
-      creep.memory.harvested = undefined
-      randomWalk(creep)
-    }
-  }
+  // 通りがかりの墓から拾う
+  creep.pos.findInRange(FIND_TOMBSTONES, 1).forEach((tombstone) => {
+    creep.withdraw(tombstone, RESOURCE_ENERGY)
+  })
 
   // transfer
   // 対象設定処理
@@ -105,7 +46,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         case ERR_NOT_IN_RANGE:
           // 分配モードの時は倉庫に近寄る
           if (creep.memory.mode === "working") {
-            customMove(creep, store)
+            customMove(creep, store, { range: 1 })
           }
           break
 

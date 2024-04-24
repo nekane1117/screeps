@@ -2,83 +2,29 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const behavior = (creep) => {
-    var _a, _b;
+    var _a;
     if (!isHarvester(creep)) {
         return console.log(`${creep.name} is not Harvester`);
     }
     // https://docs.screeps.com/simultaneous-actions.html
     // harvest
-    // 対象設定処理
-    if (!(creep.memory.harvestTargetId ||
-        (creep.memory.harvestTargetId = (_a = creep.pos.findClosestByPath(_(creep.room.memory.activeSource)
-            .map((id) => Game.getObjectById(id))
-            .compact()
-            .value(), {
-            ignoreCreeps: true,
-        })) === null || _a === void 0 ? void 0 : _a.id))) {
-        // 完全に見つからなければうろうろしておく
-        (0, util_creep_1.randomWalk)(creep);
-    }
-    else {
-        // 対象が見つかった時
-        const source = Game.getObjectById(creep.memory.harvestTargetId);
-        if (source) {
-            creep.memory.harvested = {
-                tick: Game.time,
-                result: creep.harvest(source),
-            };
-            switch (creep.memory.harvested.result) {
-                case ERR_NOT_IN_RANGE:
-                    if (creep.memory.mode === "harvesting") {
-                        // 収集モードで近くにいないときは近寄る
-                        const moved = (0, util_creep_1.customMove)(creep, source);
-                        switch (moved) {
-                            case OK:
-                                break;
-                            case ERR_NO_PATH:
-                                creep.memory.harvestTargetId = undefined;
-                                break;
-                            default:
-                                creep.say(util_creep_1.RETURN_CODE_DECODER[moved.toString()]);
-                                break;
-                        }
-                    }
-                    break;
-                // 資源がダメ系
-                case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
-                case ERR_INVALID_TARGET: // 対象が変
-                    creep.memory.harvestTargetId = undefined;
-                    break;
-                // 来ないはずのやつ
-                case ERR_NOT_OWNER: // 自creepじゃない
-                case ERR_NOT_FOUND: // mineralは対象外
-                case ERR_NO_BODYPART: // WORKが無い
-                    console.log(`${creep.name} harvest returns ${util_creep_1.RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]}`);
-                    creep.say(util_creep_1.RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]);
-                    break;
-                // 大丈夫なやつ
-                case OK: // OK
-                case ERR_TIRED: // 疲れた
-                case ERR_BUSY: // spawning
-                default:
-                    break;
-            }
-        }
-        else {
-            // 指定されていたソースが見つからないとき
-            // 対象をクリアしてうろうろしておく
-            creep.memory.harvestTargetId = undefined;
-            creep.memory.harvested = undefined;
-            (0, util_creep_1.randomWalk)(creep);
-        }
-    }
+    (0, util_creep_1.commonHarvest)(creep);
+    //withdraw
+    // 通りがかりに落っこちてるリソースを拾う
+    creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1).forEach((resource) => {
+        creep.pickup(resource);
+    });
+    // 通りがかりの墓から拾う
+    creep.pos.findInRange(FIND_TOMBSTONES, 1).forEach((tombstone) => {
+        creep.withdraw(tombstone, RESOURCE_ENERGY);
+    });
     // transfer
     // 対象設定処理
     if (!(creep.memory.storeId ||
-        (creep.memory.storeId = (_b = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        (creep.memory.storeId = (_a = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: util_creep_1.isStoreTarget,
             ignoreCreeps: true,
-        })) === null || _b === void 0 ? void 0 : _b.id))) {
+        })) === null || _a === void 0 ? void 0 : _a.id))) {
         // 完全に見つからなければうろうろしておく
         if (creep.memory.mode === "working") {
             (0, util_creep_1.randomWalk)(creep);
@@ -93,7 +39,7 @@ const behavior = (creep) => {
                 case ERR_NOT_IN_RANGE:
                     // 分配モードの時は倉庫に近寄る
                     if (creep.memory.mode === "working") {
-                        (0, util_creep_1.customMove)(creep, store);
+                        (0, util_creep_1.customMove)(creep, store, { range: 1 });
                     }
                     break;
                 // 手持ちがない

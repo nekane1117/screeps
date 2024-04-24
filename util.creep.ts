@@ -68,14 +68,15 @@ export const RETURN_CODE_DECODER = Object.freeze({
   [ERR_GCL_NOT_ENOUGH.toString()]: "ERR_GCL_NOT_ENOUGH",
 })
 
-type CustomMove = (creep: Creep, target: RoomPosition | { pos: RoomPosition }) => ReturnType<Creep["moveTo"]>
-export const customMove: CustomMove = (creep, target) => {
+type CustomMove = (creep: Creep, target: RoomPosition | { pos: RoomPosition }, opt?: MoveToOpts) => ReturnType<Creep["moveTo"]>
+export const customMove: CustomMove = (creep, target, opt) => {
   if (creep.fatigue) {
     return OK
   }
   return creep.moveTo(target, {
     ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length),
     serializeMemory: false,
+    ...opt,
   })
 }
 
@@ -108,7 +109,7 @@ export function getSpawnNamesInRoom(room: Room) {
 }
 
 export function commonHarvest(creep: Harvester | Builder | Upgrader) {
-  // 対象が見つからない場合
+  // 対象設定処理
   if (
     !(
       creep.memory.harvestTargetId ||
@@ -123,50 +124,60 @@ export function commonHarvest(creep: Harvester | Builder | Upgrader) {
       )?.id)
     )
   ) {
-    // うろうろしておく
-    return randomWalk(creep)
-  }
-
-  const source = Game.getObjectById(creep.memory.harvestTargetId)
-
-  if (!source) {
-    // 指定されていたソースが見つからないとき
-    // 対象をクリアしてうろうろしておく
-    creep.memory.harvestTargetId = undefined
-    return randomWalk(creep)
-  }
-
-  const returnVal = creep.harvest(source)
-  switch (returnVal) {
-    case OK:
-      return OK
-    // 離れていた時は向かう
-    case ERR_NOT_IN_RANGE: {
-      const returnVal = customMove(creep, source)
-      switch (returnVal) {
-        // 問題のない者たち
-        case OK:
-        case ERR_BUSY:
-        case ERR_TIRED:
-          return returnVal
-        default:
-          creep.say(RETURN_CODE_DECODER[returnVal.toString()])
-          creep.memory.harvestTargetId = undefined
-          return returnVal
+    // 完全に見つからなければうろうろしておく
+    randomWalk(creep)
+  } else {
+    // 対象が見つかった時
+    const source = Game.getObjectById(creep.memory.harvestTargetId)
+    if (source) {
+      creep.memory.harvested = {
+        tick: Game.time,
+        result: creep.harvest(source),
       }
-    }
-    case ERR_NOT_ENOUGH_RESOURCES:
-    case ERR_NOT_FOUND:
-    case ERR_INVALID_TARGET:
+      switch (creep.memory.harvested.result) {
+        case ERR_NOT_IN_RANGE:
+          if (creep.memory.mode === "harvesting") {
+            // 収集モードで近くにいないときは近寄る
+            const moved = customMove(creep, source)
+            switch (moved) {
+              case OK:
+                break
+              case ERR_NO_PATH:
+                creep.memory.harvestTargetId = undefined
+                break
+
+              default:
+                creep.say(RETURN_CODE_DECODER[moved.toString()])
+                break
+            }
+          }
+          break
+
+        // 資源がダメ系
+        case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
+        case ERR_INVALID_TARGET: // 対象が変
+          creep.memory.harvestTargetId = undefined
+          break
+        // 来ないはずのやつ
+        case ERR_NOT_OWNER: // 自creepじゃない
+        case ERR_NOT_FOUND: // mineralは対象外
+        case ERR_NO_BODYPART: // WORKが無い
+          console.log(`${creep.name} harvest returns ${RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]}`)
+          creep.say(RETURN_CODE_DECODER[creep.memory.harvested.result.toString()])
+          break
+        // 大丈夫なやつ
+        case OK: // OK
+        case ERR_TIRED: // 疲れた
+        case ERR_BUSY: // spawning
+        default:
+          break
+      }
+    } else {
+      // 指定されていたソースが見つからないとき
+      // 対象をクリアしてうろうろしておく
       creep.memory.harvestTargetId = undefined
-      return returnVal
-    case ERR_NOT_OWNER:
-    case ERR_BUSY:
-    case ERR_TIRED:
-    case ERR_NO_BODYPART:
-    default:
-      // 無視するやつは戻り値をそのまま返す
-      creep.say(RETURN_CODE_DECODER[returnVal.toString()])
-      return returnVal
+      creep.memory.harvested = undefined
+      randomWalk(creep)
+    }
   }
 }

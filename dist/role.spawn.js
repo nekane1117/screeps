@@ -43,6 +43,7 @@ const behavior = (spawn) => {
     }
     // builderが不足しているとき
     if (spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length && // 建設がある
+        ((creepsInRoom === null || creepsInRoom === void 0 ? void 0 : creepsInRoom.builder) || []).length < spawn.room.memory.activeSource.length &&
         spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.8) // エネルギー余ってる
     ) {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("builder", spawn.room.energyAvailable), generateCreepName(spawn, "builder"), {

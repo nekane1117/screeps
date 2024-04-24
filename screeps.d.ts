@@ -71,9 +71,10 @@ declare interface BuilderMemory extends HarvesterMemory {
    * collecting : 資源取得中
    * harvesting : 自力で収集中
    */
-  mode: "working" | "collecting" | "harvesting"
+  mode: "working" | "harvesting"
   /** 今建てたいもの */
   buildingId?: ConstructionSite["id"] | null
+  built?: ReturnType<Creeps["build"]>
   /** 資源をもらいに行く先 */
   storeId?: StoreTarget["id"] | null
 }

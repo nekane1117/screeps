@@ -1,126 +1,83 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const util_array_1 = require("./util.array");
 const util_creep_1 = require("./util.creep");
 const behavior = (creep) => {
-    var _a, _b;
+    var _a;
     if (!isBuilder(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
-    if (creep.memory.mode === "working") {
-        // 建設モード
-        if (!creep.memory.buildingId) {
-            // 対象が無いときはいい感じの対象を探す
-            creep.memory.buildingId = (_a = _.first((0, util_array_1.complexOrder)(creep.room.find(FIND_MY_CONSTRUCTION_SITES), [
-                (c1, c2) => {
-                    // 建築優先順位
-                    return getBuildPriority(c1.structureType) - getBuildPriority(c2.structureType);
-                },
-                (c1, c2) => {
-                    // 残り作業が一番少ないやつ
-                    return c1.progressTotal - c1.progress - (c2.progressTotal - c2.progress);
-                },
-                (c1, c2) => {
-                    // spawnに一番近いやつ
-                    const spawn = _((0, util_creep_1.getSpawnNamesInRoom)(creep.room))
-                        .map((name) => Game.spawns[name])
-                        .compact()
-                        .first();
-                    return spawn.pos.findPathTo(c1, { ignoreCreeps: true }).length - spawn.pos.findPathTo(c2, { ignoreCreeps: true }).length;
-                },
-            ]))) === null || _a === void 0 ? void 0 : _a.id;
-        }
-        if (!creep.memory.buildingId) {
-            // 見つからないときは終わる
-            creep.say("no sites");
-            return (0, util_creep_1.randomWalk)(creep);
-        }
-        const site = Game.getObjectById(creep.memory.buildingId);
-        if (site) {
-            const returnVal = creep.build(site);
-            switch (returnVal) {
-                case ERR_NOT_IN_RANGE:
-                    return (0, util_creep_1.customMove)(creep, site);
-                case ERR_NOT_ENOUGH_RESOURCES:
-                    // 色々初期化して資源収集モードへ
-                    creep.memory.mode = creep.room.energyAvailable / creep.room.energyCapacityAvailable > 0.8 ? "collecting" : "harvesting";
-                    creep.memory.buildingId = undefined;
-                    creep.memory.storeId = undefined;
-                    return;
-                case OK:
-                    return;
-                case ERR_NOT_OWNER:
-                case ERR_BUSY:
-                case ERR_INVALID_TARGET:
-                case ERR_NO_BODYPART:
-                default:
-                    // 無視するやつ
-                    return creep.say(util_creep_1.RETURN_CODE_DECODER[returnVal]);
-            }
-        }
-        else {
-            // 建設が見つからないときは対象をクリアして終わる
-            creep.say("site not found");
-            creep.memory.buildingId = undefined;
-        }
-    }
-    else if (creep.memory.mode === "collecting") {
-        // 資源収集モード
-        // 対象が無ければ入れる
-        if (!creep.memory.storeId) {
-            creep.memory.storeId = (_b = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-                // 複数種類のfindが出来ないのでStructureでfindしてfilterで絞る
-                ignoreCreeps: true,
-                filter: (s) => {
-                    // StorageTargetかつエネルギーがある
-                    return (0, util_creep_1.isStoreTarget)(s) && !!s.store[RESOURCE_ENERGY];
-                },
-            })) === null || _b === void 0 ? void 0 : _b.id;
-        }
-        // 対象が全くない時
-        if (!creep.memory.storeId) {
-            return creep.say("empty all");
-        }
-        const target = Game.getObjectById(creep.memory.storeId);
-        if (!target) {
-            return ERR_NOT_FOUND;
-        }
-        // 取り出してみる
-        switch (creep.withdraw(target, RESOURCE_ENERGY)) {
-            // 離れていた時
-            case ERR_NOT_IN_RANGE:
-                (0, util_creep_1.customMove)(creep, target);
-                break;
-            case OK: // 取れたとき
-            case ERR_NOT_ENOUGH_RESOURCES: // 無いとき
-            case ERR_FULL: // 満タンの時
-                // 満タンになったか、空になったかのどっちかしかないので消す
-                creep.memory.storeId = undefined;
-                (0, util_creep_1.randomWalk)(creep);
-        }
-        // 適当に容量が8割を超えてたら建築モードにする
-        if (creep.store.getUsedCapacity(RESOURCE_ENERGY) / creep.store.getCapacity(RESOURCE_ENERGY) > 0.8) {
-            creep.memory.mode = "working";
-            creep.memory.storeId = undefined;
-            creep.memory.harvestTargetId = undefined;
-        }
+    // https://docs.screeps.com/simultaneous-actions.html
+    if (creep.memory.mode === "harvesting") {
+        // harvest
+        (0, util_creep_1.commonHarvest)(creep);
     }
     else {
-        // 自力収集モード
-        (0, util_creep_1.commonHarvest)(creep);
-        if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-            creep.memory.mode = "working";
-            creep.memory.storeId = undefined;
-            creep.memory.harvestTargetId = undefined;
+        // build
+        if (!(creep.memory.buildingId || (creep.memory.buildingId = (_a = creep.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES, { ignoreCreeps: true })) === null || _a === void 0 ? void 0 : _a.id))) {
+            // 完全に見つからなければうろうろしておく
+            (0, util_creep_1.randomWalk)(creep);
         }
+        else {
+            const site = Game.getObjectById(creep.memory.buildingId);
+            if (site) {
+                switch ((creep.memory.built = creep.build(site))) {
+                    case ERR_NOT_ENOUGH_RESOURCES:
+                        // 手持ちが足らないときは収集モードに切り替える
+                        changeMode(creep, "harvesting");
+                        break;
+                    // 対象が変な時はクリアする
+                    case ERR_INVALID_TARGET:
+                        creep.memory.buildingId = undefined;
+                        break;
+                    // 建築モードで離れてるときは近寄る
+                    case ERR_NOT_IN_RANGE:
+                        if (creep.memory.mode === "working") {
+                            (0, util_creep_1.customMove)(creep, site);
+                        }
+                        break;
+                    // 有りえない系
+                    case ERR_NOT_OWNER: // 自creepじゃない
+                    case ERR_NO_BODYPART:
+                        console.log(`${creep.name} transfer returns ${util_creep_1.RETURN_CODE_DECODER[creep.memory.built.toString()]}`);
+                        creep.say(util_creep_1.RETURN_CODE_DECODER[creep.memory.built.toString()]);
+                        break;
+                    // 問題ない系
+                    case OK:
+                    case ERR_BUSY:
+                    default:
+                        break;
+                }
+                creep.say(util_creep_1.RETURN_CODE_DECODER[creep.memory.built.toString()]);
+            }
+            else {
+                // 指定されていたソースが見つからないとき
+                // 対象をクリアしてうろうろしておく
+                creep.memory.buildingId = undefined;
+                (0, util_creep_1.randomWalk)(creep);
+            }
+        }
+    }
+    // withdraw
+    // 通りがかりにharvesterが居たら奪い取る
+    creep.pos.findInRange(FIND_MY_CREEPS, 1, { filter: (c) => c.memory.role === "harvester" }).forEach((c) => {
+        c.transfer(creep, RESOURCE_ENERGY);
+    });
+    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+        changeMode(creep, "working");
+    }
+    if (creep.store[RESOURCE_ENERGY] === 0) {
+        changeMode(creep, "harvesting");
     }
 };
 exports.default = behavior;
 function isBuilder(creep) {
     return creep.memory.role === "builder";
 }
-const buildPriority = [STRUCTURE_EXTENSION, STRUCTURE_ROAD];
-const getBuildPriority = (s) => {
-    const priority = buildPriority.findIndex((p) => s === p);
-    return priority === -1 ? buildPriority.length : priority;
+const changeMode = (creep, mode) => {
+    if (mode !== creep.memory.mode) {
+        creep.memory.mode = mode;
+        creep.memory.buildingId = undefined;
+        creep.memory.harvestTargetId = undefined;
+        creep.memory.harvested = undefined;
+    }
 };
