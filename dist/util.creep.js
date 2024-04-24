@@ -111,13 +111,13 @@ function getSpawnNamesInRoom(room) {
         return room.memory.spawns.names;
     }
     else {
-        room.memory.creeps = {
+        room.memory.spawns = {
             tick: Game.time,
             names: Object.entries(Game.spawns)
                 .filter(([_, spawns]) => spawns.room.name === room.name)
                 .map((entry) => entry[0]),
         };
-        return room.memory.creeps.names;
+        return room.memory.spawns.names;
     }
 }
 exports.getSpawnNamesInRoom = getSpawnNamesInRoom;

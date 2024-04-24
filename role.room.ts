@@ -6,6 +6,11 @@ export function roomBehavior(room: Room) {
   // 今使えるソース
   room.memory.activeSource = findActiceSource(room);
 
+  // 建築が終わった対象を消しておく
+  room.memory.priorityConstructionTarget =
+    room.memory.priorityConstructionTarget.filter((id) =>
+      Game.getObjectById(id),
+    );
   if (!room.memory.roadLayed || Game.time - room.memory.roadLayed > 5000) {
     console.log("roadLayer in " + Game.time);
     roadLayer(room);
@@ -80,47 +85,71 @@ function creteExtensions(room: Room) {
 
 // 全てのspawnからsourceまでの道を引く
 function roadLayer(room: Room) {
-  _(getSpawnNamesInRoom(room).map((name) => Game.spawns[name]))
+  _(getSpawnNamesInRoom(room))
+    .map((name) => Game.spawns[name])
     .compact()
-    .value()
     .forEach((spawn) => {
-      return [
-        ...room.find(FIND_SOURCES),
-        ...room.find(FIND_MY_STRUCTURES, {
-          filter: (s) => s.structureType === STRUCTURE_CONTROLLER,
-        }),
-      ].forEach((source) => {
-        room
-          .findPath(spawn.pos, source.pos, {
-            ignoreCreeps: true,
-            swampCost: 1,
-            // これから道を引く予定のところは1にする
-            costCallback: (roomName, matrix) => {
-              _.range(50).forEach((x) => {
-                _.range(50).forEach((y) => {
-                  if (
-                    room
-                      .lookForAt(LOOK_CONSTRUCTION_SITES, x, y)
-                      .some((site) => site.structureType === STRUCTURE_ROAD)
-                  ) {
-                    matrix.set(x, y, 1);
-                  }
-                });
+      const findCustomPath = (s: Source | StructureSpawn) =>
+        spawn.pos.findPathTo(s, {
+          ignoreCreeps: true,
+          plainCost: 1.1, // 道よりいくらか高い
+          swampCost: 1.1, // これから道を引くのでplainと同じ
+          costCallback(roomName, costMatrix) {
+            const room = Game.rooms[roomName];
+            _.range(50).forEach((x) => {
+              _.range(50).forEach((y) => {
+                const pos = room.getPositionAt(x, y);
+                if (!pos) {
+                  return;
+                } else if (
+                  pos
+                    .look()
+                    .some(
+                      (s) =>
+                        "structureType" in s &&
+                        s.structureType === STRUCTURE_ROAD,
+                    )
+                ) {
+                  // 道がある or 道を引く場合道と同じ値にする
+                  costMatrix.set(x, y, 1);
+                }
               });
-            },
+            });
+          },
+        });
+
+      return (
+        _([
+          ...room.find(FIND_SOURCES),
+          ...room.find(FIND_MY_STRUCTURES, {
+            filter: (s): s is StructureSpawn =>
+              s.structureType === STRUCTURE_CONTROLLER,
+          }),
+        ])
+          // 近い順にする
+          .sortBy((s) => findCustomPath(s).length)
+          .map((s) => {
+            return findCustomPath(s).map((path) => {
+              const returnVal = room.createConstructionSite(
+                path.x,
+                path.y,
+                STRUCTURE_ROAD,
+              );
+              if (returnVal === OK) {
+                const site = _.first(
+                  room
+                    .getPositionAt(path.x, path.y)
+                    ?.lookFor(LOOK_CONSTRUCTION_SITES) || [],
+                );
+                if (site) {
+                  room.memory.priorityConstructionTarget.push(site.id);
+                }
+              }
+            });
           })
-          .map((path) => {
-            // そこに道が無ければ敷く
-            const pos = room.getPositionAt(path.x, path.y);
-            return (
-              !pos?.lookFor(LOOK_TERRAIN).some((t) => t === "wall") &&
-              !pos
-                ?.lookFor(LOOK_STRUCTURES)
-                .some((s) => s.structureType === STRUCTURE_ROAD) &&
-              room.createConstructionSite(path.x, path.y, STRUCTURE_ROAD)
-            );
-          });
-      });
-    });
+          .run()
+      );
+    })
+    .run();
   room.memory.roadLayed = Game.time;
 }
