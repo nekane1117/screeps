@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles"
-import { RETURN_CODE_DECODER, commonHarvest, customMove, pickUpAll, randomWalk } from "./util.creep"
+import { RETURN_CODE_DECODER, commonHarvest, customMove, isStoreTarget, pickUpAll, randomWalk } from "./util.creep"
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isBuilder(creep)) {
@@ -21,7 +21,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       switch ((creep.memory.built = creep.build(site))) {
         case ERR_NOT_ENOUGH_RESOURCES:
           // 手持ちが足らないときは収集モードに切り替える
-          changeMode(creep, "harvesting")
+          changeMode(creep, "collecting")
           break
         // 対象が変な時はクリアする
         case ERR_INVALID_TARGET:
@@ -37,7 +37,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         // 有りえない系
         case ERR_NOT_OWNER: // 自creepじゃない
         case ERR_NO_BODYPART:
-          console.log(`${creep.name} transfer returns ${RETURN_CODE_DECODER[creep.memory.built.toString()]}`)
+          console.log(`${creep.name} build returns ${RETURN_CODE_DECODER[creep.memory.built.toString()]}`)
           creep.say(RETURN_CODE_DECODER[creep.memory.built.toString()])
           break
 
@@ -56,6 +56,50 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // withdraw
+  if (
+    creep.memory.storeId ||
+    (creep.memory.storeId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      filter: (s): s is StoreTarget => {
+        return isStoreTarget(s) && s.store.getUsedCapacity(RESOURCE_ENERGY) !== 0
+      },
+    })?.id)
+  ) {
+    const store = Game.getObjectById(creep.memory.storeId)
+    if (store) {
+      creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY)
+      switch (creep.memory.worked) {
+        case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
+        case ERR_INVALID_TARGET: // 対象が変
+          creep.memory.storeId = undefined
+          break
+
+        // 満タンまで取った
+        case ERR_FULL:
+          changeMode(creep, "working")
+          break
+        case ERR_NOT_IN_RANGE:
+          if (creep.memory.mode === "collecting") {
+            customMove(creep, store)
+          }
+          break
+        // 有りえない系
+        case ERR_NOT_OWNER:
+        case ERR_INVALID_ARGS:
+          console.log(`${creep.name} build returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`)
+          creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()])
+          break
+        // 問題ない系
+        case OK:
+        case ERR_BUSY:
+        default:
+          break
+      }
+    } else {
+      creep.memory.storeId = undefined
+    }
+  }
+
+  // withdraw
   // 落っこちてるものを拾う
   pickUpAll(creep)
 
@@ -68,7 +112,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     changeMode(creep, "working")
   }
   if (creep.store[RESOURCE_ENERGY] === 0) {
-    changeMode(creep, "harvesting")
+    changeMode(creep, "collecting")
   }
 }
 
@@ -77,12 +121,23 @@ export default behavior
 function isBuilder(creep: Creep): creep is Builder {
   return creep.memory.role === "builder"
 }
-const changeMode = (creep: Builder, mode: BuilderMemory["mode"]) => {
+const changeMode = (creep: Builder, mode: "working" | "collecting") => {
   if (mode !== creep.memory.mode) {
     creep.say(mode)
-    creep.memory.mode = mode
+    if (mode === "working") {
+      creep.memory.mode = mode
+    } else {
+      creep.memory.mode = creep.room.find(FIND_STRUCTURES, {
+        filter: (s): s is StoreTarget => {
+          return isStoreTarget(s) && s.store.getUsedCapacity(RESOURCE_ENERGY) !== 0
+        },
+      })
+        ? "collecting"
+        : "harvesting"
+    }
     creep.memory.buildingId = undefined
     creep.memory.harvestTargetId = undefined
     creep.memory.harvested = undefined
+    creep.memory.storeId = undefined
   }
 }

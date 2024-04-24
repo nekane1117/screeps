@@ -69,7 +69,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       (creep.memory.transferId = spawn.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (s): s is StoreTarget => {
           // 空きのあるSpawnから一番近いストレージ
-          return isStoreTarget(s) && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+          return isStoreTarget(s) && s.structureType !== STRUCTURE_CONTAINER && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
         },
         ignoreCreeps: true,
       })?.id)

@@ -44,6 +44,8 @@ declare interface RoomMemory {
     names: string[]
   }
   roadLayed: number
+
+  containers: Partial<Record<Id<StructureContainer>, RoomContainerMemory>>
 }
 
 declare interface Upgrader extends Creep {
@@ -73,7 +75,7 @@ declare interface BuilderMemory extends HarvesterMemory {
    * collecting : 資源取得中
    * harvesting : 自力で収集中
    */
-  mode: "working" | "harvesting"
+  mode: "working" | "collecting" | "harvesting"
   /** 今建てたいもの */
   buildingId?: ConstructionSite["id"] | null
   built?: ReturnType<Creeps["build"]>
@@ -97,4 +99,8 @@ declare interface CarrierMemory extends HarvesterMemory {
   storeId: StructureContainer["id"]
   /** 配送先 */
   transferId?: StoreTarget["id"] | null
+}
+
+declare interface RoomContainerMemory {
+  carrierName: string
 }

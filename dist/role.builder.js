@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const behavior = (creep) => {
-    var _a;
+    var _a, _b;
     if (!isBuilder(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
@@ -20,7 +20,7 @@ const behavior = (creep) => {
             switch ((creep.memory.built = creep.build(site))) {
                 case ERR_NOT_ENOUGH_RESOURCES:
                     // 手持ちが足らないときは収集モードに切り替える
-                    changeMode(creep, "harvesting");
+                    changeMode(creep, "collecting");
                     break;
                 // 対象が変な時はクリアする
                 case ERR_INVALID_TARGET:
@@ -35,7 +35,7 @@ const behavior = (creep) => {
                 // 有りえない系
                 case ERR_NOT_OWNER: // 自creepじゃない
                 case ERR_NO_BODYPART:
-                    console.log(`${creep.name} transfer returns ${util_creep_1.RETURN_CODE_DECODER[creep.memory.built.toString()]}`);
+                    console.log(`${creep.name} build returns ${util_creep_1.RETURN_CODE_DECODER[creep.memory.built.toString()]}`);
                     creep.say(util_creep_1.RETURN_CODE_DECODER[creep.memory.built.toString()]);
                     break;
                 // 問題ない系
@@ -53,6 +53,47 @@ const behavior = (creep) => {
         }
     }
     // withdraw
+    if (creep.memory.storeId ||
+        (creep.memory.storeId = (_b = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+            filter: (s) => {
+                return (0, util_creep_1.isStoreTarget)(s) && s.store.getUsedCapacity(RESOURCE_ENERGY) !== 0;
+            },
+        })) === null || _b === void 0 ? void 0 : _b.id)) {
+        const store = Game.getObjectById(creep.memory.storeId);
+        if (store) {
+            creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY);
+            switch (creep.memory.worked) {
+                case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
+                case ERR_INVALID_TARGET: // 対象が変
+                    creep.memory.storeId = undefined;
+                    break;
+                // 満タンまで取った
+                case ERR_FULL:
+                    changeMode(creep, "working");
+                    break;
+                case ERR_NOT_IN_RANGE:
+                    if (creep.memory.mode === "collecting") {
+                        (0, util_creep_1.customMove)(creep, store);
+                    }
+                    break;
+                // 有りえない系
+                case ERR_NOT_OWNER:
+                case ERR_INVALID_ARGS:
+                    console.log(`${creep.name} build returns ${util_creep_1.RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
+                    creep.say(util_creep_1.RETURN_CODE_DECODER[creep.memory.worked.toString()]);
+                    break;
+                // 問題ない系
+                case OK:
+                case ERR_BUSY:
+                default:
+                    break;
+            }
+        }
+        else {
+            creep.memory.storeId = undefined;
+        }
+    }
+    // withdraw
     // 落っこちてるものを拾う
     (0, util_creep_1.pickUpAll)(creep);
     // 通りがかりにharvesterが居たら奪い取る
@@ -63,7 +104,7 @@ const behavior = (creep) => {
         changeMode(creep, "working");
     }
     if (creep.store[RESOURCE_ENERGY] === 0) {
-        changeMode(creep, "harvesting");
+        changeMode(creep, "collecting");
     }
 };
 exports.default = behavior;
@@ -73,9 +114,21 @@ function isBuilder(creep) {
 const changeMode = (creep, mode) => {
     if (mode !== creep.memory.mode) {
         creep.say(mode);
-        creep.memory.mode = mode;
+        if (mode === "working") {
+            creep.memory.mode = mode;
+        }
+        else {
+            creep.memory.mode = creep.room.find(FIND_STRUCTURES, {
+                filter: (s) => {
+                    return (0, util_creep_1.isStoreTarget)(s) && s.store.getUsedCapacity(RESOURCE_ENERGY) !== 0;
+                },
+            })
+                ? "collecting"
+                : "harvesting";
+        }
         creep.memory.buildingId = undefined;
         creep.memory.harvestTargetId = undefined;
         creep.memory.harvested = undefined;
+        creep.memory.storeId = undefined;
     }
 };

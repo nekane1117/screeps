@@ -37,7 +37,7 @@ function randomWalk(creep) {
 exports.randomWalk = randomWalk;
 exports.MIN_BODY = Object.freeze({
     builder: [WORK, CARRY, MOVE],
-    carrier: [WORK, CARRY, MOVE],
+    carrier: [CARRY, MOVE],
     defender: [],
     harvester: [WORK, CARRY, MOVE],
     repairer: [WORK, CARRY, MOVE],

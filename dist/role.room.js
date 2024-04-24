@@ -7,6 +7,14 @@ function roomBehavior(room) {
     if (room.memory.harvesterLimit === undefined) {
         room.memory.harvesterLimit = getHarvesterLimit(room);
     }
+    // コンテナのリストをあらかじめ作っておく
+    room.memory.containers = room
+        .find(FIND_STRUCTURES, {
+        filter: (s) => s.structureType === STRUCTURE_CONTAINER,
+    })
+        .reduce((record, s) => {
+        return Object.assign(Object.assign({}, record), { [s.id]: { carrierName: "" } });
+    }, {});
     // 今使えるソース
     room.memory.activeSource = findActiceSource(room);
     if (!room.memory.roadLayed || Game.time - room.memory.roadLayed > 5000) {

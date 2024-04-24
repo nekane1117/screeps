@@ -38,7 +38,7 @@ export function randomWalk(creep: Creep) {
 
 export const MIN_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
   builder: [WORK, CARRY, MOVE],
-  carrier: [WORK, CARRY, MOVE],
+  carrier: [CARRY, MOVE],
   defender: [],
   harvester: [WORK, CARRY, MOVE],
   repairer: [WORK, CARRY, MOVE],
