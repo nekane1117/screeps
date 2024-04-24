@@ -1,9 +1,9 @@
-import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, isStoreTarget, randomWalk } from "./util.creep";
+import { CreepBehavior } from "./roles"
+import { RETURN_CODE_DECODER, customMove, isStoreTarget, randomWalk } from "./util.creep"
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isHarvester(creep)) {
-    return console.log(`${creep.name} is not Harvester`);
+    return console.log(`${creep.name} is not Harvester`)
   }
 
   // https://docs.screeps.com/simultaneous-actions.html
@@ -25,59 +25,59 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     )
   ) {
     // 完全に見つからなければうろうろしておく
-    randomWalk(creep);
+    randomWalk(creep)
   } else {
     // 対象が見つかった時
-    const source = Game.getObjectById(creep.memory.harvestTargetId);
+    const source = Game.getObjectById(creep.memory.harvestTargetId)
     if (source) {
       creep.memory.harvested = {
         tick: Game.time,
         result: creep.harvest(source),
-      };
+      }
       switch (creep.memory.harvested.result) {
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "harvesting") {
             // 収集モードで近くにいないときは近寄る
-            const moved = customMove(creep, source);
+            const moved = customMove(creep, source)
             switch (moved) {
               case OK:
-                break;
+                break
               case ERR_NO_PATH:
-                creep.memory.harvestTargetId = undefined;
-                break;
+                creep.memory.harvestTargetId = undefined
+                break
 
               default:
-                creep.say(RETURN_CODE_DECODER[moved.toString()]);
-                break;
+                creep.say(RETURN_CODE_DECODER[moved.toString()])
+                break
             }
           }
-          break;
+          break
 
         // 資源がダメ系
         case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
         case ERR_INVALID_TARGET: // 対象が変
-          creep.memory.harvestTargetId = undefined;
-          break;
+          creep.memory.harvestTargetId = undefined
+          break
         // 来ないはずのやつ
         case ERR_NOT_OWNER: // 自creepじゃない
         case ERR_NOT_FOUND: // mineralは対象外
         case ERR_NO_BODYPART: // WORKが無い
-          console.log(`${creep.name} harvest returns ${RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]}`);
-          creep.say(RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]);
-          break;
+          console.log(`${creep.name} harvest returns ${RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]}`)
+          creep.say(RETURN_CODE_DECODER[creep.memory.harvested.result.toString()])
+          break
         // 大丈夫なやつ
         case OK: // OK
         case ERR_TIRED: // 疲れた
         case ERR_BUSY: // spawning
         default:
-          break;
+          break
       }
     } else {
       // 指定されていたソースが見つからないとき
       // 対象をクリアしてうろうろしておく
-      creep.memory.harvestTargetId = undefined;
-      creep.memory.harvested = undefined;
-      randomWalk(creep);
+      creep.memory.harvestTargetId = undefined
+      creep.memory.harvested = undefined
+      randomWalk(creep)
     }
   }
 
@@ -94,69 +94,69 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   ) {
     // 完全に見つからなければうろうろしておく
     if (creep.memory.mode === "working") {
-      randomWalk(creep);
+      randomWalk(creep)
     }
   } else {
-    const store = Game.getObjectById(creep.memory.storeId);
+    const store = Game.getObjectById(creep.memory.storeId)
     if (store) {
-      const returnVal = creep.transfer(store, RESOURCE_ENERGY);
+      const returnVal = creep.transfer(store, RESOURCE_ENERGY)
       switch (returnVal) {
         // 遠い
         case ERR_NOT_IN_RANGE:
           // 分配モードの時は倉庫に近寄る
           if (creep.memory.mode === "working") {
-            customMove(creep, store);
+            customMove(creep, store)
           }
-          break;
+          break
 
         // 手持ちがない
         case ERR_NOT_ENOUGH_RESOURCES: // 値を指定しないから多分発生しない
-          changeMode(creep, "harvesting");
-          break;
+          changeMode(creep, "harvesting")
+          break
 
         // 対象が変
         case ERR_INVALID_TARGET: // 対象が変
-          creep.memory.storeId = undefined;
-          break;
+          creep.memory.storeId = undefined
+          break
         case ERR_FULL: // 満タン
-          randomWalk(creep);
-          creep.memory.storeId = undefined;
-          break;
+          randomWalk(creep)
+          creep.memory.storeId = undefined
+          break
 
         // 有りえない系
         case ERR_NOT_OWNER: // 自creepじゃない
         case ERR_INVALID_ARGS: // 引数が変
-          console.log(`${creep.name} transfer returns ${RETURN_CODE_DECODER[returnVal.toString()]}`);
-          creep.say(RETURN_CODE_DECODER[returnVal.toString()]);
-          break;
+          console.log(`${creep.name} transfer returns ${RETURN_CODE_DECODER[returnVal.toString()]}`)
+          creep.say(RETURN_CODE_DECODER[returnVal.toString()])
+          break
 
         // 問題ない系
         case OK:
         case ERR_BUSY: // spawining
         default:
-          break;
+          break
       }
     } else {
       // 指定されていたソースが見つからないとき
       // 対象をクリアしてうろうろしておく
-      creep.memory.storeId = undefined;
-      randomWalk(creep);
+      creep.memory.storeId = undefined
+      randomWalk(creep)
     }
   }
   // 空っぽになったら収集モードに切り替える
   if (creep.store[RESOURCE_ENERGY] === 0) {
-    changeMode(creep, "harvesting");
+    changeMode(creep, "harvesting")
   }
   // 満タンだったら分配モードに切り替える
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-    changeMode(creep, "working");
+    changeMode(creep, "working")
   }
-};
+}
 
-export default behavior;
+export default behavior
 
 function isHarvester(creep: Creeps): creep is Harvester {
-  return creep.memory.role === "harvester";
+  return creep.memory.role === "harvester"
 }
 
 function changeMode(creep: Harvester, mode: HarvesterMemory["mode"]) {
@@ -165,6 +165,6 @@ function changeMode(creep: Harvester, mode: HarvesterMemory["mode"]) {
       mode,
       harvestTargetId: undefined,
       storeId: undefined,
-    } as HarvesterMemory);
+    } as HarvesterMemory)
   }
 }

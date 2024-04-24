@@ -1,16 +1,16 @@
-import _ from "lodash";
-import { MIN_BODY, bodyMaker, getBodyCost, getCreepsInRoom } from "./util.creep";
+import _ from "lodash"
+import { MIN_BODY, bodyMaker, getBodyCost, getCreepsInRoom } from "./util.creep"
 
 const behavior = (spawn: StructureSpawn) => {
   if (spawn.spawning) {
-    return;
+    return
   }
 
   const creepsInRoom: _.Dictionary<Creep[] | undefined> = _(getCreepsInRoom(spawn.room))
     .map((name) => Game.creeps[name])
     .compact()
     .groupBy((c) => c.memory.role)
-    .value();
+    .value()
   // １匹もいないときはとにかく作る
   if ((creepsInRoom.harvester || []).length === 0) {
     return spawn.spawnCreep(
@@ -22,7 +22,7 @@ const behavior = (spawn: StructureSpawn) => {
           role: "harvester",
         } as HarvesterMemory,
       },
-    );
+    )
   }
 
   // upgraderが居ないときもとりあえず作る
@@ -31,7 +31,7 @@ const behavior = (spawn: StructureSpawn) => {
       memory: {
         role: "upgrader",
       } as UpgraderMemory,
-    });
+    })
   }
 
   // harvesterが不足しているとき
@@ -43,7 +43,7 @@ const behavior = (spawn: StructureSpawn) => {
       memory: {
         role: "harvester",
       } as HarvesterMemory,
-    });
+    })
   }
   // builderが不足しているとき
   if (
@@ -56,10 +56,10 @@ const behavior = (spawn: StructureSpawn) => {
         role: "builder",
         mode: "working",
       } as BuilderMemory,
-    });
+    })
   }
-  return OK;
-};
+  return OK
+}
 
 const generateCreepName = (spawn: StructureSpawn, role: ROLES) => {
   const shortName: Record<ROLES, string> = {
@@ -69,13 +69,13 @@ const generateCreepName = (spawn: StructureSpawn, role: ROLES) => {
     harvester: "HAV",
     repairer: "REP",
     upgrader: "UPG",
-  };
+  }
 
   return (
     _.range(100)
       .map((i) => `${spawn.room.name}_${shortName[role]}_${i}`)
       .find((name) => !Game.creeps[name]) || Game.time.toString()
-  );
-};
+  )
+}
 
-export default behavior;
+export default behavior
