@@ -190,7 +190,7 @@ export function pickUpAll(creep: Creep) {
   })
 
   // 通りがかりの墓から拾う
-  creep.pos.findInRange(FIND_TOMBSTONES, 1).forEach((tombstone) => {
+  ;[...creep.pos.findInRange(FIND_TOMBSTONES, 1), ...creep.pos.findInRange(FIND_RUINS, 1)].forEach((tombstone) => {
     creep.withdraw(tombstone, RESOURCE_ENERGY)
   })
 }
