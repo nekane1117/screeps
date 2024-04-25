@@ -104,6 +104,8 @@ const behavior = (creep) => {
                     break;
                 // 問題ない系
                 case OK:
+                    creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: util_creep_1.isStoreTarget }).map((s) => creep.transfer(s, RESOURCE_ENERGY));
+                    break;
                 case ERR_BUSY: // spawining
                 default:
                     break;
@@ -116,6 +118,7 @@ const behavior = (creep) => {
             (0, util_creep_1.randomWalk)(creep);
         }
     }
+    (0, util_creep_1.stealBy)(creep, ["harvester"]);
     // 落っこちてるものを拾う
     (0, util_creep_1.pickUpAll)(creep);
     // 空っぽになったら収集モードに切り替える

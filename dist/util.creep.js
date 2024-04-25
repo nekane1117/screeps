@@ -18,13 +18,13 @@ exports.squareDiff = Object.freeze([
 function bodyMaker(role, cost) {
     // 入れ物
     const bodies = [...exports.MIN_BODY[role]];
+    const diff = [...(DIFF_BODY[role] || exports.MIN_BODY[role])];
     const getTotalCost = () => _(bodies)
         .map((p) => BODYPART_COST[p])
         .sum();
-    let cnt = 0;
     // cost以下かつ50個以下の間くっつける
     while (getTotalCost() <= cost && bodies.length <= 50) {
-        bodies.push(exports.MIN_BODY[role][cnt++ % exports.MIN_BODY[role].length]);
+        bodies.push(diff[_.random(0, diff.length - 1)]);
     }
     // 1個分超えてるはずなので最後の１個を消して返す
     return bodies.slice(0, bodies.length - 1);
@@ -42,6 +42,10 @@ exports.MIN_BODY = Object.freeze({
     harvester: [WORK, CARRY, MOVE],
     repairer: [WORK, CARRY, MOVE],
     upgrader: [WORK, CARRY, MOVE],
+});
+const DIFF_BODY = Object.freeze({
+    // ギリsourceまで行ければいいので
+    harvester: [WORK, CARRY, CARRY],
 });
 const getBodyCost = (bodies) => _(bodies)
     .map((p) => BODYPART_COST[p])
@@ -68,7 +72,7 @@ const customMove = (creep, target, opt) => {
     if (creep.fatigue) {
         return OK;
     }
-    return creep.moveTo(target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length) || Game.time % 5 == 0, serializeMemory: false }, opt));
+    return creep.moveTo(target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length) && Game.time % 5 !== 0, serializeMemory: false }, opt));
 };
 exports.customMove = customMove;
 function getCreepsInRoom(room) {

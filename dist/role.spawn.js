@@ -85,7 +85,7 @@ const generateCreepName = (spawn, role) => {
         upgrader: "U",
     };
     return (lodash_1.default.range(100)
-        .map((i) => `${spawn.room.name}_${shortName[role]}_${i}`)
+        .map((i) => `${shortName[role]}_${i}`)
         .find((name) => !Game.creeps[name]) || Game.time.toString());
 };
 exports.default = behavior;

@@ -76,16 +76,17 @@ function creteExtensions(room: Room) {
   const spawn = Object.entries(Game.spawns).find(([_, s]) => s.room.name === room.name)?.[1];
   if (room.controller && spawn) {
     const extensions = [...room.find(FIND_MY_CONSTRUCTION_SITES), ...room.find(FIND_MY_STRUCTURES)].filter((s) => s.structureType === STRUCTURE_EXTENSION);
-
+    const terrain = room.getTerrain();
     if (extensions.length < CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][room.controller.level]) {
       for (const dist of _.range(1, 25)) {
         for (const dy of _.range(-dist, dist + 1)) {
           for (const dx of _.range(-dist, dist + 1)) {
-            if (Math.abs(dx) + Math.abs(dy) === dist && (dx + dy) % 2 === 0) {
-              if (room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, STRUCTURE_EXTENSION) === OK) {
-                // つくれた場合抜ける
-                return;
-              }
+            if (
+              Math.abs(dx) + Math.abs(dy) === dist &&
+              terrain.get(spawn.pos.x + dx, spawn.pos.y + dy) !== TERRAIN_MASK_WALL &&
+              room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, (dx + dy) % 2 === 0 ? STRUCTURE_EXTENSION : STRUCTURE_ROAD) === OK
+            ) {
+              return;
             }
           }
         }

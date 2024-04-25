@@ -16,15 +16,15 @@ export const squareDiff = Object.freeze([
 export function bodyMaker(role: ROLES, cost: number): BodyPartConstant[] {
   // 入れ物
   const bodies = [...MIN_BODY[role]];
+  const diff = [...(DIFF_BODY[role] || MIN_BODY[role])];
   const getTotalCost = () =>
     _(bodies)
       .map((p) => BODYPART_COST[p])
       .sum();
-  let cnt = 0;
 
   // cost以下かつ50個以下の間くっつける
   while (getTotalCost() <= cost && bodies.length <= 50) {
-    bodies.push(MIN_BODY[role][cnt++ % MIN_BODY[role].length]);
+    bodies.push(diff[_.random(0, diff.length - 1)]);
   }
 
   // 1個分超えてるはずなので最後の１個を消して返す
@@ -43,6 +43,11 @@ export const MIN_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
   harvester: [WORK, CARRY, MOVE],
   repairer: [WORK, CARRY, MOVE],
   upgrader: [WORK, CARRY, MOVE],
+});
+
+const DIFF_BODY: Partial<Record<ROLES, BodyPartConstant[]>> = Object.freeze({
+  // ギリsourceまで行ければいいので
+  harvester: [WORK, CARRY, CARRY],
 });
 
 export const getBodyCost = (bodies: BodyPartConstant[]) =>
@@ -74,7 +79,7 @@ export const customMove: CustomMove = (creep, target, opt) => {
     return OK;
   }
   return creep.moveTo(target, {
-    ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length) || Game.time % 5 == 0,
+    ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length) && Game.time % 5 !== 0,
     serializeMemory: false,
     ...opt,
   });

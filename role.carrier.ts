@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, getSpawnNamesInRoom, isStoreTarget, pickUpAll, randomWalk } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, getSpawnNamesInRoom, isStoreTarget, pickUpAll, randomWalk, stealBy } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isCarrier(creep)) {
@@ -112,6 +112,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
         // 問題ない系
         case OK:
+          creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: isStoreTarget }).map((s) => creep.transfer(s, RESOURCE_ENERGY));
+          break;
         case ERR_BUSY: // spawining
         default:
           break;
@@ -123,6 +125,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       randomWalk(creep);
     }
   }
+
+  stealBy(creep, ["harvester"]);
 
   // 落っこちてるものを拾う
   pickUpAll(creep);

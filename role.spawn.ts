@@ -97,7 +97,7 @@ const generateCreepName = (spawn: StructureSpawn, role: ROLES) => {
 
   return (
     _.range(100)
-      .map((i) => `${spawn.room.name}_${shortName[role]}_${i}`)
+      .map((i) => `${shortName[role]}_${i}`)
       .find((name) => !Game.creeps[name]) || Game.time.toString()
   );
 };

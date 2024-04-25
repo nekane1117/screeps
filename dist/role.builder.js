@@ -74,8 +74,10 @@ const behavior = (creep) => {
                 case ERR_NOT_IN_RANGE:
                     if (creep.memory.mode === "collecting") {
                         const moved = (0, util_creep_1.customMove)(creep, store);
-                        console.log(`${creep.name} ${util_creep_1.RETURN_CODE_DECODER[moved.toString()]}`);
-                        moved !== OK && creep.say(util_creep_1.RETURN_CODE_DECODER[moved.toString()]);
+                        if (moved !== OK) {
+                            console.log(`${creep.name} ${util_creep_1.RETURN_CODE_DECODER[moved.toString()]}`);
+                            creep.say(util_creep_1.RETURN_CODE_DECODER[moved.toString()]);
+                        }
                     }
                     break;
                 // 有りえない系
