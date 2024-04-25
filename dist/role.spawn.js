@@ -54,6 +54,18 @@ const behavior = (spawn) => {
             },
         });
     }
+    // repairerが不足しているとき
+    if (spawn.room.find(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax }).length && // 建設がある
+        ((creepsInRoom === null || creepsInRoom === void 0 ? void 0 : creepsInRoom.repairer) || []).length === 0 &&
+        spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["repairer"]), spawn.room.energyCapacityAvailable * 0.8) // エネルギー余ってる
+    ) {
+        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("repairer", spawn.room.energyAvailable), generateCreepName(spawn, "repairer"), {
+            memory: {
+                role: "repairer",
+                mode: "working",
+            },
+        });
+    }
     // 目いっぱいたまったらもっとアップグレードする
     if ((((_a = creepsInRoom.upgrader) === null || _a === void 0 ? void 0 : _a.length) || 0) < (((_b = spawn.room.controller) === null || _b === void 0 ? void 0 : _b.level) || 0) * 2 && spawn.room.energyAvailable > spawn.room.energyCapacityAvailable * 0.9) {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("upgrader", spawn.room.energyAvailable), generateCreepName(spawn, "upgrader"), {

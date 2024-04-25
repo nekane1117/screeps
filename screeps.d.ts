@@ -1,106 +1,124 @@
 /// <reference types="screeps" />
 
-declare type ROLES = "harvester" | "carrier" | "builder" | "repairer" | "defender" | "upgrader"
+declare type ROLES = "harvester" | "carrier" | "builder" | "repairer" | "defender" | "upgrader";
 declare interface CreepMemory {
-  role: ROLES
+  role: ROLES;
   // 担当作業の作業結果
-  worked?: ScreepsReturnCode
+  worked?: ScreepsReturnCode;
 }
 
 /** 全部のCreepの型 */
-declare type Creeps = Creep | Harvester | Upgrader | Builder | Carrier
+declare type Creeps = Creep | Harvester | Upgrader | Builder | Carrier | Repairer;
 
-declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink
+declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink;
 
 declare interface Harvester extends Creep {
-  memory: HarvesterMemory
+  memory: HarvesterMemory;
 }
 
 declare interface HarvesterMemory extends CreepMemory {
-  role: "harvester"
+  role: "harvester";
   /** 今何してるか
    * working    : 資源を持ってきてるところ
    * harvesting : 収集中
    */
-  mode: "working" | "harvesting"
-  harvestTargetId?: Source["id"] | null
-  storeId?: StoreTarget["id"] | null
+  mode: "working" | "harvesting";
+  harvestTargetId?: Source["id"] | null;
+  storeId?: StoreTarget["id"] | null;
   harvested?: {
-    tick: number
-    result: ReturnType<Creep["harvest"]>
-  }
+    tick: number;
+    result: ReturnType<Creep["harvest"]>;
+  };
 }
 
 declare interface RoomMemory {
-  harvesterLimit: number
+  harvesterLimit: number;
   /** このtickでアクティブなソース */
-  activeSource: Source["id"][]
+  activeSource: Source["id"][];
   creeps?: {
-    tick: number
-    names: string[]
-  }
+    tick: number;
+    names: string[];
+  };
   spawns?: {
-    tick: number
-    names: string[]
-  }
-  roadLayed: number
+    tick: number;
+    names: string[];
+  };
+  roadLayed: number;
 
-  containers: Partial<Record<Id<StructureContainer>, RoomContainerMemory>>
+  containers: Partial<Record<Id<StructureContainer>, RoomContainerMemory>>;
 }
 
 declare interface Upgrader extends Creep {
-  memory: UpgraderMemory
+  memory: UpgraderMemory;
 }
 
 declare interface UpgraderMemory extends HarvesterMemory {
-  role: "upgrader"
+  role: "upgrader";
   /** 今何してるか
    * working    : 作業中
    * collecting : 資源取得中
    * harvesting : 自力で収集中
    */
-  mode: "working" | "collecting" | "harvesting"
+  mode: "working" | "collecting" | "harvesting";
   /** 資源をもらいに行く先 */
-  storeId?: StoreTarget["id"] | null
+  storeId?: StoreTarget["id"] | null;
 }
 
 declare interface Builder extends Creep {
-  memory: BuilderMemory
+  memory: BuilderMemory;
 }
 
 declare interface BuilderMemory extends HarvesterMemory {
-  role: "builder"
+  role: "builder";
   /** 今何してるか
    * working    : 作業中
    * collecting : 資源取得中
    * harvesting : 自力で収集中
    */
-  mode: "working" | "collecting" | "harvesting"
+  mode: "working" | "collecting" | "harvesting";
   /** 今建てたいもの */
-  buildingId?: ConstructionSite["id"] | null
-  built?: ReturnType<Creeps["build"]>
+  buildingId?: ConstructionSite["id"] | null;
+  built?: ReturnType<Creeps["build"]>;
   /** 資源をもらいに行く先 */
-  storeId?: StoreTarget["id"] | null
+  storeId?: StoreTarget["id"] | null;
 }
 
 declare interface Carrier extends Creep {
-  memory: CarrierMemory
+  memory: CarrierMemory;
 }
 
 declare interface CarrierMemory extends HarvesterMemory {
-  role: "carrier"
+  role: "carrier";
   /** 今何してるか
    * working    : 作業中
    * collecting : 資源取得中
    * harvesting : 自力で収集中
    */
-  mode: "working" | "collecting"
+  mode: "working" | "collecting";
   /** 担当倉庫 */
-  storeId: StructureContainer["id"]
+  storeId: StructureContainer["id"];
   /** 配送先 */
-  transferId?: StoreTarget["id"] | null
+  transferId?: StoreTarget["id"] | null;
 }
 
 declare interface RoomContainerMemory {
-  carrierName: string
+  carrierName: string;
+}
+
+declare interface Repairer extends Creep {
+  memory: RepairerMemory;
+}
+
+declare interface RepairerMemory extends HarvesterMemory {
+  role: "repairer";
+  /** 今何してるか
+   * working    : 作業中
+   * collecting : 資源取得中
+   * harvesting : 自力で収集中
+   */
+  mode: "working" | "collecting" | "harvesting";
+  /** 修理対象 */
+  workTargetId?: Id<Structure> | null;
+  /** 資源をもらいに行く先 */
+  storeId?: StoreTarget["id"] | null;
 }
