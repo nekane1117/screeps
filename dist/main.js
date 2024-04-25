@@ -8,6 +8,9 @@ const role_room_1 = require("./role.room");
 const role_spawn_1 = __importDefault(require("./role.spawn"));
 const structure_container_1 = require("./structure.container");
 module.exports.loop = function () {
+    if (Game.time % 100 === 0 && Game.cpu.bucket == 10000) {
+        Game.cpu.generatePixel();
+    }
     //死んだcreepは削除する
     Object.keys(Memory.creeps || {}).forEach((name) => {
         if (!Game.creeps[name]) {

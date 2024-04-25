@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const lodash_1 = __importDefault(require("lodash"));
 const util_creep_1 = require("./util.creep");
 const behavior = (spawn) => {
+    var _a, _b;
     if (spawn.spawning) {
         return;
     }
@@ -18,7 +19,7 @@ const behavior = (spawn) => {
     if ((creepsInRoom.harvester || []).length === 0) {
         return spawn.spawnCreep(
         // とりあえず最小単位
-        [MOVE, WORK, CARRY], generateCreepName(spawn, "harvester"), {
+        [MOVE, WORK, CARRY], generateCreepName("harvester"), {
             memory: {
                 role: "harvester",
             },
@@ -26,7 +27,7 @@ const behavior = (spawn) => {
     }
     // upgraderが居ないときもとりあえず作る
     if ((creepsInRoom.upgrader || []).length === 0 && spawn.room.energyAvailable > (0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["upgrader"])) {
-        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("upgrader", spawn.room.energyAvailable), generateCreepName(spawn, "upgrader"), {
+        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("upgrader", spawn.room.energyAvailable), generateCreepName("upgrader"), {
             memory: {
                 role: "upgrader",
             },
@@ -35,7 +36,7 @@ const behavior = (spawn) => {
     // harvesterが不足しているとき
     if ((creepsInRoom.harvester || []).length < spawn.room.memory.harvesterLimit &&
         spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["harvester"]), spawn.room.energyCapacityAvailable * 0.6)) {
-        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("harvester", spawn.room.energyAvailable), generateCreepName(spawn, "harvester"), {
+        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("harvester", spawn.room.energyAvailable), generateCreepName("harvester"), {
             memory: {
                 role: "harvester",
             },
@@ -46,7 +47,7 @@ const behavior = (spawn) => {
         ((creepsInRoom === null || creepsInRoom === void 0 ? void 0 : creepsInRoom.builder) || []).length < spawn.room.memory.activeSource.length &&
         spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.8) // エネルギー余ってる
     ) {
-        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("builder", spawn.room.energyAvailable), generateCreepName(spawn, "builder"), {
+        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("builder", spawn.room.energyAvailable), generateCreepName("builder"), {
             memory: {
                 role: "builder",
                 mode: "working",
@@ -58,7 +59,7 @@ const behavior = (spawn) => {
         ((creepsInRoom === null || creepsInRoom === void 0 ? void 0 : creepsInRoom.repairer) || []).length === 0 &&
         spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["repairer"]), spawn.room.energyCapacityAvailable * 0.8) // エネルギー余ってる
     ) {
-        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("repairer", spawn.room.energyAvailable), generateCreepName(spawn, "repairer"), {
+        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("repairer", spawn.room.energyAvailable), generateCreepName("repairer"), {
             memory: {
                 role: "repairer",
                 mode: "working",
@@ -66,8 +67,8 @@ const behavior = (spawn) => {
         });
     }
     // 目いっぱいたまったらもっとアップグレードする
-    if (spawn.room.energyAvailable > spawn.room.energyCapacityAvailable * 0.9) {
-        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("upgrader", spawn.room.energyAvailable), generateCreepName(spawn, "upgrader"), {
+    if ((((_a = creepsInRoom.upgrader) === null || _a === void 0 ? void 0 : _a.length) || 0) < 9 - (((_b = spawn.room.controller) === null || _b === void 0 ? void 0 : _b.level) || 0) && spawn.room.energyAvailable > spawn.room.energyCapacityAvailable * 0.9) {
+        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("upgrader", spawn.room.energyAvailable), generateCreepName("upgrader"), {
             memory: {
                 role: "upgrader",
             },
@@ -75,7 +76,7 @@ const behavior = (spawn) => {
     }
     return OK;
 };
-const generateCreepName = (spawn, role) => {
+const generateCreepName = (role) => {
     const shortName = {
         builder: "B",
         carrier: "C",

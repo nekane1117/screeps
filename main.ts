@@ -4,6 +4,9 @@ import spawnBehavior from "./role.spawn";
 import { containerBehavior } from "./structure.container";
 
 module.exports.loop = function () {
+  if (Game.time % 100 === 0 && Game.cpu.bucket == 10000) {
+    Game.cpu.generatePixel();
+  }
   //死んだcreepは削除する
   Object.keys(Memory.creeps || {}).forEach((name) => {
     if (!Game.creeps[name]) {
