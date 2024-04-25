@@ -74,7 +74,7 @@ export const customMove: CustomMove = (creep, target, opt) => {
     return OK
   }
   return creep.moveTo(target, {
-    ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length),
+    ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length) || Game.time % 5 == 0,
     serializeMemory: false,
     ...opt,
   })

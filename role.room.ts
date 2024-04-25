@@ -2,6 +2,9 @@ import { getSpawnNamesInRoom, squareDiff } from "./util.creep"
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
+  if (room.find(FIND_HOSTILE_CREEPS).length && !room.controller?.safeMode && room.energyAvailable > SAFE_MODE_COST) {
+    room.controller?.activateSafeMode()
+  }
 
   if (room.memory.harvesterLimit === undefined) {
     room.memory.harvesterLimit = getHarvesterLimit(room)
@@ -100,8 +103,8 @@ function roadLayer(room: Room) {
       const findCustomPath = (s: Source | StructureSpawn) =>
         spawn.pos.findPathTo(s, {
           ignoreCreeps: true,
-          plainCost: 1.1, // 道よりいくらか高い
-          swampCost: 1.1, // これから道を引くのでplainと同じ
+          plainCost: 1, // 道よりいくらか低い
+          swampCost: 1, // これから道を引くのでplainと同じ
           costCallback(roomName, costMatrix) {
             const room = Game.rooms[roomName]
             _.range(50).forEach((x) => {
@@ -110,8 +113,8 @@ function roadLayer(room: Room) {
                 if (!pos) {
                   return
                 } else if (pos.look().some((s) => "structureType" in s && s.structureType === STRUCTURE_ROAD)) {
-                  // 道がある or 道を引く場合道と同じ値にする
-                  costMatrix.set(x, y, 1)
+                  // 道がある or 道を引く場合道よりほんの少し高くする
+                  costMatrix.set(x, y, 2)
                 }
               })
             })

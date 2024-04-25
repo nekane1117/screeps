@@ -60,7 +60,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     creep.memory.storeId ||
     (creep.memory.storeId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
       filter: (s): s is StoreTarget => {
-        return isStoreTarget(s) && s.store.getUsedCapacity(RESOURCE_ENERGY) !== 0
+        return isStoreTarget(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) && s.store.getUsedCapacity(RESOURCE_ENERGY) !== 0
       },
     })?.id)
   ) {
@@ -79,7 +79,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           break
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "collecting") {
-            customMove(creep, store)
+            const moved = customMove(creep, store)
+            console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`)
+            moved !== OK && creep.say(RETURN_CODE_DECODER[moved.toString()])
           }
           break
         // 有りえない系
@@ -104,7 +106,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   pickUpAll(creep)
 
   // 通りがかりにharvesterが居たら奪い取る
-  creep.pos.findInRange(FIND_MY_CREEPS, 1, { filter: (c) => c.memory.role === "harvester" }).forEach((c) => {
+  creep.pos.findInRange(FIND_MY_CREEPS, 1, { filter: (c) => ["harvester", "carrier"].some((r) => r === c.memory.role) }).forEach((c) => {
     c.transfer(creep, RESOURCE_ENERGY)
   })
 

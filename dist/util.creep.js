@@ -68,7 +68,7 @@ const customMove = (creep, target, opt) => {
     if (creep.fatigue) {
         return OK;
     }
-    return creep.moveTo(target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length), serializeMemory: false }, opt));
+    return creep.moveTo(target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length) || Game.time % 5 == 0, serializeMemory: false }, opt));
 };
 exports.customMove = customMove;
 function getCreepsInRoom(room) {

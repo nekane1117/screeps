@@ -3,7 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.roomBehavior = void 0;
 const util_creep_1 = require("./util.creep");
 function roomBehavior(room) {
+    var _a, _b;
     // Roomとしてやっておくこと
+    if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) === null || _a === void 0 ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
+        (_b = room.controller) === null || _b === void 0 ? void 0 : _b.activateSafeMode();
+    }
     if (room.memory.harvesterLimit === undefined) {
         room.memory.harvesterLimit = getHarvesterLimit(room);
     }
@@ -88,8 +92,8 @@ function roadLayer(room) {
         .forEach((spawn) => {
         const findCustomPath = (s) => spawn.pos.findPathTo(s, {
             ignoreCreeps: true,
-            plainCost: 1.1, // 道よりいくらか高い
-            swampCost: 1.1, // これから道を引くのでplainと同じ
+            plainCost: 1, // 道よりいくらか低い
+            swampCost: 1, // これから道を引くのでplainと同じ
             costCallback(roomName, costMatrix) {
                 const room = Game.rooms[roomName];
                 _.range(50).forEach((x) => {
@@ -99,8 +103,8 @@ function roadLayer(room) {
                             return;
                         }
                         else if (pos.look().some((s) => "structureType" in s && s.structureType === STRUCTURE_ROAD)) {
-                            // 道がある or 道を引く場合道と同じ値にする
-                            costMatrix.set(x, y, 1);
+                            // 道がある or 道を引く場合道よりほんの少し高くする
+                            costMatrix.set(x, y, 2);
                         }
                     });
                 });

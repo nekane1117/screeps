@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const lodash_1 = __importDefault(require("lodash"));
 const util_creep_1 = require("./util.creep");
 const behavior = (spawn) => {
+    var _a, _b;
     if (spawn.spawning) {
         return;
     }
@@ -50,6 +51,14 @@ const behavior = (spawn) => {
             memory: {
                 role: "builder",
                 mode: "working",
+            },
+        });
+    }
+    // 目いっぱいたまったらもっとアップグレードする
+    if ((((_a = creepsInRoom.upgrader) === null || _a === void 0 ? void 0 : _a.length) || 0) < (((_b = spawn.room.controller) === null || _b === void 0 ? void 0 : _b.level) || 0) * 2 && spawn.room.energyAvailable > spawn.room.energyCapacityAvailable * 0.9) {
+        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("upgrader", spawn.room.energyAvailable), generateCreepName(spawn, "upgrader"), {
+            memory: {
+                role: "upgrader",
             },
         });
     }

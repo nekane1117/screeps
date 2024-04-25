@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles"
-import { RETURN_CODE_DECODER, customMove, getSpawnNamesInRoom, pickUpAll, randomWalk } from "./util.creep"
+import { RETURN_CODE_DECODER, customMove, getSpawnNamesInRoom, isStoreTarget, pickUpAll, randomWalk } from "./util.creep"
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isCarrier(creep)) {
@@ -67,12 +67,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     !(
       creep.memory.transferId ||
       (creep.memory.transferId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s): s is StructureExtension | StructureSpawn => {
+        filter: (s): s is StoreTarget => {
           // 空きのあるSpawnから一番近いストレージ
-          return (
-            [STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) &&
-            (s as StructureExtension | StructureSpawn).store.getFreeCapacity(RESOURCE_ENERGY) > 0
-          )
+          return isStoreTarget(s) && s.id !== creep.memory.storeId && s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0
         },
         ignoreCreeps: true,
       })?.id)

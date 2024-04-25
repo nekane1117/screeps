@@ -15,6 +15,12 @@ module.exports.loop = function () {
             console.log("Clearing non-existing creep memory:", name);
         }
     });
+    Object.keys(Memory.rooms || {}).forEach((name) => {
+        if (!Game.rooms[name]) {
+            delete Memory.rooms[name];
+            console.log("Clearing non-existing rooms memory:", name);
+        }
+    });
     // Room -> Spawn -> Container -> Creep
     const spawnGroup = _.groupBy(Object.values(Game.spawns), (c) => c.room.name);
     const creepGroup = _.groupBy(Object.values(Game.creeps), (c) => c.room.name);
