@@ -74,7 +74,7 @@ const behavior = (spawn: StructureSpawn) => {
   }
 
   // 目いっぱいたまったらもっとアップグレードする
-  if ((creepsInRoom.upgrader?.length || 0) < (spawn.room.controller?.level || 0) * 2 && spawn.room.energyAvailable > spawn.room.energyCapacityAvailable * 0.9) {
+  if (spawn.room.energyAvailable > spawn.room.energyCapacityAvailable * 0.9) {
     return spawn.spawnCreep(bodyMaker("upgrader", spawn.room.energyAvailable), generateCreepName(spawn, "upgrader"), {
       memory: {
         role: "upgrader",
