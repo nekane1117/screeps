@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles"
-import { RETURN_CODE_DECODER, commonHarvest, customMove, isStoreTarget, pickUpAll, randomWalk } from "./util.creep"
+import { RETURN_CODE_DECODER, commonHarvest, customMove, isStoreTarget, pickUpAll, randomWalk, stealBy } from "./util.creep"
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isBuilder(creep)) {
@@ -106,9 +106,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   pickUpAll(creep)
 
   // 通りがかりにharvesterが居たら奪い取る
-  creep.pos.findInRange(FIND_MY_CREEPS, 1, { filter: (c) => ["harvester", "carrier"].some((r) => r === c.memory.role) }).forEach((c) => {
-    c.transfer(creep, RESOURCE_ENERGY)
-  })
+  stealBy(creep, ["harvester", "carrier"])
 
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
     changeMode(creep, "working")

@@ -194,3 +194,14 @@ export function pickUpAll(creep: Creep) {
     creep.withdraw(tombstone, RESOURCE_ENERGY)
   })
 }
+
+/**
+ * 通りがかりのcreepから奪い取る
+ */
+export function stealBy(creep: Creep, roles: ROLES[], type: ResourceConstant = RESOURCE_ENERGY) {
+  return creep.pos
+    .findInRange(FIND_MY_CREEPS, 1, {
+      filter: (c) => roles.includes(c.memory.role),
+    })
+    .map((t) => t.transfer(creep, type))
+}

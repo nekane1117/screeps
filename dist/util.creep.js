@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.pickUpAll = exports.commonHarvest = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.stealBy = exports.pickUpAll = exports.commonHarvest = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -183,3 +183,14 @@ function pickUpAll(creep) {
     });
 }
 exports.pickUpAll = pickUpAll;
+/**
+ * 通りがかりのcreepから奪い取る
+ */
+function stealBy(creep, roles, type = RESOURCE_ENERGY) {
+    return creep.pos
+        .findInRange(FIND_MY_CREEPS, 1, {
+        filter: (c) => roles.includes(c.memory.role),
+    })
+        .map((t) => t.transfer(creep, type));
+}
+exports.stealBy = stealBy;

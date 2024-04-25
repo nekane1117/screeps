@@ -99,9 +99,7 @@ const behavior = (creep) => {
     // 落っこちてるものを拾う
     (0, util_creep_1.pickUpAll)(creep);
     // 通りがかりにharvesterが居たら奪い取る
-    creep.pos.findInRange(FIND_MY_CREEPS, 1, { filter: (c) => ["harvester", "carrier"].some((r) => r === c.memory.role) }).forEach((c) => {
-        c.transfer(creep, RESOURCE_ENERGY);
-    });
+    (0, util_creep_1.stealBy)(creep, ["harvester", "carrier"]);
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
         changeMode(creep, "working");
     }
