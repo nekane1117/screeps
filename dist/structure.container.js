@@ -1,27 +1,23 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.containerBehavior = void 0;
 const util_creep_1 = require("./util.creep");
-function containerBehavior(containerId) {
-    var _a;
-    const container = Game.getObjectById(containerId);
+function containerBehavior(structure) {
+    var _a, _b;
     // 取れないやつが来た時は消して終了
-    if (!container) {
-        Object.values(Game.rooms).forEach((room) => {
-            delete room.memory.containers[containerId];
-        });
-        return console.log(`Clearing non-existing container memory: ${Game.rooms} ${containerId}`);
+    if (!isTarget(structure)) {
+        return console.log(`${structure.id} is not container(${structure.structureType})`);
     }
-    if (!container.room.memory.containers[containerId] || !((_a = container.room.memory.containers[containerId]) === null || _a === void 0 ? void 0 : _a.carrierName)) {
-        container.room.memory.containers[containerId] = {
-            carrierName: `C_${container.pos.x.toString().padStart(2, "0")}_${container.pos.y.toString().padStart(2, "0")}`,
+    // 自分用のメモリを初期化する
+    if (!structure.room.memory.containers[structure.id] || !((_a = structure.room.memory.containers[structure.id]) === null || _a === void 0 ? void 0 : _a.carrierName)) {
+        structure.room.memory.containers[structure.id] = {
+            carrierName: `C_${structure.pos.x.toString().padStart(2, "0")}_${structure.pos.y.toString().padStart(2, "0")}`,
         };
     }
-    const carrierName = container.room.memory.containers[containerId].carrierName;
+    const carrierName = (_b = structure.room.memory.containers[structure.id]) === null || _b === void 0 ? void 0 : _b.carrierName;
     if (carrierName) {
         // Creepが無ければSpawnを探す
         if (!Game.creeps[carrierName]) {
-            const spawn = container.room
+            const spawn = structure.room
                 .find(FIND_STRUCTURES, {
                 filter: (s) => s.structureType === STRUCTURE_SPAWN,
             })
@@ -31,7 +27,7 @@ function containerBehavior(containerId) {
                 spawn.spawnCreep((0, util_creep_1.bodyMaker)("carrier", spawn.room.energyAvailable), carrierName, {
                     memory: {
                         role: "carrier",
-                        storeId: containerId,
+                        storeId: structure.id,
                     },
                 });
             }
@@ -42,4 +38,7 @@ function containerBehavior(containerId) {
         return;
     }
 }
-exports.containerBehavior = containerBehavior;
+exports.default = containerBehavior;
+function isTarget(s) {
+    return s.structureType === STRUCTURE_CONTAINER;
+}

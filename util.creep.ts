@@ -210,3 +210,10 @@ export function stealBy(creep: Creep, roles: ROLES[], type: ResourceConstant = R
     })
     .map((t) => t.transfer(creep, type));
 }
+
+export const ATTACK_TARGET: (FIND_HOSTILE_CREEPS | FIND_HOSTILE_POWER_CREEPS | FIND_HOSTILE_SPAWNS | FIND_HOSTILE_STRUCTURES)[] = [
+  FIND_HOSTILE_CREEPS,
+  FIND_HOSTILE_POWER_CREEPS,
+  FIND_HOSTILE_SPAWNS,
+  FIND_HOSTILE_STRUCTURES,
+];

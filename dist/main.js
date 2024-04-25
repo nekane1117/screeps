@@ -3,10 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const roles_1 = require("./roles");
 const role_room_1 = require("./role.room");
 const role_spawn_1 = __importDefault(require("./role.spawn"));
-const structure_container_1 = require("./structure.container");
+const roles_1 = require("./roles");
+const structures_1 = __importDefault(require("./structures"));
 module.exports.loop = function () {
     if (Game.time % 100 === 0 && Game.cpu.bucket == 10000) {
         Game.cpu.generatePixel();
@@ -31,7 +31,9 @@ module.exports.loop = function () {
         var _a, _b;
         (0, role_room_1.roomBehavior)(room);
         (_a = spawnGroup[room.name]) === null || _a === void 0 ? void 0 : _a.map(role_spawn_1.default);
-        Object.keys(room.memory.containers).forEach((id) => (0, structure_container_1.containerBehavior)(id));
+        // 構造物の動き
+        room.find(FIND_STRUCTURES).map((s) => { var _a; return (_a = structures_1.default[s.structureType]) === null || _a === void 0 ? void 0 : _a.call(structures_1.default, s); });
+        // Creepの動き
         (_b = creepGroup[room.name]) === null || _b === void 0 ? void 0 : _b.map((c) => { var _a; return !c.spawning && ((_a = roles_1.behaviors[c.memory.role]) === null || _a === void 0 ? void 0 : _a.call(roles_1.behaviors, c)); });
     });
 };

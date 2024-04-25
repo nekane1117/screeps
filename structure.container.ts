@@ -1,26 +1,23 @@
 import { bodyMaker } from "./util.creep";
 
-export function containerBehavior(containerId: Id<StructureContainer>) {
-  const container = Game.getObjectById(containerId);
+export default function containerBehavior(structure: Structure) {
   // 取れないやつが来た時は消して終了
-  if (!container) {
-    Object.values(Game.rooms).forEach((room) => {
-      delete room.memory.containers[containerId];
-    });
-    return console.log(`Clearing non-existing container memory: ${Game.rooms} ${containerId}`);
+  if (!isTarget(structure)) {
+    return console.log(`${structure.id} is not container(${structure.structureType})`);
   }
 
-  if (!container.room.memory.containers[containerId] || !container.room.memory.containers[containerId]?.carrierName) {
-    container.room.memory.containers[containerId] = {
-      carrierName: `C_${container.pos.x.toString().padStart(2, "0")}_${container.pos.y.toString().padStart(2, "0")}`,
+  // 自分用のメモリを初期化する
+  if (!structure.room.memory.containers[structure.id] || !structure.room.memory.containers[structure.id]?.carrierName) {
+    structure.room.memory.containers[structure.id] = {
+      carrierName: `C_${structure.pos.x.toString().padStart(2, "0")}_${structure.pos.y.toString().padStart(2, "0")}`,
     };
   }
 
-  const carrierName = container.room.memory.containers[containerId]!.carrierName;
+  const carrierName = structure.room.memory.containers[structure.id]?.carrierName;
   if (carrierName) {
     // Creepが無ければSpawnを探す
     if (!Game.creeps[carrierName]) {
-      const spawn = container.room
+      const spawn = structure.room
         .find(FIND_STRUCTURES, {
           filter: (s): s is StructureSpawn => s.structureType === STRUCTURE_SPAWN,
         })
@@ -30,7 +27,7 @@ export function containerBehavior(containerId: Id<StructureContainer>) {
         spawn.spawnCreep(bodyMaker("carrier", spawn.room.energyAvailable), carrierName, {
           memory: {
             role: "carrier",
-            storeId: containerId,
+            storeId: structure.id,
           } as CarrierMemory,
         });
       }
@@ -39,4 +36,8 @@ export function containerBehavior(containerId: Id<StructureContainer>) {
     // メモリが見つからなければ終了
     return;
   }
+}
+
+function isTarget(s: Structure): s is StructureContainer {
+  return s.structureType === STRUCTURE_CONTAINER;
 }

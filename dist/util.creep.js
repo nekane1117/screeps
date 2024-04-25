@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.stealBy = exports.pickUpAll = exports.commonHarvest = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.ATTACK_TARGET = exports.stealBy = exports.pickUpAll = exports.commonHarvest = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -198,3 +198,9 @@ function stealBy(creep, roles, type = RESOURCE_ENERGY) {
         .map((t) => t.transfer(creep, type));
 }
 exports.stealBy = stealBy;
+exports.ATTACK_TARGET = [
+    FIND_HOSTILE_CREEPS,
+    FIND_HOSTILE_POWER_CREEPS,
+    FIND_HOSTILE_SPAWNS,
+    FIND_HOSTILE_STRUCTURES,
+];

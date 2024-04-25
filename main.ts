@@ -1,7 +1,7 @@
-import { behaviors } from "./roles";
 import { roomBehavior } from "./role.room";
 import spawnBehavior from "./role.spawn";
-import { containerBehavior } from "./structure.container";
+import { behaviors } from "./roles";
+import structures from "./structures";
 
 module.exports.loop = function () {
   if (Game.time % 100 === 0 && Game.cpu.bucket == 10000) {
@@ -30,8 +30,11 @@ module.exports.loop = function () {
     roomBehavior(room);
 
     spawnGroup[room.name]?.map(spawnBehavior);
-    (Object.keys(room.memory.containers) as Id<StructureContainer>[]).forEach((id) => containerBehavior(id));
 
+    // 構造物の動き
+    room.find(FIND_STRUCTURES).map((s) => structures[s.structureType]?.(s));
+
+    // Creepの動き
     creepGroup[room.name]?.map((c) => !c.spawning && behaviors[c.memory.role]?.(c));
   });
 };
