@@ -20,7 +20,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     })?.id)
   ) {
     const target = Game.getObjectById(creep.memory.workTargetId);
-    if (target) {
+    if (target && target.hits < target.hitsMax) {
       creep.memory.worked = creep.repair(target);
       switch (creep.memory.worked) {
         // 資源不足
@@ -55,7 +55,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // withdraw
-  // withdraw
   if (
     creep.memory.storeId ||
     (creep.memory.storeId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
@@ -66,8 +65,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   ) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
-      creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY);
-      switch (creep.memory.worked) {
+      creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);
+      switch (creep.memory.collected) {
         case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
           changeMode(creep, "collecting");
           break;
@@ -89,8 +88,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         // 有りえない系
         case ERR_NOT_OWNER:
         case ERR_INVALID_ARGS:
-          console.log(`${creep.name} build returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
-          creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
+          console.log(`${creep.name} build returns ${RETURN_CODE_DECODER[creep.memory.collected.toString()]}`);
+          creep.say(RETURN_CODE_DECODER[creep.memory.collected.toString()]);
           break;
         // 問題ない系
         case OK:
@@ -121,7 +120,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 export default behavior;
 
 function isRepairer(creep: Creeps): creep is Repairer {
-  return creep.memory.role === "carrier";
+  return creep.memory.role === "repairer";
 }
 
 function changeMode(creep: Repairer, mode: "working" | "collecting") {

@@ -121,4 +121,5 @@ declare interface RepairerMemory extends HarvesterMemory {
   workTargetId?: Id<Structure> | null;
   /** 資源をもらいに行く先 */
   storeId?: StoreTarget["id"] | null;
+  collected?: ScreepsReturnCode;
 }

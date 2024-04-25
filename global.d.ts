@@ -1,5 +1,5 @@
-import _ from "lodash"
+import _ from "lodash";
 
 declare global {
-  declare const _: _.LoDashStatic
+  declare const _: _.LoDashStatic;
 }

@@ -16,7 +16,7 @@ const behavior = (creep) => {
             ignoreCreeps: true,
         })) === null || _a === void 0 ? void 0 : _a.id)) {
         const target = Game.getObjectById(creep.memory.workTargetId);
-        if (target) {
+        if (target && target.hits < target.hitsMax) {
             creep.memory.worked = creep.repair(target);
             switch (creep.memory.worked) {
                 // 資源不足
@@ -50,7 +50,6 @@ const behavior = (creep) => {
         }
     }
     // withdraw
-    // withdraw
     if (creep.memory.storeId ||
         (creep.memory.storeId = (_b = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (s) => {
@@ -59,8 +58,8 @@ const behavior = (creep) => {
         })) === null || _b === void 0 ? void 0 : _b.id)) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
-            creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY);
-            switch (creep.memory.worked) {
+            creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);
+            switch (creep.memory.collected) {
                 case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
                     changeMode(creep, "collecting");
                     break;
@@ -81,8 +80,8 @@ const behavior = (creep) => {
                 // 有りえない系
                 case ERR_NOT_OWNER:
                 case ERR_INVALID_ARGS:
-                    console.log(`${creep.name} build returns ${util_creep_1.RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
-                    creep.say(util_creep_1.RETURN_CODE_DECODER[creep.memory.worked.toString()]);
+                    console.log(`${creep.name} build returns ${util_creep_1.RETURN_CODE_DECODER[creep.memory.collected.toString()]}`);
+                    creep.say(util_creep_1.RETURN_CODE_DECODER[creep.memory.collected.toString()]);
                     break;
                 // 問題ない系
                 case OK:
@@ -110,7 +109,7 @@ const behavior = (creep) => {
 };
 exports.default = behavior;
 function isRepairer(creep) {
-    return creep.memory.role === "carrier";
+    return creep.memory.role === "repairer";
 }
 function changeMode(creep, mode) {
     if (creep.memory.mode !== mode) {
