@@ -1,3 +1,5 @@
+import { defaultTo } from "./utils.common";
+
 export function isStoreTarget(x: Structure): x is StoreTarget {
   return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -113,19 +115,25 @@ export function getSpawnNamesInRoom(room: Room) {
   }
 }
 
-export function commonHarvest(creep: Harvester | Builder | Upgrader | Repairer) {
+type CommonHarvestOpts = {
+  activeOnly: boolean;
+};
+
+export function commonHarvest(creep: Harvester | Builder | Upgrader | Repairer, opts?: Partial<CommonHarvestOpts>) {
   // 対象設定処理
   if (
     !(
       creep.memory.harvestTargetId ||
-      (creep.memory.harvestTargetId = creep.pos.findClosestByPath(
-        _(creep.room.memory.activeSource)
-          .map((id) => Game.getObjectById(id))
-          .compact()
-          .value(),
-        {
-          ignoreCreeps: true,
-        },
+      (creep.memory.harvestTargetId = (
+        defaultTo(opts?.activeOnly, true)
+          ? creep.pos.findClosestByPath(
+              _(creep.room.memory.activeSource)
+                .map((id) => Game.getObjectById(id))
+                .compact()
+                .value(),
+              { ignoreCreeps: true },
+            )
+          : creep.pos.findClosestByPath(FIND_SOURCES, { ignoreCreeps: true })
       )?.id)
     )
   ) {

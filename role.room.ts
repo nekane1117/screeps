@@ -31,7 +31,7 @@ export function roomBehavior(room: Room) {
   }
 
   // エクステンション建てる
-  creteExtensions(room);
+  creteStructures(room);
 }
 
 function getHarvesterLimit(room: Room) {
@@ -71,22 +71,25 @@ function findActiceSource(room: Room) {
     .value();
 }
 
-/** エクステンション建てる */
-function creteExtensions(room: Room) {
+/** 部屋ごとの色々を建てる */
+function creteStructures(room: Room) {
   const spawn = Object.entries(Game.spawns).find(([_, s]) => s.room.name === room.name)?.[1];
+  const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN];
   if (room.controller && spawn) {
-    const extensions = [...room.find(FIND_MY_CONSTRUCTION_SITES), ...room.find(FIND_MY_STRUCTURES)].filter((s) => s.structureType === STRUCTURE_EXTENSION);
     const terrain = room.getTerrain();
-    if (extensions.length < CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][room.controller.level]) {
-      for (const dist of _.range(1, 25)) {
-        for (const dy of _.range(-dist, dist + 1)) {
-          for (const dx of _.range(-dist, dist + 1)) {
-            if (
-              Math.abs(dx) + Math.abs(dy) === dist &&
-              terrain.get(spawn.pos.x + dx, spawn.pos.y + dy) !== TERRAIN_MASK_WALL &&
-              room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, (dx + dy) % 2 === 0 ? STRUCTURE_EXTENSION : STRUCTURE_ROAD) === OK
-            ) {
-              return;
+    for (const target of targets) {
+      const extensions = [...room.find(FIND_MY_CONSTRUCTION_SITES), ...room.find(FIND_MY_STRUCTURES)].filter((s) => s.structureType === target);
+      if (extensions.length < CONTROLLER_STRUCTURES[target][room.controller.level]) {
+        for (const dist of _.range(1, 25)) {
+          for (const dy of _.range(-dist, dist + 1)) {
+            for (const dx of _.range(-dist, dist + 1)) {
+              if (
+                Math.abs(dx) + Math.abs(dy) === dist &&
+                terrain.get(spawn.pos.x + dx, spawn.pos.y + dy) !== TERRAIN_MASK_WALL &&
+                room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, (dx + dy) % 2 === 0 ? target : STRUCTURE_ROAD) === OK
+              ) {
+                return;
+              }
             }
           }
         }

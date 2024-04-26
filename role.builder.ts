@@ -9,7 +9,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // https://docs.screeps.com/simultaneous-actions.html
 
   // harvest
-  commonHarvest(creep);
+  commonHarvest(creep, {
+    // 切れててもでも近寄る
+    activeOnly: false,
+  });
 
   // build
   if (!(creep.memory.buildingId || (creep.memory.buildingId = creep.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES, { ignoreCreeps: true })?.id))) {
@@ -124,19 +127,22 @@ function isBuilder(creep: Creep): creep is Builder {
   return creep.memory.role === "builder";
 }
 const changeMode = (creep: Builder, mode: "working" | "collecting") => {
-  if (mode !== creep.memory.mode) {
-    creep.say(mode);
+  if (mode !== (creep.memory.mode === "harvesting" ? "collecting" : creep.memory.mode)) {
     if (mode === "working") {
+      creep.say(mode);
       creep.memory.mode = mode;
     } else {
       creep.memory.mode = creep.room.find(FIND_STRUCTURES, {
         filter: (s): s is StoreTarget => {
-          return isStoreTarget(s) && s.store.getUsedCapacity(RESOURCE_ENERGY) !== 0;
+          return (
+            isStoreTarget(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => s.structureType === t) && s.store.getUsedCapacity(RESOURCE_ENERGY) !== 0
+          );
         },
-      })
+      }).length
         ? "collecting"
         : "harvesting";
     }
+    creep.say(creep.memory.mode);
     creep.memory.buildingId = undefined;
     creep.memory.harvestTargetId = undefined;
     creep.memory.harvested = undefined;

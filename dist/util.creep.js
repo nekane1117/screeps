@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ATTACK_TARGET = exports.stealBy = exports.pickUpAll = exports.commonHarvest = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
+const utils_common_1 = require("./utils.common");
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -107,16 +108,16 @@ function getSpawnNamesInRoom(room) {
     }
 }
 exports.getSpawnNamesInRoom = getSpawnNamesInRoom;
-function commonHarvest(creep) {
+function commonHarvest(creep, opts) {
     var _a;
     // 対象設定処理
     if (!(creep.memory.harvestTargetId ||
-        (creep.memory.harvestTargetId = (_a = creep.pos.findClosestByPath(_(creep.room.memory.activeSource)
-            .map((id) => Game.getObjectById(id))
-            .compact()
-            .value(), {
-            ignoreCreeps: true,
-        })) === null || _a === void 0 ? void 0 : _a.id))) {
+        (creep.memory.harvestTargetId = (_a = ((0, utils_common_1.defaultTo)(opts === null || opts === void 0 ? void 0 : opts.activeOnly, true)
+            ? creep.pos.findClosestByPath(_(creep.room.memory.activeSource)
+                .map((id) => Game.getObjectById(id))
+                .compact()
+                .value(), { ignoreCreeps: true })
+            : creep.pos.findClosestByPath(FIND_SOURCES, { ignoreCreeps: true }))) === null || _a === void 0 ? void 0 : _a.id))) {
         // 完全に見つからなければうろうろしておく
         randomWalk(creep);
     }
