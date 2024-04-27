@@ -62,10 +62,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.memory.transferId ||
       (creep.memory.transferId = creep.pos.findClosestByPath(
         creep.room.find(FIND_STRUCTURES, {
-          filter: (s): s is StructureSpawn | StructureStorage | StructureContainer => {
+          filter: (s): s is StructureSpawn | StructureStorage | StructureContainer | StructureExtension => {
             // 対象のいずれか
             return (
-              [STRUCTURE_SPAWN, STRUCTURE_STORAGE, STRUCTURE_CONTAINER].some((t) => s.structureType === t) &&
+              [STRUCTURE_SPAWN, STRUCTURE_STORAGE, STRUCTURE_CONTAINER, STRUCTURE_EXTENSION].some((t) => s.structureType === t) &&
               // かつ自分じゃない
               s.id !== store.id &&
               // かつ自分より近い
