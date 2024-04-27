@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { DIRECTIONS, RETURN_CODE_DECODER, commonHarvest, customMove, isStoreTarget, pickUpAll, randomWalk } from "./util.creep";
+import { RETURN_CODE_DECODER, commonHarvest, customMove, isStoreTarget, pickUpAll, randomWalk } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isBuilder(creep)) {
@@ -83,13 +83,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "collecting") {
             const moved = customMove(creep, store);
-            creep.memory._move &&
-              creep.say(
-                `${creep.memory._move.path[0].x},${creep.memory._move.path[0].y},${DIRECTIONS[creep.memory._move.path[0].direction]
-                  .split("_")
-                  .map((s) => s[0])
-                  .join("")}`,
-              );
             if (moved !== OK) {
               console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`);
               creep.say(RETURN_CODE_DECODER[moved.toString()]);
