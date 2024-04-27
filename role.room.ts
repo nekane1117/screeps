@@ -10,18 +10,6 @@ export function roomBehavior(room: Room) {
     room.memory.harvesterLimit = getHarvesterLimit(room);
   }
 
-  // コンテナのリストをあらかじめ作っておく
-  room.memory.containers = room
-    .find(FIND_STRUCTURES, {
-      filter: (s) => s.structureType === STRUCTURE_CONTAINER,
-    })
-    .reduce(
-      (record, s) => {
-        return { ...record, [s.id]: { carrierName: "" } };
-      },
-      {} as Partial<Record<string, RoomContainerMemory>>,
-    );
-
   // 今使えるソース
   room.memory.activeSource = findActiceSource(room);
 

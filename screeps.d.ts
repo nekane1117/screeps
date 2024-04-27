@@ -50,8 +50,6 @@ declare interface RoomMemory {
     names: string[];
   };
   roadLayed: number;
-
-  containers: Partial<Record<Id<StructureContainer>, RoomContainerMemory>>;
 }
 
 declare interface Upgrader extends Creep {
@@ -105,10 +103,6 @@ declare interface CarrierMemory extends HarvesterMemory {
   storeId: StructureContainer["id"];
   /** 配送先 */
   transferId?: StoreTarget["id"] | null;
-}
-
-declare interface RoomContainerMemory {
-  carrierName: string;
 }
 
 declare interface Repairer extends Creep {
