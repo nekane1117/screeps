@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ATTACK_TARGET = exports.stealBy = exports.pickUpAll = exports.commonHarvest = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.ATTACK_TARGET = exports.stealBy = exports.pickUpAll = exports.commonHarvest = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.DIRECTIONS = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
 const utils_common_1 = require("./utils.common");
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
@@ -31,8 +31,21 @@ function bodyMaker(role, cost) {
     return bodies.slice(0, bodies.length - 1);
 }
 exports.bodyMaker = bodyMaker;
+exports.DIRECTIONS = {
+    [TOP_LEFT]: "TOP_LEFT",
+    [TOP]: "TOP",
+    [TOP_RIGHT]: "TOP_RIGHT",
+    [LEFT]: "LEFT",
+    [RIGHT]: "RIGHT",
+    [BOTTOM_LEFT]: "BOTTOM_LEFT",
+    [BOTTOM]: "BOTTOM",
+    [BOTTOM_RIGHT]: "BOTTOM_RIGHT",
+};
 function randomWalk(creep) {
-    const directions = [TOP_LEFT, TOP, TOP_RIGHT, LEFT, RIGHT, BOTTOM_LEFT, BOTTOM, BOTTOM_RIGHT];
+    const directions = _(exports.DIRECTIONS)
+        .keys()
+        .map((d) => Number(d))
+        .run();
     return creep.move(directions[_.random(0, directions.length - 1)]);
 }
 exports.randomWalk = randomWalk;

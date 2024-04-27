@@ -5,6 +5,12 @@ declare interface CreepMemory {
   role: ROLES;
   // 担当作業の作業結果
   worked?: ScreepsReturnCode;
+  _move?: {
+    dest: { x: number; y: number; room: string };
+    time: typeof Game.time;
+    path: PathStep[];
+    room: string;
+  };
 }
 
 /** 全部のCreepの型 */

@@ -77,6 +77,8 @@ const behavior = (creep) => {
                 case ERR_NOT_IN_RANGE:
                     if (creep.memory.mode === "collecting") {
                         const moved = (0, util_creep_1.customMove)(creep, store);
+                        creep.memory._move &&
+                            creep.say(`${creep.memory._move.path[0].x},${creep.memory._move.path[0].y},${util_creep_1.DIRECTIONS[creep.memory._move.path[0].direction]}`);
                         if (moved !== OK) {
                             console.log(`${creep.name} ${util_creep_1.RETURN_CODE_DECODER[moved.toString()]}`);
                             creep.say(util_creep_1.RETURN_CODE_DECODER[moved.toString()]);

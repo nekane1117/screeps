@@ -54,7 +54,7 @@ const behavior = (spawn) => {
         });
     }
     // repairerが不足しているとき
-    if (spawn.room.find(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax }).length && // 建設がある
+    if (spawn.room.find(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax * 0.5 }).length && // 建設がある
         ((creepsInRoom === null || creepsInRoom === void 0 ? void 0 : creepsInRoom.repairer) || []).length === 0 &&
         spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["repairer"]), spawn.room.energyCapacityAvailable * 0.8) // エネルギー余ってる
     ) {
@@ -80,7 +80,7 @@ const generateCreepName = (role) => {
         builder: "B",
         carrier: "C",
         defender: "D",
-        harvester: "H",
+        harvester: "G", // gatherer
         repairer: "R",
         upgrader: "U",
     };

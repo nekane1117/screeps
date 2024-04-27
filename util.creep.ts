@@ -33,8 +33,22 @@ export function bodyMaker(role: ROLES, cost: number): BodyPartConstant[] {
   return bodies.slice(0, bodies.length - 1);
 }
 
+export const DIRECTIONS: Record<DirectionConstant, string> = {
+  [TOP_LEFT]: "TOP_LEFT",
+  [TOP]: "TOP",
+  [TOP_RIGHT]: "TOP_RIGHT",
+  [LEFT]: "LEFT",
+  [RIGHT]: "RIGHT",
+  [BOTTOM_LEFT]: "BOTTOM_LEFT",
+  [BOTTOM]: "BOTTOM",
+  [BOTTOM_RIGHT]: "BOTTOM_RIGHT",
+};
+
 export function randomWalk(creep: Creep) {
-  const directions = [TOP_LEFT, TOP, TOP_RIGHT, LEFT, RIGHT, BOTTOM_LEFT, BOTTOM, BOTTOM_RIGHT];
+  const directions = _(DIRECTIONS)
+    .keys()
+    .map((d) => Number(d))
+    .run() as DirectionConstant[];
   return creep.move(directions[_.random(0, directions.length - 1)]);
 }
 
