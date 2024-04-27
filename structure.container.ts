@@ -7,7 +7,20 @@ export default function containerBehavior(structure: Structure) {
   }
 
   // 自分用のメモリを初期化する
-  return _.range(2)
+  const memory = Memory.storages[structure.id] || (Memory.storages[structure.id] = { carrierRequests: 1 });
+
+  if (Game.time % 100 === 0) {
+    if (structure.store.getUsedCapacity() / structure.store.getCapacity() < 0.25 && memory.carrierRequests > 1) {
+      // 25%を切ったときはキャリアを減らす
+      --memory.carrierRequests;
+    } else if (structure.store.getUsedCapacity() / structure.store.getCapacity() < 0.75) {
+      // 75%を上回ったときはキャリアを増やす
+      memory.carrierRequests = Math.min(memory.carrierRequests + 1, 3);
+    }
+  }
+
+  // 要求数に応じてキャリアを作る(わざわざ処分はしない)
+  return _.range(memory.carrierRequests)
     .map((n) => `C_${structure.pos.x}_${structure.pos.y}_${n}`)
     .map((name) => {
       // Creepが無ければSpawnを探す

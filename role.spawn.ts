@@ -35,10 +35,7 @@ const behavior = (spawn: StructureSpawn) => {
   }
 
   // harvesterが不足しているとき
-  if (
-    (creepsInRoom.harvester || []).length < spawn.room.memory.harvesterLimit &&
-    spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["harvester"]), spawn.room.energyCapacityAvailable * 0.6)
-  ) {
+  if ((creepsInRoom.harvester || []).length < spawn.room.memory.harvesterLimit && spawn.room.energyAvailable > getBodyCost(MIN_BODY["harvester"])) {
     return spawn.spawnCreep(bodyMaker("harvester", spawn.room.energyAvailable), generateCreepName("harvester"), {
       memory: {
         role: "harvester",
@@ -48,6 +45,7 @@ const behavior = (spawn: StructureSpawn) => {
   // builderが不足しているとき
   if (
     spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length && // 建設がある
+    (creepsInRoom.builder || []).length < 4 &&
     spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.8) // エネルギー余ってる
   ) {
     return spawn.spawnCreep(bodyMaker("builder", spawn.room.energyAvailable), generateCreepName("builder"), {
@@ -69,15 +67,6 @@ const behavior = (spawn: StructureSpawn) => {
         role: "repairer",
         mode: "working",
       } as RepairerMemory,
-    });
-  }
-
-  // 目いっぱいたまったらもっとアップグレードする
-  if ((creepsInRoom.upgrader?.length || 0) < 9 - (spawn.room.controller?.level || 0) && spawn.room.energyAvailable > spawn.room.energyCapacityAvailable * 0.9) {
-    return spawn.spawnCreep(bodyMaker("upgrader", spawn.room.energyAvailable), generateCreepName("upgrader"), {
-      memory: {
-        role: "upgrader",
-      } as UpgraderMemory,
     });
   }
 

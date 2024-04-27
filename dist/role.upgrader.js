@@ -43,8 +43,6 @@ const behavior = (creep) => {
     // withdraw
     // 落っこちてるものを拾う
     (0, util_creep_1.pickUpAll)(creep);
-    // 通りがかりにharvesterが居たら奪い取る
-    (0, util_creep_1.stealBy)(creep, ["harvester", "carrier"]);
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
         changeMode(creep, "working");
     }

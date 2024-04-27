@@ -59,7 +59,8 @@ exports.MIN_BODY = Object.freeze({
 });
 const DIFF_BODY = Object.freeze({
     // ギリsourceまで行ければいいので
-    harvester: [WORK, CARRY, CARRY],
+    harvester: [WORK, WORK, CARRY],
+    builder: [WORK, CARRY],
 });
 const getBodyCost = (bodies) => _(bodies)
     .map((p) => BODYPART_COST[p])

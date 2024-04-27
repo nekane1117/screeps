@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.defaultTo = void 0;
+exports.ObjectKeys = exports.defaultTo = void 0;
 function defaultTo(value, defaultValue) {
     if (value === undefined || value === null) {
         return defaultValue;
@@ -10,3 +10,7 @@ function defaultTo(value, defaultValue) {
     }
 }
 exports.defaultTo = defaultTo;
+function ObjectKeys(o) {
+    return Object.keys(o);
+}
+exports.ObjectKeys = ObjectKeys;

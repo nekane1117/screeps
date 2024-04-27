@@ -60,7 +60,7 @@ const behavior = (creep) => {
                 s.id !== store.id &&
                     // かつ満タンじゃない
                     "store" in s &&
-                    s.store.getFreeCapacity() !== 0 &&
+                    s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0 &&
                     // かつ自分より近い
                     s.pos.getRangeTo(spawn) < rangeToSpawn);
             },
@@ -115,6 +115,7 @@ const behavior = (creep) => {
             (0, util_creep_1.randomWalk)(creep);
         }
     }
+    // 通りがかりに奪い取る
     (0, util_creep_1.stealBy)(creep, ["harvester"]);
     // 落っこちてるものを拾う
     (0, util_creep_1.pickUpAll)(creep);

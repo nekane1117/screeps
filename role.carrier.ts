@@ -69,7 +69,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
               s.id !== store.id &&
               // かつ満タンじゃない
               "store" in s &&
-              s.store.getFreeCapacity() !== 0 &&
+              s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0 &&
               // かつ自分より近い
               s.pos.getRangeTo(spawn) < rangeToSpawn
             );
@@ -132,6 +132,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
+  // 通りがかりに奪い取る
   stealBy(creep, ["harvester"]);
 
   // 落っこちてるものを拾う

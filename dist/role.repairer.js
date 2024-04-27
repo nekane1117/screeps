@@ -94,8 +94,6 @@ const behavior = (creep) => {
             creep.memory.storeId = undefined;
         }
     }
-    // 通りがかりから奪い取る
-    (0, util_creep_1.stealBy)(creep, ["harvester", "carrier", "upgrader"]);
     // 落っこちてるものを拾う
     (0, util_creep_1.pickUpAll)(creep);
     // 空っぽになったら収集モードに切り替える

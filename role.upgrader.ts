@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, commonHarvest, customMove, pickUpAll, stealBy } from "./util.creep";
+import { RETURN_CODE_DECODER, commonHarvest, customMove, pickUpAll } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isUpgrader(creep)) {
@@ -45,9 +45,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // withdraw
   // 落っこちてるものを拾う
   pickUpAll(creep);
-
-  // 通りがかりにharvesterが居たら奪い取る
-  stealBy(creep, ["harvester", "carrier"]);
 
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
     changeMode(creep, "working");

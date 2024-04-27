@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, commonHarvest, customMove, isStoreTarget, pickUpAll, randomWalk } from "./util.creep";
+import { RETURN_CODE_DECODER, commonHarvest, customMove, isStoreTarget, pickUpAll, randomWalk, stealBy } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isHarvester(creep)) {
@@ -72,6 +72,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       randomWalk(creep);
     }
   }
+
+  // 通りがかりに奪い取る
+  stealBy(creep, ["builder", "repairer", "upgrader"]);
 
   // 落っこちてるものを拾う
   pickUpAll(creep);

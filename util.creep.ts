@@ -63,7 +63,8 @@ export const MIN_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
 
 const DIFF_BODY: Partial<Record<ROLES, BodyPartConstant[]>> = Object.freeze({
   // ギリsourceまで行ければいいので
-  harvester: [WORK, CARRY, CARRY],
+  harvester: [WORK, WORK, CARRY],
+  builder: [WORK, CARRY],
 });
 
 export const getBodyCost = (bodies: BodyPartConstant[]) =>
