@@ -6,11 +6,18 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return console.log(`${creep.name} is not Harvester`);
   }
 
+  const spawn = creep.pos.findClosestByRange(
+    _(getSpawnNamesInRoom(creep.room))
+      .map((name) => Game.spawns[name])
+      .compact()
+      .run(),
+  );
+
   // https://docs.screeps.com/simultaneous-actions.html
 
   // withdraw
   const store = Game.getObjectById(creep.memory.storeId);
-  if (store) {
+  if (store && spawn) {
     // 取得しようとしてみる
     creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY);
     switch (creep.memory.worked) {
@@ -44,35 +51,32 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         break;
     }
   } else {
-    const spawn = _(getSpawnNamesInRoom(creep.room))
-      .map((name) => Game.spawns[name])
-      .compact()
-      .first();
-
-    if (spawn) {
-      if (creep.pos.isNearTo(spawn)) {
-        // Spawnまでたどり着いたら処分
-        creep.suicide();
-      } else {
-        creep.moveTo(spawn);
-      }
-    } else {
-      // Spawnも見つからなければ処分
-      creep.suicide();
-    }
+    // Storeが見つからなければ処分
+    return creep.suicide();
   }
   // transfer
   // 対象設定処理
+  const rangeToSpawn = store.pos.getRangeTo(spawn);
   if (
     !(
       creep.memory.transferId ||
-      (creep.memory.transferId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s): s is StoreTarget => {
-          // 空きのあるSpawnから一番近いストレージ
-          return isStoreTarget(s) && s.id !== creep.memory.storeId && s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0;
+      (creep.memory.transferId = creep.pos.findClosestByPath(
+        creep.room.find(FIND_STRUCTURES, {
+          filter: (s): s is StructureSpawn | StructureStorage | StructureContainer => {
+            // 対象のいずれか
+            return (
+              [STRUCTURE_SPAWN, STRUCTURE_STORAGE, STRUCTURE_CONTAINER].some((t) => s.structureType === t) &&
+              // かつ自分じゃない
+              s.id !== store.id &&
+              // かつ自分より近い
+              s.pos.getRangeTo(spawn) < rangeToSpawn
+            );
+          },
+        }),
+        {
+          ignoreCreeps: true,
         },
-        ignoreCreeps: true,
-      })?.id)
+      )?.id)
     )
   ) {
     // 完全に見つからなければうろうろしておく
@@ -132,7 +136,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   pickUpAll(creep);
 
   // 空っぽになったら収集モードに切り替える
-  if (creep.store[RESOURCE_ENERGY] === 0) {
+  if (creep.store.getUsedCapacity(RESOURCE_ENERGY) < creep.store.getCapacity(RESOURCE_ENERGY) * 0.25) {
     changeMode(creep, "collecting");
   }
   // 満タンだったら分配モードに切り替える
