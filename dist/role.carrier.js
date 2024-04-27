@@ -55,10 +55,12 @@ const behavior = (creep) => {
     if (!(creep.memory.transferId ||
         (creep.memory.transferId = (_a = creep.pos.findClosestByPath(creep.room.find(FIND_STRUCTURES, {
             filter: (s) => {
-                // 対象のいずれか
-                return ([STRUCTURE_SPAWN, STRUCTURE_STORAGE, STRUCTURE_CONTAINER, STRUCTURE_EXTENSION].some((t) => s.structureType === t) &&
-                    // かつ自分じゃない
-                    s.id !== store.id &&
+                return (
+                // かつ自分じゃない
+                s.id !== store.id &&
+                    // かつ満タンじゃない
+                    "store" in s &&
+                    s.store.getFreeCapacity() !== 0 &&
                     // かつ自分より近い
                     s.pos.getRangeTo(spawn) < rangeToSpawn);
             },
