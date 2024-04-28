@@ -70,6 +70,15 @@ const behavior = (spawn: StructureSpawn) => {
     });
   }
 
+  // upgraderが居ないときもとりあえず作る
+  if ((creepsInRoom.upgrader || []).length < 3 && spawn.room.energyAvailable > getBodyCost(MIN_BODY["upgrader"])) {
+    return spawn.spawnCreep(bodyMaker("upgrader", spawn.room.energyAvailable), generateCreepName("upgrader"), {
+      memory: {
+        role: "upgrader",
+      } as UpgraderMemory,
+    });
+  }
+
   return OK;
 };
 

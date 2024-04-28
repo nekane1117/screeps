@@ -64,6 +64,14 @@ const behavior = (spawn) => {
             },
         });
     }
+    // upgraderが居ないときもとりあえず作る
+    if ((creepsInRoom.upgrader || []).length < 3 && spawn.room.energyAvailable > (0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["upgrader"])) {
+        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("upgrader", spawn.room.energyAvailable), generateCreepName("upgrader"), {
+            memory: {
+                role: "upgrader",
+            },
+        });
+    }
     return OK;
 };
 const generateCreepName = (role) => {

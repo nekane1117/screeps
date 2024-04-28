@@ -1,5 +1,3 @@
-import { ATTACK_TARGET } from "./util.creep";
-
 export default function behaviors(tower: Structure) {
   if (!isTower(tower)) {
     return console.log(`${tower.id} is not tower`);
@@ -10,11 +8,13 @@ export default function behaviors(tower: Structure) {
   // attack
   if (!tower.room.controller?.safeMode) {
     // safe modeじゃなければ一番近い敵に攻撃する
-    const target = tower.pos.findClosestByRange(
-      ATTACK_TARGET.map((find) => {
-        return tower.room.find(find);
-      }).flat(),
-    );
+
+    const target = tower.pos.findClosestByRange([
+      ...tower.room.find(FIND_HOSTILE_CREEPS),
+      ...tower.room.find(FIND_HOSTILE_POWER_CREEPS),
+      ...tower.room.find(FIND_HOSTILE_SPAWNS),
+      ...tower.room.find(FIND_HOSTILE_STRUCTURES),
+    ]);
 
     target && tower.attack(target);
   }

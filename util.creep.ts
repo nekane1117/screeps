@@ -65,6 +65,7 @@ const DIFF_BODY: Partial<Record<ROLES, BodyPartConstant[]>> = Object.freeze({
   // ギリsourceまで行ければいいので
   harvester: [WORK, WORK, CARRY],
   builder: [WORK, CARRY],
+  upgrader: [WORK, CARRY, WORK, CARRY, MOVE],
 });
 
 export const getBodyCost = (bodies: BodyPartConstant[]) =>
@@ -233,10 +234,3 @@ export function stealBy(creep: Creep, roles: ROLES[], type: ResourceConstant = R
     })
     .map((t) => t.transfer(creep, type));
 }
-
-export const ATTACK_TARGET: (FIND_HOSTILE_CREEPS | FIND_HOSTILE_POWER_CREEPS | FIND_HOSTILE_SPAWNS | FIND_HOSTILE_STRUCTURES)[] = [
-  FIND_HOSTILE_CREEPS,
-  FIND_HOSTILE_POWER_CREEPS,
-  FIND_HOSTILE_SPAWNS,
-  FIND_HOSTILE_STRUCTURES,
-];

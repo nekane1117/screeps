@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const util_creep_1 = require("./util.creep");
 function behaviors(tower) {
     var _a;
     if (!isTower(tower)) {
@@ -10,9 +9,12 @@ function behaviors(tower) {
     // attack
     if (!((_a = tower.room.controller) === null || _a === void 0 ? void 0 : _a.safeMode)) {
         // safe modeじゃなければ一番近い敵に攻撃する
-        const target = tower.pos.findClosestByRange(util_creep_1.ATTACK_TARGET.map((find) => {
-            return tower.room.find(find);
-        }).flat());
+        const target = tower.pos.findClosestByRange([
+            ...tower.room.find(FIND_HOSTILE_CREEPS),
+            ...tower.room.find(FIND_HOSTILE_POWER_CREEPS),
+            ...tower.room.find(FIND_HOSTILE_SPAWNS),
+            ...tower.room.find(FIND_HOSTILE_STRUCTURES),
+        ]);
         target && tower.attack(target);
     }
     // repair

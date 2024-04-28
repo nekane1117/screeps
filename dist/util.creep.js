@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ATTACK_TARGET = exports.stealBy = exports.pickUpAll = exports.commonHarvest = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.DIRECTIONS = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.stealBy = exports.pickUpAll = exports.commonHarvest = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.DIRECTIONS = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
 const utils_common_1 = require("./utils.common");
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
@@ -61,6 +61,7 @@ const DIFF_BODY = Object.freeze({
     // ギリsourceまで行ければいいので
     harvester: [WORK, WORK, CARRY],
     builder: [WORK, CARRY],
+    upgrader: [WORK, CARRY, WORK, CARRY, MOVE],
 });
 const getBodyCost = (bodies) => _(bodies)
     .map((p) => BODYPART_COST[p])
@@ -213,9 +214,3 @@ function stealBy(creep, roles, type = RESOURCE_ENERGY) {
         .map((t) => t.transfer(creep, type));
 }
 exports.stealBy = stealBy;
-exports.ATTACK_TARGET = [
-    FIND_HOSTILE_CREEPS,
-    FIND_HOSTILE_POWER_CREEPS,
-    FIND_HOSTILE_SPAWNS,
-    FIND_HOSTILE_STRUCTURES,
-];

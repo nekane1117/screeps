@@ -61,11 +61,12 @@ declare interface UpgraderMemory extends HarvesterMemory {
   /** 今何してるか
    * working    : 作業中
    * collecting : 資源取得中
-   * harvesting : 自力で収集中
    */
-  mode: "working" | "collecting" | "harvesting";
+  mode: "working" | "collecting";
   /** 資源をもらいに行く先 */
   storeId?: StoreTarget["id"] | null;
+
+  collected?: ScreepsReturnCode;
 }
 
 declare interface Builder extends Creep {
