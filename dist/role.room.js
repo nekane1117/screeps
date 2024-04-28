@@ -72,10 +72,10 @@ function creteStructures(room) {
 }
 const generateCross = (dx, dy) => {
     if (dx % 2 === 0) {
-        return (dx + dy + (dx % 4 === 0 ? -2 : 0)) % 4 !== 0;
+        return !((dy % 4) + (dx % 4 === 0 ? -2 : 0) === 0);
     }
     else {
-        return (dx + dy) % 2 !== 0;
+        return dy % 2 === 0;
     }
 };
 function roadLayer(room) {
@@ -96,7 +96,7 @@ function roadLayer(room) {
                             return;
                         }
                         else if (pos.look().some((s) => "structureType" in s && s.structureType === STRUCTURE_ROAD)) {
-                            costMatrix.set(x, y, 2);
+                            costMatrix.set(x, y, 1.5);
                         }
                     });
                 });

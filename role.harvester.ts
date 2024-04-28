@@ -17,7 +17,17 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     !(
       creep.memory.storeId ||
       (creep.memory.storeId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s): s is StoreTarget => isStoreTarget(s) && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
+        filter: (s): s is StoreTarget => {
+          const spawn = creep.pos.findClosestByRange(Object.values(Game.spawns));
+          if (!spawn) {
+            // 一番近いSpawnが無いときはエラーなので適当
+            return false;
+          }
+          // 最寄りSpawnまでの距離
+          const rangeToSpawn = creep.pos.getRangeTo(spawn);
+          // 空きがあって最寄りSpawnまでより近いやつ
+          return isStoreTarget(s) && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && creep.pos.getRangeTo(s) <= rangeToSpawn;
+        },
         ignoreCreeps: true,
       })?.id)
     )

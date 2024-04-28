@@ -9,7 +9,14 @@ const behavior = (creep) => {
     (0, util_creep_1.commonHarvest)(creep);
     if (!(creep.memory.storeId ||
         (creep.memory.storeId = (_a = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-            filter: (s) => (0, util_creep_1.isStoreTarget)(s) && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
+            filter: (s) => {
+                const spawn = creep.pos.findClosestByRange(Object.values(Game.spawns));
+                if (!spawn) {
+                    return false;
+                }
+                const rangeToSpawn = creep.pos.getRangeTo(spawn);
+                return (0, util_creep_1.isStoreTarget)(s) && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && creep.pos.getRangeTo(s) <= rangeToSpawn;
+            },
             ignoreCreeps: true,
         })) === null || _a === void 0 ? void 0 : _a.id))) {
         if (creep.memory.mode === "working") {

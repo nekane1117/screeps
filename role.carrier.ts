@@ -77,6 +77,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         }),
         {
           ignoreCreeps: true,
+          plainCost: 1.5,
         },
       )?.id)
     )

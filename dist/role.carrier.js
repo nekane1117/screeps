@@ -51,6 +51,7 @@ const behavior = (creep) => {
             },
         }), {
             ignoreCreeps: true,
+            plainCost: 1.5,
         })) === null || _a === void 0 ? void 0 : _a.id))) {
         if (creep.memory.mode === "working") {
             (0, util_creep_1.randomWalk)(creep);
