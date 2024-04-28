@@ -53,7 +53,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     (creep.memory.storeId = creep.room.controller.pos.findClosestByPath(FIND_STRUCTURES, {
       // コントローラーから一番近い倉庫に行く
       filter: (s: Structure): s is StoreTarget => {
-        return isStoreTarget(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType);
+        return isStoreTarget(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) && s.store[RESOURCE_ENERGY] > 0;
       },
     })?.id)
   ) {

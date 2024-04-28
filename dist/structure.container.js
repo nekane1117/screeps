@@ -11,7 +11,7 @@ function containerBehavior(structure) {
     if (Game.time % 100 === 0) {
         if (structure.store.getUsedCapacity() / structure.store.getCapacity() < 0.25 && memory.carrierRequests > 1) {
             // 25%を切ったときはキャリアを減らす
-            --memory.carrierRequests;
+            memory.carrierRequests = memory.carrierRequests - 1;
         }
         else if (structure.store.getUsedCapacity() / structure.store.getCapacity() < 0.75) {
             // 75%を上回ったときはキャリアを増やす
