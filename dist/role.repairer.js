@@ -6,10 +6,7 @@ const behavior = (creep) => {
     if (!isRepairer(creep)) {
         return console.log(`${creep.name} is not Repairer`);
     }
-    // https://docs.screeps.com/simultaneous-actions.html
-    // harvest
     (0, util_creep_1.commonHarvest)(creep);
-    // repair
     if (creep.memory.workTargetId ||
         (creep.memory.workTargetId = (_a = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (s) => s.hits < s.hitsMax,
@@ -19,7 +16,6 @@ const behavior = (creep) => {
         if (target && target.hits < target.hitsMax) {
             creep.memory.worked = creep.repair(target);
             switch (creep.memory.worked) {
-                // 資源不足
                 case ERR_NOT_ENOUGH_RESOURCES:
                     changeMode(creep, "collecting");
                     break;
@@ -28,14 +24,12 @@ const behavior = (creep) => {
                         (0, util_creep_1.customMove)(creep, target);
                     }
                     break;
-                // 有りえない系
                 case ERR_NOT_OWNER:
                 case ERR_NO_BODYPART:
                 case ERR_INVALID_TARGET:
                     console.log(`${creep.name} repair returns ${util_creep_1.RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
                     creep.say(util_creep_1.RETURN_CODE_DECODER[creep.memory.worked.toString()]);
                     break;
-                // 問題ない系
                 case OK:
                 case ERR_BUSY:
                 default:
@@ -43,13 +37,10 @@ const behavior = (creep) => {
             }
         }
         else {
-            // 指定されていたソースが見つからないとき
-            // 対象をクリアしてうろうろしておく
             creep.memory.workTargetId = undefined;
             (0, util_creep_1.randomWalk)(creep);
         }
     }
-    // withdraw
     if (creep.memory.storeId ||
         (creep.memory.storeId = (_b = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (s) => {
@@ -60,13 +51,12 @@ const behavior = (creep) => {
         if (store) {
             creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);
             switch (creep.memory.collected) {
-                case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
+                case ERR_NOT_ENOUGH_RESOURCES:
                     changeMode(creep, "collecting");
                     break;
-                case ERR_INVALID_TARGET: // 対象が変
+                case ERR_INVALID_TARGET:
                     creep.memory.storeId = undefined;
                     break;
-                // 満タンまで取った
                 case ERR_FULL:
                     changeMode(creep, "working");
                     break;
@@ -77,13 +67,11 @@ const behavior = (creep) => {
                         moved !== OK && creep.say(util_creep_1.RETURN_CODE_DECODER[moved.toString()]);
                     }
                     break;
-                // 有りえない系
                 case ERR_NOT_OWNER:
                 case ERR_INVALID_ARGS:
                     console.log(`${creep.name} build returns ${util_creep_1.RETURN_CODE_DECODER[creep.memory.collected.toString()]}`);
                     creep.say(util_creep_1.RETURN_CODE_DECODER[creep.memory.collected.toString()]);
                     break;
-                // 問題ない系
                 case OK:
                 case ERR_BUSY:
                 default:
@@ -94,13 +82,10 @@ const behavior = (creep) => {
             creep.memory.storeId = undefined;
         }
     }
-    // 落っこちてるものを拾う
     (0, util_creep_1.pickUpAll)(creep);
-    // 空っぽになったら収集モードに切り替える
     if (creep.store[RESOURCE_ENERGY] === 0) {
         changeMode(creep, "collecting");
     }
-    // 満タンだったら分配モードに切り替える
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
         changeMode(creep, "working");
     }

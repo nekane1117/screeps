@@ -17,17 +17,14 @@ exports.squareDiff = Object.freeze([
     [1, 1],
 ]);
 function bodyMaker(role, cost) {
-    // 入れ物
     const bodies = [...exports.MIN_BODY[role]];
     const diff = [...(DIFF_BODY[role] || exports.MIN_BODY[role])];
     const getTotalCost = () => _(bodies)
         .map((p) => BODYPART_COST[p])
         .sum();
-    // cost以下かつ50個以下の間くっつける
     while (getTotalCost() <= cost && bodies.length <= 50) {
         bodies.push(diff[_.random(0, diff.length - 1)]);
     }
-    // 1個分超えてるはずなので最後の１個を消して返す
     return bodies.slice(0, bodies.length - 1);
 }
 exports.bodyMaker = bodyMaker;
@@ -58,7 +55,6 @@ exports.MIN_BODY = Object.freeze({
     upgrader: [WORK, CARRY, MOVE],
 });
 const DIFF_BODY = Object.freeze({
-    // ギリsourceまで行ければいいので
     harvester: [WORK, WORK, CARRY],
     builder: [WORK, CARRY],
     upgrader: [WORK, CARRY, WORK, CARRY, MOVE],
@@ -125,7 +121,6 @@ function getSpawnNamesInRoom(room) {
 exports.getSpawnNamesInRoom = getSpawnNamesInRoom;
 function commonHarvest(creep, opts) {
     var _a;
-    // 対象設定処理
     if (!(creep.memory.harvestTargetId ||
         (creep.memory.harvestTargetId = (_a = ((0, utils_common_1.defaultTo)(opts === null || opts === void 0 ? void 0 : opts.activeOnly, true)
             ? creep.pos.findClosestByPath(_(creep.room.memory.activeSource)
@@ -133,11 +128,9 @@ function commonHarvest(creep, opts) {
                 .compact()
                 .value(), { ignoreCreeps: true })
             : creep.pos.findClosestByPath(FIND_SOURCES, { ignoreCreeps: true }))) === null || _a === void 0 ? void 0 : _a.id))) {
-        // 完全に見つからなければうろうろしておく
         randomWalk(creep);
     }
     else {
-        // 対象が見つかった時
         const source = Game.getObjectById(creep.memory.harvestTargetId);
         if (source) {
             creep.memory.harvested = {
@@ -147,7 +140,6 @@ function commonHarvest(creep, opts) {
             switch (creep.memory.harvested.result) {
                 case ERR_NOT_IN_RANGE:
                     if (creep.memory.mode === "harvesting") {
-                        // 収集モードで近くにいないときは近寄る
                         const moved = (0, exports.customMove)(creep, source);
                         switch (moved) {
                             case OK:
@@ -161,29 +153,24 @@ function commonHarvest(creep, opts) {
                         }
                     }
                     break;
-                // 資源がダメ系
-                case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
-                case ERR_INVALID_TARGET: // 対象が変
+                case ERR_NOT_ENOUGH_RESOURCES:
+                case ERR_INVALID_TARGET:
                     creep.memory.harvestTargetId = undefined;
                     break;
-                // 来ないはずのやつ
-                case ERR_NOT_OWNER: // 自creepじゃない
-                case ERR_NOT_FOUND: // mineralは対象外
-                case ERR_NO_BODYPART: // WORKが無い
+                case ERR_NOT_OWNER:
+                case ERR_NOT_FOUND:
+                case ERR_NO_BODYPART:
                     console.log(`${creep.name} harvest returns ${exports.RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]}`);
                     creep.say(exports.RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]);
                     break;
-                // 大丈夫なやつ
-                case OK: // OK
-                case ERR_TIRED: // 疲れた
-                case ERR_BUSY: // spawning
+                case OK:
+                case ERR_TIRED:
+                case ERR_BUSY:
                 default:
                     break;
             }
         }
         else {
-            // 指定されていたソースが見つからないとき
-            // 対象をクリアしてうろうろしておく
             creep.memory.harvestTargetId = undefined;
             creep.memory.harvested = undefined;
             randomWalk(creep);
@@ -192,20 +179,14 @@ function commonHarvest(creep, opts) {
 }
 exports.commonHarvest = commonHarvest;
 function pickUpAll(creep) {
-    //withdraw
-    // 通りがかりに落っこちてるリソースを拾う
     creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1).forEach((resource) => {
         creep.pickup(resource);
     });
-    // 通りがかりの墓から拾う
     [...creep.pos.findInRange(FIND_TOMBSTONES, 1), ...creep.pos.findInRange(FIND_RUINS, 1)].forEach((tombstone) => {
         creep.withdraw(tombstone, RESOURCE_ENERGY);
     });
 }
 exports.pickUpAll = pickUpAll;
-/**
- * 通りがかりのcreepから奪い取る
- */
 function stealBy(creep, roles, type = RESOURCE_ENERGY) {
     return creep.pos
         .findInRange(FIND_MY_CREEPS, 1, {
