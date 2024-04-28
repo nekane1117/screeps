@@ -60,7 +60,7 @@ function creteStructures(room) {
                         for (const dx of _.range(-dist, dist + 1)) {
                             if (Math.abs(dx) + Math.abs(dy) === dist &&
                                 terrain.get(spawn.pos.x + dx, spawn.pos.y + dy) !== TERRAIN_MASK_WALL &&
-                                room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, (dx + dy) % 2 === 0 ? target : STRUCTURE_ROAD) === OK) {
+                                room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, generateCross(dx, dy) ? target : STRUCTURE_ROAD) === OK) {
                                 return;
                             }
                         }
@@ -70,6 +70,14 @@ function creteStructures(room) {
         }
     }
 }
+const generateCross = (dx, dy) => {
+    if (dx % 2 === 0) {
+        return (dx + dy + (dx % 4 === 0 ? -2 : 0)) % 4 !== 0;
+    }
+    else {
+        return (dx + dy) % 2 !== 0;
+    }
+};
 function roadLayer(room) {
     _((0, util_creep_1.getSpawnNamesInRoom)(room))
         .map((name) => Game.spawns[name])

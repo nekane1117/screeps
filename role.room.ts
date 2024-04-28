@@ -74,7 +74,7 @@ function creteStructures(room: Room) {
               if (
                 Math.abs(dx) + Math.abs(dy) === dist &&
                 terrain.get(spawn.pos.x + dx, spawn.pos.y + dy) !== TERRAIN_MASK_WALL &&
-                room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, (dx + dy) % 2 === 0 ? target : STRUCTURE_ROAD) === OK
+                room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, generateCross(dx, dy) ? target : STRUCTURE_ROAD) === OK
               ) {
                 return;
               }
@@ -85,6 +85,20 @@ function creteStructures(room: Room) {
     }
   }
 }
+
+/**
+ * 十字を作る
+ * @returns {boolean} true:建設したいもの false:道
+ */
+const generateCross = (dx: number, dy: number): boolean => {
+  if (dx % 2 === 0) {
+    // dxが偶数の時
+    return (dx + dy + (dx % 4 === 0 ? -2 : 0)) % 4 !== 0;
+  } else {
+    // dxが奇数の時
+    return (dx + dy) % 2 !== 0;
+  }
+};
 
 // 全てのspawnからsourceまでの道を引く
 function roadLayer(room: Room) {
