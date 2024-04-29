@@ -81,8 +81,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "collecting") {
             const moved = customMove(creep, store);
-            console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`);
-            moved !== OK && creep.say(RETURN_CODE_DECODER[moved.toString()]);
+            moved !== OK && (console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`), creep.say(RETURN_CODE_DECODER[moved.toString()]));
           }
           break;
         // 有りえない系
