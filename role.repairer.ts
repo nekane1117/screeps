@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, commonHarvest, customMove, isStoreTarget, pickUpAll, randomWalk } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll, randomWalk } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isRepairer(creep)) {
@@ -7,9 +7,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // https://docs.screeps.com/simultaneous-actions.html
-
-  // harvest
-  commonHarvest(creep);
 
   // repair
   if (

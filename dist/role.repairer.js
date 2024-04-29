@@ -6,7 +6,6 @@ const behavior = (creep) => {
     if (!isRepairer(creep)) {
         return console.log(`${creep.name} is not Repairer`);
     }
-    (0, util_creep_1.commonHarvest)(creep);
     if (creep.memory.workTargetId ||
         (creep.memory.workTargetId = (_a = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (s) => s.hits < s.hitsMax,
