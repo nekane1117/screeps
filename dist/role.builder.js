@@ -7,10 +7,7 @@ const behavior = (creep) => {
         return console.log(`${creep.name} is not Builder`);
     }
     (0, util_creep_1.commonHarvest)(creep);
-    const mySites = _(Object.values(Game.constructionSites)).filter((c) => { var _a; return ((_a = c.room) === null || _a === void 0 ? void 0 : _a.name) === creep.room.name; });
-    const pMax = mySites.map((c) => c.progress / c.progressTotal).max();
-    if (!(creep.memory.buildingId ||
-        (creep.memory.buildingId = (_a = creep.pos.findClosestByPath(mySites.filter((c) => c.progress / c.progressTotal >= pMax).run(), { ignoreCreeps: true })) === null || _a === void 0 ? void 0 : _a.id))) {
+    if (!(creep.memory.buildingId || (creep.memory.buildingId = (_a = creep.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES, { ignoreCreeps: true })) === null || _a === void 0 ? void 0 : _a.id))) {
         (0, util_creep_1.randomWalk)(creep);
     }
     else {

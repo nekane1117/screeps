@@ -12,16 +12,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   commonHarvest(creep);
 
   // build
-  // 自分のサイト
-  const mySites = _(Object.values(Game.constructionSites)).filter((c): c is ConstructionSite => c.room?.name === creep.room.name);
-  // 一番進んでるやつ
-  const pMax = mySites.map((c) => c.progress / c.progressTotal).max();
-  if (
-    !(
-      creep.memory.buildingId ||
-      (creep.memory.buildingId = creep.pos.findClosestByPath(mySites.filter((c) => c.progress / c.progressTotal >= pMax).run(), { ignoreCreeps: true })?.id)
-    )
-  ) {
+  if (!(creep.memory.buildingId || (creep.memory.buildingId = creep.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES, { ignoreCreeps: true })?.id))) {
     // 完全に見つからなければうろうろしておく
     randomWalk(creep);
   } else {
