@@ -92,7 +92,7 @@ function creteStructures(room: Room) {
  */
 const generateCross = (dx: number, dy: number): boolean => {
   if (dx % 2 === 0) {
-    return !((dy % 4) + (dx % 4 === 0 ? -2 : 0) === 0);
+    return !((dy + (dx % 4 === 0 ? -2 : 0)) % 4 === 0);
   } else {
     return dy % 2 === 0;
   }

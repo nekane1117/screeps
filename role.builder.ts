@@ -9,13 +9,19 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // https://docs.screeps.com/simultaneous-actions.html
 
   // harvest
-  commonHarvest(creep, {
-    // 切れててもでも近寄る
-    activeOnly: false,
-  });
+  commonHarvest(creep);
 
   // build
-  if (!(creep.memory.buildingId || (creep.memory.buildingId = creep.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES, { ignoreCreeps: true })?.id))) {
+  // 自分のサイト
+  const mySites = _(Object.values(Game.constructionSites)).filter((c): c is ConstructionSite => c.room?.name === creep.room.name);
+  // 一番進んでるやつ
+  const pMax = mySites.map((c) => c.progress / c.progressTotal).max();
+  if (
+    !(
+      creep.memory.buildingId ||
+      (creep.memory.buildingId = creep.pos.findClosestByPath(mySites.filter((c) => c.progress / c.progressTotal >= pMax).run(), { ignoreCreeps: true })?.id)
+    )
+  ) {
     // 完全に見つからなければうろうろしておく
     randomWalk(creep);
   } else {
@@ -64,6 +70,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     (creep.memory.storeId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
       filter: (s): s is StoreTarget => {
         return isStoreTarget(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) && s.store.getUsedCapacity(RESOURCE_ENERGY) !== 0;
+      },
+    })?.id) ||
+    (creep.memory.storeId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      filter: (s): s is StructureSpawn => {
+        return s.structureType === STRUCTURE_SPAWN && s.store.getUsedCapacity(RESOURCE_ENERGY) / s.store.getCapacity(RESOURCE_ENERGY) > 0.8;
       },
     })?.id)
   ) {

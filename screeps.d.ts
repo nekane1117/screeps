@@ -11,6 +11,7 @@ declare interface CreepMemory {
     path: PathStep[];
     room: string;
   };
+  harvestMoved?: ReturnType<Creep["moveTo"]>;
 }
 
 /** 全部のCreepの型 */

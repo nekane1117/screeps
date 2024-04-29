@@ -140,15 +140,15 @@ function commonHarvest(creep, opts) {
             switch (creep.memory.harvested.result) {
                 case ERR_NOT_IN_RANGE:
                     if (creep.memory.mode === "harvesting") {
-                        const moved = (0, exports.customMove)(creep, source);
-                        switch (moved) {
+                        creep.memory.harvestMoved = (0, exports.customMove)(creep, source);
+                        switch (creep.memory.harvestMoved) {
                             case OK:
                                 break;
                             case ERR_NO_PATH:
                                 creep.memory.harvestTargetId = undefined;
                                 break;
                             default:
-                                creep.say(exports.RETURN_CODE_DECODER[moved.toString()]);
+                                creep.say(exports.RETURN_CODE_DECODER[creep.memory.harvestMoved.toString()]);
                                 break;
                         }
                     }

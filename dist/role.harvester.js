@@ -58,7 +58,6 @@ const behavior = (creep) => {
             (0, util_creep_1.randomWalk)(creep);
         }
     }
-    (0, util_creep_1.stealBy)(creep, ["builder", "repairer", "upgrader"]);
     (0, util_creep_1.pickUpAll)(creep);
     if (creep.store[RESOURCE_ENERGY] === 0) {
         changeMode(creep, "harvesting");

@@ -167,8 +167,8 @@ export function commonHarvest(creep: Harvester | Builder | Upgrader | Repairer, 
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "harvesting") {
             // 収集モードで近くにいないときは近寄る
-            const moved = customMove(creep, source);
-            switch (moved) {
+            creep.memory.harvestMoved = customMove(creep, source);
+            switch (creep.memory.harvestMoved) {
               case OK:
                 break;
               case ERR_NO_PATH:
@@ -176,7 +176,7 @@ export function commonHarvest(creep: Harvester | Builder | Upgrader | Repairer, 
                 break;
 
               default:
-                creep.say(RETURN_CODE_DECODER[moved.toString()]);
+                creep.say(RETURN_CODE_DECODER[creep.memory.harvestMoved.toString()]);
                 break;
             }
           }
