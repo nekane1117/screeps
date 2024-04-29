@@ -2,15 +2,8 @@ import { roomBehavior } from "./role.room";
 import spawnBehavior from "./role.spawn";
 import { behaviors } from "./roles";
 import structures from "./structures";
-import { ObjectKeys } from "./utils.common";
 
 module.exports.loop = function () {
-  Memory.storages = ObjectKeys(Memory.storages || {}).reduce((storages, id) => {
-    if (!Game.getObjectById(id)) {
-      delete storages[id];
-    }
-    return storages;
-  }, Memory.storages || {});
   if (Game.time % 100 === 0 && Game.cpu.bucket == 10000) {
     Game.cpu.generatePixel();
   }

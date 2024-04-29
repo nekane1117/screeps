@@ -125,11 +125,3 @@ declare interface RepairerMemory extends HarvesterMemory {
   storeId?: StoreTarget["id"] | null;
   collected?: ScreepsReturnCode;
 }
-
-declare interface Memory {
-  storages: { [name: Id<Structure>]: StorageMemory };
-}
-
-declare interface StorageMemory {
-  carrierRequests: number;
-}

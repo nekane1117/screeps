@@ -7,14 +7,7 @@ const role_room_1 = require("./role.room");
 const role_spawn_1 = __importDefault(require("./role.spawn"));
 const roles_1 = require("./roles");
 const structures_1 = __importDefault(require("./structures"));
-const utils_common_1 = require("./utils.common");
 module.exports.loop = function () {
-    Memory.storages = (0, utils_common_1.ObjectKeys)(Memory.storages || {}).reduce((storages, id) => {
-        if (!Game.getObjectById(id)) {
-            delete storages[id];
-        }
-        return storages;
-    }, Memory.storages || {});
     if (Game.time % 100 === 0 && Game.cpu.bucket == 10000) {
         Game.cpu.generatePixel();
     }
