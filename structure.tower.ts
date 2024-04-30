@@ -20,25 +20,26 @@ export default function behaviors(tower: Structure) {
   }
   // repair
   // ダメージを受けている建物
-  _(tower.room.find(FIND_STRUCTURES, { filter: (s: Structure): s is Structure<StructureConstant> => s.hits < s.hitsMax }))
-    .tap((damaged) => {
-      // の中で最少のHP
-      const minHit = _(damaged)
-        .map((s) => s.hits)
-        .min();
-      // の建物の一覧
-      const minHits =
-        _(damaged)
-          .filter((s) => s.hits === minHit)
-          .run() || [];
-      // の中から一番近いやつ
-      const target = tower.pos.findClosestByRange(minHits);
-      // があれば修理する
-      if (target) {
-        tower.repair(target);
-      }
-    })
-    .run();
+  tower.store.getUsedCapacity(RESOURCE_ENERGY) / tower.store.getCapacity(RESOURCE_ENERGY) > 0.8 &&
+    _(tower.room.find(FIND_STRUCTURES, { filter: (s: Structure): s is Structure<StructureConstant> => s.hits < s.hitsMax }))
+      .tap((damaged) => {
+        // の中で最少のHP
+        const minHit = _(damaged)
+          .map((s) => s.hits)
+          .min();
+        // の建物の一覧
+        const minHits =
+          _(damaged)
+            .filter((s) => s.hits === minHit)
+            .run() || [];
+        // の中から一番近いやつ
+        const target = tower.pos.findClosestByRange(minHits);
+        // があれば修理する
+        if (target) {
+          tower.repair(target);
+        }
+      })
+      .run();
   // heal
   _(tower.room.find(FIND_MY_CREEPS, { filter: (s: Creep): s is Creep => s.hits < s.hitsMax }))
     .tap((damaged) => {

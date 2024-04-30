@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
+const utils_common_1 = require("./utils.common");
 const behavior = (creep) => {
-    var _a;
+    var _a, _b;
     if (!isCarrier(creep)) {
         return console.log(`${creep.name} is not Harvester`);
     }
@@ -40,19 +41,22 @@ const behavior = (creep) => {
     else {
         return creep.suicide();
     }
-    const rangeToSpawn = store.pos.getRangeTo(spawn);
+    const { spawn: spawns = [], storage = [], container = [], extension = [], link = [], tower = [], } = creep.room
+        .find(FIND_STRUCTURES, {
+        filter: (s) => {
+            return (s.id !== store.id &&
+                "store" in s &&
+                s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0);
+        },
+    })
+        .reduce((storages, s) => {
+        return Object.assign(Object.assign({}, storages), { [s.structureType]: (0, utils_common_1.defaultTo)(storages[s.structureType], []).concat(s) });
+    }, {});
     if (!(creep.memory.transferId ||
-        (creep.memory.transferId = (_a = creep.pos.findClosestByPath(creep.room.find(FIND_STRUCTURES, {
-            filter: (s) => {
-                return (s.id !== store.id &&
-                    "store" in s &&
-                    s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0 &&
-                    s.pos.getRangeTo(spawn) < rangeToSpawn);
-            },
-        }), {
-            ignoreCreeps: true,
-            plainCost: 1.5,
-        })) === null || _a === void 0 ? void 0 : _a.id))) {
+        (creep.memory.transferId = (_a = creep.pos.findClosestByPath(_([...spawns, ...storage, ...container, ...link, ...extension])
+            .compact()
+            .run(), { ignoreCreeps: true })) === null || _a === void 0 ? void 0 : _a.id) ||
+        (creep.memory.transferId = (_b = creep.pos.findClosestByPath(tower, { ignoreCreeps: true })) === null || _b === void 0 ? void 0 : _b.id))) {
         if (creep.memory.mode === "working") {
             (0, util_creep_1.randomWalk)(creep);
         }

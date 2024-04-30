@@ -104,7 +104,7 @@ declare interface CarrierMemory extends HarvesterMemory {
   /** 担当倉庫 */
   storeId: StructureContainer["id"];
   /** 配送先 */
-  transferId?: StoreTarget["id"] | null;
+  transferId?: Id<Parameters<Creep["transfer"]>[0]>;
 }
 
 declare interface Repairer extends Creep {

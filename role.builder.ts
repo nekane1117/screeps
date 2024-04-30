@@ -9,7 +9,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // https://docs.screeps.com/simultaneous-actions.html
 
   // build
-  if (!(creep.memory.buildingId || (creep.memory.buildingId = creep.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES, { ignoreCreeps: true })?.id))) {
+  if (!(creep.memory.buildingId || (creep.memory.buildingId = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES)?.id))) {
     // 完全に見つからなければうろうろしておく
     randomWalk(creep);
   } else {

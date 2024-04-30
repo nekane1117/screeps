@@ -1,6 +1,10 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, getSpawnNamesInRoom, isStoreTarget, pickUpAll, randomWalk, stealBy } from "./util.creep";
+import { defaultTo } from "./utils.common";
 
+type Structures<T extends StructureConstant = StructureConstant> = {
+  [t in T]: Structure<T>[];
+};
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isCarrier(creep)) {
     return console.log(`${creep.name} is not Harvester`);
@@ -56,30 +60,42 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
   // transfer
   // 対象設定処理
-  const rangeToSpawn = store.pos.getRangeTo(spawn);
+  const {
+    spawn: spawns = [],
+    storage = [],
+    container = [],
+    extension = [],
+    link = [],
+    tower = [],
+  } = creep.room
+    .find(FIND_STRUCTURES, {
+      filter: (s): s is StructureSpawn | StructureStorage | StructureContainer | StructureExtension => {
+        return (
+          // 自分じゃない
+          s.id !== store.id &&
+          // 満タンじゃない
+          "store" in s &&
+          s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0
+        );
+      },
+    })
+    .reduce((storages, s) => {
+      return {
+        ...storages,
+        [s.structureType]: defaultTo(storages[s.structureType], []).concat(s),
+      };
+    }, {} as Structures);
 
   if (
     !(
       creep.memory.transferId ||
       (creep.memory.transferId = creep.pos.findClosestByPath(
-        creep.room.find(FIND_STRUCTURES, {
-          filter: (s): s is StructureSpawn | StructureStorage | StructureContainer | StructureExtension => {
-            return (
-              // かつ自分じゃない
-              s.id !== store.id &&
-              // かつ満タンじゃない
-              "store" in s &&
-              s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0 &&
-              // かつ自分より近い
-              s.pos.getRangeTo(spawn) < rangeToSpawn
-            );
-          },
-        }),
-        {
-          ignoreCreeps: true,
-          plainCost: 1.5,
-        },
-      )?.id)
+        _([...spawns, ...storage, ...container, ...link, ...extension])
+          .compact()
+          .run(),
+        { ignoreCreeps: true },
+      )?.id) ||
+      (creep.memory.transferId = creep.pos.findClosestByPath(tower, { ignoreCreeps: true })?.id)
     )
   ) {
     // 完全に見つからなければうろうろしておく
