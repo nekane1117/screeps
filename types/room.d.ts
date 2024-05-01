@@ -1,6 +1,6 @@
 /// <reference types="screeps" />
 declare interface RoomMemory {
-  sources: SourceInfo[];
+  sources: Record<Id<Source>, SourceInfo>;
 }
 
 declare interface SourceInfo {

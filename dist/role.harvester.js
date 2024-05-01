@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const constants_1 = require("./constants");
 const behavior = (creep) => {
-    if (!isMe(creep)) {
+    if (!isHarvester(creep)) {
         console.log(`${creep.name} is not harvester`);
         return ERR_INVALID_TARGET;
     }
@@ -43,6 +43,6 @@ const behavior = (creep) => {
     return creep.memory.harvested;
 };
 exports.default = behavior;
-function isMe(c) {
-    return c.memory.role === "harvester";
+function isHarvester(c) {
+    return "role" in c.memory && c.memory.role === "harvester";
 }

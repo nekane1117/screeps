@@ -5,7 +5,7 @@ import { RETURN_CODE_DECODER } from "./constants";
  * 無いと困るので自分の周囲の建築だけする
  */
 const behavior: CreepBehavior = (creep: Creeps) => {
-  if (!isMe(creep)) {
+  if (!isHarvester(creep)) {
     console.log(`${creep.name} is not harvester`);
     return ERR_INVALID_TARGET;
   }
@@ -58,6 +58,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // build
+  // 射程圏内の建設はとりあえずぜんぶ叩いておく
   creep.pos.findInRange(Object.values(Game.constructionSites), 3).map((site) => creep.build(site));
 
   return creep.memory.harvested;
@@ -65,6 +66,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
 export default behavior;
 
-function isMe(c: Creeps): c is Harvester {
-  return c.memory.role === "harvester";
+function isHarvester(c: Creeps): c is Harvester {
+  return "role" in c.memory && c.memory.role === "harvester";
 }

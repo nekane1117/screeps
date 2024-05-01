@@ -49,3 +49,17 @@ export const DIRECTIONS: Record<DirectionConstant, [number, number]> = {
   [BOTTOM]: [0, 1],
   [BOTTOM_RIGHT]: [1, 1],
 };
+
+export const HARVESTER_BODY = Object.freeze([
+  // 最低構成
+  WORK,
+  MOVE,
+  CARRY,
+  // 効率
+  WORK,
+  WORK,
+  WORK,
+  WORK,
+  // 保持力
+  ..._.range(43).map(() => CARRY),
+]) as BodyPartConstant[];
