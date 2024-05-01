@@ -150,7 +150,6 @@ function commonHarvest(creep, _opts) {
                         }
                     }
                     break;
-                case ERR_NOT_ENOUGH_RESOURCES:
                 case ERR_INVALID_TARGET:
                     creep.memory.harvestTargetId = undefined;
                     break;
@@ -160,6 +159,7 @@ function commonHarvest(creep, _opts) {
                     console.log(`${creep.name} harvest returns ${exports.RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]}`);
                     creep.say(exports.RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]);
                     break;
+                case ERR_NOT_ENOUGH_RESOURCES:
                 case OK:
                 case ERR_TIRED:
                 case ERR_BUSY:

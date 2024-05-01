@@ -16,7 +16,7 @@ const behavior = (creep) => {
         creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY);
         switch (creep.memory.worked) {
             case ERR_NOT_ENOUGH_RESOURCES:
-                if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
+                if (creep.store.energy > 0 && store.store.energy === 0) {
                     changeMode(creep, "working");
                 }
                 else {
@@ -40,6 +40,9 @@ const behavior = (creep) => {
             case OK:
             case ERR_BUSY:
             default:
+                if (store.store.energy === 0) {
+                    changeMode(creep, "working");
+                }
                 break;
         }
     }
@@ -103,7 +106,7 @@ const behavior = (creep) => {
     }
     (0, util_creep_1.stealBy)(creep, ["harvester"]);
     (0, util_creep_1.pickUpAll)(creep);
-    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) < creep.store.getCapacity(RESOURCE_ENERGY) * 0.25) {
+    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
         changeMode(creep, "collecting");
     }
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {

@@ -28,7 +28,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       // 空の時
       case ERR_NOT_ENOUGH_RESOURCES:
         // 邪魔になるときがあるのでうろうろしておく
-        if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
+        if (creep.store.energy > 0 && store.store.energy === 0) {
           changeMode(creep, "working");
         } else {
           randomWalk(creep);
@@ -56,6 +56,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       case OK:
       case ERR_BUSY:
       default:
+        if (store.store.energy === 0) {
+          changeMode(creep, "working");
+        }
         break;
     }
   } else {
@@ -160,7 +163,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   pickUpAll(creep);
 
   // 空っぽになったら収集モードに切り替える
-  if (creep.store.getUsedCapacity(RESOURCE_ENERGY) < creep.store.getCapacity(RESOURCE_ENERGY) * 0.25) {
+  if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
     changeMode(creep, "collecting");
   }
   // 満タンだったら分配モードに切り替える

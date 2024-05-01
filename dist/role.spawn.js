@@ -21,19 +21,19 @@ const behavior = (spawn) => {
             },
         });
     }
-    if ((creepsInRoom.upgrader || []).length === 0 &&
-        spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["upgrader"]), spawn.room.energyCapacityAvailable * 0.8)) {
-        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("upgrader", spawn.room.energyAvailable), generateCreepName("upgrader"), {
-            memory: {
-                role: "upgrader",
-            },
-        });
-    }
     if ((creepsInRoom.harvester || []).length < spawn.room.memory.harvesterLimit &&
         spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["harvester"]), spawn.room.energyCapacityAvailable * 0.8)) {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("harvester", spawn.room.energyAvailable), generateCreepName("harvester"), {
             memory: {
                 role: "harvester",
+            },
+        });
+    }
+    if ((creepsInRoom.upgrader || []).length === 0 &&
+        spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["upgrader"]), spawn.room.energyCapacityAvailable * 0.8)) {
+        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("upgrader", spawn.room.energyAvailable), generateCreepName("upgrader"), {
+            memory: {
+                role: "upgrader",
             },
         });
     }

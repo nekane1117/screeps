@@ -7,11 +7,11 @@ function roomBehavior(room) {
     if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) === null || _a === void 0 ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
         (_b = room.controller) === null || _b === void 0 ? void 0 : _b.activateSafeMode();
     }
-    if (room.memory.harvesterLimit === undefined) {
+    if (room.memory.harvesterLimit === undefined || Game.time % 100 === 0) {
         room.memory.harvesterLimit = getHarvesterLimit(room);
     }
     room.memory.activeSource = findActiceSource(room);
-    if (!room.memory.roadLayed || Game.time - room.memory.roadLayed > 5000) {
+    if (!room.memory.roadLayed || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
         console.log("roadLayer in " + Game.time);
         roadLayer(room);
     }
@@ -49,7 +49,7 @@ function findActiceSource(room) {
 function creteStructures(room) {
     var _a;
     const spawn = (_a = Object.entries(Game.spawns).find(([_, s]) => s.room.name === room.name)) === null || _a === void 0 ? void 0 : _a[1];
-    const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN];
+    const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN, STRUCTURE_STORAGE];
     if (room.controller && spawn) {
         const terrain = room.getTerrain();
         for (const target of targets) {

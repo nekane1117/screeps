@@ -177,7 +177,6 @@ export function commonHarvest(creep: Harvester | Builder | Upgrader | Repairer, 
           break;
 
         // 資源がダメ系
-        case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
         case ERR_INVALID_TARGET: // 対象が変
           creep.memory.harvestTargetId = undefined;
           break;
@@ -189,6 +188,7 @@ export function commonHarvest(creep: Harvester | Builder | Upgrader | Repairer, 
           creep.say(RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]);
           break;
         // 大丈夫なやつ
+        case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
         case OK: // OK
         case ERR_TIRED: // 疲れた
         case ERR_BUSY: // spawning

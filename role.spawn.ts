@@ -25,6 +25,17 @@ const behavior = (spawn: StructureSpawn) => {
     );
   }
 
+  // harvesterが不足しているとき
+  if (
+    (creepsInRoom.harvester || []).length < spawn.room.memory.harvesterLimit &&
+    spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["harvester"]), spawn.room.energyCapacityAvailable * 0.8)
+  ) {
+    return spawn.spawnCreep(bodyMaker("harvester", spawn.room.energyAvailable), generateCreepName("harvester"), {
+      memory: {
+        role: "harvester",
+      } as HarvesterMemory,
+    });
+  }
   // upgraderが居ないときもとりあえず作る
   if (
     (creepsInRoom.upgrader || []).length === 0 &&
@@ -37,17 +48,6 @@ const behavior = (spawn: StructureSpawn) => {
     });
   }
 
-  // harvesterが不足しているとき
-  if (
-    (creepsInRoom.harvester || []).length < spawn.room.memory.harvesterLimit &&
-    spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["harvester"]), spawn.room.energyCapacityAvailable * 0.8)
-  ) {
-    return spawn.spawnCreep(bodyMaker("harvester", spawn.room.energyAvailable), generateCreepName("harvester"), {
-      memory: {
-        role: "harvester",
-      } as HarvesterMemory,
-    });
-  }
   // builderが不足しているとき
   if (
     spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length && // 建設がある

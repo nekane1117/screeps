@@ -6,14 +6,14 @@ export function roomBehavior(room: Room) {
     room.controller?.activateSafeMode();
   }
 
-  if (room.memory.harvesterLimit === undefined) {
+  if (room.memory.harvesterLimit === undefined || Game.time % 100 === 0) {
     room.memory.harvesterLimit = getHarvesterLimit(room);
   }
 
   // 今使えるソース
   room.memory.activeSource = findActiceSource(room);
 
-  if (!room.memory.roadLayed || Game.time - room.memory.roadLayed > 5000) {
+  if (!room.memory.roadLayed || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
     console.log("roadLayer in " + Game.time);
     roadLayer(room);
   }
@@ -23,6 +23,7 @@ export function roomBehavior(room: Room) {
 }
 
 function getHarvesterLimit(room: Room) {
+  // return 2;
   return _(room.find(FIND_SOURCES))
     .map((source) => {
       // 8近傍を取得
@@ -62,7 +63,7 @@ function findActiceSource(room: Room) {
 /** 部屋ごとの色々を建てる */
 function creteStructures(room: Room) {
   const spawn = Object.entries(Game.spawns).find(([_, s]) => s.room.name === room.name)?.[1];
-  const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN];
+  const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN, STRUCTURE_STORAGE];
   if (room.controller && spawn) {
     const terrain = room.getTerrain();
     for (const target of targets) {

@@ -107,7 +107,7 @@ function changeMode(creep: Harvester, mode: HarvesterMemory["mode"]) {
     creep.say(mode);
     Object.assign(creep.memory, {
       mode,
-      harvestTargetId: undefined,
+      // harvestTargetId: undefined,
       storeId: undefined,
     } as HarvesterMemory);
   }

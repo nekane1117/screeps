@@ -75,7 +75,6 @@ function changeMode(creep, mode) {
         creep.say(mode);
         Object.assign(creep.memory, {
             mode,
-            harvestTargetId: undefined,
             storeId: undefined,
         });
     }
