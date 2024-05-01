@@ -1,12 +1,12 @@
 import { UPGRADER_BODY } from "./constants";
-import { getBodyByCost, getCreepsInRoom, getSpawnsInRoom } from "./utils";
+import { getBodyByCost, getCreepNamesInRoom, getSpawnsInRoom } from "./utils";
 
 export default function (controller: Structure) {
   if (!isContoller(controller)) {
     return console.log(`${controller.id} is not contoller:${controller.structureType}`);
   }
 
-  const creeps = getCreepsInRoom(controller.room);
+  const creeps = getCreepNamesInRoom(controller.room);
 
   const { energyAvailable, energyCapacityAvailable } = controller.room;
 

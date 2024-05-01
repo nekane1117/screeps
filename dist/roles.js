@@ -5,8 +5,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const role_harvester_1 = __importDefault(require("./role.harvester"));
 const role_upgrader_1 = __importDefault(require("./role.upgrader"));
+const role_carrier_1 = __importDefault(require("./role.carrier"));
 const roles = {
     harvester: role_harvester_1.default,
     upgrader: role_upgrader_1.default,
+    carrier: role_carrier_1.default,
 };
 exports.default = roles;

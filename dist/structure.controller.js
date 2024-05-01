@@ -7,7 +7,7 @@ function default_1(controller) {
     if (!isContoller(controller)) {
         return console.log(`${controller.id} is not contoller:${controller.structureType}`);
     }
-    const creeps = (0, utils_1.getCreepsInRoom)(controller.room);
+    const creeps = (0, utils_1.getCreepNamesInRoom)(controller.room);
     const { energyAvailable, energyCapacityAvailable } = controller.room;
     if (((_a = creeps.upgrader) === null || _a === void 0 ? void 0 : _a.length) === 0 && energyAvailable / energyCapacityAvailable > 0.8) {
         (_b = (0, utils_1.getSpawnsInRoom)(controller.room)

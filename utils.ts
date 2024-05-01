@@ -62,7 +62,7 @@ export function cond<T, R = unknown>(...conditions: [(value: T) => boolean, (val
  * tickごとにキャッシュしたcreepの一覧を返す
  * このtickでspawnしたやつとかは入らないので注意
  * */
-export function getCreepsInRoom(room: Room) {
+export function getCreepNamesInRoom(room: Room) {
   if (Game.time === room.memory.creeps?.tick) {
     return room.memory.creeps.value;
   } else {
@@ -74,10 +74,10 @@ export function getCreepsInRoom(room: Room) {
           (creeps, c) => {
             return {
               ...creeps,
-              [c.memory.role]: (creeps[c.memory.role] || []).concat(),
+              [c.memory.role]: (creeps[c.memory.role] || []).concat(c.name),
             };
           },
-          {} as Record<ROLES, Creeps[]>,
+          {} as Record<ROLES, string[]>,
         ),
     }).value;
   }
@@ -89,11 +89,28 @@ export function getCreepsInRoom(room: Room) {
  * */
 export function getSpawnsInRoom(room: Room) {
   if (Game.time === room.memory.spawns?.tick) {
-    return room.memory.spawns.value;
+    return _(room.memory.spawns.value.map((name) => Game.spawns[name]))
+      .compact()
+      .run();
   } else {
-    return (room.memory.spawns = {
-      tick: Game.time,
-      value: Object.values(Game.spawns).filter((c) => c.room.name === room.name),
-    }).value;
+    return _(
+      (room.memory.spawns = {
+        tick: Game.time,
+        value: Object.values(Game.spawns)
+          .filter((c) => c.room.name === room.name)
+          .map((spawn) => spawn.name),
+      }).value,
+    )
+      .map((name) => Game.spawns[name])
+      .compact()
+      .run();
+  }
+}
+
+export function defaultTo<T>(value: T | undefined | null, defaultValue: T) {
+  if (value === undefined || value === null) {
+    return defaultValue;
+  } else {
+    return value;
   }
 }

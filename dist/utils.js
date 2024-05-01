@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSpawnsInRoom = exports.getCreepsInRoom = exports.cond = exports.noop = exports.stubTrue = exports.someOf = exports.shallowEq = exports.getBodyByCost = exports.ObjectKeys = void 0;
+exports.defaultTo = exports.getSpawnsInRoom = exports.getCreepNamesInRoom = exports.cond = exports.noop = exports.stubTrue = exports.someOf = exports.shallowEq = exports.getBodyByCost = exports.ObjectKeys = void 0;
 function ObjectKeys(o) {
     return Object.keys(o);
 }
@@ -56,7 +56,7 @@ function cond(...conditions) {
     };
 }
 exports.cond = cond;
-function getCreepsInRoom(room) {
+function getCreepNamesInRoom(room) {
     var _a;
     if (Game.time === ((_a = room.memory.creeps) === null || _a === void 0 ? void 0 : _a.tick)) {
         return room.memory.creeps.value;
@@ -67,22 +67,38 @@ function getCreepsInRoom(room) {
             value: Object.values(Game.creeps)
                 .filter((c) => c.room.name === room.name)
                 .reduce((creeps, c) => {
-                return Object.assign(Object.assign({}, creeps), { [c.memory.role]: (creeps[c.memory.role] || []).concat() });
+                return Object.assign(Object.assign({}, creeps), { [c.memory.role]: (creeps[c.memory.role] || []).concat(c.name) });
             }, {}),
         }).value;
     }
 }
-exports.getCreepsInRoom = getCreepsInRoom;
+exports.getCreepNamesInRoom = getCreepNamesInRoom;
 function getSpawnsInRoom(room) {
     var _a;
     if (Game.time === ((_a = room.memory.spawns) === null || _a === void 0 ? void 0 : _a.tick)) {
-        return room.memory.spawns.value;
+        return _(room.memory.spawns.value.map((name) => Game.spawns[name]))
+            .compact()
+            .run();
     }
     else {
-        return (room.memory.spawns = {
+        return _((room.memory.spawns = {
             tick: Game.time,
-            value: Object.values(Game.spawns).filter((c) => c.room.name === room.name),
-        }).value;
+            value: Object.values(Game.spawns)
+                .filter((c) => c.room.name === room.name)
+                .map((spawn) => spawn.name),
+        }).value)
+            .map((name) => Game.spawns[name])
+            .compact()
+            .run();
     }
 }
 exports.getSpawnsInRoom = getSpawnsInRoom;
+function defaultTo(value, defaultValue) {
+    if (value === undefined || value === null) {
+        return defaultValue;
+    }
+    else {
+        return value;
+    }
+}
+exports.defaultTo = defaultTo;
