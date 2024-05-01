@@ -20,6 +20,7 @@ function behavior(room) {
     _((0, utils_1.ObjectKeys)(room.memory.sources))
         .map((s) => Game.getObjectById(s))
         .compact()
-        .map(source_1.default);
+        .map(source_1.default)
+        .run();
 }
 exports.default = behavior;

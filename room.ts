@@ -27,5 +27,6 @@ export default function behavior(room: Room) {
   _(ObjectKeys(room.memory.sources))
     .map((s) => Game.getObjectById(s))
     .compact()
-    .map(sourceBehavior);
+    .map(sourceBehavior)
+    .run();
 }

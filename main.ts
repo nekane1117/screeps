@@ -1,5 +1,6 @@
 import { ObjectKeys } from "./utils";
 import roomBehavior from "./room";
+import roles from "./roles";
 
 module.exports.loop = function () {
   // ピクセル生成
@@ -21,6 +22,7 @@ module.exports.loop = function () {
     }
   });
 
-  // Room -> Structure -> Creepの順で考える
+  // Room -> Structure -> Creepの順で考えておく
   Object.values(Game.rooms).map(roomBehavior);
+  Object.values(Game.creeps).map((c) => roles[c.memory.role]?.(c));
 };
