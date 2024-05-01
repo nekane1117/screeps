@@ -17,8 +17,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // 本当に起こったはとりあえず死ぬ
     return creep.suicide();
   }
-  creep.memory.harvested = creep.harvest(source);
-  switch (creep.memory.harvested) {
+  creep.memory.worked = creep.harvest(source);
+  switch (creep.memory.worked) {
     case ERR_NOT_IN_RANGE: {
       // 移動してみる
       if (
@@ -45,8 +45,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     case ERR_NOT_FOUND: // mineralは対象外
     case ERR_NO_BODYPART: // WORKが無い
       // とりあえずログを出して終わる
-      console.log(`${creep.name} harvest returns ${RETURN_CODE_DECODER[creep.memory.harvested.toString()]}`);
-      creep.say(RETURN_CODE_DECODER[creep.memory.harvested.toString()]);
+      console.log(`${creep.name} harvest returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
+      creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
       break;
     // 大丈夫なやつ
     case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
@@ -61,7 +61,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // 射程圏内の建設はとりあえずぜんぶ叩いておく
   creep.pos.findInRange(Object.values(Game.constructionSites), 3).map((site) => creep.build(site));
 
-  return creep.memory.harvested;
+  return creep.memory.worked;
 };
 
 export default behavior;

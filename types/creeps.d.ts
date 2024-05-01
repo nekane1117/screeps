@@ -14,7 +14,7 @@ declare interface CreepMemory {
 }
 
 /** 全部のCreepの型 */
-declare type Creeps = Creep | Harvester;
+declare type Creeps = Creep | Harvester | Upgrader;
 declare interface Harvester extends Creep {
   memory: HarvesterMemory;
 }
@@ -22,7 +22,14 @@ declare interface Harvester extends Creep {
 declare interface HarvesterMemory extends CreepMemory {
   role: "harvester";
   harvestTargetId: Source["id"];
-  harvested?: ReturnType<Creep["harvest"]>;
+}
+
+declare interface Upgrader extends Creep {
+  memory: UpgraderMemory;
+}
+
+declare interface UpgraderMemory extends CreepMemory {
+  role: "upgrader";
 }
 
 declare type CreepBehavior = (creep: Creeps) => ScreepsReturnCode;
