@@ -9,7 +9,6 @@ module.exports.loop = function () {
       console.log("Clearing non-existing creep memory:", name);
     }
   });
-
   Object.keys(Memory.rooms || {}).forEach((name) => {
     if (!Game.rooms[name]) {
       delete Memory.rooms[name];
