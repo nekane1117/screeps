@@ -1,15 +1,9 @@
 /// <reference types="screeps" />
 declare interface RoomMemory {
-  harvesterLimit: number;
-  /** このtickでアクティブなソース */
-  activeSource: Source["id"][];
-  creeps?: {
-    tick: number;
-    names: string[];
-  };
-  spawns?: {
-    tick: number;
-    names: string[];
-  };
-  roadLayed: number;
+  sources: SourceInfo[];
+}
+
+declare interface SourceInfo {
+  // 周囲の地面の数
+  spaces: number;
 }
