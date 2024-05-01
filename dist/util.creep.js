@@ -55,7 +55,6 @@ exports.MIN_BODY = Object.freeze({
 });
 const DIFF_BODY = Object.freeze({
     harvester: [WORK, WORK, CARRY],
-    builder: [WORK, CARRY],
     upgrader: [WORK, CARRY, WORK, CARRY, MOVE],
 });
 const getBodyCost = (bodies) => _(bodies)

@@ -26,7 +26,10 @@ const behavior = (spawn: StructureSpawn) => {
   }
 
   // upgraderが居ないときもとりあえず作る
-  if ((creepsInRoom.upgrader || []).length === 0 && spawn.room.energyAvailable > getBodyCost(MIN_BODY["upgrader"])) {
+  if (
+    (creepsInRoom.upgrader || []).length === 0 &&
+    spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["upgrader"]), spawn.room.energyCapacityAvailable * 0.8)
+  ) {
     return spawn.spawnCreep(bodyMaker("upgrader", spawn.room.energyAvailable), generateCreepName("upgrader"), {
       memory: {
         role: "upgrader",
@@ -35,7 +38,10 @@ const behavior = (spawn: StructureSpawn) => {
   }
 
   // harvesterが不足しているとき
-  if ((creepsInRoom.harvester || []).length < spawn.room.memory.harvesterLimit && spawn.room.energyAvailable > getBodyCost(MIN_BODY["harvester"])) {
+  if (
+    (creepsInRoom.harvester || []).length < spawn.room.memory.harvesterLimit &&
+    spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["harvester"]), spawn.room.energyCapacityAvailable * 0.8)
+  ) {
     return spawn.spawnCreep(bodyMaker("harvester", spawn.room.energyAvailable), generateCreepName("harvester"), {
       memory: {
         role: "harvester",
@@ -45,7 +51,7 @@ const behavior = (spawn: StructureSpawn) => {
   // builderが不足しているとき
   if (
     spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length && // 建設がある
-    (creepsInRoom.builder || []).length < 4 &&
+    (creepsInRoom.builder || []).length === 0 &&
     spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.8) // エネルギー余ってる
   ) {
     return spawn.spawnCreep(bodyMaker("builder", spawn.room.energyAvailable), generateCreepName("builder"), {
@@ -67,15 +73,6 @@ const behavior = (spawn: StructureSpawn) => {
         role: "repairer",
         mode: "working",
       } as RepairerMemory,
-    });
-  }
-
-  // upgraderが居ないときもとりあえず作る
-  if ((creepsInRoom.upgrader || []).length < 3 && spawn.room.energyAvailable > getBodyCost(MIN_BODY["upgrader"])) {
-    return spawn.spawnCreep(bodyMaker("upgrader", spawn.room.energyAvailable), generateCreepName("upgrader"), {
-      memory: {
-        role: "upgrader",
-      } as UpgraderMemory,
     });
   }
 

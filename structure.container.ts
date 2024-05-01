@@ -6,7 +6,7 @@ export default function containerBehavior(structure: Structure) {
     return console.log(`${structure.id} is not container(${structure.structureType})`);
   }
 
-  return _.range(3).map((n) => {
+  return _.range(1).map((n) => {
     const carrierName = `C_${structure.pos.x}_${structure.pos.y}_${n}`;
 
     // Creepが無ければSpawnを探す
@@ -17,7 +17,7 @@ export default function containerBehavior(structure: Structure) {
         })
         .find((spawn) => !spawn.spawning);
       // 使えるSpawnがあったときは作る
-      if (spawn && spawn.room.energyAvailable > spawn.room.energyCapacityAvailable * 0.5) {
+      if (spawn && spawn.room.energyAvailable > spawn.room.energyCapacityAvailable * 0.9) {
         return spawn.spawnCreep(bodyMaker("carrier", spawn.room.energyAvailable), carrierName, {
           memory: {
             role: "carrier",

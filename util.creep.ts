@@ -62,7 +62,6 @@ export const MIN_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
 const DIFF_BODY: Partial<Record<ROLES, BodyPartConstant[]>> = Object.freeze({
   // ギリsourceまで行ければいいので
   harvester: [WORK, WORK, CARRY],
-  builder: [WORK, CARRY],
   upgrader: [WORK, CARRY, WORK, CARRY, MOVE],
 });
 

@@ -21,14 +21,16 @@ const behavior = (spawn) => {
             },
         });
     }
-    if ((creepsInRoom.upgrader || []).length === 0 && spawn.room.energyAvailable > (0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["upgrader"])) {
+    if ((creepsInRoom.upgrader || []).length === 0 &&
+        spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["upgrader"]), spawn.room.energyCapacityAvailable * 0.8)) {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("upgrader", spawn.room.energyAvailable), generateCreepName("upgrader"), {
             memory: {
                 role: "upgrader",
             },
         });
     }
-    if ((creepsInRoom.harvester || []).length < spawn.room.memory.harvesterLimit && spawn.room.energyAvailable > (0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["harvester"])) {
+    if ((creepsInRoom.harvester || []).length < spawn.room.memory.harvesterLimit &&
+        spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["harvester"]), spawn.room.energyCapacityAvailable * 0.8)) {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("harvester", spawn.room.energyAvailable), generateCreepName("harvester"), {
             memory: {
                 role: "harvester",
@@ -36,7 +38,7 @@ const behavior = (spawn) => {
         });
     }
     if (spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length &&
-        (creepsInRoom.builder || []).length < 4 &&
+        (creepsInRoom.builder || []).length === 0 &&
         spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.8)) {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("builder", spawn.room.energyAvailable), generateCreepName("builder"), {
             memory: {
@@ -52,13 +54,6 @@ const behavior = (spawn) => {
             memory: {
                 role: "repairer",
                 mode: "working",
-            },
-        });
-    }
-    if ((creepsInRoom.upgrader || []).length < 3 && spawn.room.energyAvailable > (0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["upgrader"])) {
-        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("upgrader", spawn.room.energyAvailable), generateCreepName("upgrader"), {
-            memory: {
-                role: "upgrader",
             },
         });
     }
