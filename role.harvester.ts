@@ -1,4 +1,5 @@
 import { RETURN_CODE_DECODER } from "./constants";
+import { pickUpAll } from "./utils.creep";
 
 /**
  * sourceにとりついて資源を取り続けるだけで移動しない
@@ -61,7 +62,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // 射程圏内の建設はとりあえずぜんぶ叩いておく
   creep.pos.findInRange(Object.values(Game.constructionSites), 3).map((site) => creep.build(site));
 
-  return creep.memory.worked;
+  // 周りのものを拾う
+  pickUpAll(creep);
+
+  // 周りの建物に投げる
+  creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: (s) => "store" in s }).map((s) => creep.transfer(s, RESOURCE_ENERGY));
 };
 
 export default behavior;

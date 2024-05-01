@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const constants_1 = require("./constants");
+const utils_creep_1 = require("./utils.creep");
 const behavior = (creep) => {
     if (!isHarvester(creep)) {
         console.log(`${creep.name} is not harvester`);
@@ -40,7 +41,8 @@ const behavior = (creep) => {
             break;
     }
     creep.pos.findInRange(Object.values(Game.constructionSites), 3).map((site) => creep.build(site));
-    return creep.memory.worked;
+    (0, utils_creep_1.pickUpAll)(creep);
+    creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: (s) => "store" in s }).map((s) => creep.transfer(s, RESOURCE_ENERGY));
 };
 exports.default = behavior;
 function isHarvester(c) {
