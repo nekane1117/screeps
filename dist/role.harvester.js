@@ -40,7 +40,9 @@ const behavior = (creep) => {
         default:
             break;
     }
-    creep.pos.findInRange(Object.values(Game.constructionSites), 3).map((site) => creep.build(site));
+    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5) {
+        creep.pos.findInRange(Object.values(Game.constructionSites), 3).map((site) => creep.build(site));
+    }
     (0, utils_creep_1.pickUpAll)(creep);
     creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: (s) => "store" in s }).map((s) => creep.transfer(s, RESOURCE_ENERGY));
 };

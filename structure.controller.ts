@@ -8,9 +8,9 @@ export default function (controller: Structure) {
 
   const creeps = getCreepNamesInRoom(controller.room);
 
-  const { energyAvailable, energyCapacityAvailable } = controller.room;
+  const { energyAvailable } = controller.room;
 
-  if (creeps.upgrader?.length === 0 && energyAvailable / energyCapacityAvailable > 0.8) {
+  if (creeps.upgrader?.length === 0 && energyAvailable > 200) {
     getSpawnsInRoom(controller.room)
       .find((s) => !s.spawning)
       ?.spawnCreep(getBodyByCost(BODY.upgrader, energyAvailable), `U_${controller.room.name}`, {
