@@ -28,3 +28,32 @@ export function getBodyByCost(bodies: BodyPartConstant[], cost: number): BodyPar
     })
     .map((p) => p.parts);
 }
+
+export function shallowEq<T>(value1: T) {
+  return (value2: T) => {
+    return value1 === value2;
+  };
+}
+
+export function someOf<T>(...arr: T[]) {
+  return (value: T) => arr.some((v) => v === value);
+}
+
+export function stubTrue<T>() {
+  return (_v2: T) => {
+    return true;
+  };
+}
+export function noop<T>(_: T) {
+  // noop
+}
+
+export function cond<T, R = unknown>(...conditions: [(value: T) => boolean, (value: T) => R][]) {
+  if (conditions.length === 0) {
+    throw new Error("no conditions");
+  }
+
+  return (value: T) => {
+    return (conditions.find((c) => c[0](value)) || conditions[conditions.length - 1])[1](value);
+  };
+}

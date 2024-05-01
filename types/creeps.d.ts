@@ -11,6 +11,7 @@ declare interface CreepMemory {
     path: PathStep[];
     room: string;
   };
+  targetId: Id;
 }
 
 /** 全部のCreepの型 */
@@ -30,6 +31,8 @@ declare interface Upgrader extends Creep {
 
 declare interface UpgraderMemory extends CreepMemory {
   role: "upgrader";
+  mode: "collecting" | "working";
+  storeId: Id<StoreTarget> | null | undefined;
 }
 
-declare type CreepBehavior = (creep: Creeps) => ScreepsReturnCode;
+declare type CreepBehavior = (creep: Creeps) => unknown;
