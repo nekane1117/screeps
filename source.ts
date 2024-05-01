@@ -1,4 +1,4 @@
-import { HARVESTER_BODY } from "./constants";
+import { BODY } from "./constants";
 import { getBodyByCost } from "./utils";
 
 export default function behavior(source: Source) {
@@ -31,7 +31,7 @@ export default function behavior(source: Source) {
     // 部屋の中で使えるspawnにharvesterを作らせる
     Object.values(Game.spawns)
       .find((spawn) => spawn.room.name === source.room.name && !spawn.spawning)
-      ?.spawnCreep(getBodyByCost(HARVESTER_BODY, source.room.energyAvailable), ["H", source.pos.x, source.pos.y, Game.time.toString()].join("_"), {
+      ?.spawnCreep(getBodyByCost(BODY.harvester, source.room.energyAvailable), ["H", source.pos.x, source.pos.y, Game.time.toString()].join("_"), {
         memory: {
           role: "harvester",
           harvestTargetId: source.id,

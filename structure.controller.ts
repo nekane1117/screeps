@@ -1,4 +1,4 @@
-import { UPGRADER_BODY } from "./constants";
+import { BODY } from "./constants";
 import { getBodyByCost, getCreepNamesInRoom, getSpawnsInRoom } from "./utils";
 
 export default function (controller: Structure) {
@@ -13,7 +13,7 @@ export default function (controller: Structure) {
   if (creeps.upgrader?.length === 0 && energyAvailable / energyCapacityAvailable > 0.8) {
     getSpawnsInRoom(controller.room)
       .find((s) => !s.spawning)
-      ?.spawnCreep(getBodyByCost(UPGRADER_BODY, energyAvailable), `U_${controller.room.name}`, {
+      ?.spawnCreep(getBodyByCost(BODY.upgrader, energyAvailable), `U_${controller.room.name}`, {
         memory: {
           role: "upgrader",
           mode: "collecting",

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UPGRADER_BODY = exports.HARVESTER_BODY = exports.DIRECTIONS = exports.RETURN_CODE_DECODER = exports.getNeighborhoods = exports.neighborhoods = void 0;
+exports.BODY = exports.DIRECTIONS = exports.RETURN_CODE_DECODER = exports.getNeighborhoods = exports.neighborhoods = void 0;
 exports.neighborhoods = [
     [-1, -1],
     [0, -1],
@@ -48,21 +48,29 @@ exports.DIRECTIONS = {
     [BOTTOM]: [0, 1],
     [BOTTOM_RIGHT]: [1, 1],
 };
-exports.HARVESTER_BODY = Object.freeze([
-    WORK,
-    MOVE,
-    CARRY,
-    WORK,
-    WORK,
-    WORK,
-    WORK,
-    ..._.range(43).map(() => CARRY),
-]);
-exports.UPGRADER_BODY = Object.freeze(_.range(17)
-    .map(() => [
-    CARRY,
-    MOVE,
-    WORK,
-])
-    .flat()
-    .slice(0, 50));
+exports.BODY = Object.freeze({
+    carrier: _.range(25)
+        .map(() => [
+        CARRY,
+        MOVE,
+    ])
+        .flat(),
+    harvester: [
+        WORK,
+        MOVE,
+        CARRY,
+        WORK,
+        WORK,
+        WORK,
+        WORK,
+        ..._.range(43).map(() => CARRY),
+    ],
+    upgrader: _.range(17)
+        .map(() => [
+        CARRY,
+        MOVE,
+        WORK,
+    ])
+        .flat()
+        .slice(0, 50),
+});

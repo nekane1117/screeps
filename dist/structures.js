@@ -4,6 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const structure_controller_1 = __importDefault(require("./structure.controller"));
+const structure_container_1 = __importDefault(require("./structure.container"));
 exports.default = {
     controller: structure_controller_1.default,
+    container: structure_container_1.default,
 };

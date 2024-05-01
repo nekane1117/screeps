@@ -50,22 +50,28 @@ export const DIRECTIONS: Record<DirectionConstant, [number, number]> = {
   [BOTTOM_RIGHT]: [1, 1],
 };
 
-export const HARVESTER_BODY = Object.freeze([
-  // 最低構成
-  WORK,
-  MOVE,
-  CARRY,
-  // 効率
-  WORK,
-  WORK,
-  WORK,
-  WORK,
-  // 保持力
-  ..._.range(43).map(() => CARRY),
-]) as BodyPartConstant[];
-
-export const UPGRADER_BODY = Object.freeze(
-  _.range(17)
+export const BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
+  carrier: _.range(25)
+    .map(() => [
+      // 最低構成
+      CARRY,
+      MOVE,
+    ])
+    .flat(),
+  harvester: [
+    // 最低構成
+    WORK,
+    MOVE,
+    CARRY,
+    // 効率
+    WORK,
+    WORK,
+    WORK,
+    WORK,
+    // 保持力
+    ..._.range(43).map(() => CARRY),
+  ],
+  upgrader: _.range(17)
     .map(() => [
       // 最低構成
       CARRY,
@@ -74,4 +80,4 @@ export const UPGRADER_BODY = Object.freeze(
     ])
     .flat()
     .slice(0, 50),
-) as BodyPartConstant[];
+});

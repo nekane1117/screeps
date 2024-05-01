@@ -11,7 +11,7 @@ function default_1(controller) {
     const { energyAvailable, energyCapacityAvailable } = controller.room;
     if (((_a = creeps.upgrader) === null || _a === void 0 ? void 0 : _a.length) === 0 && energyAvailable / energyCapacityAvailable > 0.8) {
         (_b = (0, utils_1.getSpawnsInRoom)(controller.room)
-            .find((s) => !s.spawning)) === null || _b === void 0 ? void 0 : _b.spawnCreep((0, utils_1.getBodyByCost)(constants_1.UPGRADER_BODY, energyAvailable), `U_${controller.room.name}`, {
+            .find((s) => !s.spawning)) === null || _b === void 0 ? void 0 : _b.spawnCreep((0, utils_1.getBodyByCost)(constants_1.BODY.upgrader, energyAvailable), `U_${controller.room.name}`, {
             memory: {
                 role: "upgrader",
                 mode: "collecting",
