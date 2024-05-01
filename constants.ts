@@ -63,3 +63,15 @@ export const HARVESTER_BODY = Object.freeze([
   // 保持力
   ..._.range(43).map(() => CARRY),
 ]) as BodyPartConstant[];
+
+export const UPGRADER_BODY = Object.freeze(
+  _.range(17)
+    .map(() => [
+      // 最低構成
+      CARRY,
+      MOVE,
+      WORK,
+    ])
+    .flat()
+    .slice(0, 50),
+) as BodyPartConstant[];

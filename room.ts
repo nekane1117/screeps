@@ -1,6 +1,7 @@
 import { getNeighborhoods } from "./constants";
 import { ObjectKeys } from "./utils";
 import sourceBehavior from "./source";
+import structures from "./structures";
 export default function behavior(room: Room) {
   // 部屋ごとの動きやroomのメモリの初期化
 
@@ -29,4 +30,6 @@ export default function behavior(room: Room) {
     .compact()
     .map(sourceBehavior)
     .run();
+
+  room.find(FIND_STRUCTURES).map((s) => structures[s.structureType]?.(s));
 }

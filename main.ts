@@ -22,7 +22,7 @@ module.exports.loop = function () {
     }
   });
 
-  // Room -> Structure -> Creepの順で考えておく
+  // Room -> Creepの順で考えておく
   Object.values(Game.rooms).map(roomBehavior);
   Object.values(Game.creeps).map((c) => roles[c.memory.role]?.(c));
 };

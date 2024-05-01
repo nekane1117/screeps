@@ -57,3 +57,43 @@ export function cond<T, R = unknown>(...conditions: [(value: T) => boolean, (val
     return (conditions.find((c) => c[0](value)) || conditions[conditions.length - 1])[1](value);
   };
 }
+
+/**
+ * tickごとにキャッシュしたcreepの一覧を返す
+ * このtickでspawnしたやつとかは入らないので注意
+ * */
+export function getCreepsInRoom(room: Room) {
+  if (Game.time === room.memory.creeps?.tick) {
+    return room.memory.creeps.value;
+  } else {
+    return (room.memory.creeps = {
+      tick: Game.time,
+      value: Object.values(Game.creeps)
+        .filter((c) => c.room.name === room.name)
+        .reduce(
+          (creeps, c) => {
+            return {
+              ...creeps,
+              [c.memory.role]: (creeps[c.memory.role] || []).concat(),
+            };
+          },
+          {} as Record<ROLES, Creeps[]>,
+        ),
+    }).value;
+  }
+}
+
+/**
+ * tickごとにキャッシュしたspawnの一覧を返す
+ * このtickで作ったやつとかは入らないので注意
+ * */
+export function getSpawnsInRoom(room: Room) {
+  if (Game.time === room.memory.spawns?.tick) {
+    return room.memory.spawns.value;
+  } else {
+    return (room.memory.spawns = {
+      tick: Game.time,
+      value: Object.values(Game.spawns).filter((c) => c.room.name === room.name),
+    }).value;
+  }
+}

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cond = exports.noop = exports.stubTrue = exports.someOf = exports.shallowEq = exports.getBodyByCost = exports.ObjectKeys = void 0;
+exports.getSpawnsInRoom = exports.getCreepsInRoom = exports.cond = exports.noop = exports.stubTrue = exports.someOf = exports.shallowEq = exports.getBodyByCost = exports.ObjectKeys = void 0;
 function ObjectKeys(o) {
     return Object.keys(o);
 }
@@ -56,3 +56,33 @@ function cond(...conditions) {
     };
 }
 exports.cond = cond;
+function getCreepsInRoom(room) {
+    var _a;
+    if (Game.time === ((_a = room.memory.creeps) === null || _a === void 0 ? void 0 : _a.tick)) {
+        return room.memory.creeps.value;
+    }
+    else {
+        return (room.memory.creeps = {
+            tick: Game.time,
+            value: Object.values(Game.creeps)
+                .filter((c) => c.room.name === room.name)
+                .reduce((creeps, c) => {
+                return Object.assign(Object.assign({}, creeps), { [c.memory.role]: (creeps[c.memory.role] || []).concat() });
+            }, {}),
+        }).value;
+    }
+}
+exports.getCreepsInRoom = getCreepsInRoom;
+function getSpawnsInRoom(room) {
+    var _a;
+    if (Game.time === ((_a = room.memory.spawns) === null || _a === void 0 ? void 0 : _a.tick)) {
+        return room.memory.spawns.value;
+    }
+    else {
+        return (room.memory.spawns = {
+            tick: Game.time,
+            value: Object.values(Game.spawns).filter((c) => c.room.name === room.name),
+        }).value;
+    }
+}
+exports.getSpawnsInRoom = getSpawnsInRoom;

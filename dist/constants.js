@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HARVESTER_BODY = exports.DIRECTIONS = exports.RETURN_CODE_DECODER = exports.getNeighborhoods = exports.neighborhoods = void 0;
+exports.UPGRADER_BODY = exports.HARVESTER_BODY = exports.DIRECTIONS = exports.RETURN_CODE_DECODER = exports.getNeighborhoods = exports.neighborhoods = void 0;
 exports.neighborhoods = [
     [-1, -1],
     [0, -1],
@@ -58,3 +58,11 @@ exports.HARVESTER_BODY = Object.freeze([
     WORK,
     ..._.range(43).map(() => CARRY),
 ]);
+exports.UPGRADER_BODY = Object.freeze(_.range(17)
+    .map(() => [
+    CARRY,
+    MOVE,
+    WORK,
+])
+    .flat()
+    .slice(0, 50));
