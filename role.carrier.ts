@@ -28,7 +28,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       // 空の時
       case ERR_NOT_ENOUGH_RESOURCES:
         // 邪魔になるときがあるのでうろうろしておく
-        randomWalk(creep);
+        if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
+          changeMode(creep, "working");
+        } else {
+          randomWalk(creep);
+        }
         break;
       // お腹いっぱい
       case ERR_FULL:

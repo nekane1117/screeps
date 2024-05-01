@@ -16,7 +16,12 @@ const behavior = (creep) => {
         creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY);
         switch (creep.memory.worked) {
             case ERR_NOT_ENOUGH_RESOURCES:
-                (0, util_creep_1.randomWalk)(creep);
+                if (creep.store.getUsedCapacity(RESOURCE_ENERGY) > 0) {
+                    changeMode(creep, "working");
+                }
+                else {
+                    (0, util_creep_1.randomWalk)(creep);
+                }
                 break;
             case ERR_FULL:
                 changeMode(creep, "working");
