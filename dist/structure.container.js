@@ -13,7 +13,7 @@ function containerBehavior(structure) {
                 filter: (s) => s.structureType === STRUCTURE_SPAWN,
             })
                 .find((spawn) => !spawn.spawning);
-            if (spawn && spawn.room.energyAvailable > spawn.room.energyCapacityAvailable * 0.9) {
+            if (spawn && spawn.room.energyAvailable > spawn.room.energyCapacityAvailable * 0.6) {
                 return spawn.spawnCreep((0, util_creep_1.bodyMaker)("carrier", spawn.room.energyAvailable), carrierName, {
                     memory: {
                         role: "carrier",

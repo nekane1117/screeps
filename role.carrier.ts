@@ -67,7 +67,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
   // transfer
   // 最寄りのspawnまでの距離(見つからないときは0にして適当にごまかしている)
-  const rangeToClosestSpawn = creep.pos.findClosestByRange(getSpawnNamesInRoom(creep.room).map((name) => Game.spawns[name]))?.pos.getRangeTo(creep) || 0;
+  const rangeToClosestSpawn = store.pos.findClosestByRange(getSpawnNamesInRoom(store.room).map((name) => Game.spawns[name]))?.pos.getRangeTo(store) || 0;
   // 対象設定処理
   const {
     spawn: spawns = [],

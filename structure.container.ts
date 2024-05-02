@@ -17,7 +17,7 @@ export default function containerBehavior(structure: Structure) {
         })
         .find((spawn) => !spawn.spawning);
       // 使えるSpawnがあったときは作る
-      if (spawn && spawn.room.energyAvailable > spawn.room.energyCapacityAvailable * 0.9) {
+      if (spawn && spawn.room.energyAvailable > spawn.room.energyCapacityAvailable * 0.6) {
         return spawn.spawnCreep(bodyMaker("carrier", spawn.room.energyAvailable), carrierName, {
           memory: {
             role: "carrier",

@@ -49,7 +49,7 @@ const behavior = (creep) => {
     else {
         return creep.suicide();
     }
-    const rangeToClosestSpawn = ((_a = creep.pos.findClosestByRange((0, util_creep_1.getSpawnNamesInRoom)(creep.room).map((name) => Game.spawns[name]))) === null || _a === void 0 ? void 0 : _a.pos.getRangeTo(creep)) || 0;
+    const rangeToClosestSpawn = ((_a = store.pos.findClosestByRange((0, util_creep_1.getSpawnNamesInRoom)(store.room).map((name) => Game.spawns[name]))) === null || _a === void 0 ? void 0 : _a.pos.getRangeTo(store)) || 0;
     const { spawn: spawns = [], container = [], extension = [], link = [], tower = [], } = creep.room
         .find(FIND_STRUCTURES, {
         filter: (s) => {
