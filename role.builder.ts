@@ -112,22 +112,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           }
           break;
       }
-    } else {
-      creep.memory.storeId = undefined;
-      if (creep.memory.mode === "collecting") {
-        const source = creep.pos.findClosestByRange(FIND_SOURCES_ACTIVE);
-        if (source) {
-          creep.moveTo(source, { range: 1 });
-        }
-      }
-    }
-  } else {
-    creep.memory.storeId = undefined;
-    if (creep.memory.mode === "collecting") {
-      const source = creep.pos.findClosestByRange(FIND_SOURCES_ACTIVE);
-      if (source) {
-        creep.moveTo(source, { range: 1 });
-      }
     }
   }
 
