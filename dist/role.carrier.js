@@ -56,7 +56,7 @@ const behavior = (creep) => {
             return (s.id !== store.id &&
                 "store" in s &&
                 s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0 &&
-                (s.structureType === STRUCTURE_TOWER ? true : s.pos.getRangeTo(creep) < rangeToClosestSpawn));
+                ([STRUCTURE_TOWER, STRUCTURE_EXTENSION, STRUCTURE_SPAWN].some((t) => s.structureType === t) ? true : s.pos.getRangeTo(creep) < rangeToClosestSpawn));
         },
     })
         .reduce((storages, s) => {

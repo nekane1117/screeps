@@ -85,7 +85,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           "store" in s &&
           s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0 &&
           // 自分より最寄りのspawnに近い
-          (s.structureType === STRUCTURE_TOWER ? true : s.pos.getRangeTo(creep) < rangeToClosestSpawn)
+          ([STRUCTURE_TOWER, STRUCTURE_EXTENSION, STRUCTURE_SPAWN].some((t) => s.structureType === t) ? true : s.pos.getRangeTo(creep) < rangeToClosestSpawn)
         );
       },
     })
