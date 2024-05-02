@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll, randomWalk } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll, randomWalk, stealBy } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isBuilder(creep)) {
@@ -107,14 +107,33 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         case OK:
         case ERR_BUSY:
         default:
+          if (store.structureType === STRUCTURE_SPAWN) {
+            creep.memory.storeId = undefined;
+          }
           break;
       }
     } else {
       creep.memory.storeId = undefined;
+      if (creep.memory.mode === "collecting") {
+        const source = creep.pos.findClosestByRange(FIND_SOURCES_ACTIVE);
+        if (source) {
+          creep.moveTo(source, { range: 1 });
+        }
+      }
+    }
+  } else {
+    creep.memory.storeId = undefined;
+    if (creep.memory.mode === "collecting") {
+      const source = creep.pos.findClosestByRange(FIND_SOURCES_ACTIVE);
+      if (source) {
+        creep.moveTo(source, { range: 1 });
+      }
     }
   }
 
   // withdraw
+  stealBy(creep, ["harvester"]);
+
   // 落っこちてるものを拾う
   pickUpAll(creep);
 

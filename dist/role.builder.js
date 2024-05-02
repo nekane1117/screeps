@@ -82,13 +82,32 @@ const behavior = (creep) => {
                 case OK:
                 case ERR_BUSY:
                 default:
+                    if (store.structureType === STRUCTURE_SPAWN) {
+                        creep.memory.storeId = undefined;
+                    }
                     break;
             }
         }
         else {
             creep.memory.storeId = undefined;
+            if (creep.memory.mode === "collecting") {
+                const source = creep.pos.findClosestByRange(FIND_SOURCES_ACTIVE);
+                if (source) {
+                    creep.moveTo(source, { range: 1 });
+                }
+            }
         }
     }
+    else {
+        creep.memory.storeId = undefined;
+        if (creep.memory.mode === "collecting") {
+            const source = creep.pos.findClosestByRange(FIND_SOURCES_ACTIVE);
+            if (source) {
+                creep.moveTo(source, { range: 1 });
+            }
+        }
+    }
+    (0, util_creep_1.stealBy)(creep, ["harvester"]);
     (0, util_creep_1.pickUpAll)(creep);
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
         changeMode(creep, "working");
