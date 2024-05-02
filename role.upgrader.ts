@@ -50,12 +50,24 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   if (
     creep.memory.storeId ||
-    (creep.memory.storeId = creep.room.controller.pos.findClosestByPath(FIND_STRUCTURES, {
-      // コントローラーから一番近い倉庫に行く
-      filter: (s: Structure): s is StoreTarget => {
-        return isStoreTarget(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) && s.store[RESOURCE_ENERGY] > 0;
-      },
-    })?.id)
+    (creep.memory.storeId = (
+      creep.room.controller.pos.findClosestByRange(FIND_STRUCTURES, {
+        // コントローラーから一番近い倉庫に行く
+        filter: (s: Structure): s is StoreTarget => {
+          return isStoreTarget(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) && s.store[RESOURCE_ENERGY] > 0;
+        },
+      }) ||
+      creep.room.controller.pos.findClosestByRange(FIND_STRUCTURES, {
+        // コントローラーから一番近い倉庫に行く
+        filter: (s): s is StoreTarget => {
+          return (
+            [STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) &&
+            "store" in s &&
+            s.store.getUsedCapacity(RESOURCE_ENERGY) > s.store.getCapacity(RESOURCE_ENERGY) * 0.8
+          );
+        },
+      })
+    )?.id)
   ) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {

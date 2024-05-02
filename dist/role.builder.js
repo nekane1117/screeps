@@ -6,7 +6,10 @@ const behavior = (creep) => {
     if (!isBuilder(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
-    if (!(creep.memory.buildingId || (creep.memory.buildingId = (_a = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES)) === null || _a === void 0 ? void 0 : _a.id))) {
+    const sites = _(Object.values(Game.constructionSites));
+    const minRemaining = sites.map((s) => s.progressTotal - s.progress).min();
+    if (!(creep.memory.buildingId ||
+        (creep.memory.buildingId = (_a = creep.pos.findClosestByRange(sites.filter((s) => s.progressTotal - s.progress <= minRemaining).run())) === null || _a === void 0 ? void 0 : _a.id))) {
         (0, util_creep_1.randomWalk)(creep);
     }
     else {
@@ -99,24 +102,12 @@ function isBuilder(creep) {
     return creep.memory.role === "builder";
 }
 const changeMode = (creep, mode) => {
-    if (mode !== (creep.memory.mode === "harvesting" ? "collecting" : creep.memory.mode)) {
-        if (mode === "working") {
-            creep.say(mode);
-            creep.memory.mode = mode;
-        }
-        else {
-            creep.memory.mode = creep.room.find(FIND_STRUCTURES, {
-                filter: (s) => {
-                    return ((0, util_creep_1.isStoreTarget)(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => s.structureType === t) && s.store.getUsedCapacity(RESOURCE_ENERGY) !== 0);
-                },
-            }).length
-                ? "collecting"
-                : "harvesting";
-        }
-        creep.say(creep.memory.mode);
+    if (mode !== creep.memory.mode) {
+        creep.memory.mode = mode;
         creep.memory.buildingId = undefined;
         creep.memory.harvestTargetId = undefined;
         creep.memory.harvested = undefined;
         creep.memory.storeId = undefined;
+        creep.say(creep.memory.mode);
     }
 };

@@ -40,11 +40,18 @@ const behavior = (creep) => {
             break;
     }
     if (creep.memory.storeId ||
-        (creep.memory.storeId = (_b = creep.room.controller.pos.findClosestByPath(FIND_STRUCTURES, {
+        (creep.memory.storeId = (_b = (creep.room.controller.pos.findClosestByRange(FIND_STRUCTURES, {
             filter: (s) => {
                 return (0, util_creep_1.isStoreTarget)(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) && s.store[RESOURCE_ENERGY] > 0;
             },
-        })) === null || _b === void 0 ? void 0 : _b.id)) {
+        }) ||
+            creep.room.controller.pos.findClosestByRange(FIND_STRUCTURES, {
+                filter: (s) => {
+                    return ([STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) &&
+                        "store" in s &&
+                        s.store.getUsedCapacity(RESOURCE_ENERGY) > s.store.getCapacity(RESOURCE_ENERGY) * 0.8);
+                },
+            }))) === null || _b === void 0 ? void 0 : _b.id)) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
             creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);

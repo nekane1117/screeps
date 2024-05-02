@@ -9,7 +9,16 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // https://docs.screeps.com/simultaneous-actions.html
 
   // build
-  if (!(creep.memory.buildingId || (creep.memory.buildingId = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES)?.id))) {
+  const sites = _(Object.values(Game.constructionSites));
+
+  const minRemaining = sites.map((s) => s.progressTotal - s.progress).min();
+
+  if (
+    !(
+      creep.memory.buildingId ||
+      (creep.memory.buildingId = creep.pos.findClosestByRange(sites.filter((s) => s.progressTotal - s.progress <= minRemaining).run())?.id)
+    )
+  ) {
     // 完全に見つからなければうろうろしておく
     randomWalk(creep);
   } else {
@@ -123,25 +132,12 @@ function isBuilder(creep: Creep): creep is Builder {
   return creep.memory.role === "builder";
 }
 const changeMode = (creep: Builder, mode: "working" | "collecting") => {
-  if (mode !== (creep.memory.mode === "harvesting" ? "collecting" : creep.memory.mode)) {
-    if (mode === "working") {
-      creep.say(mode);
-      creep.memory.mode = mode;
-    } else {
-      creep.memory.mode = creep.room.find(FIND_STRUCTURES, {
-        filter: (s): s is StoreTarget => {
-          return (
-            isStoreTarget(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => s.structureType === t) && s.store.getUsedCapacity(RESOURCE_ENERGY) !== 0
-          );
-        },
-      }).length
-        ? "collecting"
-        : "harvesting";
-    }
-    creep.say(creep.memory.mode);
+  if (mode !== creep.memory.mode) {
+    creep.memory.mode = mode;
     creep.memory.buildingId = undefined;
     creep.memory.harvestTargetId = undefined;
     creep.memory.harvested = undefined;
     creep.memory.storeId = undefined;
+    creep.say(creep.memory.mode);
   }
 };
