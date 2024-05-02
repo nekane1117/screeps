@@ -93,67 +93,65 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       };
     }, {} as Structures);
 
-  if (
-    !(
-      creep.memory.transferId ||
-      (creep.memory.transferId = creep.pos.findClosestByPath(
-        _([...spawns, ...storage, ...container, ...link, ...extension])
-          .compact()
-          .run(),
-        { ignoreCreeps: true },
-      )?.id) ||
-      (creep.memory.transferId = creep.pos.findClosestByPath(tower, { ignoreCreeps: true })?.id)
-    )
-  ) {
+  const visualizePath = !creep.memory.transferId;
+
+  if (!creep.memory.transferId) {
+    (creep.memory.transferId = creep.pos.findClosestByPath(
+      _([...spawns, ...storage, ...container, ...link, ...extension])
+        .compact()
+        .run(),
+      { ignoreCreeps: true },
+    )?.id) || (creep.memory.transferId = creep.pos.findClosestByPath(tower, { ignoreCreeps: true })?.id);
+    if (!creep.memory.transferId) {
+      // 完全に見つからなければうろうろしておく
+      return randomWalk(creep);
+    }
+  }
+
+  const transferTarget = Game.getObjectById(creep.memory.transferId);
+  if (!transferTarget) {
+    creep.memory.transferId = undefined;
     // 完全に見つからなければうろうろしておく
-    if (creep.memory.mode === "working") {
-      randomWalk(creep);
-    }
-  } else {
-    const store = Game.getObjectById(creep.memory.transferId);
-    if (store) {
-      const returnVal = creep.transfer(store, RESOURCE_ENERGY);
-      switch (returnVal) {
-        // 遠い
-        case ERR_NOT_IN_RANGE:
-          // 分配モードの時は倉庫に近寄る
-          if (creep.memory.mode === "working") {
-            customMove(creep, store);
-          }
-          break;
+    return randomWalk(creep);
+  }
 
-        // 手持ちがない
-        case ERR_NOT_ENOUGH_RESOURCES: // 値を指定しないから多分発生しない
-          changeMode(creep, "collecting");
-          break;
-
-        // 対象が変
-        case ERR_INVALID_TARGET: // 対象が変
-        case ERR_FULL: // 満タン
-          creep.memory.transferId = undefined;
-          break;
-
-        // 有りえない系
-        case ERR_NOT_OWNER: // 自creepじゃない
-        case ERR_INVALID_ARGS: // 引数が変
-          console.log(`${creep.name} transfer returns ${RETURN_CODE_DECODER[returnVal.toString()]}`);
-          creep.say(RETURN_CODE_DECODER[returnVal.toString()]);
-          break;
-
-        // 問題ない系
-        case OK:
-          creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: isStoreTarget }).map((s) => creep.transfer(s, RESOURCE_ENERGY));
-          break;
-        case ERR_BUSY: // spawining
-        default:
-          break;
+  const returnVal = creep.transfer(transferTarget, RESOURCE_ENERGY);
+  switch (returnVal) {
+    // 遠い
+    case ERR_NOT_IN_RANGE:
+      // 分配モードの時は倉庫に近寄る
+      if (creep.memory.mode === "working") {
+        customMove(creep, transferTarget, {
+          visualizePathStyle: visualizePath ? {} : undefined,
+        });
       }
-    } else {
-      // 指定されていたソースが見つからないとき
-      // 対象をクリアしてうろうろしておく
+      break;
+
+    // 手持ちがない
+    case ERR_NOT_ENOUGH_RESOURCES: // 値を指定しないから多分発生しない
+      changeMode(creep, "collecting");
+      break;
+
+    // 対象が変
+    case ERR_INVALID_TARGET: // 対象が変
+    case ERR_FULL: // 満タン
       creep.memory.transferId = undefined;
-      randomWalk(creep);
-    }
+      break;
+
+    // 有りえない系
+    case ERR_NOT_OWNER: // 自creepじゃない
+    case ERR_INVALID_ARGS: // 引数が変
+      console.log(`${creep.name} transfer returns ${RETURN_CODE_DECODER[returnVal.toString()]}`);
+      creep.say(RETURN_CODE_DECODER[returnVal.toString()]);
+      break;
+
+    // 問題ない系
+    case OK:
+      creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: isStoreTarget }).map((s) => creep.transfer(s, RESOURCE_ENERGY));
+      break;
+    case ERR_BUSY: // spawining
+    default:
+      break;
   }
 
   // 通りがかりに奪い取る

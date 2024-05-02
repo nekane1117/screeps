@@ -60,49 +60,47 @@ const behavior = (creep) => {
         .reduce((storages, s) => {
         return Object.assign(Object.assign({}, storages), { [s.structureType]: (0, utils_common_1.defaultTo)(storages[s.structureType], []).concat(s) });
     }, {});
-    if (!(creep.memory.transferId ||
+    const visualizePath = !creep.memory.transferId;
+    if (!creep.memory.transferId) {
         (creep.memory.transferId = (_a = creep.pos.findClosestByPath(_([...spawns, ...storage, ...container, ...link, ...extension])
             .compact()
-            .run(), { ignoreCreeps: true })) === null || _a === void 0 ? void 0 : _a.id) ||
-        (creep.memory.transferId = (_b = creep.pos.findClosestByPath(tower, { ignoreCreeps: true })) === null || _b === void 0 ? void 0 : _b.id))) {
-        if (creep.memory.mode === "working") {
-            (0, util_creep_1.randomWalk)(creep);
+            .run(), { ignoreCreeps: true })) === null || _a === void 0 ? void 0 : _a.id) || (creep.memory.transferId = (_b = creep.pos.findClosestByPath(tower, { ignoreCreeps: true })) === null || _b === void 0 ? void 0 : _b.id);
+        if (!creep.memory.transferId) {
+            return (0, util_creep_1.randomWalk)(creep);
         }
     }
-    else {
-        const store = Game.getObjectById(creep.memory.transferId);
-        if (store) {
-            const returnVal = creep.transfer(store, RESOURCE_ENERGY);
-            switch (returnVal) {
-                case ERR_NOT_IN_RANGE:
-                    if (creep.memory.mode === "working") {
-                        (0, util_creep_1.customMove)(creep, store);
-                    }
-                    break;
-                case ERR_NOT_ENOUGH_RESOURCES:
-                    changeMode(creep, "collecting");
-                    break;
-                case ERR_INVALID_TARGET:
-                case ERR_FULL:
-                    creep.memory.transferId = undefined;
-                    break;
-                case ERR_NOT_OWNER:
-                case ERR_INVALID_ARGS:
-                    console.log(`${creep.name} transfer returns ${util_creep_1.RETURN_CODE_DECODER[returnVal.toString()]}`);
-                    creep.say(util_creep_1.RETURN_CODE_DECODER[returnVal.toString()]);
-                    break;
-                case OK:
-                    creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: util_creep_1.isStoreTarget }).map((s) => creep.transfer(s, RESOURCE_ENERGY));
-                    break;
-                case ERR_BUSY:
-                default:
-                    break;
+    const transferTarget = Game.getObjectById(creep.memory.transferId);
+    if (!transferTarget) {
+        creep.memory.transferId = undefined;
+        return (0, util_creep_1.randomWalk)(creep);
+    }
+    const returnVal = creep.transfer(transferTarget, RESOURCE_ENERGY);
+    switch (returnVal) {
+        case ERR_NOT_IN_RANGE:
+            if (creep.memory.mode === "working") {
+                (0, util_creep_1.customMove)(creep, transferTarget, {
+                    visualizePathStyle: visualizePath ? {} : undefined,
+                });
             }
-        }
-        else {
+            break;
+        case ERR_NOT_ENOUGH_RESOURCES:
+            changeMode(creep, "collecting");
+            break;
+        case ERR_INVALID_TARGET:
+        case ERR_FULL:
             creep.memory.transferId = undefined;
-            (0, util_creep_1.randomWalk)(creep);
-        }
+            break;
+        case ERR_NOT_OWNER:
+        case ERR_INVALID_ARGS:
+            console.log(`${creep.name} transfer returns ${util_creep_1.RETURN_CODE_DECODER[returnVal.toString()]}`);
+            creep.say(util_creep_1.RETURN_CODE_DECODER[returnVal.toString()]);
+            break;
+        case OK:
+            creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: util_creep_1.isStoreTarget }).map((s) => creep.transfer(s, RESOURCE_ENERGY));
+            break;
+        case ERR_BUSY:
+        default:
+            break;
     }
     (0, util_creep_1.stealBy)(creep, ["harvester"]);
     (0, util_creep_1.pickUpAll)(creep);
