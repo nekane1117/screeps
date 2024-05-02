@@ -49,12 +49,14 @@ const behavior = (creep) => {
     else {
         return creep.suicide();
     }
-    const { spawn: spawns = [], storage = [], container = [], extension = [], link = [], tower = [], } = creep.room
+    const rangeToClosestSpawn = ((_a = creep.pos.findClosestByRange((0, util_creep_1.getSpawnNamesInRoom)(creep.room).map((name) => Game.spawns[name]))) === null || _a === void 0 ? void 0 : _a.pos.getRangeTo(creep)) || 0;
+    const { spawn: spawns = [], container = [], extension = [], link = [], tower = [], } = creep.room
         .find(FIND_STRUCTURES, {
         filter: (s) => {
             return (s.id !== store.id &&
                 "store" in s &&
-                s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0);
+                s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0 &&
+                (s.structureType === STRUCTURE_TOWER ? true : s.pos.getRangeTo(creep) < rangeToClosestSpawn));
         },
     })
         .reduce((storages, s) => {
@@ -62,9 +64,14 @@ const behavior = (creep) => {
     }, {});
     const visualizePath = !creep.memory.transferId;
     if (!creep.memory.transferId) {
-        (creep.memory.transferId = (_a = creep.pos.findClosestByPath(_([...spawns, ...storage, ...container, ...link, ...extension])
-            .compact()
-            .run(), { ignoreCreeps: true })) === null || _a === void 0 ? void 0 : _a.id) || (creep.memory.transferId = (_b = creep.pos.findClosestByPath(tower, { ignoreCreeps: true })) === null || _b === void 0 ? void 0 : _b.id);
+        creep.memory.transferId = (_b = (creep.pos.findClosestByPath(link, { ignoreCreeps: true }) ||
+            creep.pos.findClosestByPath(_([...spawns, ...container, ...extension])
+                .compact()
+                .run(), { ignoreCreeps: true }) ||
+            creep.pos.findClosestByPath(tower, { ignoreCreeps: true }) ||
+            creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
+                filter: (s) => "store" in s && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
+            }))) === null || _b === void 0 ? void 0 : _b.id;
         if (!creep.memory.transferId) {
             return (0, util_creep_1.randomWalk)(creep);
         }

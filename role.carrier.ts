@@ -66,10 +66,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return creep.suicide();
   }
   // transfer
+  // 最寄りのspawnまでの距離(見つからないときは0にして適当にごまかしている)
+  const rangeToClosestSpawn = creep.pos.findClosestByRange(getSpawnNamesInRoom(creep.room).map((name) => Game.spawns[name]))?.pos.getRangeTo(creep) || 0;
   // 対象設定処理
   const {
     spawn: spawns = [],
-    storage = [],
     container = [],
     extension = [],
     link = [],
@@ -82,7 +83,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           s.id !== store.id &&
           // 満タンじゃない
           "store" in s &&
-          s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0
+          s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0 &&
+          // 自分より最寄りのspawnに近い
+          (s.structureType === STRUCTURE_TOWER ? true : s.pos.getRangeTo(creep) < rangeToClosestSpawn)
         );
       },
     })
@@ -96,12 +99,21 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   const visualizePath = !creep.memory.transferId;
 
   if (!creep.memory.transferId) {
-    (creep.memory.transferId = creep.pos.findClosestByPath(
-      _([...spawns, ...storage, ...container, ...link, ...extension])
-        .compact()
-        .run(),
-      { ignoreCreeps: true },
-    )?.id) || (creep.memory.transferId = creep.pos.findClosestByPath(tower, { ignoreCreeps: true })?.id);
+    // 優先順に検索をかける
+    // Link -> Spawnとか -> tower -> Storage
+    creep.memory.transferId = (
+      creep.pos.findClosestByPath(link, { ignoreCreeps: true }) ||
+      creep.pos.findClosestByPath(
+        _([...spawns, ...container, ...extension])
+          .compact()
+          .run(),
+        { ignoreCreeps: true },
+      ) ||
+      creep.pos.findClosestByPath(tower, { ignoreCreeps: true }) ||
+      creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
+        filter: (s) => "store" in s && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
+      })
+    )?.id;
     if (!creep.memory.transferId) {
       // 完全に見つからなければうろうろしておく
       return randomWalk(creep);
