@@ -9,7 +9,8 @@ const behavior = (creep) => {
     const sites = _(Object.values(Game.constructionSites));
     const minRemaining = sites.map((s) => s.progressTotal - s.progress).min();
     if (!(creep.memory.buildingId ||
-        (creep.memory.buildingId = (_a = creep.pos.findClosestByRange(sites.filter((s) => s.progressTotal - s.progress <= minRemaining).run())) === null || _a === void 0 ? void 0 : _a.id))) {
+        (creep.memory.buildingId = (_a = (creep.pos.findClosestByRange(sites.filter((s) => s.structureType === STRUCTURE_CONTAINER).run()) ||
+            creep.pos.findClosestByRange(sites.filter((s) => s.progressTotal - s.progress <= minRemaining).run()))) === null || _a === void 0 ? void 0 : _a.id))) {
         (0, util_creep_1.randomWalk)(creep);
     }
     else {
