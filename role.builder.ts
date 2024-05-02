@@ -16,7 +16,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (
     !(
       creep.memory.buildingId ||
-      (creep.memory.buildingId = creep.pos.findClosestByRange(sites.filter((s) => s.progressTotal - s.progress <= minRemaining).run())?.id)
+      (creep.memory.buildingId = (
+        creep.pos.findClosestByRange(sites.filter((s) => s.structureType === STRUCTURE_CONTAINER).run()) ||
+        creep.pos.findClosestByRange(sites.filter((s) => s.progressTotal - s.progress <= minRemaining).run())
+      )?.id)
     )
   ) {
     // 完全に見つからなければうろうろしておく
