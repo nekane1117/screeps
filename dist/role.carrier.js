@@ -64,11 +64,11 @@ const behavior = (creep) => {
     }, {});
     const visualizePath = !creep.memory.transferId;
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_b = (creep.pos.findClosestByPath(link, { ignoreCreeps: true }) ||
-            creep.pos.findClosestByPath(_([...spawns, ...container, ...extension])
+        creep.memory.transferId = (_b = (creep.pos.findClosestByRange(link) ||
+            creep.pos.findClosestByRange(_([...spawns, ...container, ...extension])
                 .compact()
-                .run(), { ignoreCreeps: true }) ||
-            creep.pos.findClosestByPath(tower, { ignoreCreeps: true }) ||
+                .run()) ||
+            creep.pos.findClosestByRange(tower) ||
             creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
                 filter: (s) => "store" in s && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
             }))) === null || _b === void 0 ? void 0 : _b.id;

@@ -102,14 +102,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // 優先順に検索をかける
     // Link -> Spawnとか -> tower -> Storage
     creep.memory.transferId = (
-      creep.pos.findClosestByPath(link, { ignoreCreeps: true }) ||
-      creep.pos.findClosestByPath(
+      creep.pos.findClosestByRange(link) ||
+      creep.pos.findClosestByRange(
         _([...spawns, ...container, ...extension])
           .compact()
           .run(),
-        { ignoreCreeps: true },
       ) ||
-      creep.pos.findClosestByPath(tower, { ignoreCreeps: true }) ||
+      creep.pos.findClosestByRange(tower) ||
       creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
         filter: (s) => "store" in s && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
       })
