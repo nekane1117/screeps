@@ -69,8 +69,8 @@ const behavior = (creep) => {
                 .compact()
                 .run()) ||
             creep.pos.findClosestByRange(tower) ||
-            creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
-                filter: (s) => "store" in s && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
+            creep.pos.findClosestByRange(FIND_STRUCTURES, {
+                filter: (s) => "store" in s && s.id !== creep.memory.storeId && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
             }))) === null || _b === void 0 ? void 0 : _b.id;
         if (!creep.memory.transferId) {
             return (0, util_creep_1.randomWalk)(creep);

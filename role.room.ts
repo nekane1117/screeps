@@ -148,16 +148,19 @@ function roadLayer(room: Room) {
     .run();
   room.memory.roadLayed = Game.time;
   // メンテコストがかかるので通り抜けられない建物の下にある道を削除する
-  room
-    .find(FIND_STRUCTURES, {
+  [
+    ...Object.values(Game.constructionSites).filter((s) => {
+      return OBSTACLE_OBJECT_TYPES.some((t) => t === s.structureType);
+    }),
+    ...room.find(FIND_STRUCTURES, {
       filter: (s) => {
         return OBSTACLE_OBJECT_TYPES.some((t) => t === s.structureType);
       },
-    })
-    .map((s) => {
-      room
-        .lookForAt(LOOK_STRUCTURES, s.pos)
-        .filter((s) => s.structureType === STRUCTURE_ROAD)
-        .map((r) => r.destroy);
-    });
+    }),
+  ].map((s) => {
+    room
+      .lookForAt(LOOK_STRUCTURES, s.pos)
+      .filter((s) => s.structureType === STRUCTURE_ROAD)
+      .map((r) => r.destroy());
+  });
 }

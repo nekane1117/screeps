@@ -11,9 +11,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // repair
   if (
     creep.memory.workTargetId ||
-    (creep.memory.workTargetId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+    (creep.memory.workTargetId = creep.pos.findClosestByRange(FIND_STRUCTURES, {
       filter: (s) => s.hits < s.hitsMax,
-      ignoreCreeps: true,
     })?.id)
   ) {
     const target = Game.getObjectById(creep.memory.workTargetId);
@@ -24,12 +23,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         case ERR_NOT_ENOUGH_RESOURCES:
           changeMode(creep, "collecting");
           break;
-        case ERR_NOT_IN_RANGE:
-          if (creep.memory.mode === "working") {
-            customMove(creep, target);
-          }
-          break;
-
         // 有りえない系
         case ERR_NOT_OWNER:
         case ERR_NO_BODYPART:
@@ -40,7 +33,15 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         // 問題ない系
         case OK:
         case ERR_BUSY:
+        case ERR_NOT_IN_RANGE:
         default:
+          if (creep.memory.mode === "working") {
+            customMove(creep, target, {
+              visualizePathStyle: {
+                stroke: "#ffff00",
+              },
+            });
+          }
           break;
       }
     } else {
@@ -77,7 +78,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           break;
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "collecting") {
-            const moved = customMove(creep, store);
+            const moved = customMove(creep, store, { visualizePathStyle: { stroke: "#ffff00" } });
             moved !== OK && (console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`), creep.say(RETURN_CODE_DECODER[moved.toString()]));
           }
           break;

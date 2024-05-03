@@ -109,8 +109,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           .run(),
       ) ||
       creep.pos.findClosestByRange(tower) ||
-      creep.pos.findClosestByRange(FIND_MY_STRUCTURES, {
-        filter: (s) => "store" in s && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
+      creep.pos.findClosestByRange(FIND_STRUCTURES, {
+        filter: (s) => "store" in s && s.id !== creep.memory.storeId && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
       })
     )?.id;
     if (!creep.memory.transferId) {

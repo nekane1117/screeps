@@ -120,16 +120,19 @@ function roadLayer(room) {
     })
         .run();
     room.memory.roadLayed = Game.time;
-    room
-        .find(FIND_STRUCTURES, {
-        filter: (s) => {
+    [
+        ...Object.values(Game.constructionSites).filter((s) => {
             return OBSTACLE_OBJECT_TYPES.some((t) => t === s.structureType);
-        },
-    })
-        .map((s) => {
+        }),
+        ...room.find(FIND_STRUCTURES, {
+            filter: (s) => {
+                return OBSTACLE_OBJECT_TYPES.some((t) => t === s.structureType);
+            },
+        }),
+    ].map((s) => {
         room
             .lookForAt(LOOK_STRUCTURES, s.pos)
             .filter((s) => s.structureType === STRUCTURE_ROAD)
-            .map((r) => r.destroy);
+            .map((r) => r.destroy());
     });
 }

@@ -7,9 +7,8 @@ const behavior = (creep) => {
         return console.log(`${creep.name} is not Repairer`);
     }
     if (creep.memory.workTargetId ||
-        (creep.memory.workTargetId = (_a = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        (creep.memory.workTargetId = (_a = creep.pos.findClosestByRange(FIND_STRUCTURES, {
             filter: (s) => s.hits < s.hitsMax,
-            ignoreCreeps: true,
         })) === null || _a === void 0 ? void 0 : _a.id)) {
         const target = Game.getObjectById(creep.memory.workTargetId);
         if (target && target.hits < target.hitsMax) {
@@ -17,11 +16,6 @@ const behavior = (creep) => {
             switch (creep.memory.worked) {
                 case ERR_NOT_ENOUGH_RESOURCES:
                     changeMode(creep, "collecting");
-                    break;
-                case ERR_NOT_IN_RANGE:
-                    if (creep.memory.mode === "working") {
-                        (0, util_creep_1.customMove)(creep, target);
-                    }
                     break;
                 case ERR_NOT_OWNER:
                 case ERR_NO_BODYPART:
@@ -31,7 +25,15 @@ const behavior = (creep) => {
                     break;
                 case OK:
                 case ERR_BUSY:
+                case ERR_NOT_IN_RANGE:
                 default:
+                    if (creep.memory.mode === "working") {
+                        (0, util_creep_1.customMove)(creep, target, {
+                            visualizePathStyle: {
+                                stroke: "#ffff00",
+                            },
+                        });
+                    }
                     break;
             }
         }
@@ -61,7 +63,7 @@ const behavior = (creep) => {
                     break;
                 case ERR_NOT_IN_RANGE:
                     if (creep.memory.mode === "collecting") {
-                        const moved = (0, util_creep_1.customMove)(creep, store);
+                        const moved = (0, util_creep_1.customMove)(creep, store, { visualizePathStyle: { stroke: "#ffff00" } });
                         moved !== OK && (console.log(`${creep.name} ${util_creep_1.RETURN_CODE_DECODER[moved.toString()]}`), creep.say(util_creep_1.RETURN_CODE_DECODER[moved.toString()]));
                     }
                     break;
