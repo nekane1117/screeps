@@ -112,7 +112,7 @@ const behavior = (creep) => {
         default:
             break;
     }
-    (0, util_creep_1.stealBy)(creep, ["harvester"]);
+    (0, util_creep_1.stealBy)(creep, ["harvester", "carrier"]);
     (0, util_creep_1.pickUpAll)(creep);
 };
 exports.default = behavior;

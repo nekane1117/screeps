@@ -71,6 +71,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // Storeが見つからなければ処分
     return creep.suicide();
   }
+
   // transfer
   // 最寄りのspawnまでの距離(見つからないときは0にして適当にごまかしている)
   const rangeToClosestSpawn = store.pos.findClosestByRange(getSpawnNamesInRoom(store.room).map((name) => Game.spawns[name]))?.pos.getRangeTo(store) || 0;
@@ -172,7 +173,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // 通りがかりに奪い取る
-  stealBy(creep, ["harvester"]);
+  stealBy(creep, ["harvester", "carrier"]);
 
   // 落っこちてるものを拾う
   pickUpAll(creep);
