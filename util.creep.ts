@@ -107,20 +107,34 @@ export const customMove: CustomMove = (creep, target, opt) => {
   }
 
   // 移動予定先
-  const direction = creep.memory._move?.path[0].direction && DIRECTIONS_DIFF[creep.memory._move?.path[0].direction];
+  const direction = creep.memory._move?.path?.[0]?.direction && DIRECTIONS_DIFF[creep.memory._move?.path[0].direction];
 
   const moved = creep.moveTo(target, {
-    ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length) && Game.time % 5 !== 0,
+    plainCost: 2,
+    ignoreCreeps: !creep.pos.inRangeTo(target, 3) && Game.time % 5 !== 0,
+    reusePath: Game.time % 5 === 0 ? 0 : undefined,
     serializeMemory: false,
     ...opt,
   });
 
+  moved !== OK && creep.say(RETURN_CODE_DECODER[moved.toString()]);
   // 通れなくて行き先がわかってるとき
   if (moved === ERR_NO_PATH && direction) {
     // 行き先のCreepと入れ替わろうとしてみる
     creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + direction[0], creep.pos.y + direction[1]).map((neighbor) => {
-      creep.pull(neighbor);
-      neighbor.moveTo(creep);
+      console.log(`${creep.name} try pull ${neighbor.name}`);
+      const pulled = creep.pull(neighbor);
+      const moveNeighbor = neighbor.move(creep);
+      if (pulled == OK && moveNeighbor === OK) {
+        console.log(`${Game.time} pull ${neighbor.name} success`);
+      } else {
+        console.log(
+          `${Game.time} pull ${neighbor.name} failed ${JSON.stringify({
+            pulled: RETURN_CODE_DECODER[pulled.toString()],
+            moveNeighbor: RETURN_CODE_DECODER[moveNeighbor.toString()],
+          })}`,
+        );
+      }
     });
   }
 

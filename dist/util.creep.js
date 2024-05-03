@@ -89,16 +89,27 @@ const DIRECTIONS_DIFF = {
     [BOTTOM_RIGHT]: [1, 1],
 };
 const customMove = (creep, target, opt) => {
-    var _a, _b;
+    var _a, _b, _c, _d;
     if (creep.fatigue) {
         return OK;
     }
-    const direction = ((_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path[0].direction) && DIRECTIONS_DIFF[(_b = creep.memory._move) === null || _b === void 0 ? void 0 : _b.path[0].direction];
-    const moved = creep.moveTo(target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length) && Game.time % 5 !== 0, serializeMemory: false }, opt));
+    const direction = ((_c = (_b = (_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b[0]) === null || _c === void 0 ? void 0 : _c.direction) && DIRECTIONS_DIFF[(_d = creep.memory._move) === null || _d === void 0 ? void 0 : _d.path[0].direction];
+    const moved = creep.moveTo(target, Object.assign({ plainCost: 2, ignoreCreeps: !creep.pos.inRangeTo(target, 3) && Game.time % 5 !== 0, reusePath: Game.time % 5 === 0 ? 0 : undefined, serializeMemory: false }, opt));
+    moved !== OK && creep.say(exports.RETURN_CODE_DECODER[moved.toString()]);
     if (moved === ERR_NO_PATH && direction) {
         creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + direction[0], creep.pos.y + direction[1]).map((neighbor) => {
-            creep.pull(neighbor);
-            neighbor.moveTo(creep);
+            console.log(`${creep.name} try pull ${neighbor.name}`);
+            const pulled = creep.pull(neighbor);
+            const moveNeighbor = neighbor.move(creep);
+            if (pulled == OK && moveNeighbor === OK) {
+                console.log(`${Game.time} pull ${neighbor.name} success`);
+            }
+            else {
+                console.log(`${Game.time} pull ${neighbor.name} failed ${JSON.stringify({
+                    pulled: exports.RETURN_CODE_DECODER[pulled.toString()],
+                    moveNeighbor: exports.RETURN_CODE_DECODER[moveNeighbor.toString()],
+                })}`);
+            }
         });
     }
     return moved;
