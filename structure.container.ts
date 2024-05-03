@@ -16,7 +16,7 @@ export default function containerBehavior(structure: Structure) {
       }),
     );
     // との容量差分の割合の4倍(100:0で4 , 全く同じで0)
-    return _.range(Math.ceil((Math.max(0, structure.store.energy - (innerClothestStorage?.store.energy || 0)) * 4) / CONTAINER_CAPACITY)).map((n) => {
+    return _.range(Math.ceil(Math.max(1, (structure.store.energy - (innerClothestStorage?.store.energy || 0)) * 4) / CONTAINER_CAPACITY)).map((n) => {
       const carrierName = `C_${structure.pos.x}_${structure.pos.y}_${n}`;
 
       // Creepが無ければSpawnを探す
