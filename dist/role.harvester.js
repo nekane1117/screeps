@@ -32,11 +32,13 @@ const behavior = (creep) => {
             console.log(`${creep.name} harvest returns ${util_creep_1.RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
             creep.say(util_creep_1.RETURN_CODE_DECODER[creep.memory.worked.toString()]);
             break;
-        case ERR_NOT_ENOUGH_RESOURCES:
         case OK:
+            break;
+        case ERR_NOT_ENOUGH_RESOURCES:
         case ERR_TIRED:
         case ERR_BUSY:
         default:
+            creep.say(util_creep_1.RETURN_CODE_DECODER[creep.memory.worked.toString()]);
             break;
     }
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5) {

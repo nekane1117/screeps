@@ -7,6 +7,12 @@ const behavior = (creep) => {
     if (!isCarrier(creep)) {
         return console.log(`${creep.name} is not Harvester`);
     }
+    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
+        changeMode(creep, "collecting");
+    }
+    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+        changeMode(creep, "working");
+    }
     const spawn = creep.pos.findClosestByRange(_((0, util_creep_1.getSpawnNamesInRoom)(creep.room))
         .map((name) => Game.spawns[name])
         .compact()
@@ -108,12 +114,6 @@ const behavior = (creep) => {
     }
     (0, util_creep_1.stealBy)(creep, ["harvester"]);
     (0, util_creep_1.pickUpAll)(creep);
-    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
-        changeMode(creep, "collecting");
-    }
-    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-        changeMode(creep, "working");
-    }
 };
 exports.default = behavior;
 function isCarrier(creep) {

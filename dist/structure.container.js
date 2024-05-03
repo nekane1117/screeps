@@ -10,7 +10,7 @@ function containerBehavior(structure) {
         const innerClothestStorage = structure.pos.findClosestByRange(clothestSpawn.pos.findInRange(FIND_STRUCTURES, clothestSpawn.pos.getRangeTo(structure) - 1, {
             filter: (s) => [STRUCTURE_CONTAINER, STRUCTURE_STORAGE].some((t) => t === s.structureType),
         }));
-        return _.range(Math.ceil((Math.max(0, structure.store.energy - ((innerClothestStorage === null || innerClothestStorage === void 0 ? void 0 : innerClothestStorage.store.energy) || 0)) * 4) / CONTAINER_CAPACITY)).map((n) => {
+        return _.range(Math.ceil(Math.max(1, (structure.store.energy - ((innerClothestStorage === null || innerClothestStorage === void 0 ? void 0 : innerClothestStorage.store.energy) || 0)) * 4) / CONTAINER_CAPACITY)).map((n) => {
             const carrierName = `C_${structure.pos.x}_${structure.pos.y}_${n}`;
             if (!Game.creeps[carrierName]) {
                 const spawn = structure.room

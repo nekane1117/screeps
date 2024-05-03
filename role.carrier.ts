@@ -9,6 +9,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isCarrier(creep)) {
     return console.log(`${creep.name} is not Harvester`);
   }
+  // 空っぽになったら収集モードに切り替える
+  if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
+    changeMode(creep, "collecting");
+  }
+  // 満タンだったら分配モードに切り替える
+  if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+    changeMode(creep, "working");
+  }
 
   const spawn = creep.pos.findClosestByRange(
     _(getSpawnNamesInRoom(creep.room))
@@ -168,15 +176,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // 落っこちてるものを拾う
   pickUpAll(creep);
-
-  // 空っぽになったら収集モードに切り替える
-  if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
-    changeMode(creep, "collecting");
-  }
-  // 満タンだったら分配モードに切り替える
-  if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-    changeMode(creep, "working");
-  }
 };
 
 export default behavior;
