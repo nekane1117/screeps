@@ -14,21 +14,38 @@ export const squareDiff = Object.freeze([
 ] as [number, number][]);
 
 export function bodyMaker(role: ROLES, cost: number): BodyPartConstant[] {
-  // 入れ物
-  const bodies = [...MIN_BODY[role]];
-  const diff = [...(DIFF_BODY[role] || MIN_BODY[role])];
-  const getTotalCost = () =>
-    _(bodies)
-      .map((p) => BODYPART_COST[p])
-      .sum();
+  if (role === "harvester") {
+    return HARVESTER_BODY.reduce(
+      (bodies, parts) => {
+        const total = _.last(bodies).total || 0;
+        return bodies.concat({
+          parts,
+          total: total + BODYPART_COST[parts],
+        });
+      },
+      [] as { parts: BodyPartConstant; total: number }[],
+    )
+      .filter(({ total }) => {
+        return total <= cost;
+      })
+      .map((c) => c.parts);
+  } else {
+    // 入れ物
+    const bodies = [...MIN_BODY[role]];
+    const diff = [...(DIFF_BODY[role] || MIN_BODY[role])];
+    const getTotalCost = () =>
+      _(bodies)
+        .map((p) => BODYPART_COST[p])
+        .sum();
 
-  // cost以下かつ50個以下の間くっつける
-  while (getTotalCost() <= cost && bodies.length <= 50) {
-    bodies.push(diff[_.random(0, diff.length - 1)]);
+    // cost以下かつ50個以下の間くっつける
+    while (getTotalCost() <= cost && bodies.length <= 50) {
+      bodies.push(diff[_.random(0, diff.length - 1)]);
+    }
+
+    // 1個分超えてるはずなので最後の１個を消して返す
+    return bodies.slice(0, bodies.length - 1);
   }
-
-  // 1個分超えてるはずなので最後の１個を消して返す
-  return bodies.slice(0, bodies.length - 1);
 }
 
 export const DIRECTIONS: Record<DirectionConstant, string> = {
@@ -58,6 +75,20 @@ export const MIN_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
   repairer: [WORK, CARRY, MOVE],
   upgrader: [WORK, CARRY, MOVE],
 });
+
+export const HARVESTER_BODY = Object.freeze([
+  // 最小構成
+  WORK,
+  MOVE,
+  CARRY,
+  // 作業効率
+  WORK,
+  WORK,
+  WORK,
+  WORK,
+  // 容量
+  ..._.range(43).map(() => CARRY),
+]);
 
 const DIFF_BODY: Partial<Record<ROLES, BodyPartConstant[]>> = Object.freeze({
   // ギリsourceまで行ければいいので

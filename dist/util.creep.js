@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.stealBy = exports.pickUpAll = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.DIRECTIONS = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.stealBy = exports.pickUpAll = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.HARVESTER_BODY = exports.MIN_BODY = exports.randomWalk = exports.DIRECTIONS = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -16,15 +16,30 @@ exports.squareDiff = Object.freeze([
     [1, 1],
 ]);
 function bodyMaker(role, cost) {
-    const bodies = [...exports.MIN_BODY[role]];
-    const diff = [...(DIFF_BODY[role] || exports.MIN_BODY[role])];
-    const getTotalCost = () => _(bodies)
-        .map((p) => BODYPART_COST[p])
-        .sum();
-    while (getTotalCost() <= cost && bodies.length <= 50) {
-        bodies.push(diff[_.random(0, diff.length - 1)]);
+    if (role === "harvester") {
+        return exports.HARVESTER_BODY.reduce((bodies, parts) => {
+            const total = _.last(bodies).total || 0;
+            return bodies.concat({
+                parts,
+                total: total + BODYPART_COST[parts],
+            });
+        }, [])
+            .filter(({ total }) => {
+            return total <= cost;
+        })
+            .map((c) => c.parts);
     }
-    return bodies.slice(0, bodies.length - 1);
+    else {
+        const bodies = [...exports.MIN_BODY[role]];
+        const diff = [...(DIFF_BODY[role] || exports.MIN_BODY[role])];
+        const getTotalCost = () => _(bodies)
+            .map((p) => BODYPART_COST[p])
+            .sum();
+        while (getTotalCost() <= cost && bodies.length <= 50) {
+            bodies.push(diff[_.random(0, diff.length - 1)]);
+        }
+        return bodies.slice(0, bodies.length - 1);
+    }
 }
 exports.bodyMaker = bodyMaker;
 exports.DIRECTIONS = {
@@ -53,6 +68,16 @@ exports.MIN_BODY = Object.freeze({
     repairer: [WORK, CARRY, MOVE],
     upgrader: [WORK, CARRY, MOVE],
 });
+exports.HARVESTER_BODY = Object.freeze([
+    WORK,
+    MOVE,
+    CARRY,
+    WORK,
+    WORK,
+    WORK,
+    WORK,
+    ..._.range(43).map(() => CARRY),
+]);
 const DIFF_BODY = Object.freeze({
     harvester: [WORK, WORK, CARRY],
     upgrader: [WORK, CARRY, WORK, CARRY, MOVE],
