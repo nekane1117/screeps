@@ -131,7 +131,5 @@ const changeMode = (creep: Upgrader, mode: UpgraderMemory["mode"]) => {
   if (mode !== creep.memory.mode) {
     creep.say(mode);
     creep.memory.mode = mode;
-    creep.memory.harvestTargetId = undefined;
-    creep.memory.harvested = undefined;
   }
 };

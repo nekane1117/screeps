@@ -83,7 +83,7 @@ const behavior = (creep) => {
                 case OK:
                 case ERR_BUSY:
                 default:
-                    if (store.structureType === STRUCTURE_SPAWN) {
+                    if (store.store.getUsedCapacity(RESOURCE_ENERGY) < creep.getActiveBodyparts(CARRY) * CARRY_CAPACITY) {
                         creep.memory.storeId = undefined;
                     }
                     break;
@@ -107,8 +107,6 @@ const changeMode = (creep, mode) => {
     if (mode !== creep.memory.mode) {
         creep.memory.mode = mode;
         creep.memory.buildingId = undefined;
-        creep.memory.harvestTargetId = undefined;
-        creep.memory.harvested = undefined;
         creep.memory.storeId = undefined;
         creep.say(creep.memory.mode);
     }

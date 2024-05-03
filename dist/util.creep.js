@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.stealBy = exports.pickUpAll = exports.commonHarvest = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.DIRECTIONS = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.stealBy = exports.pickUpAll = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.MIN_BODY = exports.randomWalk = exports.DIRECTIONS = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -78,11 +78,30 @@ exports.RETURN_CODE_DECODER = Object.freeze({
     [ERR_RCL_NOT_ENOUGH.toString()]: "ERR_RCL_NOT_ENOUGH",
     [ERR_GCL_NOT_ENOUGH.toString()]: "ERR_GCL_NOT_ENOUGH",
 });
+const DIRECTIONS_DIFF = {
+    [TOP_LEFT]: [-1, -1],
+    [TOP]: [-1, 0],
+    [TOP_RIGHT]: [-1, 1],
+    [LEFT]: [0, -1],
+    [RIGHT]: [0, 1],
+    [BOTTOM_LEFT]: [1, -1],
+    [BOTTOM]: [1, 0],
+    [BOTTOM_RIGHT]: [1, 1],
+};
 const customMove = (creep, target, opt) => {
+    var _a, _b;
     if (creep.fatigue) {
         return OK;
     }
-    return creep.moveTo(target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length) && Game.time % 5 !== 0, serializeMemory: false }, opt));
+    const direction = ((_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path[0].direction) && DIRECTIONS_DIFF[(_b = creep.memory._move) === null || _b === void 0 ? void 0 : _b.path[0].direction];
+    const moved = creep.moveTo(target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length) && Game.time % 5 !== 0, serializeMemory: false }, opt));
+    if (moved === ERR_NO_PATH && direction) {
+        creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + direction[0], creep.pos.y + direction[1]).map((neighbor) => {
+            creep.pull(neighbor);
+            neighbor.moveTo(creep);
+        });
+    }
+    return moved;
 };
 exports.customMove = customMove;
 function getCreepsInRoom(room) {
@@ -117,64 +136,6 @@ function getSpawnNamesInRoom(room) {
     }
 }
 exports.getSpawnNamesInRoom = getSpawnNamesInRoom;
-function commonHarvest(creep, _opts) {
-    var _a;
-    if (!(creep.memory.harvestTargetId ||
-        (creep.memory.harvestTargetId = (_a = creep.pos.findClosestByPath(_(creep.room.memory.activeSource)
-            .map((id) => Game.getObjectById(id))
-            .compact()
-            .value(), { ignoreCreeps: true })) === null || _a === void 0 ? void 0 : _a.id))) {
-        randomWalk(creep);
-    }
-    else {
-        const source = Game.getObjectById(creep.memory.harvestTargetId);
-        if (source) {
-            creep.memory.harvested = {
-                tick: Game.time,
-                result: creep.harvest(source),
-            };
-            switch (creep.memory.harvested.result) {
-                case ERR_NOT_IN_RANGE:
-                    if (creep.memory.mode === "harvesting") {
-                        creep.memory.harvestMoved = (0, exports.customMove)(creep, source);
-                        switch (creep.memory.harvestMoved) {
-                            case OK:
-                                break;
-                            case ERR_NO_PATH:
-                                creep.memory.harvestTargetId = undefined;
-                                console.log(`ERR_NO_PATH,pos:${creep.pos.x},${creep.pos.y},_move:${JSON.stringify(creep.memory._move)}`);
-                                break;
-                            default:
-                                creep.say(exports.RETURN_CODE_DECODER[creep.memory.harvestMoved.toString()]);
-                                break;
-                        }
-                    }
-                    break;
-                case ERR_INVALID_TARGET:
-                    creep.memory.harvestTargetId = undefined;
-                    break;
-                case ERR_NOT_OWNER:
-                case ERR_NOT_FOUND:
-                case ERR_NO_BODYPART:
-                    console.log(`${creep.name} harvest returns ${exports.RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]}`);
-                    creep.say(exports.RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]);
-                    break;
-                case ERR_NOT_ENOUGH_RESOURCES:
-                case OK:
-                case ERR_TIRED:
-                case ERR_BUSY:
-                default:
-                    break;
-            }
-        }
-        else {
-            creep.memory.harvestTargetId = undefined;
-            creep.memory.harvested = undefined;
-            randomWalk(creep);
-        }
-    }
-}
-exports.commonHarvest = commonHarvest;
 function pickUpAll(creep) {
     creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1).forEach((resource) => {
         creep.pickup(resource);

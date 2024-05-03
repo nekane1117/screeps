@@ -107,7 +107,5 @@ const changeMode = (creep, mode) => {
     if (mode !== creep.memory.mode) {
         creep.say(mode);
         creep.memory.mode = mode;
-        creep.memory.harvestTargetId = undefined;
-        creep.memory.harvested = undefined;
     }
 };

@@ -30,7 +30,7 @@ declare interface HarvesterMemory extends CreepMemory {
    * harvesting : 収集中
    */
   mode: "working" | "harvesting";
-  harvestTargetId?: Source["id"] | null;
+  harvestTargetId: Source["id"];
   storeId?: StoreTarget["id"] | null;
   harvested?: {
     tick: number;
@@ -57,7 +57,7 @@ declare interface Upgrader extends Creep {
   memory: UpgraderMemory;
 }
 
-declare interface UpgraderMemory extends HarvesterMemory {
+declare interface UpgraderMemory extends CreepMemory {
   role: "upgrader";
   /** 今何してるか
    * working    : 作業中
@@ -74,7 +74,7 @@ declare interface Builder extends Creep {
   memory: BuilderMemory;
 }
 
-declare interface BuilderMemory extends HarvesterMemory {
+declare interface BuilderMemory extends CreepMemory {
   role: "builder";
   /** 今何してるか
    * working    : 作業中
@@ -92,7 +92,7 @@ declare interface Carrier extends Creep {
   memory: CarrierMemory;
 }
 
-declare interface CarrierMemory extends HarvesterMemory {
+declare interface CarrierMemory extends CreepMemory {
   role: "carrier";
   /** 今何してるか
    * working    : 作業中
@@ -110,7 +110,7 @@ declare interface Repairer extends Creep {
   memory: RepairerMemory;
 }
 
-declare interface RepairerMemory extends HarvesterMemory {
+declare interface RepairerMemory extends CreepMemory {
   role: "repairer";
   /** 今何してるか
    * working    : 作業中

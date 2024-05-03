@@ -21,13 +21,31 @@ const behavior = (spawn) => {
             },
         });
     }
-    if ((creepsInRoom.harvester || []).length < spawn.room.memory.harvesterLimit &&
-        spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["harvester"]), spawn.room.energyCapacityAvailable * 0.8)) {
-        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("harvester", spawn.room.energyAvailable), generateCreepName("harvester"), {
-            memory: {
-                role: "harvester",
-            },
-        });
+    if (spawn.room.energyAvailable >= 200) {
+        for (const source of spawn.room.find(FIND_SOURCES)) {
+            const terrain = spawn.room.getTerrain();
+            const maxCount = (0, lodash_1.default)(util_creep_1.squareDiff)
+                .map(([dx, dy]) => {
+                return terrain.get(source.pos.x + dx, source.pos.y + dy) !== TERRAIN_MASK_WALL ? 1 : 0;
+            })
+                .sum();
+            const harvesters = (0, lodash_1.default)((0, util_creep_1.getCreepsInRoom)(spawn.room)
+                .map((name) => Game.creeps[name])
+                .filter((c) => {
+                const isH = (c) => {
+                    return c.memory.role === "harvester";
+                };
+                return c !== undefined && isH(c) && c.memory.harvestTargetId === source.id;
+            }));
+            if (harvesters.size() < maxCount && harvesters.map((c) => c.getActiveBodyparts(WORK)).sum() < 5) {
+                return spawn.spawnCreep((0, util_creep_1.bodyMaker)("harvester", spawn.room.energyAvailable), generateCreepName("harvester"), {
+                    memory: {
+                        role: "harvester",
+                        harvestTargetId: source.id,
+                    },
+                });
+            }
+        }
     }
     if ((creepsInRoom.upgrader || []).length === 0 &&
         spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["upgrader"]), spawn.room.energyCapacityAvailable * 0.8)) {
@@ -38,7 +56,14 @@ const behavior = (spawn) => {
         });
     }
     if (spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length &&
-        (creepsInRoom.builder || []).length === 0 &&
+        (creepsInRoom.builder || []).length <
+            spawn.room.find(FIND_STRUCTURES, {
+                filter: (s) => {
+                    return [STRUCTURE_CONTAINER, STRUCTURE_STORAGE].some((t) => {
+                        return s.structureType === t && s.store.getUsedCapacity(RESOURCE_ENERGY) / s.store.getCapacity(RESOURCE_ENERGY) > 0.5;
+                    });
+                },
+            }).length &&
         spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.8)) {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("builder", spawn.room.energyAvailable), generateCreepName("builder"), {
             memory: {

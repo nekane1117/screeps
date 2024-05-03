@@ -5,7 +5,7 @@ function containerBehavior(structure) {
     if (!isTarget(structure)) {
         return console.log(`${structure.id} is not container(${structure.structureType})`);
     }
-    return _.range(1).map((n) => {
+    return _.range(structure.store.getUsedCapacity(RESOURCE_ENERGY) / structure.store.getCapacity(RESOURCE_ENERGY) > 0.5 ? 3 : 1).map((n) => {
         const carrierName = `C_${structure.pos.x}_${structure.pos.y}_${n}`;
         if (!Game.creeps[carrierName]) {
             const spawn = structure.room

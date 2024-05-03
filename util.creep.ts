@@ -89,15 +89,42 @@ export const RETURN_CODE_DECODER = Object.freeze({
 });
 
 type CustomMove = (creep: Creep, target: RoomPosition | { pos: RoomPosition }, opt?: MoveToOpts) => ReturnType<Creep["moveTo"]>;
+
+const DIRECTIONS_DIFF: Record<DirectionConstant, [number, number]> = {
+  [TOP_LEFT]: [-1, -1],
+  [TOP]: [-1, 0],
+  [TOP_RIGHT]: [-1, 1],
+  [LEFT]: [0, -1],
+  [RIGHT]: [0, 1],
+  [BOTTOM_LEFT]: [1, -1],
+  [BOTTOM]: [1, 0],
+  [BOTTOM_RIGHT]: [1, 1],
+};
+
 export const customMove: CustomMove = (creep, target, opt) => {
   if (creep.fatigue) {
     return OK;
   }
-  return creep.moveTo(target, {
+
+  // 移動予定先
+  const direction = creep.memory._move?.path[0].direction && DIRECTIONS_DIFF[creep.memory._move?.path[0].direction];
+
+  const moved = creep.moveTo(target, {
     ignoreCreeps: !creep.pos.inRangeTo(target, getCreepsInRoom(creep.room).length) && Game.time % 5 !== 0,
     serializeMemory: false,
     ...opt,
   });
+
+  // 通れなくて行き先がわかってるとき
+  if (moved === ERR_NO_PATH && direction) {
+    // 行き先のCreepと入れ替わろうとしてみる
+    creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + direction[0], creep.pos.y + direction[1]).map((neighbor) => {
+      creep.pull(neighbor);
+      neighbor.moveTo(creep);
+    });
+  }
+
+  return moved;
 };
 
 export function getCreepsInRoom(room: Room) {
@@ -125,83 +152,6 @@ export function getSpawnNamesInRoom(room: Room) {
         .map((entry) => entry[0]),
     };
     return room.memory.spawns.names;
-  }
-}
-
-type CommonHarvestOpts = {
-  forceMove: boolean;
-};
-
-export function commonHarvest(creep: Harvester | Builder | Upgrader | Repairer, _opts?: Partial<CommonHarvestOpts>) {
-  // 対象設定処理
-  if (
-    !(
-      creep.memory.harvestTargetId ||
-      (creep.memory.harvestTargetId = creep.pos.findClosestByPath(
-        _(creep.room.memory.activeSource)
-          .map((id) => Game.getObjectById(id))
-          .compact()
-          .value(),
-        { ignoreCreeps: true },
-      )?.id)
-    )
-  ) {
-    // 完全に見つからなければうろうろしておく
-    randomWalk(creep);
-  } else {
-    // 対象が見つかった時
-    const source = Game.getObjectById(creep.memory.harvestTargetId);
-    if (source) {
-      creep.memory.harvested = {
-        tick: Game.time,
-        result: creep.harvest(source),
-      };
-      switch (creep.memory.harvested.result) {
-        case ERR_NOT_IN_RANGE:
-          if (creep.memory.mode === "harvesting") {
-            // 収集モードで近くにいないときは近寄る
-            creep.memory.harvestMoved = customMove(creep, source);
-            switch (creep.memory.harvestMoved) {
-              case OK:
-                break;
-              case ERR_NO_PATH:
-                creep.memory.harvestTargetId = undefined;
-                console.log(`ERR_NO_PATH,pos:${creep.pos.x},${creep.pos.y},_move:${JSON.stringify(creep.memory._move)}`);
-                break;
-
-              default:
-                creep.say(RETURN_CODE_DECODER[creep.memory.harvestMoved.toString()]);
-                break;
-            }
-          }
-          break;
-
-        // 資源がダメ系
-        case ERR_INVALID_TARGET: // 対象が変
-          creep.memory.harvestTargetId = undefined;
-          break;
-        // 来ないはずのやつ
-        case ERR_NOT_OWNER: // 自creepじゃない
-        case ERR_NOT_FOUND: // mineralは対象外
-        case ERR_NO_BODYPART: // WORKが無い
-          console.log(`${creep.name} harvest returns ${RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]}`);
-          creep.say(RETURN_CODE_DECODER[creep.memory.harvested.result.toString()]);
-          break;
-        // 大丈夫なやつ
-        case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
-        case OK: // OK
-        case ERR_TIRED: // 疲れた
-        case ERR_BUSY: // spawning
-        default:
-          break;
-      }
-    } else {
-      // 指定されていたソースが見つからないとき
-      // 対象をクリアしてうろうろしておく
-      creep.memory.harvestTargetId = undefined;
-      creep.memory.harvested = undefined;
-      randomWalk(creep);
-    }
   }
 }
 

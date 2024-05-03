@@ -56,7 +56,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       case OK:
       case ERR_BUSY:
       default:
-        if (store.store.energy === 0) {
+        if (creep.store.energy > 0 && store.store.energy < creep.store.getCapacity(RESOURCE_ENERGY)) {
           changeMode(creep, "working");
         }
         break;
