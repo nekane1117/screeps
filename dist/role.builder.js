@@ -90,7 +90,7 @@ const behavior = (creep) => {
             }
         }
     }
-    (0, util_creep_1.stealBy)(creep, ["harvester", "carrier"]);
+    (0, util_creep_1.stealBy)(creep, ["harvester"]);
     (0, util_creep_1.pickUpAll)(creep);
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
         changeMode(creep, "working");

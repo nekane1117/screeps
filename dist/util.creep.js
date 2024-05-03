@@ -18,7 +18,8 @@ exports.squareDiff = Object.freeze([
 function bodyMaker(role, cost) {
     if (role === "harvester") {
         return exports.HARVESTER_BODY.reduce((bodies, parts) => {
-            const total = _.last(bodies).total || 0;
+            var _a;
+            const total = ((_a = _.last(bodies)) === null || _a === void 0 ? void 0 : _a.total) || 0;
             return bodies.concat({
                 parts,
                 total: total + BODYPART_COST[parts],

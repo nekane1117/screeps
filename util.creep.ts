@@ -17,7 +17,7 @@ export function bodyMaker(role: ROLES, cost: number): BodyPartConstant[] {
   if (role === "harvester") {
     return HARVESTER_BODY.reduce(
       (bodies, parts) => {
-        const total = _.last(bodies).total || 0;
+        const total = _.last(bodies)?.total || 0;
         return bodies.concat({
           parts,
           total: total + BODYPART_COST[parts],
