@@ -119,7 +119,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // withdraw
-  stealBy(creep, ["harvester"]);
+  stealBy(creep, ["harvester", "carrier"]);
 
   // 落っこちてるものを拾う
   pickUpAll(creep);
