@@ -51,11 +51,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
       break;
     // 大丈夫なやつ
-    case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
     case OK: // OK
+      break;
+    case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
     case ERR_TIRED: // 疲れた
     case ERR_BUSY: // spawning
     default:
+      creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
       break;
   }
 
