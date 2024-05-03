@@ -62,6 +62,7 @@ const behavior = (spawn: StructureSpawn) => {
       }
     }
   }
+
   // upgraderが居ないときもとりあえず作る
   if (
     (creepsInRoom.upgrader || []).length === 0 &&
@@ -74,18 +75,20 @@ const behavior = (spawn: StructureSpawn) => {
     });
   }
 
+  // 満たされてるコンテナの数
+  const filledStorages = spawn.room.find(FIND_STRUCTURES, {
+    filter: (s) => {
+      // コンテナかstorage
+      return [STRUCTURE_CONTAINER, STRUCTURE_STORAGE].some((t) => {
+        return s.structureType === t && s.store.getUsedCapacity(RESOURCE_ENERGY) / s.store.getCapacity(RESOURCE_ENERGY) > 0.5;
+      });
+    },
+  });
+
   // builderが不足しているとき
   if (
     spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length && // 建設がある
-    (creepsInRoom.builder || []).length <
-      spawn.room.find(FIND_STRUCTURES, {
-        filter: (s) => {
-          // コンテナかstorage
-          return [STRUCTURE_CONTAINER, STRUCTURE_STORAGE].some((t) => {
-            return s.structureType === t && s.store.getUsedCapacity(RESOURCE_ENERGY) / s.store.getCapacity(RESOURCE_ENERGY) > 0.5;
-          });
-        },
-      }).length &&
+    (creepsInRoom.builder || []).length < filledStorages.length &&
     spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.8) // エネルギー余ってる
   ) {
     return spawn.spawnCreep(bodyMaker("builder", spawn.room.energyAvailable), generateCreepName("builder"), {
@@ -107,6 +110,18 @@ const behavior = (spawn: StructureSpawn) => {
         role: "repairer",
         mode: "working",
       } as RepairerMemory,
+    });
+  }
+
+  // upgraderが居ないときもとりあえず作る
+  if (
+    (creepsInRoom.upgrader || []).length < filledStorages.length &&
+    spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["upgrader"]), spawn.room.energyCapacityAvailable * 0.8)
+  ) {
+    return spawn.spawnCreep(bodyMaker("upgrader", spawn.room.energyAvailable), generateCreepName("upgrader"), {
+      memory: {
+        role: "upgrader",
+      } as UpgraderMemory,
     });
   }
 

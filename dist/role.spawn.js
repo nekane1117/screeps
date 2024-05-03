@@ -55,15 +55,15 @@ const behavior = (spawn) => {
             },
         });
     }
+    const filledStorages = spawn.room.find(FIND_STRUCTURES, {
+        filter: (s) => {
+            return [STRUCTURE_CONTAINER, STRUCTURE_STORAGE].some((t) => {
+                return s.structureType === t && s.store.getUsedCapacity(RESOURCE_ENERGY) / s.store.getCapacity(RESOURCE_ENERGY) > 0.5;
+            });
+        },
+    });
     if (spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length &&
-        (creepsInRoom.builder || []).length <
-            spawn.room.find(FIND_STRUCTURES, {
-                filter: (s) => {
-                    return [STRUCTURE_CONTAINER, STRUCTURE_STORAGE].some((t) => {
-                        return s.structureType === t && s.store.getUsedCapacity(RESOURCE_ENERGY) / s.store.getCapacity(RESOURCE_ENERGY) > 0.5;
-                    });
-                },
-            }).length &&
+        (creepsInRoom.builder || []).length < filledStorages.length &&
         spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.8)) {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("builder", spawn.room.energyAvailable), generateCreepName("builder"), {
             memory: {
@@ -79,6 +79,14 @@ const behavior = (spawn) => {
             memory: {
                 role: "repairer",
                 mode: "working",
+            },
+        });
+    }
+    if ((creepsInRoom.upgrader || []).length < filledStorages.length &&
+        spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["upgrader"]), spawn.room.energyCapacityAvailable * 0.8)) {
+        return spawn.spawnCreep((0, util_creep_1.bodyMaker)("upgrader", spawn.room.energyAvailable), generateCreepName("upgrader"), {
+            memory: {
+                role: "upgrader",
             },
         });
     }
