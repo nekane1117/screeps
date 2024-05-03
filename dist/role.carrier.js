@@ -19,9 +19,6 @@ const behavior = (creep) => {
                 if (creep.store.energy > 0 && store.store.energy === 0) {
                     changeMode(creep, "working");
                 }
-                else {
-                    (0, util_creep_1.randomWalk)(creep);
-                }
                 break;
             case ERR_FULL:
                 changeMode(creep, "working");
@@ -73,13 +70,13 @@ const behavior = (creep) => {
                 filter: (s) => "store" in s && s.id !== creep.memory.storeId && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
             }))) === null || _b === void 0 ? void 0 : _b.id;
         if (!creep.memory.transferId) {
-            return (0, util_creep_1.randomWalk)(creep);
+            return ERR_NOT_FOUND;
         }
     }
     const transferTarget = Game.getObjectById(creep.memory.transferId);
     if (!transferTarget) {
         creep.memory.transferId = undefined;
-        return (0, util_creep_1.randomWalk)(creep);
+        return ERR_NOT_FOUND;
     }
     const returnVal = creep.transfer(transferTarget, RESOURCE_ENERGY);
     switch (returnVal) {

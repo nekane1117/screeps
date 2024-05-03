@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, getSpawnNamesInRoom, isStoreTarget, pickUpAll, randomWalk, stealBy } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, getSpawnNamesInRoom, isStoreTarget, pickUpAll, stealBy } from "./util.creep";
 import { defaultTo } from "./utils.common";
 
 type Structures<T extends StructureConstant = StructureConstant> = {
@@ -30,8 +30,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         // 邪魔になるときがあるのでうろうろしておく
         if (creep.store.energy > 0 && store.store.energy === 0) {
           changeMode(creep, "working");
-        } else {
-          randomWalk(creep);
         }
         break;
       // お腹いっぱい
@@ -115,7 +113,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     )?.id;
     if (!creep.memory.transferId) {
       // 完全に見つからなければうろうろしておく
-      return randomWalk(creep);
+      return ERR_NOT_FOUND;
     }
   }
 
@@ -123,7 +121,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!transferTarget) {
     creep.memory.transferId = undefined;
     // 完全に見つからなければうろうろしておく
-    return randomWalk(creep);
+    return ERR_NOT_FOUND;
   }
 
   const returnVal = creep.transfer(transferTarget, RESOURCE_ENERGY);
