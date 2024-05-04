@@ -12,7 +12,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (
     creep.memory.workTargetId ||
     (creep.memory.workTargetId = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-      filter: (s) => s.hits < s.hitsMax,
+      filter: (s) => s.structureType !== STRUCTURE_WALL && s.hits < s.hitsMax,
     })?.id)
   ) {
     const target = Game.getObjectById(creep.memory.workTargetId);

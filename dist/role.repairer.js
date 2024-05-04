@@ -8,7 +8,7 @@ const behavior = (creep) => {
     }
     if (creep.memory.workTargetId ||
         (creep.memory.workTargetId = (_a = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-            filter: (s) => s.hits < s.hitsMax,
+            filter: (s) => s.structureType !== STRUCTURE_WALL && s.hits < s.hitsMax,
         })) === null || _a === void 0 ? void 0 : _a.id)) {
         const target = Game.getObjectById(creep.memory.workTargetId);
         if (target && target.hits < target.hitsMax) {
