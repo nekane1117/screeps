@@ -21,7 +21,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       switch (creep.memory.worked) {
         // 資源不足
         case ERR_NOT_ENOUGH_RESOURCES:
-          changeMode(creep, "collecting");
+          changeMode(creep, "🛒");
           break;
         // 有りえない系
         case ERR_NOT_OWNER:
@@ -35,7 +35,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           creep.memory.workTargetId = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.hits < s.hitsMax })).min((s) => s.hits)?.id;
         // eslint-disable-next-line no-fallthrough
         case ERR_NOT_IN_RANGE:
-          if (creep.memory.mode === "working") {
+          if (creep.memory.mode === "💪") {
             customMove(creep, target, {
               visualizePathStyle: {
                 stroke: "#ffff00",
@@ -69,7 +69,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);
       switch (creep.memory.collected) {
         case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
-          changeMode(creep, "collecting");
+          changeMode(creep, "🛒");
           break;
         case ERR_INVALID_TARGET: // 対象が変
           creep.memory.storeId = undefined;
@@ -77,10 +77,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
         // 満タンまで取った
         case ERR_FULL:
-          changeMode(creep, "working");
+          changeMode(creep, "💪");
           break;
         case ERR_NOT_IN_RANGE:
-          if (creep.memory.mode === "collecting") {
+          if (creep.memory.mode === "🛒") {
             const moved = customMove(creep, store, { visualizePathStyle: { stroke: "#ffff00" } });
             moved !== OK && (console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`), creep.say(RETURN_CODE_DECODER[moved.toString()]));
           }
@@ -107,11 +107,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // 空っぽになったら収集モードに切り替える
   if (creep.store[RESOURCE_ENERGY] === 0) {
-    changeMode(creep, "collecting");
+    changeMode(creep, "🛒");
   }
   // 満タンだったら分配モードに切り替える
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-    changeMode(creep, "working");
+    changeMode(creep, "💪");
   }
 };
 
@@ -121,10 +121,10 @@ function isRepairer(creep: Creeps): creep is Repairer {
   return creep.memory.role === "repairer";
 }
 
-function changeMode(creep: Repairer, mode: "working" | "collecting") {
+function changeMode(creep: Repairer, mode: "💪" | "🛒") {
   if (creep.memory.mode !== mode) {
     creep.say(mode);
-    if (mode === "working") {
+    if (mode === "💪") {
       creep.memory.mode = mode;
     } else {
       creep.memory.mode = creep.room.find(FIND_STRUCTURES, {
@@ -132,8 +132,8 @@ function changeMode(creep: Repairer, mode: "working" | "collecting") {
           return isStoreTarget(s) && s.store.getUsedCapacity(RESOURCE_ENERGY) !== 0;
         },
       })
-        ? "collecting"
-        : "harvesting";
+        ? "🛒"
+        : "🌾";
     }
     creep.memory.workTargetId = undefined;
   }

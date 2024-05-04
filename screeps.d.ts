@@ -30,7 +30,7 @@ declare interface HarvesterMemory extends CreepMemory {
    * working    : 資源を持ってきてるところ
    * harvesting : 収集中
    */
-  mode: "working" | "harvesting";
+  mode: "💪" | "🌾";
   harvestTargetId: Source["id"];
   storeId?: StoreTarget["id"] | null;
   harvested?: {
@@ -64,7 +64,7 @@ declare interface UpgraderMemory extends CreepMemory {
    * working    : 作業中
    * collecting : 資源取得中
    */
-  mode: "working" | "collecting";
+  mode: "💪" | "🛒";
   /** 資源をもらいに行く先 */
   storeId?: StoreTarget["id"] | null;
 
@@ -81,7 +81,7 @@ declare interface BuilderMemory extends CreepMemory {
    * working    : 作業中
    * collecting : 資源取得中
    */
-  mode: "working" | "collecting";
+  mode: "💪" | "🛒";
   /** 今建てたいもの */
   buildingId?: ConstructionSite["id"] | null;
   built?: ReturnType<Creeps["build"]>;
@@ -100,7 +100,7 @@ declare interface CarrierMemory extends CreepMemory {
    * collecting : 資源取得中
    * harvesting : 自力で収集中
    */
-  mode: "working" | "collecting";
+  mode: "💪" | "🛒";
   /** 担当倉庫 */
   storeId: StructureContainer["id"];
   /** 配送先 */
@@ -118,7 +118,7 @@ declare interface RepairerMemory extends CreepMemory {
    * collecting : 資源取得中
    * harvesting : 自力で収集中
    */
-  mode: "working" | "collecting" | "harvesting";
+  mode: "💪" | "🛒" | "🌾";
   /** 修理対象 */
   workTargetId?: Id<Structure> | null;
   /** 資源をもらいに行く先 */

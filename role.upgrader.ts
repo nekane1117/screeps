@@ -27,10 +27,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   switch (creep.memory.worked) {
     // 資源不足
     case ERR_NOT_ENOUGH_RESOURCES:
-      changeMode(creep, "collecting");
+      changeMode(creep, "🛒");
       break;
     case ERR_NOT_IN_RANGE:
-      if (creep.memory.mode === "working") {
+      if (creep.memory.mode === "💪") {
         customMove(creep, creep.room.controller);
       }
       break;
@@ -80,10 +80,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
         // 満タンまで取った
         case ERR_FULL:
-          changeMode(creep, "working");
+          changeMode(creep, "💪");
           break;
         case ERR_NOT_IN_RANGE:
-          if (creep.memory.mode === "collecting") {
+          if (creep.memory.mode === "🛒") {
             const moved = customMove(creep, store);
             if (moved !== OK) {
               console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`);
@@ -116,9 +116,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   pickUpAll(creep);
 
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-    changeMode(creep, "working");
+    changeMode(creep, "💪");
   } else if (creep.store[RESOURCE_ENERGY] === 0) {
-    changeMode(creep, "collecting");
+    changeMode(creep, "🛒");
   }
 };
 

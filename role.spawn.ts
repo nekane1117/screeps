@@ -94,7 +94,7 @@ const behavior = (spawn: StructureSpawn) => {
     return spawn.spawnCreep(bodyMaker("builder", spawn.room.energyAvailable), generateCreepName("builder"), {
       memory: {
         role: "builder",
-        mode: "working",
+        mode: "💪",
       } as BuilderMemory,
     });
   }
@@ -108,7 +108,7 @@ const behavior = (spawn: StructureSpawn) => {
     return spawn.spawnCreep(bodyMaker("repairer", spawn.room.energyAvailable), generateCreepName("repairer"), {
       memory: {
         role: "repairer",
-        mode: "working",
+        mode: "💪",
       } as RepairerMemory,
     });
   }

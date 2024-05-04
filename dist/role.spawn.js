@@ -68,7 +68,7 @@ const behavior = (spawn) => {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("builder", spawn.room.energyAvailable), generateCreepName("builder"), {
             memory: {
                 role: "builder",
-                mode: "working",
+                mode: "💪",
             },
         });
     }
@@ -78,7 +78,7 @@ const behavior = (spawn) => {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("repairer", spawn.room.energyAvailable), generateCreepName("repairer"), {
             memory: {
                 role: "repairer",
-                mode: "working",
+                mode: "💪",
             },
         });
     }

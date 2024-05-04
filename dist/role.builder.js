@@ -18,13 +18,13 @@ const behavior = (creep) => {
         if (site) {
             switch ((creep.memory.built = creep.build(site))) {
                 case ERR_NOT_ENOUGH_RESOURCES:
-                    changeMode(creep, "collecting");
+                    changeMode(creep, "🛒");
                     break;
                 case ERR_INVALID_TARGET:
                     creep.memory.buildingId = undefined;
                     break;
                 case ERR_NOT_IN_RANGE:
-                    if (creep.memory.mode === "working") {
+                    if (creep.memory.mode === "💪") {
                         (0, util_creep_1.customMove)(creep, site);
                     }
                     break;
@@ -64,10 +64,10 @@ const behavior = (creep) => {
                     creep.memory.storeId = undefined;
                     break;
                 case ERR_FULL:
-                    changeMode(creep, "working");
+                    changeMode(creep, "💪");
                     break;
                 case ERR_NOT_IN_RANGE:
-                    if (creep.memory.mode === "collecting") {
+                    if (creep.memory.mode === "🛒") {
                         const moved = (0, util_creep_1.customMove)(creep, store);
                         if (moved !== OK) {
                             console.log(`${creep.name} ${util_creep_1.RETURN_CODE_DECODER[moved.toString()]}`);
@@ -93,10 +93,10 @@ const behavior = (creep) => {
     (0, util_creep_1.stealBy)(creep, ["harvester"]);
     (0, util_creep_1.pickUpAll)(creep);
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-        changeMode(creep, "working");
+        changeMode(creep, "💪");
     }
     if (creep.store[RESOURCE_ENERGY] === 0) {
-        changeMode(creep, "collecting");
+        changeMode(creep, "🛒");
     }
 };
 exports.default = behavior;

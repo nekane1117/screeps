@@ -15,7 +15,7 @@ const behavior = (creep) => {
             creep.memory.worked = creep.repair(target);
             switch (creep.memory.worked) {
                 case ERR_NOT_ENOUGH_RESOURCES:
-                    changeMode(creep, "collecting");
+                    changeMode(creep, "🛒");
                     break;
                 case ERR_NOT_OWNER:
                 case ERR_NO_BODYPART:
@@ -26,7 +26,7 @@ const behavior = (creep) => {
                 case OK:
                     creep.memory.workTargetId = (_b = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.hits < s.hitsMax })).min((s) => s.hits)) === null || _b === void 0 ? void 0 : _b.id;
                 case ERR_NOT_IN_RANGE:
-                    if (creep.memory.mode === "working") {
+                    if (creep.memory.mode === "💪") {
                         (0, util_creep_1.customMove)(creep, target, {
                             visualizePathStyle: {
                                 stroke: "#ffff00",
@@ -55,16 +55,16 @@ const behavior = (creep) => {
             creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);
             switch (creep.memory.collected) {
                 case ERR_NOT_ENOUGH_RESOURCES:
-                    changeMode(creep, "collecting");
+                    changeMode(creep, "🛒");
                     break;
                 case ERR_INVALID_TARGET:
                     creep.memory.storeId = undefined;
                     break;
                 case ERR_FULL:
-                    changeMode(creep, "working");
+                    changeMode(creep, "💪");
                     break;
                 case ERR_NOT_IN_RANGE:
-                    if (creep.memory.mode === "collecting") {
+                    if (creep.memory.mode === "🛒") {
                         const moved = (0, util_creep_1.customMove)(creep, store, { visualizePathStyle: { stroke: "#ffff00" } });
                         moved !== OK && (console.log(`${creep.name} ${util_creep_1.RETURN_CODE_DECODER[moved.toString()]}`), creep.say(util_creep_1.RETURN_CODE_DECODER[moved.toString()]));
                     }
@@ -86,10 +86,10 @@ const behavior = (creep) => {
     }
     (0, util_creep_1.pickUpAll)(creep);
     if (creep.store[RESOURCE_ENERGY] === 0) {
-        changeMode(creep, "collecting");
+        changeMode(creep, "🛒");
     }
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-        changeMode(creep, "working");
+        changeMode(creep, "💪");
     }
 };
 exports.default = behavior;
@@ -99,7 +99,7 @@ function isRepairer(creep) {
 function changeMode(creep, mode) {
     if (creep.memory.mode !== mode) {
         creep.say(mode);
-        if (mode === "working") {
+        if (mode === "💪") {
             creep.memory.mode = mode;
         }
         else {
@@ -108,8 +108,8 @@ function changeMode(creep, mode) {
                     return (0, util_creep_1.isStoreTarget)(s) && s.store.getUsedCapacity(RESOURCE_ENERGY) !== 0;
                 },
             })
-                ? "collecting"
-                : "harvesting";
+                ? "🛒"
+                : "🌾";
         }
         creep.memory.workTargetId = undefined;
     }

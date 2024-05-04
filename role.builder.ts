@@ -30,7 +30,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       switch ((creep.memory.built = creep.build(site))) {
         case ERR_NOT_ENOUGH_RESOURCES:
           // 手持ちが足らないときは収集モードに切り替える
-          changeMode(creep, "collecting");
+          changeMode(creep, "🛒");
           break;
         // 対象が変な時はクリアする
         case ERR_INVALID_TARGET:
@@ -38,7 +38,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           break;
         // 建築モードで離れてるときは近寄る
         case ERR_NOT_IN_RANGE:
-          if (creep.memory.mode === "working") {
+          if (creep.memory.mode === "💪") {
             customMove(creep, site);
           }
           break;
@@ -89,10 +89,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
         // 満タンまで取った
         case ERR_FULL:
-          changeMode(creep, "working");
+          changeMode(creep, "💪");
           break;
         case ERR_NOT_IN_RANGE:
-          if (creep.memory.mode === "collecting") {
+          if (creep.memory.mode === "🛒") {
             const moved = customMove(creep, store);
             if (moved !== OK) {
               console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`);
@@ -125,10 +125,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   pickUpAll(creep);
 
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-    changeMode(creep, "working");
+    changeMode(creep, "💪");
   }
   if (creep.store[RESOURCE_ENERGY] === 0) {
-    changeMode(creep, "collecting");
+    changeMode(creep, "🛒");
   }
 };
 
@@ -137,7 +137,7 @@ export default behavior;
 function isBuilder(creep: Creep): creep is Builder {
   return creep.memory.role === "builder";
 }
-const changeMode = (creep: Builder, mode: "working" | "collecting") => {
+const changeMode = (creep: Builder, mode: "💪" | "🛒") => {
   if (mode !== creep.memory.mode) {
     creep.memory.mode = mode;
     creep.memory.buildingId = undefined;

@@ -13,11 +13,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
   // 空っぽになったら収集モードに切り替える
   if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
-    changeMode(creep, "collecting");
+    changeMode(creep, "🛒");
   }
   // 満タンだったら分配モードに切り替える
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-    changeMode(creep, "working");
+    changeMode(creep, "💪");
   }
 
   const spawn = creep.pos.findClosestByRange(
@@ -39,15 +39,15 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       case ERR_NOT_ENOUGH_RESOURCES:
         // 邪魔になるときがあるのでうろうろしておく
         if (creep.store.energy > 0 && store.store.energy === 0) {
-          changeMode(creep, "working");
+          changeMode(creep, "💪");
         }
         break;
       // お腹いっぱい
       case ERR_FULL:
-        changeMode(creep, "working");
+        changeMode(creep, "💪");
         break;
       case ERR_NOT_IN_RANGE:
-        if (creep.memory.mode === "collecting") {
+        if (creep.memory.mode === "🛒") {
           moveMeTo(store);
         }
         break;
@@ -65,7 +65,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       case ERR_BUSY:
       default:
         if (creep.store.energy > 0 && store.store.energy < creep.store.getCapacity(RESOURCE_ENERGY)) {
-          changeMode(creep, "working");
+          changeMode(creep, "💪");
         }
         break;
     }
@@ -75,37 +75,37 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // transfer
-  // 最寄りのspawnまでの距離(見つからないときは0にして適当にごまかしている)
-  const rangeToClosestSpawn = store.pos.findClosestByRange(getSpawnNamesInRoom(store.room).map((name) => Game.spawns[name]))?.pos.getRangeTo(store) || 0;
-  // 対象設定処理
-  const {
-    spawn: spawns = [],
-    container = [],
-    extension = [],
-    link = [],
-    tower = [],
-  } = creep.room
-    .find(FIND_STRUCTURES, {
-      filter: (s): s is StructureSpawn | StructureStorage | StructureContainer | StructureExtension => {
-        return (
-          // 自分じゃない
-          s.id !== store.id &&
-          // 満タンじゃない
-          "store" in s &&
-          s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0 &&
-          // 自分より最寄りのspawnに近い
-          ([STRUCTURE_TOWER, STRUCTURE_EXTENSION, STRUCTURE_SPAWN].some((t) => s.structureType === t) ? true : s.pos.getRangeTo(creep) < rangeToClosestSpawn)
-        );
-      },
-    })
-    .reduce((storages, s) => {
-      return {
-        ...storages,
-        [s.structureType]: defaultTo(storages[s.structureType], []).concat(s),
-      };
-    }, {} as Structures);
-
   if (!creep.memory.transferId) {
+    // 最寄りのspawnまでの距離(見つからないときは0にして適当にごまかしている)
+    const rangeToClosestSpawn = store.pos.findClosestByRange(getSpawnNamesInRoom(store.room).map((name) => Game.spawns[name]))?.pos.getRangeTo(store) || 0;
+    // 対象設定処理
+    const {
+      spawn: spawns = [],
+      container = [],
+      extension = [],
+      link = [],
+      tower = [],
+    } = creep.room
+      .find(FIND_STRUCTURES, {
+        filter: (s): s is StructureSpawn | StructureStorage | StructureContainer | StructureExtension => {
+          return (
+            // 自分じゃない
+            s.id !== store.id &&
+            // 満タンじゃない
+            "store" in s &&
+            s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0 &&
+            // 自分より最寄りのspawnに近い
+            ([STRUCTURE_TOWER, STRUCTURE_EXTENSION, STRUCTURE_SPAWN].some((t) => s.structureType === t) ? true : s.pos.getRangeTo(creep) < rangeToClosestSpawn)
+          );
+        },
+      })
+      .reduce((storages, s) => {
+        return {
+          ...storages,
+          [s.structureType]: defaultTo(storages[s.structureType], []).concat(s),
+        };
+      }, {} as Structures);
+
     // 優先順に検索をかける
     // Link -> Spawnとか -> tower -> Storage
     creep.memory.transferId = (
@@ -138,14 +138,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // 遠い
     case ERR_NOT_IN_RANGE:
       // 分配モードの時は倉庫に近寄る
-      if (creep.memory.mode === "working") {
+      if (creep.memory.mode === "💪") {
         moveMeTo(transferTarget);
       }
       break;
 
     // 手持ちがない
     case ERR_NOT_ENOUGH_RESOURCES: // 値を指定しないから多分発生しない
-      changeMode(creep, "collecting");
+      changeMode(creep, "🛒");
       break;
 
     // 対象が変
