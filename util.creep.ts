@@ -126,35 +126,29 @@ export const customMove: CustomMove = (creep, target, opt) => {
     return OK;
   }
 
-  const moved = creep.moveTo(target, {
+  creep.memory.moved = creep.moveTo(target, {
     plainCost: 2,
     ignoreCreeps: !creep.pos.inRangeTo(target, 3),
     serializeMemory: false,
     ...opt,
   });
 
-  if (moved === OK) {
-    const directionDiff: Record<DirectionConstant, { dx: number; dy: number }> = {
-      [TOP_LEFT]: { dy: -1, dx: -1 },
-      [TOP]: { dy: -1, dx: 0 },
-      [TOP_RIGHT]: { dy: -1, dx: 1 },
-      [LEFT]: { dy: 0, dx: -1 },
-      [RIGHT]: { dy: 0, dx: 1 },
-      [BOTTOM_LEFT]: { dy: 1, dx: -1 },
-      [BOTTOM]: { dy: 1, dx: 0 },
-      [BOTTOM_RIGHT]: { dy: 1, dx: 1 },
-    };
+  if (creep.memory.moved === OK) {
+    const { dy, dx } = creep.memory._move?.path?.[0] || {};
 
-    const direction = creep.memory._move?.path?.[0].direction;
-
-    const blocker = direction && creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + directionDiff[direction].dx, creep.pos.y + directionDiff[direction].dy)?.[0];
-    if (blocker && blocker.memory.moved !== undefined) {
-      creep.pull(blocker);
-      blocker.move(creep);
+    if (dx !== undefined && dy !== undefined) {
+      const blocker = creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + dx, creep.pos.y + dy)?.[0];
+      if (blocker && blocker.memory.moved === undefined) {
+        const pull = creep.pull(blocker);
+        const move = blocker.move(creep);
+        pull &&
+          move &&
+          console.log(JSON.stringify({ name: creep.name, pull: RETURN_CODE_DECODER[pull.toString()], move: RETURN_CODE_DECODER[move.toString()] }));
+      }
     }
   }
 
-  return moved;
+  return creep.memory.moved;
 };
 
 export function getCreepsInRoom(room: Room) {

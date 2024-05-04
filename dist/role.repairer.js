@@ -25,7 +25,6 @@ const behavior = (creep) => {
                     break;
                 case OK:
                     creep.memory.workTargetId = (_b = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.hits < s.hitsMax })).min((s) => s.hits)) === null || _b === void 0 ? void 0 : _b.id;
-                    console.log(creep.memory.workTargetId);
                 case ERR_NOT_IN_RANGE:
                     if (creep.memory.mode === "working") {
                         (0, util_creep_1.customMove)(creep, target, {

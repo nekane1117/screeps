@@ -102,7 +102,7 @@ const behavior = (spawn: StructureSpawn) => {
   // repairerが不足しているとき
   if (
     spawn.room.find(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax * 0.5 }).length && // 建設がある
-    (creepsInRoom?.repairer || []).length === 0 &&
+    (creepsInRoom?.repairer || []).length < filledStorages.length &&
     spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["repairer"]), spawn.room.energyCapacityAvailable * 0.8) // エネルギー余ってる
   ) {
     return spawn.spawnCreep(bodyMaker("repairer", spawn.room.energyAvailable), generateCreepName("repairer"), {

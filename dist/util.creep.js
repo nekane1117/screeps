@@ -109,26 +109,21 @@ const customMove = (creep, target, opt) => {
     if (creep.fatigue) {
         return OK;
     }
-    const moved = creep.moveTo(target, Object.assign({ plainCost: 2, ignoreCreeps: !creep.pos.inRangeTo(target, 3), serializeMemory: false }, opt));
-    if (moved === OK) {
-        const directionDiff = {
-            [TOP_LEFT]: { dy: -1, dx: -1 },
-            [TOP]: { dy: -1, dx: 0 },
-            [TOP_RIGHT]: { dy: -1, dx: 1 },
-            [LEFT]: { dy: 0, dx: -1 },
-            [RIGHT]: { dy: 0, dx: 1 },
-            [BOTTOM_LEFT]: { dy: 1, dx: -1 },
-            [BOTTOM]: { dy: 1, dx: 0 },
-            [BOTTOM_RIGHT]: { dy: 1, dx: 1 },
-        };
-        const direction = (_b = (_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b[0].direction;
-        const blocker = direction && ((_c = creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + directionDiff[direction].dx, creep.pos.y + directionDiff[direction].dy)) === null || _c === void 0 ? void 0 : _c[0]);
-        if (blocker && blocker.memory.moved !== undefined) {
-            creep.pull(blocker);
-            blocker.move(creep);
+    creep.memory.moved = creep.moveTo(target, Object.assign({ plainCost: 2, ignoreCreeps: !creep.pos.inRangeTo(target, 3), serializeMemory: false }, opt));
+    if (creep.memory.moved === OK) {
+        const { dy, dx } = ((_b = (_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b[0]) || {};
+        if (dx !== undefined && dy !== undefined) {
+            const blocker = (_c = creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + dx, creep.pos.y + dy)) === null || _c === void 0 ? void 0 : _c[0];
+            if (blocker && blocker.memory.moved === undefined) {
+                const pull = creep.pull(blocker);
+                const move = blocker.move(creep);
+                pull &&
+                    move &&
+                    console.log(JSON.stringify({ name: creep.name, pull: exports.RETURN_CODE_DECODER[pull.toString()], move: exports.RETURN_CODE_DECODER[move.toString()] }));
+            }
         }
     }
-    return moved;
+    return creep.memory.moved;
 };
 exports.customMove = customMove;
 function getCreepsInRoom(room) {

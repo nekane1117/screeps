@@ -4,6 +4,7 @@ const util_creep_1 = require("./util.creep");
 const utils_common_1 = require("./utils.common");
 const behavior = (creep) => {
     var _a, _b;
+    const moveMeTo = (target) => (0, util_creep_1.customMove)(creep, target);
     if (!isCarrier(creep)) {
         return console.log(`${creep.name} is not Harvester`);
     }
@@ -31,7 +32,7 @@ const behavior = (creep) => {
                 break;
             case ERR_NOT_IN_RANGE:
                 if (creep.memory.mode === "collecting") {
-                    (0, util_creep_1.customMove)(creep, store);
+                    moveMeTo(store);
                 }
                 break;
             case ERR_NOT_OWNER:
@@ -65,7 +66,6 @@ const behavior = (creep) => {
         .reduce((storages, s) => {
         return Object.assign(Object.assign({}, storages), { [s.structureType]: (0, utils_common_1.defaultTo)(storages[s.structureType], []).concat(s) });
     }, {});
-    const visualizePath = !creep.memory.transferId;
     if (!creep.memory.transferId) {
         creep.memory.transferId = (_b = (creep.pos.findClosestByRange(link) ||
             creep.pos.findClosestByRange(_([...spawns, ...container, ...extension])
@@ -88,9 +88,7 @@ const behavior = (creep) => {
     switch (returnVal) {
         case ERR_NOT_IN_RANGE:
             if (creep.memory.mode === "working") {
-                (0, util_creep_1.customMove)(creep, transferTarget, {
-                    visualizePathStyle: visualizePath ? {} : undefined,
-                });
+                moveMeTo(transferTarget);
             }
             break;
         case ERR_NOT_ENOUGH_RESOURCES:

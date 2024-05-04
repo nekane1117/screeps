@@ -6,6 +6,8 @@ type Structures<T extends StructureConstant = StructureConstant> = {
   [t in T]: Structure<T>[];
 };
 const behavior: CreepBehavior = (creep: Creeps) => {
+  const moveMeTo = (target: RoomPosition | _HasRoomPosition) => customMove(creep, target);
+
   if (!isCarrier(creep)) {
     return console.log(`${creep.name} is not Harvester`);
   }
@@ -46,7 +48,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         break;
       case ERR_NOT_IN_RANGE:
         if (creep.memory.mode === "collecting") {
-          customMove(creep, store);
+          moveMeTo(store);
         }
         break;
 
@@ -103,8 +105,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       };
     }, {} as Structures);
 
-  const visualizePath = !creep.memory.transferId;
-
   if (!creep.memory.transferId) {
     // 優先順に検索をかける
     // Link -> Spawnとか -> tower -> Storage
@@ -139,9 +139,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     case ERR_NOT_IN_RANGE:
       // 分配モードの時は倉庫に近寄る
       if (creep.memory.mode === "working") {
-        customMove(creep, transferTarget, {
-          visualizePathStyle: visualizePath ? {} : undefined,
-        });
+        moveMeTo(transferTarget);
       }
       break;
 

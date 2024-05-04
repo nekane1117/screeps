@@ -33,7 +33,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         // 問題ない系
         case OK:
           creep.memory.workTargetId = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.hits < s.hitsMax })).min((s) => s.hits)?.id;
-          console.log(creep.memory.workTargetId);
         // eslint-disable-next-line no-fallthrough
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "working") {
