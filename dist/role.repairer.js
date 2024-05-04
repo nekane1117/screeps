@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const behavior = (creep) => {
-    var _a, _b;
+    var _a, _b, _c;
     if (!isRepairer(creep)) {
         return console.log(`${creep.name} is not Repairer`);
     }
@@ -24,9 +24,9 @@ const behavior = (creep) => {
                     creep.say(util_creep_1.RETURN_CODE_DECODER[creep.memory.worked.toString()]);
                     break;
                 case OK:
-                case ERR_BUSY:
+                    creep.memory.workTargetId = (_b = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.hits < s.hitsMax })).min((s) => s.hits)) === null || _b === void 0 ? void 0 : _b.id;
+                    console.log(creep.memory.workTargetId);
                 case ERR_NOT_IN_RANGE:
-                default:
                     if (creep.memory.mode === "working") {
                         (0, util_creep_1.customMove)(creep, target, {
                             visualizePathStyle: {
@@ -34,6 +34,9 @@ const behavior = (creep) => {
                             },
                         });
                     }
+                    break;
+                case ERR_BUSY:
+                default:
                     break;
             }
         }
@@ -43,11 +46,11 @@ const behavior = (creep) => {
         }
     }
     if (creep.memory.storeId ||
-        (creep.memory.storeId = (_b = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        (creep.memory.storeId = (_c = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (s) => {
                 return (0, util_creep_1.isStoreTarget)(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) && s.store.getUsedCapacity(RESOURCE_ENERGY) !== 0;
             },
-        })) === null || _b === void 0 ? void 0 : _b.id)) {
+        })) === null || _c === void 0 ? void 0 : _c.id)) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
             creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);

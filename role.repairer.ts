@@ -32,9 +32,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           break;
         // 問題ない系
         case OK:
-        case ERR_BUSY:
+          creep.memory.workTargetId = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.hits < s.hitsMax })).min((s) => s.hits)?.id;
+          console.log(creep.memory.workTargetId);
+        // eslint-disable-next-line no-fallthrough
         case ERR_NOT_IN_RANGE:
-        default:
           if (creep.memory.mode === "working") {
             customMove(creep, target, {
               visualizePathStyle: {
@@ -42,6 +43,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
               },
             });
           }
+          break;
+        case ERR_BUSY:
+        default:
           break;
       }
     } else {
