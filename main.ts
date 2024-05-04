@@ -35,6 +35,12 @@ module.exports.loop = function () {
     room.find(FIND_STRUCTURES).map((s) => structures[s.structureType]?.(s));
 
     // Creepの動き
-    creepGroup[room.name]?.map((c) => !c.spawning && behaviors[c.memory.role]?.(c));
+    creepGroup[room.name]?.map((c) => {
+      if (c.spawning) {
+        return;
+      }
+      c.memory.moved = undefined;
+      return behaviors[c.memory.role]?.(c);
+    });
   });
 };

@@ -121,52 +121,37 @@ export const RETURN_CODE_DECODER = Object.freeze({
 
 type CustomMove = (creep: Creep, target: RoomPosition | { pos: RoomPosition }, opt?: MoveToOpts) => ReturnType<Creep["moveTo"]>;
 
-const DIRECTIONS_DIFF: Record<DirectionConstant, [number, number]> = {
-  [TOP_LEFT]: [-1, -1],
-  [TOP]: [-1, 0],
-  [TOP_RIGHT]: [-1, 1],
-  [LEFT]: [0, -1],
-  [RIGHT]: [0, 1],
-  [BOTTOM_LEFT]: [1, -1],
-  [BOTTOM]: [1, 0],
-  [BOTTOM_RIGHT]: [1, 1],
-};
-
 export const customMove: CustomMove = (creep, target, opt) => {
   if (creep.fatigue) {
     return OK;
   }
 
-  // 移動予定先
-  const direction = creep.memory._move?.path?.[0]?.direction && DIRECTIONS_DIFF[creep.memory._move?.path[0].direction];
-
   const moved = creep.moveTo(target, {
     plainCost: 2,
-    ignoreCreeps: !creep.pos.inRangeTo(target, 3) && Game.time % 5 !== 0,
-    reusePath: Game.time % 5 === 0 ? 0 : undefined,
+    ignoreCreeps: !creep.pos.inRangeTo(target, 3),
     serializeMemory: false,
     ...opt,
   });
 
-  moved !== OK && creep.say(RETURN_CODE_DECODER[moved.toString()]);
-  // 通れなくて行き先がわかってるとき
-  if (moved === ERR_NO_PATH && direction) {
-    // 行き先のCreepと入れ替わろうとしてみる
-    creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + direction[0], creep.pos.y + direction[1]).map((neighbor) => {
-      console.log(`${creep.name} try pull ${neighbor.name}`);
-      const pulled = creep.pull(neighbor);
-      const moveNeighbor = neighbor.move(creep);
-      if (pulled == OK && moveNeighbor === OK) {
-        console.log(`${Game.time} pull ${neighbor.name} success`);
-      } else {
-        console.log(
-          `${Game.time} pull ${neighbor.name} failed ${JSON.stringify({
-            pulled: RETURN_CODE_DECODER[pulled.toString()],
-            moveNeighbor: RETURN_CODE_DECODER[moveNeighbor.toString()],
-          })}`,
-        );
-      }
-    });
+  if (moved === OK) {
+    const directionDiff: Record<DirectionConstant, { dx: number; dy: number }> = {
+      [TOP_LEFT]: { dy: -1, dx: -1 },
+      [TOP]: { dy: -1, dx: 0 },
+      [TOP_RIGHT]: { dy: -1, dx: 1 },
+      [LEFT]: { dy: 0, dx: -1 },
+      [RIGHT]: { dy: 0, dx: 1 },
+      [BOTTOM_LEFT]: { dy: 1, dx: -1 },
+      [BOTTOM]: { dy: 1, dx: 0 },
+      [BOTTOM_RIGHT]: { dy: 1, dx: 1 },
+    };
+
+    const direction = creep.memory._move?.path?.[0].direction;
+
+    const blocker = direction && creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + directionDiff[direction].dx, creep.pos.y + directionDiff[direction].dy)?.[0];
+    if (blocker && blocker.memory.moved !== undefined) {
+      creep.pull(blocker);
+      blocker.move(creep);
+    }
   }
 
   return moved;

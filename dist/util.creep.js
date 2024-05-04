@@ -104,39 +104,29 @@ exports.RETURN_CODE_DECODER = Object.freeze({
     [ERR_RCL_NOT_ENOUGH.toString()]: "ERR_RCL_NOT_ENOUGH",
     [ERR_GCL_NOT_ENOUGH.toString()]: "ERR_GCL_NOT_ENOUGH",
 });
-const DIRECTIONS_DIFF = {
-    [TOP_LEFT]: [-1, -1],
-    [TOP]: [-1, 0],
-    [TOP_RIGHT]: [-1, 1],
-    [LEFT]: [0, -1],
-    [RIGHT]: [0, 1],
-    [BOTTOM_LEFT]: [1, -1],
-    [BOTTOM]: [1, 0],
-    [BOTTOM_RIGHT]: [1, 1],
-};
 const customMove = (creep, target, opt) => {
-    var _a, _b, _c, _d;
+    var _a, _b, _c;
     if (creep.fatigue) {
         return OK;
     }
-    const direction = ((_c = (_b = (_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b[0]) === null || _c === void 0 ? void 0 : _c.direction) && DIRECTIONS_DIFF[(_d = creep.memory._move) === null || _d === void 0 ? void 0 : _d.path[0].direction];
-    const moved = creep.moveTo(target, Object.assign({ plainCost: 2, ignoreCreeps: !creep.pos.inRangeTo(target, 3) && Game.time % 5 !== 0, reusePath: Game.time % 5 === 0 ? 0 : undefined, serializeMemory: false }, opt));
-    moved !== OK && creep.say(exports.RETURN_CODE_DECODER[moved.toString()]);
-    if (moved === ERR_NO_PATH && direction) {
-        creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + direction[0], creep.pos.y + direction[1]).map((neighbor) => {
-            console.log(`${creep.name} try pull ${neighbor.name}`);
-            const pulled = creep.pull(neighbor);
-            const moveNeighbor = neighbor.move(creep);
-            if (pulled == OK && moveNeighbor === OK) {
-                console.log(`${Game.time} pull ${neighbor.name} success`);
-            }
-            else {
-                console.log(`${Game.time} pull ${neighbor.name} failed ${JSON.stringify({
-                    pulled: exports.RETURN_CODE_DECODER[pulled.toString()],
-                    moveNeighbor: exports.RETURN_CODE_DECODER[moveNeighbor.toString()],
-                })}`);
-            }
-        });
+    const moved = creep.moveTo(target, Object.assign({ plainCost: 2, ignoreCreeps: !creep.pos.inRangeTo(target, 3), serializeMemory: false }, opt));
+    if (moved === OK) {
+        const directionDiff = {
+            [TOP_LEFT]: { dy: -1, dx: -1 },
+            [TOP]: { dy: -1, dx: 0 },
+            [TOP_RIGHT]: { dy: -1, dx: 1 },
+            [LEFT]: { dy: 0, dx: -1 },
+            [RIGHT]: { dy: 0, dx: 1 },
+            [BOTTOM_LEFT]: { dy: 1, dx: -1 },
+            [BOTTOM]: { dy: 1, dx: 0 },
+            [BOTTOM_RIGHT]: { dy: 1, dx: 1 },
+        };
+        const direction = (_b = (_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b[0].direction;
+        const blocker = direction && ((_c = creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + directionDiff[direction].dx, creep.pos.y + directionDiff[direction].dy)) === null || _c === void 0 ? void 0 : _c[0]);
+        if (blocker && blocker.memory.moved !== undefined) {
+            creep.pull(blocker);
+            blocker.move(creep);
+        }
     }
     return moved;
 };

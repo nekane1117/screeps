@@ -22,23 +22,22 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   creep.memory.worked = creep.harvest(source);
   switch (creep.memory.worked) {
     case ERR_NOT_IN_RANGE: {
-      // 移動してみる
-      if (
-        creep.moveTo(source, {
-          // 道を優先
-          plainCost: 2,
-          // ３ますより遠いときは同じ道を走る
-          ignoreCreeps: !creep.pos.inRangeTo(source, 3),
-        }) === ERR_NO_PATH
-      ) {
-        // 正面になんかあるとき
-        for (const neighbor of creep.pos.findInRange(FIND_MY_CREEPS, 1)) {
-          // 最初に出会ったやつと場所を入れ替わってみる
-          if (creep.pull(neighbor) === OK && neighbor.moveTo(creep) === OK) {
-            break;
-          }
-        }
+      creep.memory.moved = creep.moveTo(source, {
+        // 道を優先
+        plainCost: 2,
+        // ３ますより遠いときは同じ道を走る
+        ignoreCreeps: !creep.pos.inRangeTo(source, 3),
+        serializeMemory: false,
+      });
+
+      const direction = creep.memory._move?.path?.[0].direction;
+
+      const blocker = direction && creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + directionDiff[direction].dx, creep.pos.y + directionDiff[direction].dy)?.[0];
+      if (blocker && blocker.memory.moved !== undefined) {
+        creep.pull(blocker);
+        blocker.move(creep);
       }
+
       break;
     }
     // 来ないはずのやつ
@@ -79,3 +78,14 @@ export default behavior;
 function isHarvester(c: Creeps): c is Harvester {
   return "role" in c.memory && c.memory.role === "harvester";
 }
+
+const directionDiff: Record<DirectionConstant, { dx: number; dy: number }> = {
+  [TOP_LEFT]: { dy: -1, dx: -1 },
+  [TOP]: { dy: -1, dx: 0 },
+  [TOP_RIGHT]: { dy: -1, dx: 1 },
+  [LEFT]: { dy: 0, dx: -1 },
+  [RIGHT]: { dy: 0, dx: 1 },
+  [BOTTOM_LEFT]: { dy: 1, dx: -1 },
+  [BOTTOM]: { dy: 1, dx: 0 },
+  [BOTTOM_RIGHT]: { dy: 1, dx: 1 },
+};

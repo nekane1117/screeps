@@ -30,6 +30,13 @@ module.exports.loop = function () {
         (0, role_room_1.roomBehavior)(room);
         (_a = spawnGroup[room.name]) === null || _a === void 0 ? void 0 : _a.map(role_spawn_1.default);
         room.find(FIND_STRUCTURES).map((s) => { var _a; return (_a = structures_1.default[s.structureType]) === null || _a === void 0 ? void 0 : _a.call(structures_1.default, s); });
-        (_b = creepGroup[room.name]) === null || _b === void 0 ? void 0 : _b.map((c) => { var _a; return !c.spawning && ((_a = roles_1.behaviors[c.memory.role]) === null || _a === void 0 ? void 0 : _a.call(roles_1.behaviors, c)); });
+        (_b = creepGroup[room.name]) === null || _b === void 0 ? void 0 : _b.map((c) => {
+            var _a;
+            if (c.spawning) {
+                return;
+            }
+            c.memory.moved = undefined;
+            return (_a = roles_1.behaviors[c.memory.role]) === null || _a === void 0 ? void 0 : _a.call(roles_1.behaviors, c);
+        });
     });
 };
