@@ -9,16 +9,16 @@ function behaviors(tower) {
         tower.attack(target);
     }
     else {
+        const brokenRampart = _(tower.room.find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_RAMPART && s.hits < 1000 }));
+        if (brokenRampart.size() > 0) {
+            return tower.repair(brokenRampart.min((s) => {
+                return s.hits * (s.ticksToDecay / RAMPART_DECAY_TIME);
+            }));
+        }
         tower.store.getUsedCapacity(RESOURCE_ENERGY) / tower.store.getCapacity(RESOURCE_ENERGY) > 0.8 &&
             _(tower.room.find(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax }))
                 .tap((damaged) => {
-                const minHit = _(damaged)
-                    .map((s) => s.hits)
-                    .min();
-                const minHits = _(damaged)
-                    .filter((s) => s.hits === minHit)
-                    .run() || [];
-                const target = tower.pos.findClosestByRange(minHits);
+                const target = _(damaged).min((s) => s.hits);
                 if (target) {
                     tower.repair(target);
                 }

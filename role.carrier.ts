@@ -107,19 +107,37 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       }, {} as Structures);
 
     // 優先順に検索をかける
-    // Link -> Spawnとか -> tower -> Storage
-    creep.memory.transferId = (
-      creep.pos.findClosestByRange(link) ||
-      creep.pos.findClosestByRange(
+    // Link
+    if (!creep.memory.transferId) {
+      creep.memory.transferId = creep.pos.findClosestByRange(link)?.id;
+    }
+    // Spawnとか
+    if (!creep.memory.transferId) {
+      creep.memory.transferId = creep.pos.findClosestByRange(
         _([...spawns, ...container, ...extension])
           .compact()
           .run(),
-      ) ||
-      creep.pos.findClosestByRange(tower) ||
-      creep.pos.findClosestByRange(FIND_STRUCTURES, {
+      )?.id;
+    }
+    // upgrade用のコンテナ
+    if (!creep.memory.transferId && creep.room.controller) {
+      // コントローラに一番近いコンテナ
+      const store = creep.room.controller.pos.findClosestByRange(FIND_STRUCTURES, { filter: isStoreTarget });
+      // 容量があるとき
+      if (store && store.id !== creep.memory.storeId && store.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+        creep.memory.transferId = store.id;
+      }
+    }
+    // tower
+    if (!creep.memory.transferId) {
+      creep.memory.transferId = creep.pos.findClosestByRange(tower)?.id;
+    }
+    // Storage
+    if (!creep.memory.transferId) {
+      creep.memory.transferId = creep.pos.findClosestByRange(FIND_STRUCTURES, {
         filter: (s) => "store" in s && s.id !== creep.memory.storeId && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
-      })
-    )?.id;
+      })?.id;
+    }
     if (!creep.memory.transferId) {
       // 完全に見つからなければうろうろしておく
       return ERR_NOT_FOUND;

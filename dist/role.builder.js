@@ -7,11 +7,14 @@ const behavior = (creep) => {
         return console.log(`${creep.name} is not Builder`);
     }
     const sites = _(Object.values(Game.constructionSites));
+    if (sites.size() === 0) {
+        return (creep.memory.role = "repairer");
+    }
     const minRemaining = sites.map((s) => s.progressTotal - s.progress).min();
     if (!(creep.memory.buildingId ||
         (creep.memory.buildingId = (_a = (creep.pos.findClosestByRange(sites.filter((s) => s.structureType === STRUCTURE_CONTAINER).run()) ||
             creep.pos.findClosestByRange(sites.filter((s) => s.progressTotal - s.progress <= minRemaining).run()))) === null || _a === void 0 ? void 0 : _a.id))) {
-        (0, util_creep_1.randomWalk)(creep);
+        return (creep.memory.role = "repairer");
     }
     else {
         const site = Game.getObjectById(creep.memory.buildingId);
@@ -25,7 +28,11 @@ const behavior = (creep) => {
                     break;
                 case ERR_NOT_IN_RANGE:
                     if (creep.memory.mode === "💪") {
-                        (0, util_creep_1.customMove)(creep, site);
+                        (0, util_creep_1.customMove)(creep, site, {
+                            visualizePathStyle: {
+                                stroke: "#ff8888",
+                            },
+                        });
                     }
                     break;
                 case ERR_NOT_OWNER:
@@ -41,7 +48,6 @@ const behavior = (creep) => {
         }
         else {
             creep.memory.buildingId = undefined;
-            (0, util_creep_1.randomWalk)(creep);
         }
     }
     if (creep.memory.storeId ||
@@ -85,6 +91,7 @@ const behavior = (creep) => {
                 default:
                     if (store.store.getUsedCapacity(RESOURCE_ENERGY) < creep.getActiveBodyparts(CARRY) * CARRY_CAPACITY) {
                         creep.memory.storeId = undefined;
+                        changeMode(creep, "💪");
                     }
                     break;
             }

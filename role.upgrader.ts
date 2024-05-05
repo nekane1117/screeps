@@ -31,7 +31,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       break;
     case ERR_NOT_IN_RANGE:
       if (creep.memory.mode === "💪") {
-        customMove(creep, creep.room.controller);
+        customMove(creep, creep.room.controller, {
+          ignoreCreeps: !creep.pos.inRangeTo(creep.room.controller, 4),
+          visualizePathStyle: {
+            stroke: "#ff00ff",
+          },
+        });
       }
       break;
     // 有りえない系
@@ -130,6 +135,7 @@ function isUpgrader(creep: Creep): creep is Upgrader {
 const changeMode = (creep: Upgrader, mode: UpgraderMemory["mode"]) => {
   if (mode !== creep.memory.mode) {
     creep.say(mode);
+    creep.memory.storeId = undefined;
     creep.memory.mode = mode;
   }
 };

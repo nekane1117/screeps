@@ -25,7 +25,12 @@ const behavior = (creep) => {
             break;
         case ERR_NOT_IN_RANGE:
             if (creep.memory.mode === "💪") {
-                (0, util_creep_1.customMove)(creep, creep.room.controller);
+                (0, util_creep_1.customMove)(creep, creep.room.controller, {
+                    ignoreCreeps: !creep.pos.inRangeTo(creep.room.controller, 4),
+                    visualizePathStyle: {
+                        stroke: "#ff00ff",
+                    },
+                });
             }
             break;
         case ERR_NOT_OWNER:
@@ -106,6 +111,7 @@ function isUpgrader(creep) {
 const changeMode = (creep, mode) => {
     if (mode !== creep.memory.mode) {
         creep.say(mode);
+        creep.memory.storeId = undefined;
         creep.memory.mode = mode;
     }
 };

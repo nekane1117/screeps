@@ -141,8 +141,7 @@ export const customMove: CustomMove = (creep, target, opt) => {
       if (blocker && blocker.memory.moved === undefined) {
         const pull = creep.pull(blocker);
         const move = blocker.move(creep);
-        pull &&
-          move &&
+        (pull || move) &&
           console.log(JSON.stringify({ name: creep.name, pull: RETURN_CODE_DECODER[pull.toString()], move: RETURN_CODE_DECODER[move.toString()] }));
       }
     }
@@ -152,17 +151,21 @@ export const customMove: CustomMove = (creep, target, opt) => {
 };
 
 export function getCreepsInRoom(room: Room) {
-  if (room.memory.creeps?.tick === Game.time) {
-    return room.memory.creeps.names;
-  } else {
-    room.memory.creeps = {
-      tick: Game.time,
-      names: Object.entries(Game.creeps)
-        .filter(([_, creep]) => creep.room.name === room.name)
-        .map((entry) => entry[0]),
-    };
-    return room.memory.creeps.names;
-  }
+  return (() => {
+    if (room.memory.creeps?.tick === Game.time) {
+      return room.memory.creeps.names;
+    } else {
+      room.memory.creeps = {
+        tick: Game.time,
+        names: Object.entries(Game.creeps)
+          .filter(([_, creep]) => creep.room.name === room.name)
+          .map((entry) => entry[0]),
+      };
+      return room.memory.creeps.names;
+    }
+  })()
+    .map((name) => Game.creeps[name])
+    .filter((c) => c);
 }
 
 export function getSpawnNamesInRoom(room: Room) {

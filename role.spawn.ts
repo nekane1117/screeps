@@ -7,8 +7,6 @@ const behavior = (spawn: StructureSpawn) => {
   }
 
   const creepsInRoom: _.Dictionary<Creep[] | undefined> = _(getCreepsInRoom(spawn.room))
-    .map((name) => Game.creeps[name])
-    .compact()
     .groupBy((c) => c.memory.role)
     .value();
   // １匹もいないときはとにかく作る
@@ -39,15 +37,13 @@ const behavior = (spawn: StructureSpawn) => {
 
       // 自分用のharvesterのlodash wrapper
       const harvesters = _(
-        getCreepsInRoom(spawn.room)
-          .map((name) => Game.creeps[name])
-          .filter((c: Creeps | undefined): c is Harvester => {
-            // 自分用のharvester
-            const isH = (c: Creeps): c is Harvester => {
-              return c.memory.role === "harvester";
-            };
-            return c !== undefined && isH(c) && c.memory.harvestTargetId === source.id;
-          }),
+        getCreepsInRoom(spawn.room).filter((c: Creeps | undefined): c is Harvester => {
+          // 自分用のharvester
+          const isH = (c: Creeps): c is Harvester => {
+            return c.memory.role === "harvester";
+          };
+          return c !== undefined && isH(c) && c.memory.harvestTargetId === source.id;
+        }),
       );
 
       // 最大匹数より少なく、WORKのパーツが5未満の時
@@ -88,7 +84,7 @@ const behavior = (spawn: StructureSpawn) => {
   // builderが不足しているとき
   if (
     spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length && // 建設がある
-    (creepsInRoom.builder || []).length < filledStorages.length &&
+    (creepsInRoom.builder || []).length < (filledStorages.length || 1) &&
     spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.8) // エネルギー余ってる
   ) {
     return spawn.spawnCreep(bodyMaker("builder", spawn.room.energyAvailable), generateCreepName("builder"), {

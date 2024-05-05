@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll, randomWalk, stealBy } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll, stealBy } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isBuilder(creep)) {
@@ -10,6 +10,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // build
   const sites = _(Object.values(Game.constructionSites));
+
+  if (sites.size() === 0) {
+    // 修理屋になる
+    return ((creep as Creeps).memory.role = "repairer");
+  }
 
   const minRemaining = sites.map((s) => s.progressTotal - s.progress).min();
 
@@ -22,8 +27,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       )?.id)
     )
   ) {
-    // 完全に見つからなければうろうろしておく
-    randomWalk(creep);
+    // 修理屋になる
+    return ((creep as Creeps).memory.role = "repairer");
   } else {
     const site = Game.getObjectById(creep.memory.buildingId);
     if (site) {
@@ -39,7 +44,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         // 建築モードで離れてるときは近寄る
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "💪") {
-            customMove(creep, site);
+            customMove(creep, site, {
+              visualizePathStyle: {
+                stroke: "#ff8888",
+              },
+            });
           }
           break;
 
@@ -58,9 +67,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       }
     } else {
       // 指定されていたソースが見つからないとき
-      // 対象をクリアしてうろうろしておく
+      // 対象をクリア
       creep.memory.buildingId = undefined;
-      randomWalk(creep);
     }
   }
 
@@ -112,6 +120,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         default:
           if (store.store.getUsedCapacity(RESOURCE_ENERGY) < creep.getActiveBodyparts(CARRY) * CARRY_CAPACITY) {
             creep.memory.storeId = undefined;
+            changeMode(creep, "💪");
           }
           break;
       }

@@ -117,8 +117,7 @@ const customMove = (creep, target, opt) => {
             if (blocker && blocker.memory.moved === undefined) {
                 const pull = creep.pull(blocker);
                 const move = blocker.move(creep);
-                pull &&
-                    move &&
+                (pull || move) &&
                     console.log(JSON.stringify({ name: creep.name, pull: exports.RETURN_CODE_DECODER[pull.toString()], move: exports.RETURN_CODE_DECODER[move.toString()] }));
             }
         }
@@ -127,19 +126,23 @@ const customMove = (creep, target, opt) => {
 };
 exports.customMove = customMove;
 function getCreepsInRoom(room) {
-    var _a;
-    if (((_a = room.memory.creeps) === null || _a === void 0 ? void 0 : _a.tick) === Game.time) {
-        return room.memory.creeps.names;
-    }
-    else {
-        room.memory.creeps = {
-            tick: Game.time,
-            names: Object.entries(Game.creeps)
-                .filter(([_, creep]) => creep.room.name === room.name)
-                .map((entry) => entry[0]),
-        };
-        return room.memory.creeps.names;
-    }
+    return (() => {
+        var _a;
+        if (((_a = room.memory.creeps) === null || _a === void 0 ? void 0 : _a.tick) === Game.time) {
+            return room.memory.creeps.names;
+        }
+        else {
+            room.memory.creeps = {
+                tick: Game.time,
+                names: Object.entries(Game.creeps)
+                    .filter(([_, creep]) => creep.room.name === room.name)
+                    .map((entry) => entry[0]),
+            };
+            return room.memory.creeps.names;
+        }
+    })()
+        .map((name) => Game.creeps[name])
+        .filter((c) => c);
 }
 exports.getCreepsInRoom = getCreepsInRoom;
 function getSpawnNamesInRoom(room) {

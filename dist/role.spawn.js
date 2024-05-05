@@ -10,8 +10,6 @@ const behavior = (spawn) => {
         return;
     }
     const creepsInRoom = (0, lodash_1.default)((0, util_creep_1.getCreepsInRoom)(spawn.room))
-        .map((name) => Game.creeps[name])
-        .compact()
         .groupBy((c) => c.memory.role)
         .value();
     if ((creepsInRoom.harvester || []).length === 0) {
@@ -29,9 +27,7 @@ const behavior = (spawn) => {
                 return terrain.get(source.pos.x + dx, source.pos.y + dy) !== TERRAIN_MASK_WALL ? 1 : 0;
             })
                 .sum();
-            const harvesters = (0, lodash_1.default)((0, util_creep_1.getCreepsInRoom)(spawn.room)
-                .map((name) => Game.creeps[name])
-                .filter((c) => {
+            const harvesters = (0, lodash_1.default)((0, util_creep_1.getCreepsInRoom)(spawn.room).filter((c) => {
                 const isH = (c) => {
                     return c.memory.role === "harvester";
                 };
@@ -63,7 +59,7 @@ const behavior = (spawn) => {
         },
     });
     if (spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length &&
-        (creepsInRoom.builder || []).length < filledStorages.length &&
+        (creepsInRoom.builder || []).length < (filledStorages.length || 1) &&
         spawn.room.energyAvailable > Math.max((0, util_creep_1.getBodyCost)(util_creep_1.MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.8)) {
         return spawn.spawnCreep((0, util_creep_1.bodyMaker)("builder", spawn.room.energyAvailable), generateCreepName("builder"), {
             memory: {

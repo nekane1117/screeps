@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const utils_common_1 = require("./utils.common");
 const behavior = (creep) => {
-    var _a, _b;
+    var _a, _b, _c, _d, _e;
     const moveMeTo = (target) => (0, util_creep_1.customMove)(creep, target);
     if (!isCarrier(creep)) {
         return console.log(`${creep.name} is not Harvester`);
@@ -67,14 +67,28 @@ const behavior = (creep) => {
             .reduce((storages, s) => {
             return Object.assign(Object.assign({}, storages), { [s.structureType]: (0, utils_common_1.defaultTo)(storages[s.structureType], []).concat(s) });
         }, {});
-        creep.memory.transferId = (_b = (creep.pos.findClosestByRange(link) ||
-            creep.pos.findClosestByRange(_([...spawns, ...container, ...extension])
+        if (!creep.memory.transferId) {
+            creep.memory.transferId = (_b = creep.pos.findClosestByRange(link)) === null || _b === void 0 ? void 0 : _b.id;
+        }
+        if (!creep.memory.transferId) {
+            creep.memory.transferId = (_c = creep.pos.findClosestByRange(_([...spawns, ...container, ...extension])
                 .compact()
-                .run()) ||
-            creep.pos.findClosestByRange(tower) ||
-            creep.pos.findClosestByRange(FIND_STRUCTURES, {
+                .run())) === null || _c === void 0 ? void 0 : _c.id;
+        }
+        if (!creep.memory.transferId && creep.room.controller) {
+            const store = creep.room.controller.pos.findClosestByRange(FIND_STRUCTURES, { filter: util_creep_1.isStoreTarget });
+            if (store && store.id !== creep.memory.storeId && store.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+                creep.memory.transferId = store.id;
+            }
+        }
+        if (!creep.memory.transferId) {
+            creep.memory.transferId = (_d = creep.pos.findClosestByRange(tower)) === null || _d === void 0 ? void 0 : _d.id;
+        }
+        if (!creep.memory.transferId) {
+            creep.memory.transferId = (_e = creep.pos.findClosestByRange(FIND_STRUCTURES, {
                 filter: (s) => "store" in s && s.id !== creep.memory.storeId && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
-            }))) === null || _b === void 0 ? void 0 : _b.id;
+            })) === null || _e === void 0 ? void 0 : _e.id;
+        }
         if (!creep.memory.transferId) {
             return ERR_NOT_FOUND;
         }
