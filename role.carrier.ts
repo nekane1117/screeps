@@ -6,7 +6,7 @@ type Structures<T extends StructureConstant = StructureConstant> = {
   [t in T]: Structure<T>[];
 };
 const behavior: CreepBehavior = (creep: Creeps) => {
-  const moveMeTo = (target: RoomPosition | _HasRoomPosition) => customMove(creep, target);
+  const moveMeTo = (target: RoomPosition | _HasRoomPosition) => customMove(creep, target, { ignoreCreeps: true });
 
   if (!isCarrier(creep)) {
     return console.log(`${creep.name} is not Harvester`);
