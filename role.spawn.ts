@@ -2,11 +2,13 @@ import _ from "lodash";
 import { MIN_BODY, bodyMaker, getBodyCost, getCreepsInRoom, squareDiff } from "./util.creep";
 
 const behavior = (spawn: StructureSpawn) => {
+  if (Object.keys(Game.spawns)?.[0] === spawn.name) {
+    spawn.room.visual.text(`${spawn.room.energyAvailable}/${spawn.room.energyCapacityAvailable}`, spawn.pos.x + 1, spawn.pos.y - 1);
+  }
   if (spawn.spawning) {
     return;
   }
 
-  spawn.room.visual.text(`${spawn.room.energyAvailable}/${spawn.room.energyCapacityAvailable}`, spawn.pos.x + 1, spawn.pos.y - 1);
   const creepsInRoom: _.Dictionary<Creep[] | undefined> = _(getCreepsInRoom(spawn.room))
     .groupBy((c) => c.memory.role)
     .value();
