@@ -83,12 +83,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     creep.memory.storeId ||
     (creep.memory.storeId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
       filter: (s): s is StoreTarget => {
-        return isStoreTarget(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) && s.store.getUsedCapacity(RESOURCE_ENERGY) !== 0;
-      },
-    })?.id) ||
-    (creep.memory.storeId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s): s is StructureSpawn => {
-        return s.structureType === STRUCTURE_SPAWN && s.store.getUsedCapacity(RESOURCE_ENERGY) / s.store.getCapacity(RESOURCE_ENERGY) > 0.8;
+        return (
+          isStoreTarget(s) &&
+          ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) &&
+          s.store.getUsedCapacity(RESOURCE_ENERGY) / s.store.getCapacity(RESOURCE_ENERGY) > 0.6
+        );
       },
     })?.id)
   ) {

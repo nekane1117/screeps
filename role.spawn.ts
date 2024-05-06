@@ -6,6 +6,7 @@ const behavior = (spawn: StructureSpawn) => {
     return;
   }
 
+  spawn.room.visual.text(`${spawn.room.energyAvailable}/${spawn.room.energyCapacityAvailable}`, spawn.pos.x + 1, spawn.pos.y - 1);
   const creepsInRoom: _.Dictionary<Creep[] | undefined> = _(getCreepsInRoom(spawn.room))
     .groupBy((c) => c.memory.role)
     .value();
@@ -71,7 +72,7 @@ const behavior = (spawn: StructureSpawn) => {
   if (
     spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length && // 建設がある
     (creepsInRoom.builder || []).length < (filledStorages.length || 1) &&
-    spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.8) // エネルギー余ってる
+    spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["builder"]), spawn.room.energyCapacityAvailable * 0.6) // エネルギー余ってる
   ) {
     return spawn.spawnCreep(bodyMaker("builder", spawn.room.energyAvailable), generateCreepName("builder"), {
       memory: {
@@ -85,7 +86,7 @@ const behavior = (spawn: StructureSpawn) => {
   if (
     spawn.room.find(FIND_STRUCTURES, { filter: (s) => s.structureType !== STRUCTURE_WALL && s.hits < s.hitsMax * 0.5 }).length && // 建設がある
     (creepsInRoom?.repairer || []).length < filledStorages.length &&
-    spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["repairer"]), spawn.room.energyCapacityAvailable * 0.8) // エネルギー余ってる
+    spawn.room.energyAvailable > Math.max(getBodyCost(MIN_BODY["repairer"]), spawn.room.energyCapacityAvailable * 0.9) // エネルギー余ってる
   ) {
     return spawn.spawnCreep(bodyMaker("repairer", spawn.room.energyAvailable), generateCreepName("repairer"), {
       memory: {
