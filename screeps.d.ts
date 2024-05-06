@@ -40,9 +40,6 @@ declare interface HarvesterMemory extends CreepMemory {
 }
 
 declare interface RoomMemory {
-  harvesterLimit: number;
-  /** このtickでアクティブなソース */
-  activeSource: Source["id"][];
   creeps?: {
     tick: number;
     names: string[];

@@ -7,10 +7,6 @@ function roomBehavior(room) {
     if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) === null || _a === void 0 ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
         (_b = room.controller) === null || _b === void 0 ? void 0 : _b.activateSafeMode();
     }
-    if (room.memory.harvesterLimit === undefined || Game.time % 100 === 0) {
-        room.memory.harvesterLimit = getHarvesterLimit(room);
-    }
-    room.memory.activeSource = findActiceSource(room);
     if (!room.memory.roadLayed || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
         console.log("roadLayer in " + Game.time);
         roadLayer(room);
@@ -18,34 +14,6 @@ function roomBehavior(room) {
     creteStructures(room);
 }
 exports.roomBehavior = roomBehavior;
-function getHarvesterLimit(room) {
-    return _(room.find(FIND_SOURCES))
-        .map((source) => {
-        const terrain = room.getTerrain();
-        return _(util_creep_1.squareDiff)
-            .map(([dx, dy]) => {
-            return terrain.get(source.pos.x + dx, source.pos.y + dy) !== TERRAIN_MASK_WALL ? 1 : 0;
-        })
-            .run();
-    })
-        .flatten()
-        .sum();
-}
-function findActiceSource(room) {
-    return _(room.find(FIND_SOURCES_ACTIVE, {
-        filter: (s) => {
-            return !!_(util_creep_1.squareDiff)
-                .map(([dx, dy]) => {
-                return room.getPositionAt(s.pos.x + dx, s.pos.y + dy);
-            })
-                .compact()
-                .filter((pos) => pos.lookFor(LOOK_TERRAIN)[0] !== "wall" && !pos.lookFor(LOOK_CREEPS).length)
-                .size();
-        },
-    }))
-        .map((s) => s.id)
-        .value();
-}
 function creteStructures(room) {
     var _a;
     const spawn = (_a = Object.entries(Game.spawns).find(([_, s]) => s.room.name === room.name)) === null || _a === void 0 ? void 0 : _a[1];

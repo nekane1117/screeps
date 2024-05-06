@@ -1,17 +1,10 @@
-import { getSpawnNamesInRoom, squareDiff } from "./util.creep";
+import { getSpawnNamesInRoom } from "./util.creep";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
   if (room.find(FIND_HOSTILE_CREEPS).length && !room.controller?.safeMode && room.energyAvailable > SAFE_MODE_COST) {
     room.controller?.activateSafeMode();
   }
-
-  if (room.memory.harvesterLimit === undefined || Game.time % 100 === 0) {
-    room.memory.harvesterLimit = getHarvesterLimit(room);
-  }
-
-  // 今使えるソース
-  room.memory.activeSource = findActiceSource(room);
 
   if (!room.memory.roadLayed || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
     console.log("roadLayer in " + Game.time);
@@ -20,44 +13,6 @@ export function roomBehavior(room: Room) {
 
   // エクステンション建てる
   creteStructures(room);
-}
-
-function getHarvesterLimit(room: Room) {
-  // return 2;
-  return _(room.find(FIND_SOURCES))
-    .map((source) => {
-      // 8近傍を取得
-      const terrain = room.getTerrain();
-      return _(squareDiff)
-        .map(([dx, dy]: readonly [number, number]) => {
-          return terrain.get(source.pos.x + dx, source.pos.y + dy) !== TERRAIN_MASK_WALL ? 1 : 0;
-        })
-        .run();
-    })
-    .flatten()
-    .sum();
-}
-
-/** 今使えるソース */
-function findActiceSource(room: Room) {
-  return _(
-    room.find(FIND_SOURCES_ACTIVE, {
-      filter: (s) => {
-        return !!_(squareDiff)
-          // 8近傍の位置を取得する
-          .map(([dx, dy]: [number, number]) => {
-            return room.getPositionAt(s.pos.x + dx, s.pos.y + dy);
-          })
-          .compact()
-          // 壁以外かつcreepのいないマス
-          .filter((pos: RoomPosition) => pos.lookFor(LOOK_TERRAIN)[0] !== "wall" && !pos.lookFor(LOOK_CREEPS).length)
-          // がある
-          .size();
-      },
-    }),
-  )
-    .map((s) => s.id)
-    .value();
 }
 
 /** 部屋ごとの色々を建てる */
