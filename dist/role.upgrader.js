@@ -2,9 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const behavior = (creep) => {
-    var _a, _b;
+    var _a, _b, _c, _d;
     if (!isUpgrader(creep)) {
         return console.log(`${creep.name} is not Upgrader`);
+    }
+    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+        changeMode(creep, "💪");
+    }
+    else if (creep.store.energy === 0) {
+        changeMode(creep, "🛒");
     }
     if (!creep.room.controller) {
         return creep.suicide();
@@ -19,6 +25,7 @@ const behavior = (creep) => {
         }
     }
     creep.memory.worked = creep.upgradeController(creep.room.controller);
+    creep.room.visual.text(`${(creep.room.controller.progressTotal - creep.room.controller.progress).toLocaleString()}`, creep.room.controller.pos.x, creep.room.controller.pos.y - 1);
     switch (creep.memory.worked) {
         case ERR_NOT_ENOUGH_RESOURCES:
             changeMode(creep, "🛒");
@@ -45,23 +52,16 @@ const behavior = (creep) => {
             break;
     }
     if (creep.memory.storeId ||
-        (creep.memory.storeId = (_b = (creep.room.controller.pos.findClosestByRange(FIND_STRUCTURES, {
+        (creep.memory.storeId = (_b = creep.room.controller.pos.findClosestByRange(FIND_STRUCTURES, {
             filter: (s) => {
-                return (0, util_creep_1.isStoreTarget)(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) && s.store[RESOURCE_ENERGY] > 0;
+                var _a;
+                return (0, util_creep_1.isStoreTarget)(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) && !!((_a = creep.room.controller) === null || _a === void 0 ? void 0 : _a.pos.inRangeTo(s, 3));
             },
-        }) ||
-            creep.room.controller.pos.findClosestByRange(FIND_STRUCTURES, {
-                filter: (s) => {
-                    return ([STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) &&
-                        "store" in s &&
-                        s.store.getUsedCapacity(RESOURCE_ENERGY) > s.store.getCapacity(RESOURCE_ENERGY) * 0.8);
-                },
-            }))) === null || _b === void 0 ? void 0 : _b.id)) {
+        })) === null || _b === void 0 ? void 0 : _b.id)) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
             creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);
             switch (creep.memory.collected) {
-                case ERR_NOT_ENOUGH_RESOURCES:
                 case ERR_INVALID_TARGET:
                     creep.memory.storeId = undefined;
                     break;
@@ -84,25 +84,30 @@ const behavior = (creep) => {
                     break;
                 case OK:
                 case ERR_BUSY:
+                case ERR_NOT_ENOUGH_RESOURCES:
                 default:
                     break;
             }
         }
-        else {
-            creep.memory.storeId = undefined;
-            (0, util_creep_1.randomWalk)(creep);
-        }
     }
     else {
-        (0, util_creep_1.randomWalk)(creep);
+        const { controller } = creep.room;
+        if (controller.pos.findInRange([
+            ...creep.room.find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_CONTAINER }),
+            ...Object.values(Game.constructionSites).filter((s) => s.structureType === STRUCTURE_CONTAINER),
+        ], 3).length === 0) {
+            return (_d = (_c = controller.pos
+                .findClosestByPath(Object.values(Game.spawns), { ignoreCreeps: true })) === null || _c === void 0 ? void 0 : _c.pos.findClosestByPath(_(_.range(-3, 4).map((dx) => {
+                return _.range(-3, 4).map((dy) => {
+                    return creep.room.getPositionAt(controller.pos.x + dx, controller.pos.y + dy);
+                });
+            }))
+                .flatten(false)
+                .compact()
+                .run())) === null || _d === void 0 ? void 0 : _d.createConstructionSite(STRUCTURE_CONTAINER);
+        }
     }
     (0, util_creep_1.pickUpAll)(creep);
-    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-        changeMode(creep, "💪");
-    }
-    else if (creep.store[RESOURCE_ENERGY] === 0) {
-        changeMode(creep, "🛒");
-    }
 };
 exports.default = behavior;
 function isUpgrader(creep) {

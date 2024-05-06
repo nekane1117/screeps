@@ -6,6 +6,12 @@ const behavior = (creep) => {
     if (!isBuilder(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
+    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+        changeMode(creep, "💪");
+    }
+    if (creep.store.energy < BUILD_POWER * creep.getActiveBodyparts(WORK)) {
+        changeMode(creep, "🛒");
+    }
     const sites = _(Object.values(Game.constructionSites));
     if (sites.size() === 0) {
         return (creep.memory.role = "repairer");
@@ -99,12 +105,6 @@ const behavior = (creep) => {
     }
     (0, util_creep_1.stealBy)(creep, ["harvester"]);
     (0, util_creep_1.pickUpAll)(creep);
-    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-        changeMode(creep, "💪");
-    }
-    if (creep.store[RESOURCE_ENERGY] === 0) {
-        changeMode(creep, "🛒");
-    }
 };
 exports.default = behavior;
 function isBuilder(creep) {

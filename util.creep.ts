@@ -14,25 +14,12 @@ export const squareDiff = Object.freeze([
 ] as [number, number][]);
 
 export function bodyMaker(role: ROLES, cost: number): BodyPartConstant[] {
-  if (role === "harvester") {
-    return HARVESTER_BODY.reduce(
-      (bodies, parts) => {
-        const total = _.last(bodies)?.total || 0;
-        return bodies.concat({
-          parts,
-          total: total + BODYPART_COST[parts],
-        });
-      },
-      [] as { parts: BodyPartConstant; total: number }[],
-    )
-      .filter(({ total }) => {
-        return total <= cost;
-      })
-      .map((c) => c.parts);
+  if (role === "harvester" || role === "upgrader") {
+    return filterBodiesByCost(role, cost);
   } else {
     // 入れ物
     const bodies = [...MIN_BODY[role]];
-    const diff = [...(DIFF_BODY[role] || MIN_BODY[role])];
+    const diff = [...MIN_BODY[role]];
     const getTotalCost = () =>
       _(bodies)
         .map((p) => BODYPART_COST[p])
@@ -46,6 +33,24 @@ export function bodyMaker(role: ROLES, cost: number): BodyPartConstant[] {
     // 1個分超えてるはずなので最後の１個を消して返す
     return bodies.slice(0, bodies.length - 1);
   }
+}
+
+function filterBodiesByCost(role: ROLES, cost: number) {
+  return IDEAL_BODY[role]
+    .reduce(
+      (bodies, parts) => {
+        const total = _.last(bodies)?.total || 0;
+        return bodies.concat({
+          parts,
+          total: total + BODYPART_COST[parts],
+        });
+      },
+      [] as { parts: BodyPartConstant; total: number }[],
+    )
+    .filter(({ total }) => {
+      return total <= cost;
+    })
+    .map((c) => c.parts);
 }
 
 export const DIRECTIONS: Record<DirectionConstant, string> = {
@@ -76,24 +81,25 @@ export const MIN_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
   upgrader: [WORK, CARRY, MOVE],
 });
 
-export const HARVESTER_BODY = Object.freeze([
-  // 最小構成
-  WORK,
-  MOVE,
-  CARRY,
-  // 作業効率
-  WORK,
-  WORK,
-  WORK,
-  WORK,
-  // 容量
-  ..._.range(43).map(() => CARRY),
-]);
-
-const DIFF_BODY: Partial<Record<ROLES, BodyPartConstant[]>> = Object.freeze({
-  // ギリsourceまで行ければいいので
-  harvester: [WORK, WORK, CARRY],
-  upgrader: [WORK, CARRY, WORK, CARRY, MOVE],
+export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
+  builder: [],
+  carrier: [],
+  defender: [],
+  harvester: [
+    // 最小構成
+    WORK,
+    MOVE,
+    CARRY,
+    // 作業効率
+    WORK,
+    WORK,
+    WORK,
+    WORK,
+    // 容量
+    ..._.range(43).map(() => CARRY),
+  ],
+  repairer: [],
+  upgrader: [CARRY, MOVE, ..._.range(48).map(() => WORK)],
 });
 
 export const getBodyCost = (bodies: BodyPartConstant[]) =>
@@ -128,7 +134,7 @@ export const customMove: CustomMove = (creep, target, opt) => {
 
   creep.memory.moved = creep.moveTo(target, {
     plainCost: 2,
-    ignoreCreeps: !creep.pos.inRangeTo(target, 3),
+    ignoreCreeps: !creep.pos.inRangeTo(target, 4),
     serializeMemory: false,
     ...opt,
   });

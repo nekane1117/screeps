@@ -12,14 +12,7 @@ const behavior = (spawn) => {
     const creepsInRoom = (0, lodash_1.default)((0, util_creep_1.getCreepsInRoom)(spawn.room))
         .groupBy((c) => c.memory.role)
         .value();
-    if ((creepsInRoom.harvester || []).length === 0) {
-        return spawn.spawnCreep([MOVE, WORK, CARRY], generateCreepName("harvester"), {
-            memory: {
-                role: "harvester",
-            },
-        });
-    }
-    if (spawn.room.energyAvailable >= 200) {
+    if (spawn.room.energyAvailable >= 300) {
         for (const source of spawn.room.find(FIND_SOURCES)) {
             const terrain = spawn.room.getTerrain();
             const maxCount = (0, lodash_1.default)(util_creep_1.squareDiff)

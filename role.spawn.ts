@@ -9,22 +9,8 @@ const behavior = (spawn: StructureSpawn) => {
   const creepsInRoom: _.Dictionary<Creep[] | undefined> = _(getCreepsInRoom(spawn.room))
     .groupBy((c) => c.memory.role)
     .value();
-  // １匹もいないときはとにかく作る
-  if ((creepsInRoom.harvester || []).length === 0) {
-    return spawn.spawnCreep(
-      // とりあえず最小単位
-      [MOVE, WORK, CARRY],
-      generateCreepName("harvester"),
-      {
-        memory: {
-          role: "harvester",
-        } as HarvesterMemory,
-      },
-    );
-  }
-
   // harvester
-  if (spawn.room.energyAvailable >= 200) {
+  if (spawn.room.energyAvailable >= 300) {
     for (const source of spawn.room.find(FIND_SOURCES)) {
       const terrain = spawn.room.getTerrain();
 

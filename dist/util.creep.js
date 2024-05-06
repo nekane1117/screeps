@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.stealBy = exports.pickUpAll = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.HARVESTER_BODY = exports.MIN_BODY = exports.randomWalk = exports.DIRECTIONS = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.stealBy = exports.pickUpAll = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.IDEAL_BODY = exports.MIN_BODY = exports.randomWalk = exports.DIRECTIONS = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -16,23 +16,12 @@ exports.squareDiff = Object.freeze([
     [1, 1],
 ]);
 function bodyMaker(role, cost) {
-    if (role === "harvester") {
-        return exports.HARVESTER_BODY.reduce((bodies, parts) => {
-            var _a;
-            const total = ((_a = _.last(bodies)) === null || _a === void 0 ? void 0 : _a.total) || 0;
-            return bodies.concat({
-                parts,
-                total: total + BODYPART_COST[parts],
-            });
-        }, [])
-            .filter(({ total }) => {
-            return total <= cost;
-        })
-            .map((c) => c.parts);
+    if (role === "harvester" || role === "upgrader") {
+        return filterBodiesByCost(role, cost);
     }
     else {
         const bodies = [...exports.MIN_BODY[role]];
-        const diff = [...(DIFF_BODY[role] || exports.MIN_BODY[role])];
+        const diff = [...exports.MIN_BODY[role]];
         const getTotalCost = () => _(bodies)
             .map((p) => BODYPART_COST[p])
             .sum();
@@ -43,6 +32,21 @@ function bodyMaker(role, cost) {
     }
 }
 exports.bodyMaker = bodyMaker;
+function filterBodiesByCost(role, cost) {
+    return exports.IDEAL_BODY[role]
+        .reduce((bodies, parts) => {
+        var _a;
+        const total = ((_a = _.last(bodies)) === null || _a === void 0 ? void 0 : _a.total) || 0;
+        return bodies.concat({
+            parts,
+            total: total + BODYPART_COST[parts],
+        });
+    }, [])
+        .filter(({ total }) => {
+        return total <= cost;
+    })
+        .map((c) => c.parts);
+}
 exports.DIRECTIONS = {
     [TOP_LEFT]: "TOP_LEFT",
     [TOP]: "TOP",
@@ -69,19 +73,22 @@ exports.MIN_BODY = Object.freeze({
     repairer: [WORK, CARRY, MOVE],
     upgrader: [WORK, CARRY, MOVE],
 });
-exports.HARVESTER_BODY = Object.freeze([
-    WORK,
-    MOVE,
-    CARRY,
-    WORK,
-    WORK,
-    WORK,
-    WORK,
-    ..._.range(43).map(() => CARRY),
-]);
-const DIFF_BODY = Object.freeze({
-    harvester: [WORK, WORK, CARRY],
-    upgrader: [WORK, CARRY, WORK, CARRY, MOVE],
+exports.IDEAL_BODY = Object.freeze({
+    builder: [],
+    carrier: [],
+    defender: [],
+    harvester: [
+        WORK,
+        MOVE,
+        CARRY,
+        WORK,
+        WORK,
+        WORK,
+        WORK,
+        ..._.range(43).map(() => CARRY),
+    ],
+    repairer: [],
+    upgrader: [CARRY, MOVE, ..._.range(48).map(() => WORK)],
 });
 const getBodyCost = (bodies) => _(bodies)
     .map((p) => BODYPART_COST[p])
@@ -109,7 +116,7 @@ const customMove = (creep, target, opt) => {
     if (creep.fatigue) {
         return OK;
     }
-    creep.memory.moved = creep.moveTo(target, Object.assign({ plainCost: 2, ignoreCreeps: !creep.pos.inRangeTo(target, 3), serializeMemory: false }, opt));
+    creep.memory.moved = creep.moveTo(target, Object.assign({ plainCost: 2, ignoreCreeps: !creep.pos.inRangeTo(target, 4), serializeMemory: false }, opt));
     if (creep.memory.moved === OK) {
         const { dy, dx } = ((_b = (_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b[0]) || {};
         if (dx !== undefined && dy !== undefined) {

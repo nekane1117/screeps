@@ -6,6 +6,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return console.log(`${creep.name} is not Builder`);
   }
 
+  if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+    changeMode(creep, "💪");
+  }
+  if (creep.store.energy < BUILD_POWER * creep.getActiveBodyparts(WORK)) {
+    changeMode(creep, "🛒");
+  }
   // https://docs.screeps.com/simultaneous-actions.html
 
   // build
@@ -132,13 +138,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // 落っこちてるものを拾う
   pickUpAll(creep);
-
-  if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-    changeMode(creep, "💪");
-  }
-  if (creep.store[RESOURCE_ENERGY] === 0) {
-    changeMode(creep, "🛒");
-  }
 };
 
 export default behavior;
