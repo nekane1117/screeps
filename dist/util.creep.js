@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.stealBy = exports.pickUpAll = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.getBodyCost = exports.IDEAL_BODY = exports.MIN_BODY = exports.randomWalk = exports.DIRECTIONS = exports.bodyMaker = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.stealBy = exports.pickUpAll = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -15,23 +15,6 @@ exports.squareDiff = Object.freeze([
     [0, 1],
     [1, 1],
 ]);
-function bodyMaker(role, cost) {
-    if (role === "harvester" || role === "upgrader") {
-        return filterBodiesByCost(role, cost);
-    }
-    else {
-        const bodies = [...exports.MIN_BODY[role]];
-        const diff = [...exports.MIN_BODY[role]];
-        const getTotalCost = () => _(bodies)
-            .map((p) => BODYPART_COST[p])
-            .sum();
-        while (getTotalCost() <= cost && bodies.length <= 50) {
-            bodies.push(diff[_.random(0, diff.length - 1)]);
-        }
-        return bodies.slice(0, bodies.length - 1);
-    }
-}
-exports.bodyMaker = bodyMaker;
 function filterBodiesByCost(role, cost) {
     return exports.IDEAL_BODY[role]
         .reduce((bodies, parts) => {
@@ -47,6 +30,7 @@ function filterBodiesByCost(role, cost) {
     })
         .map((c) => c.parts);
 }
+exports.filterBodiesByCost = filterBodiesByCost;
 exports.DIRECTIONS = {
     [TOP_LEFT]: "TOP_LEFT",
     [TOP]: "TOP",
@@ -65,18 +49,25 @@ function randomWalk(creep) {
     return creep.move(directions[_.random(0, directions.length - 1)]);
 }
 exports.randomWalk = randomWalk;
-exports.MIN_BODY = Object.freeze({
-    builder: [WORK, CARRY, MOVE],
-    carrier: [CARRY, MOVE],
-    defender: [],
-    harvester: [WORK, CARRY, MOVE],
-    repairer: [WORK, CARRY, MOVE],
-    upgrader: [WORK, CARRY, MOVE],
-});
 exports.IDEAL_BODY = Object.freeze({
-    builder: [],
-    carrier: [],
-    defender: [],
+    builder: [
+        WORK,
+        CARRY,
+        MOVE,
+        CARRY,
+        ..._(_.range(23).map(() => {
+            return [MOVE, CARRY];
+        }))
+            .flatten()
+            .run(),
+    ],
+    carrier: [
+        ..._(_.range(25).map(() => {
+            return [MOVE, CARRY];
+        }))
+            .flatten()
+            .run(),
+    ],
     harvester: [
         WORK,
         MOVE,
@@ -85,15 +76,20 @@ exports.IDEAL_BODY = Object.freeze({
         WORK,
         WORK,
         WORK,
-        ..._.range(43).map(() => CARRY),
     ],
-    repairer: [],
-    upgrader: [CARRY, MOVE, ..._.range(48).map(() => WORK)],
+    repairer: [
+        WORK,
+        CARRY,
+        MOVE,
+        CARRY,
+        ..._(_.range(23).map(() => {
+            return [MOVE, CARRY];
+        }))
+            .flatten()
+            .run(),
+    ],
+    upgrader: [CARRY, MOVE, ..._.range(5).map(() => WORK)],
 });
-const getBodyCost = (bodies) => _(bodies)
-    .map((p) => BODYPART_COST[p])
-    .sum();
-exports.getBodyCost = getBodyCost;
 exports.RETURN_CODE_DECODER = Object.freeze({
     [OK.toString()]: "OK",
     [ERR_NOT_OWNER.toString()]: "ERR_NOT_OWNER",

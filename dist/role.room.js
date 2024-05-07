@@ -64,7 +64,7 @@ function roadLayer(room) {
                             return;
                         }
                         else if (pos.look().some((s) => "structureType" in s && s.structureType === STRUCTURE_ROAD)) {
-                            costMatrix.set(x, y, 1.5);
+                            costMatrix.set(x, y, 2);
                         }
                     });
                 });

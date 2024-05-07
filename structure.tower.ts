@@ -22,7 +22,18 @@ export default function behaviors(tower: Structure) {
 
     // ダメージを受けている建物
     tower.store.getUsedCapacity(RESOURCE_ENERGY) / tower.store.getCapacity(RESOURCE_ENERGY) > 0.8 &&
-      _(tower.room.find(FIND_STRUCTURES, { filter: (s: Structure): s is Structure<StructureConstant> => s.hits < s.hitsMax }))
+      _(
+        tower.room.find(FIND_STRUCTURES, {
+          filter: (s: Structure): s is Structure<StructureConstant> => {
+            return (
+              (s.structureType === STRUCTURE_WALL
+                ? // 壁はHP高すぎるので適当に間を開ける
+                  Game.time % 4 === 0
+                : true) && s.hits < s.hitsMax
+            );
+          },
+        }),
+      )
         .tap((damaged) => {
           // の中で最少のHPの建物の一覧
           const target = _(damaged).min((s) => s.hits);

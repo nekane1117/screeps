@@ -1,4 +1,4 @@
-import { bodyMaker } from "./util.creep";
+import { filterBodiesByCost } from "./util.creep";
 
 export default function containerBehavior(structure: Structure) {
   // 取れないやつが来た時は消して終了
@@ -15,8 +15,8 @@ export default function containerBehavior(structure: Structure) {
         filter: (s): s is StructureContainer | StructureStorage => [STRUCTURE_CONTAINER, STRUCTURE_STORAGE].some((t) => t === s.structureType),
       }),
     );
-    // との容量差分の割合の4倍(100:0で4 , 全く同じで0)
-    const requests = Math.ceil(Math.max(1, (structure.store.energy - (innerClothestStorage?.store.energy || 0)) * 4) / CONTAINER_CAPACITY);
+    // との容量差分の割合の2倍(100:0で2 , 全く同じで0)
+    const requests = Math.min(2, Math.ceil(Math.max(1, (structure.store.energy - (innerClothestStorage?.store.energy || 0)) * 2) / CONTAINER_CAPACITY));
 
     new RoomVisual(structure.room.name).text(requests.toString(), structure.pos);
     return _.range(requests).map((n) => {
@@ -31,7 +31,7 @@ export default function containerBehavior(structure: Structure) {
           .find((spawn) => !spawn.spawning);
         // 使えるSpawnがあったときは作る
         if (spawn && spawn.room.energyAvailable > spawn.room.energyCapacityAvailable * 0.6) {
-          return spawn.spawnCreep(bodyMaker("carrier", spawn.room.energyAvailable), carrierName, {
+          return spawn.spawnCreep(filterBodiesByCost("carrier", spawn.room.energyAvailable), carrierName, {
             memory: {
               role: "carrier",
               storeId: structure.id,
@@ -47,6 +47,6 @@ export default function containerBehavior(structure: Structure) {
   }
 }
 
-function isTarget(s: Structure): s is StructureContainer {
-  return s.structureType === STRUCTURE_CONTAINER;
+function isTarget(s: Structure): s is StructureContainer | StructureStorage | StructureLink {
+  return ([STRUCTURE_CONTAINER, STRUCTURE_STORAGE, STRUCTURE_LINK] as StructureConstant[]).includes(s.structureType);
 }

@@ -16,7 +16,14 @@ function behaviors(tower) {
             }));
         }
         tower.store.getUsedCapacity(RESOURCE_ENERGY) / tower.store.getCapacity(RESOURCE_ENERGY) > 0.8 &&
-            _(tower.room.find(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax }))
+            _(tower.room.find(FIND_STRUCTURES, {
+                filter: (s) => {
+                    return ((s.structureType === STRUCTURE_WALL
+                        ?
+                            Game.time % 4 === 0
+                        : true) && s.hits < s.hitsMax);
+                },
+            }))
                 .tap((damaged) => {
                 const target = _(damaged).min((s) => s.hits);
                 if (target) {

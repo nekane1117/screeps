@@ -13,29 +13,7 @@ export const squareDiff = Object.freeze([
   [1, 1],
 ] as [number, number][]);
 
-export function bodyMaker(role: ROLES, cost: number): BodyPartConstant[] {
-  if (role === "harvester" || role === "upgrader") {
-    return filterBodiesByCost(role, cost);
-  } else {
-    // 入れ物
-    const bodies = [...MIN_BODY[role]];
-    const diff = [...MIN_BODY[role]];
-    const getTotalCost = () =>
-      _(bodies)
-        .map((p) => BODYPART_COST[p])
-        .sum();
-
-    // cost以下かつ50個以下の間くっつける
-    while (getTotalCost() <= cost && bodies.length <= 50) {
-      bodies.push(diff[_.random(0, diff.length - 1)]);
-    }
-
-    // 1個分超えてるはずなので最後の１個を消して返す
-    return bodies.slice(0, bodies.length - 1);
-  }
-}
-
-function filterBodiesByCost(role: ROLES, cost: number) {
+export function filterBodiesByCost(role: ROLES, cost: number) {
   return IDEAL_BODY[role]
     .reduce(
       (bodies, parts) => {
@@ -72,19 +50,33 @@ export function randomWalk(creep: Creep) {
   return creep.move(directions[_.random(0, directions.length - 1)]);
 }
 
-export const MIN_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
-  builder: [WORK, CARRY, MOVE],
-  carrier: [CARRY, MOVE],
-  defender: [],
-  harvester: [WORK, CARRY, MOVE],
-  repairer: [WORK, CARRY, MOVE],
-  upgrader: [WORK, CARRY, MOVE],
-});
-
 export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
-  builder: [],
-  carrier: [],
-  defender: [],
+  builder: [
+    // 最小構成
+    WORK,
+    CARRY,
+    MOVE,
+    // 偶数にする
+    CARRY,
+    ..._(
+      _.range(23).map(() => {
+        // あとはMoveとCarryの繰り返し
+        return [MOVE, CARRY];
+      }),
+    )
+      .flatten<BodyPartConstant>()
+      .run(),
+  ],
+  carrier: [
+    ..._(
+      _.range(25).map(() => {
+        // あとはMoveとCarryの繰り返し
+        return [MOVE, CARRY];
+      }),
+    )
+      .flatten<BodyPartConstant>()
+      .run(),
+  ],
   harvester: [
     // 最小構成
     WORK,
@@ -95,17 +87,25 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
     WORK,
     WORK,
     WORK,
-    // 容量
-    ..._.range(43).map(() => CARRY),
   ],
-  repairer: [],
-  upgrader: [CARRY, MOVE, ..._.range(48).map(() => WORK)],
+  repairer: [
+    // 最小構成
+    WORK,
+    CARRY,
+    MOVE,
+    // 偶数にする
+    CARRY,
+    ..._(
+      _.range(23).map(() => {
+        // あとはMoveとCarryの繰り返し
+        return [MOVE, CARRY];
+      }),
+    )
+      .flatten<BodyPartConstant>()
+      .run(),
+  ],
+  upgrader: [CARRY, MOVE, ..._.range(5).map(() => WORK)],
 });
-
-export const getBodyCost = (bodies: BodyPartConstant[]) =>
-  _(bodies)
-    .map((p) => BODYPART_COST[p])
-    .sum();
 
 export const RETURN_CODE_DECODER = Object.freeze({
   [OK.toString()]: "OK",

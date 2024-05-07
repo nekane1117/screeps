@@ -10,7 +10,7 @@ function containerBehavior(structure) {
         const innerClothestStorage = structure.pos.findClosestByRange(clothestSpawn.pos.findInRange(FIND_STRUCTURES, clothestSpawn.pos.getRangeTo(structure) - 1, {
             filter: (s) => [STRUCTURE_CONTAINER, STRUCTURE_STORAGE].some((t) => t === s.structureType),
         }));
-        const requests = Math.ceil(Math.max(1, (structure.store.energy - ((innerClothestStorage === null || innerClothestStorage === void 0 ? void 0 : innerClothestStorage.store.energy) || 0)) * 4) / CONTAINER_CAPACITY);
+        const requests = Math.min(2, Math.ceil(Math.max(1, (structure.store.energy - ((innerClothestStorage === null || innerClothestStorage === void 0 ? void 0 : innerClothestStorage.store.energy) || 0)) * 2) / CONTAINER_CAPACITY));
         new RoomVisual(structure.room.name).text(requests.toString(), structure.pos);
         return _.range(requests).map((n) => {
             const carrierName = `C_${structure.pos.x}_${structure.pos.y}_${n}`;
@@ -21,7 +21,7 @@ function containerBehavior(structure) {
                 })
                     .find((spawn) => !spawn.spawning);
                 if (spawn && spawn.room.energyAvailable > spawn.room.energyCapacityAvailable * 0.6) {
-                    return spawn.spawnCreep((0, util_creep_1.bodyMaker)("carrier", spawn.room.energyAvailable), carrierName, {
+                    return spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("carrier", spawn.room.energyAvailable), carrierName, {
                         memory: {
                             role: "carrier",
                             storeId: structure.id,
@@ -40,5 +40,5 @@ function containerBehavior(structure) {
 }
 exports.default = containerBehavior;
 function isTarget(s) {
-    return s.structureType === STRUCTURE_CONTAINER;
+    return [STRUCTURE_CONTAINER, STRUCTURE_STORAGE, STRUCTURE_LINK].includes(s.structureType);
 }

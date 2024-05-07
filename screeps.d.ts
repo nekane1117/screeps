@@ -1,6 +1,6 @@
 /// <reference types="screeps" />
 
-declare type ROLES = "harvester" | "carrier" | "builder" | "repairer" | "defender" | "upgrader";
+declare type ROLES = "harvester" | "carrier" | "builder" | "repairer" | "upgrader";
 declare interface CreepMemory {
   role: ROLES;
   // 担当作業の作業結果

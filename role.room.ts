@@ -74,7 +74,7 @@ function roadLayer(room: Room) {
                   return;
                 } else if (pos.look().some((s) => "structureType" in s && s.structureType === STRUCTURE_ROAD)) {
                   // 道がある or 道を引く場合道よりほんの少し高くする
-                  costMatrix.set(x, y, 1.5);
+                  costMatrix.set(x, y, 2);
                 }
               });
             });

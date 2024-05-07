@@ -4,7 +4,10 @@ const util_creep_1 = require("./util.creep");
 const utils_common_1 = require("./utils.common");
 const behavior = (creep) => {
     var _a, _b, _c, _d, _e;
-    const moveMeTo = (target) => (0, util_creep_1.customMove)(creep, target, { ignoreCreeps: true });
+    const moveMeTo = (target) => (0, util_creep_1.customMove)(creep, target, {
+        ignoreCreeps: !creep.pos.inRangeTo(target, 2),
+        visualizePathStyle: { stroke: "#00ffff" },
+    });
     if (!isCarrier(creep)) {
         return console.log(`${creep.name} is not Harvester`);
     }
