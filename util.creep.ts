@@ -139,12 +139,12 @@ export const customMove: CustomMove = (creep, target, opt) => {
     ...opt,
   });
 
-  if (creep.memory.moved === OK) {
+  if (creep.memory.moved === OK && Game.time % 2) {
     const { dy, dx } = creep.memory._move?.path?.[0] || {};
 
     if (dx !== undefined && dy !== undefined) {
       const blocker = creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + dx, creep.pos.y + dy)?.[0];
-      if (blocker && blocker.memory.moved === undefined) {
+      if (blocker && blocker.memory.moved !== OK) {
         const pull = creep.pull(blocker);
         const move = blocker.move(creep);
         (pull || move) &&

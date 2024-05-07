@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
+const utils_1 = require("./utils");
 const utils_common_1 = require("./utils.common");
 const behavior = (creep) => {
     var _a, _b, _c, _d, _e;
@@ -61,10 +62,24 @@ const behavior = (creep) => {
         const { spawn: spawns = [], container = [], extension = [], link = [], tower = [], } = creep.room
             .find(FIND_STRUCTURES, {
             filter: (s) => {
-                return (s.id !== store.id &&
-                    "store" in s &&
-                    s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0 &&
-                    ([STRUCTURE_TOWER, STRUCTURE_EXTENSION, STRUCTURE_SPAWN].some((t) => s.structureType === t) ? true : s.pos.getRangeTo(creep) < rangeToClosestSpawn));
+                if (s.id === creep.memory.storeId || !("store" in s)) {
+                    return false;
+                }
+                const storeRate = (0, utils_1.getCapacityRate)(s, RESOURCE_ENERGY);
+                if (storeRate > 0.9) {
+                    return false;
+                }
+                switch (s.structureType) {
+                    case STRUCTURE_TOWER:
+                    case STRUCTURE_EXTENSION:
+                    case STRUCTURE_SPAWN:
+                        return true;
+                    case STRUCTURE_CONTAINER:
+                    case STRUCTURE_LINK:
+                        return s.pos.inRangeTo(creep, rangeToClosestSpawn);
+                    default:
+                        return false;
+                }
             },
         })
             .reduce((storages, s) => {
@@ -89,7 +104,9 @@ const behavior = (creep) => {
         }
         if (!creep.memory.transferId) {
             creep.memory.transferId = (_e = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-                filter: (s) => "store" in s && s.id !== creep.memory.storeId && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
+                filter: (s) => {
+                    return s.id !== creep.memory.storeId && "store" in s && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
+                },
             })) === null || _e === void 0 ? void 0 : _e.id;
         }
         if (!creep.memory.transferId) {
@@ -97,7 +114,7 @@ const behavior = (creep) => {
         }
     }
     const transferTarget = Game.getObjectById(creep.memory.transferId);
-    if (!transferTarget) {
+    if (!transferTarget || (0, utils_1.getCapacityRate)(transferTarget) === 1) {
         creep.memory.transferId = undefined;
         return ERR_NOT_FOUND;
     }

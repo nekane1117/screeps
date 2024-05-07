@@ -113,11 +113,11 @@ const customMove = (creep, target, opt) => {
         return OK;
     }
     creep.memory.moved = creep.moveTo(target, Object.assign({ plainCost: 2, ignoreCreeps: !creep.pos.inRangeTo(target, 4), serializeMemory: false }, opt));
-    if (creep.memory.moved === OK) {
+    if (creep.memory.moved === OK && Game.time % 2) {
         const { dy, dx } = ((_b = (_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b[0]) || {};
         if (dx !== undefined && dy !== undefined) {
             const blocker = (_c = creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + dx, creep.pos.y + dy)) === null || _c === void 0 ? void 0 : _c[0];
-            if (blocker && blocker.memory.moved === undefined) {
+            if (blocker && blocker.memory.moved !== OK) {
                 const pull = creep.pull(blocker);
                 const move = blocker.move(creep);
                 (pull || move) &&

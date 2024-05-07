@@ -1,5 +1,6 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, getSpawnNamesInRoom, isStoreTarget, pickUpAll, stealBy } from "./util.creep";
+import { getCapacityRate } from "./utils";
 import { defaultTo } from "./utils.common";
 
 type Structures<T extends StructureConstant = StructureConstant> = {
@@ -91,24 +92,43 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       tower = [],
     } = creep.room
       .find(FIND_STRUCTURES, {
-        filter: (s): s is StructureSpawn | StructureStorage | StructureContainer | StructureExtension => {
-          return (
-            // 自分じゃない
-            s.id !== store.id &&
-            // 満タンじゃない
-            "store" in s &&
-            s.store.getFreeCapacity(RESOURCE_ENERGY) !== 0 &&
-            // 自分より最寄りのspawnに近い
-            ([STRUCTURE_TOWER, STRUCTURE_EXTENSION, STRUCTURE_SPAWN].some((t) => s.structureType === t) ? true : s.pos.getRangeTo(creep) < rangeToClosestSpawn)
-          );
+        filter: (s): s is StructureSpawn | StructureTower | StructureExtension | StructureLink | StructureContainer => {
+          // 自分の倉庫は無視
+          // storeを持ってない
+          if (s.id === creep.memory.storeId || !("store" in s)) {
+            return false;
+          }
+
+          const storeRate = getCapacityRate(s, RESOURCE_ENERGY);
+          // 満タンのものは無視
+          if (storeRate > 0.9) {
+            return false;
+          }
+
+          // タイプごとの判定
+          switch (s.structureType) {
+            case STRUCTURE_TOWER:
+            case STRUCTURE_EXTENSION:
+            case STRUCTURE_SPAWN:
+              return true;
+            case STRUCTURE_CONTAINER:
+            case STRUCTURE_LINK:
+              return s.pos.inRangeTo(creep, rangeToClosestSpawn);
+
+            default:
+              return false;
+          }
         },
       })
-      .reduce((storages, s) => {
-        return {
-          ...storages,
-          [s.structureType]: defaultTo(storages[s.structureType], []).concat(s),
-        };
-      }, {} as Structures);
+      .reduce(
+        (storages, s) => {
+          return {
+            ...storages,
+            [s.structureType]: defaultTo(storages[s.structureType], []).concat(s),
+          };
+        },
+        {} as Structures<STRUCTURE_SPAWN | STRUCTURE_TOWER | STRUCTURE_EXTENSION | STRUCTURE_LINK | STRUCTURE_CONTAINER>,
+      );
 
     // 優先順に検索をかける
     // Link
@@ -136,10 +156,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     if (!creep.memory.transferId) {
       creep.memory.transferId = creep.pos.findClosestByRange(tower)?.id;
     }
-    // Storage
+    // 入れ物何でも
     if (!creep.memory.transferId) {
       creep.memory.transferId = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-        filter: (s) => "store" in s && s.id !== creep.memory.storeId && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
+        filter: (s) => {
+          return s.id !== creep.memory.storeId && "store" in s && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
+        },
       })?.id;
     }
     if (!creep.memory.transferId) {
@@ -149,7 +171,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   const transferTarget = Game.getObjectById(creep.memory.transferId);
-  if (!transferTarget) {
+  if (!transferTarget || getCapacityRate(transferTarget) === 1) {
     creep.memory.transferId = undefined;
     // 完全に見つからなければうろうろしておく
     return ERR_NOT_FOUND;
