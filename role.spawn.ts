@@ -49,7 +49,17 @@ const behavior = (spawn: StructureSpawn) => {
   }
 
   // upgraderが居ないときもとりあえず作る
-  if ((creepsInRoom.upgrader || []).length === 0 && spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.8)) {
+  if (
+    (creepsInRoom.upgrader || []).length <=
+      ((spawn.pos.findClosestByRange(FIND_STRUCTURES, {
+        filter: (s): s is StructureContainer => {
+          return s.structureType === STRUCTURE_CONTAINER;
+        },
+      })?.store.energy || 0) /
+        CONTAINER_CAPACITY) *
+        2 &&
+    spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.8)
+  ) {
     return spawn.spawnCreep(filterBodiesByCost("upgrader", spawn.room.energyAvailable), generateCreepName("upgrader"), {
       memory: {
         role: "upgrader",

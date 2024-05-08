@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const lodash_1 = __importDefault(require("lodash"));
 const util_creep_1 = require("./util.creep");
 const behavior = (spawn) => {
-    var _a;
+    var _a, _b;
     if (((_a = Object.keys(Game.spawns)) === null || _a === void 0 ? void 0 : _a[0]) === spawn.name) {
         spawn.room.visual.text(`${spawn.room.energyAvailable}/${spawn.room.energyCapacityAvailable}`, spawn.pos.x + 1, spawn.pos.y - 1);
     }
@@ -40,7 +40,15 @@ const behavior = (spawn) => {
             }
         }
     }
-    if ((creepsInRoom.upgrader || []).length === 0 && spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.8)) {
+    if ((creepsInRoom.upgrader || []).length <=
+        ((((_b = spawn.pos.findClosestByRange(FIND_STRUCTURES, {
+            filter: (s) => {
+                return s.structureType === STRUCTURE_CONTAINER;
+            },
+        })) === null || _b === void 0 ? void 0 : _b.store.energy) || 0) /
+            CONTAINER_CAPACITY) *
+            2 &&
+        spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.8)) {
         return spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("upgrader", spawn.room.energyAvailable), generateCreepName("upgrader"), {
             memory: {
                 role: "upgrader",
