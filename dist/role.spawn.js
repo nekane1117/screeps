@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const lodash_1 = __importDefault(require("lodash"));
 const util_creep_1 = require("./util.creep");
+const utils_1 = require("./utils");
 const behavior = (spawn) => {
     var _a, _b;
     if (((_a = Object.keys(Game.spawns)) === null || _a === void 0 ? void 0 : _a[0]) === spawn.name) {
@@ -31,56 +32,82 @@ const behavior = (spawn) => {
                 return c !== undefined && isH(c) && c.memory.harvestTargetId === source.id;
             }));
             if (harvesters.size() < maxCount && harvesters.map((c) => c.getActiveBodyparts(WORK)).sum() < 5) {
-                return spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("harvester", spawn.room.energyAvailable), generateCreepName("harvester"), {
+                const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("harvester", spawn.room.energyAvailable);
+                const spawned = spawn.spawnCreep(bodies, generateCreepName("harvester"), {
                     memory: {
                         role: "harvester",
                         harvestTargetId: source.id,
                     },
+                    energyStructures: (0, lodash_1.default)(spawn.room.find(FIND_STRUCTURES, {
+                        filter: (s) => s.structureType === STRUCTURE_SPAWN || s.structureType === STRUCTURE_EXTENSION,
+                    }))
+                        .sortBy((s) => s.pos.getRangeTo(spawn))
+                        .reverse()
+                        .run(),
                 });
+                if (spawned === OK && spawn.room.memory.energySummary) {
+                    spawn.room.memory.energySummary.push({
+                        consumes: cost,
+                        production: 0,
+                    });
+                }
+                return spawned;
             }
         }
     }
-    if ((creepsInRoom.upgrader || []).length <=
-        ((((_b = spawn.pos.findClosestByRange(FIND_STRUCTURES, {
-            filter: (s) => {
-                return s.structureType === STRUCTURE_CONTAINER;
-            },
-        })) === null || _b === void 0 ? void 0 : _b.store.energy) || 0) /
-            CONTAINER_CAPACITY) *
-            2 &&
+    const upgradeContainer = (_b = spawn.room.controller) === null || _b === void 0 ? void 0 : _b.pos.findClosestByRange(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_CONTAINER });
+    const upgradeContainerRate = upgradeContainer ? (0, utils_1.getCapacityRate)(upgradeContainer) : 0;
+    if ((creepsInRoom.upgrader || []).length < upgradeContainerRate / 0.75 &&
         spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.8)) {
-        return spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("upgrader", spawn.room.energyAvailable), generateCreepName("upgrader"), {
+        const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("upgrader", spawn.room.energyAvailable);
+        const spawned = spawn.spawnCreep(bodies, generateCreepName("upgrader"), {
             memory: {
                 role: "upgrader",
             },
         });
-    }
-    const filledStorages = spawn.room.find(FIND_STRUCTURES, {
-        filter: (s) => {
-            return [STRUCTURE_CONTAINER, STRUCTURE_STORAGE].some((t) => {
-                return s.structureType === t && s.store.getUsedCapacity(RESOURCE_ENERGY) / s.store.getCapacity(RESOURCE_ENERGY) > 0.5;
+        if (spawned === OK && spawn.room.memory.energySummary) {
+            spawn.room.memory.energySummary.push({
+                consumes: cost,
+                production: 0,
             });
-        },
-    });
+        }
+        return spawned;
+    }
     if (spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length &&
-        (creepsInRoom.builder || []).length < 1 &&
+        (creepsInRoom.builder || []).length < upgradeContainerRate / 0.5 &&
         spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.6)) {
-        return spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("builder", spawn.room.energyAvailable), generateCreepName("builder"), {
+        const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("builder", spawn.room.energyAvailable);
+        const spawned = spawn.spawnCreep(bodies, generateCreepName("builder"), {
             memory: {
                 role: "builder",
                 mode: "💪",
             },
         });
+        if (spawned === OK && spawn.room.memory.energySummary) {
+            spawn.room.memory.energySummary.push({
+                consumes: cost,
+                production: 0,
+            });
+        }
+        return spawned;
     }
     if (spawn.room.find(FIND_STRUCTURES, { filter: (s) => s.structureType !== STRUCTURE_WALL && s.hits < s.hitsMax * 0.5 }).length &&
-        ((creepsInRoom === null || creepsInRoom === void 0 ? void 0 : creepsInRoom.repairer) || []).length < filledStorages.length &&
+        ((creepsInRoom === null || creepsInRoom === void 0 ? void 0 : creepsInRoom.repairer) || []).length < 1 &&
         spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.9)) {
-        return spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("repairer", spawn.room.energyAvailable), generateCreepName("repairer"), {
+        const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("repairer", spawn.room.energyAvailable);
+        const spawned = spawn.spawnCreep(bodies, generateCreepName("repairer"), {
             memory: {
                 role: "repairer",
                 mode: "💪",
             },
         });
+        if (spawned === OK && spawn.room.memory.energySummary) {
+            spawn.room.memory.energySummary.push({
+                consumes: cost,
+                production: 0,
+            });
+        }
+        return spawned;
     }
     return OK;
 };

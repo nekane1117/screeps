@@ -67,6 +67,8 @@ function creteStructures(room) {
                 summary.production += event.data.amount;
                 break;
             case EVENT_BUILD:
+                summary.consumes += event.data.amount;
+                break;
             case EVENT_REPAIR:
             case EVENT_UPGRADE_CONTROLLER:
                 summary.consumes += event.data.energySpent;
@@ -88,10 +90,18 @@ function creteStructures(room) {
         production: 0,
         consumes: 0,
     });
-    visual.text(`生産量：${_.floor(total.production / room.memory.energySummary.length, 2)}`, 25, 25, {
+    const total100 = room.memory.energySummary.slice(-100).reduce((sum, current) => {
+        sum.consumes += current.consumes || 0;
+        sum.production += current.production || 0;
+        return sum;
+    }, {
+        production: 0,
+        consumes: 0,
+    });
+    visual.text(`生産量：${_.floor(total.production / room.memory.energySummary.length, 2)}(${_.floor(total100.production / 100, 2)})`, 25, 25, {
         align: "left",
     });
-    visual.text(`消費量：${_.floor(total.consumes / room.memory.energySummary.length, 2)}`, 25, 26, {
+    visual.text(`消費量：${_.floor(total.consumes / room.memory.energySummary.length, 2)}(${_.floor(total100.consumes / 100, 2)})`, 25, 26, {
         align: "left",
     });
 }

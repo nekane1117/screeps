@@ -12,10 +12,11 @@ const behavior = (creep) => {
     if (!isCarrier(creep)) {
         return console.log(`${creep.name} is not Harvester`);
     }
-    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
+    const capacityRate = (0, utils_1.getCapacityRate)(creep);
+    if (capacityRate < 0.25) {
         changeMode(creep, "🛒");
     }
-    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+    if (capacityRate > 0) {
         changeMode(creep, "💪");
     }
     const spawn = creep.pos.findClosestByRange(_((0, util_creep_1.getSpawnNamesInRoom)(creep.room))
@@ -65,8 +66,8 @@ const behavior = (creep) => {
                 if (s.id === creep.memory.storeId || !("store" in s)) {
                     return false;
                 }
-                const storeRate = (0, utils_1.getCapacityRate)(s, RESOURCE_ENERGY);
-                if (storeRate > 0.9) {
+                const rate = (0, utils_1.getCapacityRate)(s, RESOURCE_ENERGY);
+                if (s.structureType === STRUCTURE_EXTENSION ? rate === 1 : rate > 0.9) {
                     return false;
                 }
                 switch (s.structureType) {
@@ -86,7 +87,7 @@ const behavior = (creep) => {
             return Object.assign(Object.assign({}, storages), { [s.structureType]: (0, utils_common_1.defaultTo)(storages[s.structureType], []).concat(s) });
         }, {});
         if (!creep.memory.transferId) {
-            creep.memory.transferId = (_b = creep.pos.findClosestByRange(link)) === null || _b === void 0 ? void 0 : _b.id;
+            creep.memory.transferId = (_b = spawn.pos.findClosestByRange(link)) === null || _b === void 0 ? void 0 : _b.id;
         }
         if (!creep.memory.transferId) {
             creep.memory.transferId = (_c = creep.pos.findClosestByRange(_([...spawns, ...container, ...extension])
@@ -95,7 +96,7 @@ const behavior = (creep) => {
         }
         if (!creep.memory.transferId && creep.room.controller) {
             const store = creep.room.controller.pos.findClosestByRange(FIND_STRUCTURES, { filter: util_creep_1.isStoreTarget });
-            if (store && store.id !== creep.memory.storeId && store.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+            if (store && store.id !== creep.memory.storeId && (0, utils_1.getCapacityRate)(store) < 0.9) {
                 creep.memory.transferId = store.id;
             }
         }
@@ -103,9 +104,10 @@ const behavior = (creep) => {
             creep.memory.transferId = (_d = creep.pos.findClosestByRange(tower)) === null || _d === void 0 ? void 0 : _d.id;
         }
         if (!creep.memory.transferId) {
-            creep.memory.transferId = (_e = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+            creep.memory.transferId = (_e = spawn.pos.findClosestByRange(FIND_STRUCTURES, {
                 filter: (s) => {
-                    return s.id !== creep.memory.storeId && "store" in s && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
+                    console.log("filter tower ", "store" in s && (0, utils_1.getCapacityRate)(s, RESOURCE_ENERGY) < 0.9);
+                    return "store" in s && (0, utils_1.getCapacityRate)(s, RESOURCE_ENERGY) < 0.9;
                 },
             })) === null || _e === void 0 ? void 0 : _e.id;
         }
@@ -138,10 +140,11 @@ const behavior = (creep) => {
             creep.say(util_creep_1.RETURN_CODE_DECODER[returnVal.toString()]);
             break;
         case OK:
-            creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: util_creep_1.isStoreTarget }).map((s) => creep.transfer(s, RESOURCE_ENERGY));
-            break;
         case ERR_BUSY:
         default:
+            if ((0, utils_1.getCapacityRate)(transferTarget) > 0.9) {
+                creep.memory.transferId = undefined;
+            }
             break;
     }
     (0, util_creep_1.stealBy)(creep, ["harvester"]);

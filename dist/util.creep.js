@@ -16,7 +16,8 @@ exports.squareDiff = Object.freeze([
     [1, 1],
 ]);
 function filterBodiesByCost(role, cost) {
-    return exports.IDEAL_BODY[role]
+    var _a;
+    const bodies = exports.IDEAL_BODY[role]
         .reduce((bodies, parts) => {
         var _a;
         const total = ((_a = _.last(bodies)) === null || _a === void 0 ? void 0 : _a.total) || 0;
@@ -27,8 +28,11 @@ function filterBodiesByCost(role, cost) {
     }, [])
         .filter(({ total }) => {
         return total <= cost;
-    })
-        .map((c) => c.parts);
+    });
+    return {
+        bodies: bodies.map((c) => c.parts),
+        cost: ((_a = _.last(bodies)) === null || _a === void 0 ? void 0 : _a.total) || 0,
+    };
 }
 exports.filterBodiesByCost = filterBodiesByCost;
 exports.DIRECTIONS = {
@@ -72,6 +76,7 @@ exports.IDEAL_BODY = Object.freeze({
         WORK,
         MOVE,
         CARRY,
+        WORK,
         WORK,
         WORK,
         WORK,

@@ -37,8 +37,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       break;
     // 大丈夫なやつ
     case OK: // OK
-      break;
     case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
+      break;
     case ERR_TIRED: // 疲れた
     case ERR_BUSY: // spawning
     default:

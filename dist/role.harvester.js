@@ -25,8 +25,8 @@ const behavior = (creep) => {
             creep.say(util_creep_1.RETURN_CODE_DECODER[creep.memory.worked.toString()]);
             break;
         case OK:
-            break;
         case ERR_NOT_ENOUGH_RESOURCES:
+            break;
         case ERR_TIRED:
         case ERR_BUSY:
         default:

@@ -16,12 +16,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isCarrier(creep)) {
     return console.log(`${creep.name} is not Harvester`);
   }
+  const capacityRate = getCapacityRate(creep);
   // 空っぽになったら収集モードに切り替える
-  if (creep.store.getUsedCapacity(RESOURCE_ENERGY) === 0) {
+  if (capacityRate < 0.25) {
     changeMode(creep, "🛒");
   }
   // 満タンだったら分配モードに切り替える
-  if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+  if (capacityRate > 0) {
     changeMode(creep, "💪");
   }
 
@@ -99,9 +100,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             return false;
           }
 
-          const storeRate = getCapacityRate(s, RESOURCE_ENERGY);
+          const rate = getCapacityRate(s, RESOURCE_ENERGY);
           // 満タンのものは無視
-          if (storeRate > 0.9) {
+          // extensionは定常消費が無いので満タン
+          // それ以外は吸われてるとずっと判定にかかってしまうのでバッファで0.9
+          if (s.structureType === STRUCTURE_EXTENSION ? rate === 1 : rate > 0.9) {
             return false;
           }
 
@@ -133,7 +136,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // 優先順に検索をかける
     // Link
     if (!creep.memory.transferId) {
-      creep.memory.transferId = creep.pos.findClosestByRange(link)?.id;
+      creep.memory.transferId = spawn.pos.findClosestByRange(link)?.id;
     }
     // Spawnとか
     if (!creep.memory.transferId) {
@@ -148,7 +151,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       // コントローラに一番近いコンテナ
       const store = creep.room.controller.pos.findClosestByRange(FIND_STRUCTURES, { filter: isStoreTarget });
       // 容量があるとき
-      if (store && store.id !== creep.memory.storeId && store.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+      if (store && store.id !== creep.memory.storeId && getCapacityRate(store) < 0.9) {
         creep.memory.transferId = store.id;
       }
     }
@@ -156,11 +159,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     if (!creep.memory.transferId) {
       creep.memory.transferId = creep.pos.findClosestByRange(tower)?.id;
     }
-    // 入れ物何でも
+    // spawnから近い入れ物何でも
     if (!creep.memory.transferId) {
-      creep.memory.transferId = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+      creep.memory.transferId = spawn.pos.findClosestByRange(FIND_STRUCTURES, {
         filter: (s) => {
-          return s.id !== creep.memory.storeId && "store" in s && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
+          console.log("filter tower ", "store" in s && getCapacityRate(s, RESOURCE_ENERGY) < 0.9);
+          return "store" in s && getCapacityRate(s, RESOURCE_ENERGY) < 0.9;
         },
       })?.id;
     }
@@ -207,10 +211,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     // 問題ない系
     case OK:
-      creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: isStoreTarget }).map((s) => creep.transfer(s, RESOURCE_ENERGY));
-      break;
     case ERR_BUSY: // spawining
     default:
+      if (getCapacityRate(transferTarget) > 0.9) {
+        creep.memory.transferId = undefined;
+      }
       break;
   }
 

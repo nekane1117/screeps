@@ -14,7 +14,7 @@ export const squareDiff = Object.freeze([
 ] as [number, number][]);
 
 export function filterBodiesByCost(role: ROLES, cost: number) {
-  return IDEAL_BODY[role]
+  const bodies = IDEAL_BODY[role]
     .reduce(
       (bodies, parts) => {
         const total = _.last(bodies)?.total || 0;
@@ -27,8 +27,11 @@ export function filterBodiesByCost(role: ROLES, cost: number) {
     )
     .filter(({ total }) => {
       return total <= cost;
-    })
-    .map((c) => c.parts);
+    });
+  return {
+    bodies: bodies.map((c) => c.parts),
+    cost: _.last(bodies)?.total || 0,
+  };
 }
 
 export const DIRECTIONS: Record<DirectionConstant, string> = {
@@ -83,6 +86,7 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
     MOVE,
     CARRY,
     // 作業効率
+    WORK,
     WORK,
     WORK,
     WORK,

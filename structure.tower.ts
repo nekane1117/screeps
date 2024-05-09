@@ -25,12 +25,7 @@ export default function behaviors(tower: Structure) {
       _(
         tower.room.find(FIND_STRUCTURES, {
           filter: (s: Structure): s is Structure<StructureConstant> => {
-            return (
-              (s.structureType === STRUCTURE_WALL
-                ? // 壁はHP高すぎるので適当に間を開ける
-                  Game.time % 4 === 0
-                : true) && s.hits < s.hitsMax * 0.8
-            );
+            return s.hits < s.hitsMax * 0.8;
           },
         }),
       )

@@ -9,17 +9,7 @@ export default function containerBehavior(structure: Structure) {
   const clothestSpawn = structure.pos.findClosestByRange(Object.values(Game.spawns));
 
   if (clothestSpawn) {
-    // 最寄りのSpawnにより近い倉庫の中で一番近いやつ
-    const innerClothestStorage = structure.pos.findClosestByRange(
-      clothestSpawn.pos.findInRange(FIND_STRUCTURES, clothestSpawn.pos.getRangeTo(structure) - 1, {
-        filter: (s): s is StructureContainer | StructureStorage => [STRUCTURE_CONTAINER, STRUCTURE_STORAGE].some((t) => t === s.structureType),
-      }),
-    );
-    // との容量差分の割合の2倍(100:0で2 , 全く同じで0)
-    const requests = Math.min(2, Math.ceil(Math.max(1, (structure.store.energy - (innerClothestStorage?.store.energy || 0)) * 2) / CONTAINER_CAPACITY));
-
-    new RoomVisual(structure.room.name).text(requests.toString(), structure.pos);
-    return _.range(requests).map((n) => {
+    return _.range(1).map((n) => {
       const carrierName = `C_${structure.pos.x}_${structure.pos.y}_${n}`;
 
       // Creepが無ければSpawnを探す
@@ -31,12 +21,28 @@ export default function containerBehavior(structure: Structure) {
           .find((spawn) => !spawn.spawning);
         // 使えるSpawnがあったときは作る
         if (spawn && spawn.room.energyAvailable > spawn.room.energyCapacityAvailable * 0.6) {
-          return spawn.spawnCreep(filterBodiesByCost("carrier", spawn.room.energyAvailable), carrierName, {
+          const { bodies, cost } = filterBodiesByCost("carrier", spawn.room.energyAvailable);
+          const spawned = spawn.spawnCreep(bodies, carrierName, {
             memory: {
               role: "carrier",
               storeId: structure.id,
             } as CarrierMemory,
+            energyStructures: _(
+              structure.room.find(FIND_STRUCTURES, {
+                filter: (s): s is StructureSpawn => s.structureType === STRUCTURE_SPAWN || s.structureType === STRUCTURE_EXTENSION,
+              }),
+            )
+              .sortBy((s) => s.pos.getRangeTo(spawn))
+              .reverse()
+              .run(),
           });
+          if (spawned === OK && spawn.room.memory.energySummary) {
+            spawn.room.memory.energySummary.push({
+              consumes: cost,
+              production: 0,
+            });
+          }
+          return spawned;
         } else {
           return ERR_NOT_FOUND;
         }

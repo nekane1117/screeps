@@ -1,6 +1,6 @@
-export function getCapacityRate(s: AnyCreep | Structure, type?: ResourceConstant | undefined) {
+export function getCapacityRate(s: AnyCreep | Structure, type: ResourceConstant = RESOURCE_ENERGY) {
   if ("store" in s) {
-    return (s.store.getUsedCapacity(type) ?? 0) / (s.store.getCapacity(type) ?? 1);
+    return s.store.getUsedCapacity(type) / s.store.getCapacity(type);
   } else {
     return Infinity;
   }
