@@ -49,6 +49,11 @@ declare interface RoomMemory {
     names: string[];
   };
   roadLayed: number;
+
+  energySummary?: {
+    production: number;
+    consumes: number;
+  }[];
 }
 
 declare interface Upgrader extends Creep {
