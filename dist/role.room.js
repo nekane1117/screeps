@@ -88,10 +88,10 @@ function creteStructures(room) {
         production: 0,
         consumes: 0,
     });
-    visual.text(`生産量：${_.floor(total.production / room.memory.energySummary.length, 2)}`, 0, 1, {
+    visual.text(`生産量：${_.floor(total.production / room.memory.energySummary.length, 2)}`, 25, 25, {
         align: "left",
     });
-    visual.text(`消費量：${_.floor(total.consumes / room.memory.energySummary.length, 2)}`, 0, 2, {
+    visual.text(`消費量：${_.floor(total.consumes / room.memory.energySummary.length, 2)}`, 25, 26, {
         align: "left",
     });
 }
