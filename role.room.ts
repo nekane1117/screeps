@@ -17,12 +17,48 @@ export function roomBehavior(room: Room) {
 
 /** 部屋ごとの色々を建てる */
 function creteStructures(room: Room) {
-  const spawn = Object.entries(Game.spawns).find(([_, s]) => s.room.name === room.name)?.[1];
-  const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN, STRUCTURE_STORAGE];
-  if (room.controller && spawn) {
+  // 多分最初のspawn
+  const spawn = Object.values(Game.spawns).find((s) => s.room.name === room.name);
+  if (!spawn) {
+    return;
+  }
+
+  const siteInRooms = Object.values(Game.constructionSites)
+    .filter((s) => s.room?.name === room.name)
+    .reduce(
+      (sites, s) => {
+        sites.all.push(s);
+        (sites[s.structureType] = sites[s.structureType] || []).push(s);
+        return sites;
+      },
+      { all: [] } as Partial<Record<StructureConstant, ConstructionSite[]>> & { all: ConstructionSite[] },
+    );
+
+  if (room.controller) {
+    // linkを扱えてspawnの横にlinkが無いとき
+    if (
+      CONTROLLER_STRUCTURES[STRUCTURE_LINK][room.controller.level] > 0 &&
+      spawn.pos.findInRange(FIND_STRUCTURES, 1, { filter: (s) => s.structureType === STRUCTURE_LINK }).length === 0 &&
+      (siteInRooms.link?.length || 0) === 0
+    ) {
+      for (const [dx, dy] of fourNeighbors) {
+        const pos = room.getPositionAt(spawn.pos.x + dx, spawn.pos.y + dy);
+        // 壁とかなら無視
+        if (!pos) {
+          break;
+        }
+
+        // そこにあるものは壊す
+        pos.lookFor(LOOK_STRUCTURES).map((s) => s.destroy());
+
+        return pos.createConstructionSite(STRUCTURE_LINK);
+      }
+    }
+
+    const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN, STRUCTURE_STORAGE];
     const terrain = room.getTerrain();
     for (const target of targets) {
-      const extensions = [...room.find(FIND_MY_CONSTRUCTION_SITES), ...room.find(FIND_MY_STRUCTURES)].filter((s) => s.structureType === target);
+      const extensions = [...siteInRooms.all, ...room.find(FIND_MY_STRUCTURES)].filter((s) => s.structureType === target);
       if (extensions.length < CONTROLLER_STRUCTURES[target][room.controller.level]) {
         for (const dist of _.range(1, 25)) {
           for (const dy of _.range(-dist, dist + 1)) {
@@ -119,3 +155,11 @@ function roadLayer(room: Room) {
       .map((r) => r.destroy());
   });
 }
+
+// 上下左右4近傍
+const fourNeighbors = [
+  [0, -1],
+  [-1, 0],
+  [1, 0],
+  [0, 1],
+];

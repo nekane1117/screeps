@@ -48,5 +48,5 @@ export default function containerBehavior(structure: Structure) {
 }
 
 function isTarget(s: Structure): s is StructureContainer | StructureStorage | StructureLink {
-  return ([STRUCTURE_CONTAINER, STRUCTURE_STORAGE, STRUCTURE_LINK] as StructureConstant[]).includes(s.structureType);
+  return ([STRUCTURE_CONTAINER, STRUCTURE_STORAGE] as StructureConstant[]).includes(s.structureType);
 }

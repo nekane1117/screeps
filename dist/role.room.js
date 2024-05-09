@@ -16,12 +16,34 @@ function roomBehavior(room) {
 exports.roomBehavior = roomBehavior;
 function creteStructures(room) {
     var _a;
-    const spawn = (_a = Object.entries(Game.spawns).find(([_, s]) => s.room.name === room.name)) === null || _a === void 0 ? void 0 : _a[1];
-    const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN, STRUCTURE_STORAGE];
-    if (room.controller && spawn) {
+    const spawn = Object.values(Game.spawns).find((s) => s.room.name === room.name);
+    if (!spawn) {
+        return;
+    }
+    const siteInRooms = Object.values(Game.constructionSites)
+        .filter((s) => { var _a; return ((_a = s.room) === null || _a === void 0 ? void 0 : _a.name) === room.name; })
+        .reduce((sites, s) => {
+        sites.all.push(s);
+        (sites[s.structureType] = sites[s.structureType] || []).push(s);
+        return sites;
+    }, { all: [] });
+    if (room.controller) {
+        if (CONTROLLER_STRUCTURES[STRUCTURE_LINK][room.controller.level] > 0 &&
+            spawn.pos.findInRange(FIND_STRUCTURES, 1, { filter: (s) => s.structureType === STRUCTURE_LINK }).length === 0 &&
+            (((_a = siteInRooms.link) === null || _a === void 0 ? void 0 : _a.length) || 0) === 0) {
+            for (const [dx, dy] of fourNeighbors) {
+                const pos = room.getPositionAt(spawn.pos.x + dx, spawn.pos.y + dy);
+                if (!pos) {
+                    break;
+                }
+                pos.lookFor(LOOK_STRUCTURES).map((s) => s.destroy());
+                return pos.createConstructionSite(STRUCTURE_LINK);
+            }
+        }
+        const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN, STRUCTURE_STORAGE];
         const terrain = room.getTerrain();
         for (const target of targets) {
-            const extensions = [...room.find(FIND_MY_CONSTRUCTION_SITES), ...room.find(FIND_MY_STRUCTURES)].filter((s) => s.structureType === target);
+            const extensions = [...siteInRooms.all, ...room.find(FIND_MY_STRUCTURES)].filter((s) => s.structureType === target);
             if (extensions.length < CONTROLLER_STRUCTURES[target][room.controller.level]) {
                 for (const dist of _.range(1, 25)) {
                     for (const dy of _.range(-dist, dist + 1)) {
@@ -104,3 +126,9 @@ function roadLayer(room) {
             .map((r) => r.destroy());
     });
 }
+const fourNeighbors = [
+    [0, -1],
+    [-1, 0],
+    [1, 0],
+    [0, 1],
+];

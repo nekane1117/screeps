@@ -29,7 +29,7 @@ export default function behaviors(tower: Structure) {
               (s.structureType === STRUCTURE_WALL
                 ? // 壁はHP高すぎるので適当に間を開ける
                   Game.time % 4 === 0
-                : true) && s.hits < s.hitsMax
+                : true) && s.hits < s.hitsMax * 0.8
             );
           },
         }),

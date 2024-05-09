@@ -21,7 +21,7 @@ function behaviors(tower) {
                     return ((s.structureType === STRUCTURE_WALL
                         ?
                             Game.time % 4 === 0
-                        : true) && s.hits < s.hitsMax);
+                        : true) && s.hits < s.hitsMax * 0.8);
                 },
             }))
                 .tap((damaged) => {

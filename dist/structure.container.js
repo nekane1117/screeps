@@ -40,5 +40,5 @@ function containerBehavior(structure) {
 }
 exports.default = containerBehavior;
 function isTarget(s) {
-    return [STRUCTURE_CONTAINER, STRUCTURE_STORAGE, STRUCTURE_LINK].includes(s.structureType);
+    return [STRUCTURE_CONTAINER, STRUCTURE_STORAGE].includes(s.structureType);
 }
