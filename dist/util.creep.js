@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.stealBy = exports.pickUpAll = exports.getSpawnNamesInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.toColor = exports.stealBy = exports.pickUpAll = exports.getSpawnsInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -65,7 +65,14 @@ exports.IDEAL_BODY = Object.freeze({
             .flatten()
             .run(),
     ],
-    carrier: [
+    gatherer: [
+        ..._(_.range(25).map(() => {
+            return [MOVE, CARRY];
+        }))
+            .flatten()
+            .run(),
+    ],
+    distributer: [
         ..._(_.range(25).map(() => {
             return [MOVE, CARRY];
         }))
@@ -117,7 +124,7 @@ const customMove = (creep, target, opt) => {
     if (creep.fatigue) {
         return OK;
     }
-    creep.memory.moved = creep.moveTo(target, Object.assign({ plainCost: 2, ignoreCreeps: !creep.pos.inRangeTo(target, 4), serializeMemory: false }, opt));
+    creep.memory.moved = creep.moveTo(target, Object.assign(Object.assign({ plainCost: 2, ignoreCreeps: !creep.pos.inRangeTo(target, 4), serializeMemory: false }, opt), { visualizePathStyle: Object.assign({ opacity: 0.6, stroke: toColor(creep) }, opt === null || opt === void 0 ? void 0 : opt.visualizePathStyle) }));
     if (creep.memory.moved === OK && Game.time % 2) {
         const { dy, dx } = ((_b = (_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b[0]) || {};
         if (dx !== undefined && dy !== undefined) {
@@ -153,22 +160,27 @@ function getCreepsInRoom(room) {
         .filter((c) => c);
 }
 exports.getCreepsInRoom = getCreepsInRoom;
-function getSpawnNamesInRoom(room) {
-    var _a;
-    if (((_a = room.memory.spawns) === null || _a === void 0 ? void 0 : _a.tick) === Game.time) {
-        return room.memory.spawns.names;
-    }
-    else {
-        room.memory.spawns = {
-            tick: Game.time,
-            names: Object.entries(Game.spawns)
-                .filter(([_, spawns]) => spawns.room.name === room.name)
-                .map((entry) => entry[0]),
-        };
-        return room.memory.spawns.names;
-    }
+function getSpawnsInRoom(room) {
+    return _((() => {
+        var _a;
+        if (((_a = room.memory.spawns) === null || _a === void 0 ? void 0 : _a.tick) === Game.time) {
+            return room.memory.spawns.names;
+        }
+        else {
+            room.memory.spawns = {
+                tick: Game.time,
+                names: Object.entries(Game.spawns)
+                    .filter(([_, spawns]) => spawns.room.name === room.name)
+                    .map((entry) => entry[0]),
+            };
+            return room.memory.spawns.names;
+        }
+    })())
+        .map((name) => Game.spawns[name])
+        .compact()
+        .run();
 }
-exports.getSpawnNamesInRoom = getSpawnNamesInRoom;
+exports.getSpawnsInRoom = getSpawnsInRoom;
 function pickUpAll(creep) {
     creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1).forEach((resource) => {
         creep.pickup(resource);
@@ -186,3 +198,7 @@ function stealBy(creep, roles, type = RESOURCE_ENERGY) {
         .map((t) => t.transfer(creep, type));
 }
 exports.stealBy = stealBy;
+function toColor({ id }) {
+    return `#${id.slice(-6)}`;
+}
+exports.toColor = toColor;

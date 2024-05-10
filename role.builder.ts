@@ -50,11 +50,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         // 建築モードで離れてるときは近寄る
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "💪") {
-            customMove(creep, site, {
-              visualizePathStyle: {
-                stroke: "#ff8888",
-              },
-            });
+            customMove(creep, site);
           }
           break;
 

@@ -138,8 +138,9 @@ const behavior = (spawn: StructureSpawn) => {
 const generateCreepName = (role: ROLES) => {
   const shortName: Record<ROLES, string> = {
     builder: "B",
-    carrier: "C",
-    harvester: "G", // gatherer
+    gatherer: "G",
+    distributer: "D",
+    harvester: "H",
     repairer: "R",
     upgrader: "U",
   };

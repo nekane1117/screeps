@@ -34,11 +34,7 @@ const behavior = (creep) => {
                     break;
                 case ERR_NOT_IN_RANGE:
                     if (creep.memory.mode === "💪") {
-                        (0, util_creep_1.customMove)(creep, site, {
-                            visualizePathStyle: {
-                                stroke: "#ff8888",
-                            },
-                        });
+                        (0, util_creep_1.customMove)(creep, site);
                     }
                     break;
                 case ERR_NOT_OWNER:

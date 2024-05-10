@@ -1,17 +1,44 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.roomBehavior = void 0;
+const source_1 = require("./source");
 const util_creep_1 = require("./util.creep");
 function roomBehavior(room) {
     var _a, _b;
     if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) === null || _a === void 0 ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
         (_b = room.controller) === null || _b === void 0 ? void 0 : _b.activateSafeMode();
     }
+    initMemory(room);
+    room.find(FIND_SOURCES).map((source) => (0, source_1.behavior)(source));
     if (!room.memory.roadLayed || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
         console.log("roadLayer in " + Game.time);
         roadLayer(room);
     }
     creteStructures(room);
+    const gatherers = (0, util_creep_1.getCreepsInRoom)(room).filter((c) => c.memory.role === "gatherer");
+    _.range(4).map((n) => {
+        var _a;
+        const name = `G_${n}`;
+        if (gatherers.some((g) => g.name === name)) {
+            return;
+        }
+        const spawn = (0, util_creep_1.getSpawnsInRoom)(room).find((r) => !r.spawning);
+        if (spawn && room.energyAvailable > 200) {
+            const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("gatherer", room.energyAvailable);
+            if (spawn.spawnCreep(bodies, name, {
+                memory: {
+                    mode: "🛒",
+                    role: "gatherer",
+                },
+            }) === OK) {
+                (_a = room.memory.energySummary) === null || _a === void 0 ? void 0 : _a.push({
+                    consumes: cost,
+                    production: 0,
+                });
+            }
+            return OK;
+        }
+    });
 }
 exports.roomBehavior = roomBehavior;
 function creteStructures(room) {
@@ -114,9 +141,7 @@ const generateCross = (dx, dy) => {
     }
 };
 function roadLayer(room) {
-    _((0, util_creep_1.getSpawnNamesInRoom)(room))
-        .map((name) => Game.spawns[name])
-        .compact()
+    _((0, util_creep_1.getSpawnsInRoom)(room))
         .forEach((spawn) => {
         const findCustomPath = (s) => spawn.pos.findPathTo(s, {
             ignoreCreeps: true,
@@ -177,3 +202,7 @@ const fourNeighbors = [
     [1, 0],
     [0, 1],
 ];
+function initMemory(room) {
+    room.memory.find = {};
+    room.memory.find[FIND_STRUCTURES] = undefined;
+}

@@ -1,6 +1,6 @@
 /// <reference types="screeps" />
 
-declare type ROLES = "harvester" | "carrier" | "builder" | "repairer" | "upgrader";
+declare type ROLES = "harvester" | "gatherer" | "builder" | "repairer" | "upgrader" | "distributer";
 declare interface CreepMemory {
   role: ROLES;
   // 担当作業の作業結果
@@ -16,7 +16,7 @@ declare interface CreepMemory {
 }
 
 /** 全部のCreepの型 */
-declare type Creeps = Creep | Harvester | Upgrader | Builder | Carrier | Repairer;
+declare type Creeps = Creep | Harvester | Upgrader | Builder | Gatherer | Repairer;
 
 declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink;
 
@@ -27,8 +27,8 @@ declare interface Harvester extends Creep {
 declare interface HarvesterMemory extends CreepMemory {
   role: "harvester";
   /** 今何してるか
-   * working    : 資源を持ってきてるところ
-   * harvesting : 収集中
+   * 💪 : 資源を持ってきてるところ
+   * 🌾 : 収集中
    */
   mode: "💪" | "🌾";
   harvestTargetId: Source["id"];
@@ -38,6 +38,31 @@ declare interface HarvesterMemory extends CreepMemory {
     result: ReturnType<Creep["harvest"]>;
   };
 }
+
+declare type MyStructureCache = {
+  all: Structure[];
+  constructedWall: StructureWall[];
+  container: StructureContainer[];
+  controller: StructureController[];
+  extension: StructureExtension[];
+  extractor: StructureExtractor[];
+  factory: StructureFactory[];
+  invaderCore: StructureInvaderCore[];
+  keeperLair: StructureKeeperLair[];
+  lab: StructureLab[];
+  link: StructureLink[];
+  nuker: StructureNuker[];
+  observer: StructureObserver[];
+  portal: StructurePortal[];
+  powerBank: StructurePowerBank[];
+  powerSpawn: StructurePowerSpawn[];
+  rampart: StructureRampart[];
+  road: StructureRoad[];
+  spawn: StructureSpawn[];
+  storage: StructureStorage[];
+  terminal: StructureTerminal[];
+  tower: StructureTower[];
+};
 
 declare interface RoomMemory {
   creeps?: {
@@ -49,6 +74,10 @@ declare interface RoomMemory {
     names: string[];
   };
   roadLayed: number;
+
+  find: {
+    [FIND_STRUCTURES]?: MyStructureCache;
+  };
 
   energySummary?: {
     production: number;
@@ -91,12 +120,12 @@ declare interface BuilderMemory extends CreepMemory {
   storeId?: StoreTarget["id"] | null;
 }
 
-declare interface Carrier extends Creep {
-  memory: CarrierMemory;
+declare interface Gatherer extends Creep {
+  memory: GathererMemory;
 }
 
-declare interface CarrierMemory extends CreepMemory {
-  role: "carrier";
+declare interface GathererMemory extends CreepMemory {
+  role: "gatherer";
   /** 今何してるか
    * working    : 作業中
    * collecting : 資源取得中
@@ -104,7 +133,31 @@ declare interface CarrierMemory extends CreepMemory {
    */
   mode: "💪" | "🛒";
   /** 担当倉庫 */
-  storeId: StructureContainer["id"];
+  storeId?: Id<StructureExtension | StructureSpawn | StructureLink | StructureStorage | StructureTerminal | StructureContainer>;
+  /** 配送先 */
+  transferId?: Id<Parameters<Creep["transfer"]>[0]>;
+}
+
+declare interface Repairer extends Creep {
+  memory: RepairerMemory;
+}
+
+/**
+ * Source単位で固定で担当し、Spawnに向けて配布する
+ */
+declare interface Distributer extends Creep {
+  memory: DistributerMemory;
+}
+
+declare interface DistributerMemory extends CreepMemory {
+  role: "distributer";
+  /** 今何してるか
+   * 💪 : 作業中
+   * 🛒 : 資源取得中
+   */
+  mode: "💪" | "🛒";
+  /** 担当倉庫 */
+  sourceId: Id<Source>;
   /** 配送先 */
   transferId?: Id<Parameters<Creep["transfer"]>[0]>;
 }

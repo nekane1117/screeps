@@ -114,8 +114,9 @@ const behavior = (spawn) => {
 const generateCreepName = (role) => {
     const shortName = {
         builder: "B",
-        carrier: "C",
-        harvester: "G",
+        gatherer: "G",
+        distributer: "D",
+        harvester: "H",
         repairer: "R",
         upgrader: "U",
     };

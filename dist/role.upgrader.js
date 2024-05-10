@@ -34,9 +34,6 @@ const behavior = (creep) => {
             if (creep.memory.mode === "💪") {
                 (0, util_creep_1.customMove)(creep, creep.room.controller, {
                     ignoreCreeps: !creep.pos.inRangeTo(creep.room.controller, 4),
-                    visualizePathStyle: {
-                        stroke: "#ff00ff",
-                    },
                 });
             }
             break;

@@ -70,7 +70,17 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       .flatten<BodyPartConstant>()
       .run(),
   ],
-  carrier: [
+  gatherer: [
+    ..._(
+      _.range(25).map(() => {
+        // あとはMoveとCarryの繰り返し
+        return [MOVE, CARRY];
+      }),
+    )
+      .flatten<BodyPartConstant>()
+      .run(),
+  ],
+  distributer: [
     ..._(
       _.range(25).map(() => {
         // あとはMoveとCarryの繰り返し
@@ -141,6 +151,11 @@ export const customMove: CustomMove = (creep, target, opt) => {
     ignoreCreeps: !creep.pos.inRangeTo(target, 4),
     serializeMemory: false,
     ...opt,
+    visualizePathStyle: {
+      opacity: 0.6,
+      stroke: toColor(creep),
+      ...opt?.visualizePathStyle,
+    },
   });
 
   if (creep.memory.moved === OK && Game.time % 2) {
@@ -178,18 +193,25 @@ export function getCreepsInRoom(room: Room) {
     .filter((c) => c);
 }
 
-export function getSpawnNamesInRoom(room: Room) {
-  if (room.memory.spawns?.tick === Game.time) {
-    return room.memory.spawns.names;
-  } else {
-    room.memory.spawns = {
-      tick: Game.time,
-      names: Object.entries(Game.spawns)
-        .filter(([_, spawns]) => spawns.room.name === room.name)
-        .map((entry) => entry[0]),
-    };
-    return room.memory.spawns.names;
-  }
+export function getSpawnsInRoom(room: Room) {
+  return _(
+    (() => {
+      if (room.memory.spawns?.tick === Game.time) {
+        return room.memory.spawns.names;
+      } else {
+        room.memory.spawns = {
+          tick: Game.time,
+          names: Object.entries(Game.spawns)
+            .filter(([_, spawns]) => spawns.room.name === room.name)
+            .map((entry) => entry[0]),
+        };
+        return room.memory.spawns.names;
+      }
+    })(),
+  )
+    .map((name) => Game.spawns[name])
+    .compact()
+    .run();
 }
 
 export function pickUpAll(creep: Creep) {
@@ -214,4 +236,8 @@ export function stealBy(creep: Creep, roles: ROLES[], type: ResourceConstant = R
       filter: (c) => roles.includes(c.memory.role),
     })
     .map((t) => t.transfer(creep, type));
+}
+
+export function toColor({ id }: Creeps) {
+  return `#${id.slice(-6)}`;
 }

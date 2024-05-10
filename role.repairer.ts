@@ -36,11 +36,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         // eslint-disable-next-line no-fallthrough
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "💪") {
-            customMove(creep, target, {
-              visualizePathStyle: {
-                stroke: "#ffff00",
-              },
-            });
+            customMove(creep, target);
           }
           break;
         case ERR_BUSY:
@@ -81,7 +77,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           break;
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "🛒") {
-            const moved = customMove(creep, store, { visualizePathStyle: { stroke: "#ffff00" } });
+            const moved = customMove(creep, store);
             moved !== OK && (console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`), creep.say(RETURN_CODE_DECODER[moved.toString()]));
           }
           break;

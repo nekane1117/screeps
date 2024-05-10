@@ -27,11 +27,7 @@ const behavior = (creep) => {
                     creep.memory.workTargetId = (_b = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.hits < s.hitsMax })).min((s) => s.hits)) === null || _b === void 0 ? void 0 : _b.id;
                 case ERR_NOT_IN_RANGE:
                     if (creep.memory.mode === "💪") {
-                        (0, util_creep_1.customMove)(creep, target, {
-                            visualizePathStyle: {
-                                stroke: "#ffff00",
-                            },
-                        });
+                        (0, util_creep_1.customMove)(creep, target);
                     }
                     break;
                 case ERR_BUSY:
@@ -65,7 +61,7 @@ const behavior = (creep) => {
                     break;
                 case ERR_NOT_IN_RANGE:
                     if (creep.memory.mode === "🛒") {
-                        const moved = (0, util_creep_1.customMove)(creep, store, { visualizePathStyle: { stroke: "#ffff00" } });
+                        const moved = (0, util_creep_1.customMove)(creep, store);
                         moved !== OK && (console.log(`${creep.name} ${util_creep_1.RETURN_CODE_DECODER[moved.toString()]}`), creep.say(util_creep_1.RETURN_CODE_DECODER[moved.toString()]));
                     }
                     break;

@@ -1,4 +1,5 @@
-import { getSpawnNamesInRoom } from "./util.creep";
+import { behavior } from "./source";
+import { filterBodiesByCost, getCreepsInRoom, getSpawnsInRoom } from "./util.creep";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
@@ -6,6 +7,12 @@ export function roomBehavior(room: Room) {
     room.controller?.activateSafeMode();
   }
 
+  // tickごとのメモリの初期化
+  initMemory(room);
+
+  room.find(FIND_SOURCES).map((source) => behavior(source));
+
+  // 道を敷く
   if (!room.memory.roadLayed || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
     console.log("roadLayer in " + Game.time);
     roadLayer(room);
@@ -13,6 +20,34 @@ export function roomBehavior(room: Room) {
 
   // エクステンション建てる
   creteStructures(room);
+
+  const gatherers = getCreepsInRoom(room).filter((c) => c.memory.role === "gatherer");
+  _.range(4).map((n) => {
+    const name = `G_${n}`;
+    if (gatherers.some((g) => g.name === name)) {
+      // 居るときは無視
+      return;
+    }
+
+    const spawn = getSpawnsInRoom(room).find((r) => !r.spawning);
+    if (spawn && room.energyAvailable > 200) {
+      const { bodies, cost } = filterBodiesByCost("gatherer", room.energyAvailable);
+      if (
+        spawn.spawnCreep(bodies, name, {
+          memory: {
+            mode: "🛒",
+            role: "gatherer",
+          } as GathererMemory,
+        }) === OK
+      ) {
+        room.memory.energySummary?.push({
+          consumes: cost,
+          production: 0,
+        });
+      }
+      return OK;
+    }
+  });
 }
 
 /** 部屋ごとの色々を建てる */
@@ -152,9 +187,7 @@ const generateCross = (dx: number, dy: number): boolean => {
 
 // 全てのspawnからsourceまでの道を引く
 function roadLayer(room: Room) {
-  _(getSpawnNamesInRoom(room))
-    .map((name) => Game.spawns[name])
-    .compact()
+  _(getSpawnsInRoom(room))
     .forEach((spawn) => {
       const findCustomPath = (s: Source | StructureSpawn) =>
         spawn.pos.findPathTo(s, {
@@ -223,3 +256,11 @@ const fourNeighbors = [
   [1, 0],
   [0, 1],
 ];
+
+/**
+ * tickごとに初期化するメモリを初期化する
+ */
+function initMemory(room: Room) {
+  room.memory.find = {};
+  room.memory.find[FIND_STRUCTURES] = undefined;
+}

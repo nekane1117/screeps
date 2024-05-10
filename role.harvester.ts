@@ -22,9 +22,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   creep.memory.worked = creep.harvest(source);
   switch (creep.memory.worked) {
     case ERR_NOT_IN_RANGE:
-      customMove(creep, source, {
-        visualizePathStyle: { stroke: "#00ff00" },
-      });
+      customMove(creep, source);
       break;
     // 来ないはずのやつ
     case ERR_INVALID_TARGET: // 対象が変
