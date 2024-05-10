@@ -36,7 +36,7 @@ const behavior = (creep) => {
             }) ||
                 creep.pos.findClosestByRange(tower, {
                     filter: (t) => {
-                        return (0, utils_1.getCapacityRate)(t) <= 0.8;
+                        return (0, utils_1.getCapacityRate)(t) < 1 && (0, util_creep_1.getCreepsInRoom)(t.room).filter((c) => "transferId" in c.memory && c.memory.transferId !== t.id);
                     },
                 }) ||
                 (controllerContaeiner && (0, utils_1.getCapacityRate)(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined) ||

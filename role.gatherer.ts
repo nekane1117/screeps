@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, getSpawnsInRoom, pickUpAll, stealBy } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getSpawnsInRoom, pickUpAll, stealBy } from "./util.creep";
 import { findMyStructures, getCapacityRate } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
@@ -52,7 +52,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         }) ||
         creep.pos.findClosestByRange(tower, {
           filter: (t: StructureTower) => {
-            return getCapacityRate(t) <= 0.8;
+            return getCapacityRate(t) < 1 && getCreepsInRoom(t.room).filter((c) => "transferId" in c.memory && c.memory.transferId !== t.id);
           },
         }) ||
         (controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined) ||
