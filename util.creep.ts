@@ -152,7 +152,7 @@ export const customMove: CustomMove = (creep, target, opt) => {
     serializeMemory: false,
     ...opt,
     visualizePathStyle: {
-      opacity: 0.6,
+      opacity: 0.55,
       stroke: toColor(creep),
       ...opt?.visualizePathStyle,
     },

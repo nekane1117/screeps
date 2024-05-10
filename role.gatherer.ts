@@ -50,12 +50,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
           },
         }) ||
-        (controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined) ||
         creep.pos.findClosestByRange(tower, {
           filter: (t: StructureTower) => {
-            return getCapacityRate(t) < 1;
+            return getCapacityRate(t) <= 0.8;
           },
         }) ||
+        (controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined) ||
         // それか何か入れられるもの
         spawn.pos.findClosestByRange([...link, ...storage, ...terminal, ...containers], {
           filter: (s: StructureSpawn | StructureExtension) => {
@@ -96,10 +96,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       return transferTarget.id !== s.id && s.store.getUsedCapacity(RESOURCE_ENERGY) >= CARRY_CAPACITY && spawn.pos.getRangeTo(s) >= rangeToSpawn;
     };
     // 対象より遠い容量がある入れ物
-    creep.memory.storeId = creep.pos.findClosestByRange(
-      _.compact([...extension, ...spawns, spawn.pos.findClosestByRange(link), ...storage, ...terminal, ...containers]),
-      { filter },
-    )?.id;
+    creep.memory.storeId = creep.pos.findClosestByRange(_.compact([spawn.pos.findClosestByRange(link), ...storage, ...terminal, ...containers]), {
+      filter,
+    })?.id;
   }
   // それでも見つからないとき
   if (!creep.memory.storeId) {
