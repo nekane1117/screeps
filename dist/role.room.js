@@ -1,8 +1,13 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.roomBehavior = void 0;
 const source_1 = require("./source");
 const util_creep_1 = require("./util.creep");
+const structure_links_1 = __importDefault(require("./structure.links"));
+const utils_1 = require("./utils");
 function roomBehavior(room) {
     var _a, _b;
     if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) === null || _a === void 0 ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
@@ -16,6 +21,8 @@ function roomBehavior(room) {
     }
     creteStructures(room);
     const gatherers = (0, util_creep_1.getCreepsInRoom)(room).filter((c) => c.memory.role === "gatherer");
+    const { link } = (0, utils_1.findMyStructures)(room);
+    (0, structure_links_1.default)(link);
     _.range(4).map((n) => {
         var _a;
         const name = `G_${n}`;

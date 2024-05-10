@@ -41,4 +41,59 @@ declare module _ {
      */
     compact<TResult>(): LoDashExplicitArrayWrapper<Exclude<TResult, Falsey>>;
   }
+
+  //_.first
+  interface LoDashStatic {
+    /**
+     * Gets the first element of array.
+     *
+     * @alias _.head
+     *
+     * @param array The array to query.
+     * @return Returns the first element of array.
+     */
+    first<T>(array: List<T>): T | undefined;
+  }
+
+  interface LoDashImplicitWrapper<T> {
+    /**
+     * @see _.first
+     */
+    first(): string | undefined;
+  }
+
+  interface LoDashImplicitArrayWrapper<T> {
+    /**
+     * @see _.first
+     */
+    first(): T | undefined;
+  }
+
+  interface LoDashImplicitObjectWrapper<T> {
+    /**
+     * @see _.first
+     */
+    first<T>(): T | undefined;
+  }
+
+  interface LoDashExplicitWrapper<T> {
+    /**
+     * @see _.first
+     */
+    first(): LoDashExplicitWrapper<string | undefined>;
+  }
+
+  interface LoDashExplicitArrayWrapper<T> {
+    /**
+     * @see _.first
+     */
+    first<T>(): T | undefined;
+  }
+
+  interface LoDashExplicitObjectWrapper<T> {
+    /**
+     * @see _.first
+     */
+    first<T>(): T | undefined;
+  }
 }

@@ -92,13 +92,18 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   if (!creep.memory.storeId) {
     const rangeToSpawn = spawn.pos.getRangeTo(transferTarget);
-    const filter = (s: StructureSpawn | StructureExtension) => {
-      return transferTarget.id !== s.id && s.store.getUsedCapacity(RESOURCE_ENERGY) >= CARRY_CAPACITY && spawn.pos.getRangeTo(s) >= rangeToSpawn;
-    };
     // 対象より遠い容量がある入れ物
-    creep.memory.storeId = creep.pos.findClosestByRange(_.compact([spawn.pos.findClosestByRange(link), ...storage, ...terminal, ...containers]), {
-      filter,
-    })?.id;
+    creep.memory.storeId = (
+      (() => {
+        const extructor = spawn.pos.findClosestByRange(link);
+        return extructor && extructor.store.energy >= CARRY_CAPACITY ? extructor : undefined;
+      })() ||
+      creep.pos.findClosestByRange(_.compact([...storage, ...terminal, ...containers]), {
+        filter: (s: StructureSpawn | StructureExtension) => {
+          return transferTarget.id !== s.id && s.store.getUsedCapacity(RESOURCE_ENERGY) >= CARRY_CAPACITY && spawn.pos.getRangeTo(s) >= rangeToSpawn;
+        },
+      })
+    )?.id;
   }
   // それでも見つからないとき
   if (!creep.memory.storeId) {

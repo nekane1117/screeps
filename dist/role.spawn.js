@@ -57,7 +57,7 @@ const behavior = (spawn) => {
     }
     const upgradeContainer = (_b = spawn.room.controller) === null || _b === void 0 ? void 0 : _b.pos.findClosestByRange(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_CONTAINER });
     const upgradeContainerRate = upgradeContainer ? (0, utils_1.getCapacityRate)(upgradeContainer) : 0;
-    if ((creepsInRoom.upgrader || []).length < upgradeContainerRate / 0.75 &&
+    if ((creepsInRoom.upgrader || []).length < Math.floor(1 + upgradeContainerRate) &&
         spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.8)) {
         const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("upgrader", spawn.room.energyAvailable);
         const spawned = spawn.spawnCreep(bodies, generateCreepName("upgrader"), {

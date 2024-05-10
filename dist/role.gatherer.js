@@ -64,12 +64,15 @@ const behavior = (creep) => {
     }
     if (!creep.memory.storeId) {
         const rangeToSpawn = spawn.pos.getRangeTo(transferTarget);
-        const filter = (s) => {
-            return transferTarget.id !== s.id && s.store.getUsedCapacity(RESOURCE_ENERGY) >= CARRY_CAPACITY && spawn.pos.getRangeTo(s) >= rangeToSpawn;
-        };
-        creep.memory.storeId = (_c = creep.pos.findClosestByRange(_.compact([spawn.pos.findClosestByRange(link), ...storage, ...terminal, ...containers]), {
-            filter,
-        })) === null || _c === void 0 ? void 0 : _c.id;
+        creep.memory.storeId = (_c = ((() => {
+            const extructor = spawn.pos.findClosestByRange(link);
+            return extructor && extructor.store.energy >= CARRY_CAPACITY ? extructor : undefined;
+        })() ||
+            creep.pos.findClosestByRange(_.compact([...storage, ...terminal, ...containers]), {
+                filter: (s) => {
+                    return transferTarget.id !== s.id && s.store.getUsedCapacity(RESOURCE_ENERGY) >= CARRY_CAPACITY && spawn.pos.getRangeTo(s) >= rangeToSpawn;
+                },
+            }))) === null || _c === void 0 ? void 0 : _c.id;
     }
     if (!creep.memory.storeId) {
         return moveMeTo(spawn, {

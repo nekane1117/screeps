@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const utils_1 = require("./utils");
 function behaviors(tower) {
     if (!isTower(tower)) {
         return console.log(`${tower.id} is not tower`);
@@ -18,7 +19,7 @@ function behaviors(tower) {
         tower.store.getUsedCapacity(RESOURCE_ENERGY) / tower.store.getCapacity(RESOURCE_ENERGY) > 0.8 &&
             _(tower.room.find(FIND_STRUCTURES, {
                 filter: (s) => {
-                    return s.hits < s.hitsMax * 0.8;
+                    return (s.structureType === STRUCTURE_WALL ? (Game.time % (0, utils_1.findMyStructures)(s.room).tower.length) * 2 === 0 : true) && s.hits < s.hitsMax;
                 },
             }))
                 .tap((damaged) => {

@@ -1,5 +1,7 @@
 import { behavior } from "./source";
 import { filterBodiesByCost, getCreepsInRoom, getSpawnsInRoom } from "./util.creep";
+import linkBehavior from "./structure.links";
+import { findMyStructures } from "./utils";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
@@ -22,6 +24,10 @@ export function roomBehavior(room: Room) {
   creteStructures(room);
 
   const gatherers = getCreepsInRoom(room).filter((c) => c.memory.role === "gatherer");
+
+  const { link } = findMyStructures(room);
+  linkBehavior(link);
+
   _.range(4).map((n) => {
     const name = `G_${n}`;
     if (gatherers.some((g) => g.name === name)) {

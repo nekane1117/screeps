@@ -1,3 +1,5 @@
+import { findMyStructures } from "./utils";
+
 export default function behaviors(tower: Structure) {
   if (!isTower(tower)) {
     return console.log(`${tower.id} is not tower`);
@@ -25,7 +27,7 @@ export default function behaviors(tower: Structure) {
       _(
         tower.room.find(FIND_STRUCTURES, {
           filter: (s: Structure): s is Structure<StructureConstant> => {
-            return s.hits < s.hitsMax * 0.8;
+            return (s.structureType === STRUCTURE_WALL ? (Game.time % findMyStructures(s.room).tower.length) * 2 === 0 : true) && s.hits < s.hitsMax;
           },
         }),
       )

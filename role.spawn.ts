@@ -70,7 +70,7 @@ const behavior = (spawn: StructureSpawn) => {
 
   // upgraderが居ないときもとりあえず作る
   if (
-    (creepsInRoom.upgrader || []).length < upgradeContainerRate / 0.75 &&
+    (creepsInRoom.upgrader || []).length < Math.floor(1 + upgradeContainerRate) &&
     spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.8)
   ) {
     const { bodies, cost } = filterBodiesByCost("upgrader", spawn.room.energyAvailable);
