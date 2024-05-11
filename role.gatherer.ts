@@ -41,6 +41,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // https://docs.screeps.com/simultaneous-actions.html
 
   const { extension, spawn: spawns, link, tower, storage, terminal, container: containers } = findMyStructures(creep.room);
+  const controllerContaeiner = creep.room.controller?.pos.findClosestByRange(containers);
 
   // 輸送先設定処理###############################################################################################
 
@@ -93,7 +94,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   if (!creep.memory.transferId) {
     logger("search controller contaeiner");
-    const controllerContaeiner = creep.room.controller?.pos.findClosestByRange(containers);
     if ((creep.memory.transferId = (controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined)?.id)) {
       logger("store to controller contaeiner", creep.memory.transferId);
     }
@@ -146,8 +146,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         return extructor && extructor.store.energy >= CARRY_CAPACITY ? extructor : undefined;
       })() ||
       creep.pos.findClosestByRange(_.compact([...storage, ...terminal, ...containers]), {
-        filter: (s: StructureSpawn | StructureExtension) => {
-          return transferTarget.id !== s.id && s.store.getUsedCapacity(RESOURCE_ENERGY) >= CARRY_CAPACITY && spawn.pos.getRangeTo(s) >= rangeToSpawn;
+        filter: (s: StructureSpawn | StructureExtension | StructureContainer) => {
+          return (
+            controllerContaeiner?.id !== s.id &&
+            transferTarget.id !== s.id &&
+            s.store.getUsedCapacity(RESOURCE_ENERGY) >= CARRY_CAPACITY &&
+            spawn.pos.getRangeTo(s) >= rangeToSpawn
+          );
         },
       })
     )?.id;

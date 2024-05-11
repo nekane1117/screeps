@@ -51,7 +51,7 @@ const behavior = (creep) => {
                 }
             }
         }
-        if (creep.store.energy > CARRY_CAPACITY) {
+        if ((0, utils_1.getCapacityRate)(creep) === 1) {
             changeMode(creep, "💪");
         }
     })

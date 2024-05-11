@@ -74,7 +74,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           }
         }
         // 満タンだったら分配モードに切り替える
-        if (creep.store.energy > CARRY_CAPACITY) {
+        if (getCapacityRate(creep) === 1) {
           changeMode(creep, "💪");
         }
       })
