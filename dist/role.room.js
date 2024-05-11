@@ -39,6 +39,7 @@ function roomBehavior(room) {
                 },
             }) === OK) {
                 (_a = room.memory.energySummary) === null || _a === void 0 ? void 0 : _a.push({
+                    time: new Date().valueOf(),
                     consumes: cost,
                     production: 0,
                 });
@@ -112,10 +113,13 @@ function creteStructures(room) {
         }
         return summary;
     }, {
+        time: new Date().valueOf(),
         production: 0,
         consumes: 0,
     }))
-        .slice(-CREEP_LIFE_TIME);
+        .filter((s) => {
+        return s.time && s.time >= new Date().valueOf() - 1 * 60 * 60 * 1000;
+    });
     const total = room.memory.energySummary.reduce((sum, current) => {
         sum.consumes += current.consumes || 0;
         sum.production += current.production || 0;
@@ -124,7 +128,11 @@ function creteStructures(room) {
         production: 0,
         consumes: 0,
     });
-    const total100 = room.memory.energySummary.slice(-100).reduce((sum, current) => {
+    const total1min = room.memory.energySummary
+        .filter((s) => {
+        return s.time && s.time >= new Date().valueOf() - 1 * 60 * 1000;
+    })
+        .reduce((sum, current) => {
         sum.consumes += current.consumes || 0;
         sum.production += current.production || 0;
         return sum;
@@ -132,10 +140,10 @@ function creteStructures(room) {
         production: 0,
         consumes: 0,
     });
-    visual.text(`生産量：${_.floor(total.production / room.memory.energySummary.length, 2)}(${_.floor(total100.production / 100, 2)})`, 25, 25, {
+    visual.text(`生産量：${_.floor(total.production / (1 * 60 * 60), 2)}(${_.floor(total1min.production / 60, 2)})`, 25, 25, {
         align: "left",
     });
-    visual.text(`消費量：${_.floor(total.consumes / room.memory.energySummary.length, 2)}(${_.floor(total100.consumes / 100, 2)})`, 25, 26, {
+    visual.text(`消費量：${_.floor(total.consumes / (1 * 60 * 60), 2)}(${_.floor(total1min.consumes / 60, 2)})`, 25, 26, {
         align: "left",
     });
 }

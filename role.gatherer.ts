@@ -113,10 +113,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
   // それでも見つからないとき
   if (!creep.memory.transferId) {
-    return moveMeTo(spawn, {
-      // 近寄りすぎると邪魔なので
-      range: 3,
-    });
+    return ERR_NOT_FOUND;
   }
 
   // 輸送先を取得
@@ -138,7 +135,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   if (!creep.memory.storeId) {
-    const rangeToSpawn = spawn.pos.getRangeTo(transferTarget);
     // 対象より遠い容量がある入れ物
     creep.memory.storeId = (
       (() => {
@@ -147,22 +143,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       })() ||
       creep.pos.findClosestByRange(_.compact([...storage, ...terminal, ...containers]), {
         filter: (s: StructureSpawn | StructureExtension | StructureContainer) => {
-          return (
-            controllerContaeiner?.id !== s.id &&
-            transferTarget.id !== s.id &&
-            s.store.getUsedCapacity(RESOURCE_ENERGY) >= CARRY_CAPACITY &&
-            spawn.pos.getRangeTo(s) >= rangeToSpawn
-          );
+          return controllerContaeiner?.id !== s.id && transferTarget.id !== s.id && s.store.getUsedCapacity(RESOURCE_ENERGY) >= CARRY_CAPACITY;
         },
       })
     )?.id;
   }
   // それでも見つからないとき
   if (!creep.memory.storeId) {
-    return moveMeTo(spawn, {
-      // 近寄りすぎると邪魔なので
-      range: 3,
-    });
+    return ERR_NOT_FOUND;
   }
 
   // 取り出し処理###############################################################################################

@@ -9,6 +9,19 @@ const behavior = (creep) => {
     if (!isDistributer(creep)) {
         return console.log(`${creep.name} is not Harvester`);
     }
+    function checkMode() {
+        if (!isDistributer(creep)) {
+            return console.log(`${creep.name} is not Gatherer`);
+        }
+        const newMode = creep.store.energy > CARRY_CAPACITY ? "💪" : "🛒";
+        if (creep.memory.mode !== newMode) {
+            if (creep.memory.mode !== newMode) {
+                creep.say(newMode);
+                creep.memory.mode = newMode;
+                creep.memory.transferId = undefined;
+            }
+        }
+    }
     const source = Game.getObjectById(creep.memory.sourceId);
     if (!source) {
         return creep.suicide();
@@ -19,13 +32,7 @@ const behavior = (creep) => {
     }
     return (_(OK)
         .tap(() => {
-        const capacityRate = (0, utils_1.getCapacityRate)(creep);
-        if (capacityRate < 0.25) {
-            changeMode(creep, "🛒");
-        }
-        else if (capacityRate === 1) {
-            changeMode(creep, "💪");
-        }
+        checkMode();
     })
         .tap(() => {
         if (creep.memory.mode === "🛒") {
@@ -51,9 +58,7 @@ const behavior = (creep) => {
                 }
             }
         }
-        if ((0, utils_1.getCapacityRate)(creep) === 1) {
-            changeMode(creep, "💪");
-        }
+        checkMode();
     })
         .tap(() => {
         var _a, _b;
@@ -92,7 +97,7 @@ const behavior = (creep) => {
                 const returnVal = creep.transfer(transferTarget, RESOURCE_ENERGY);
                 switch (returnVal) {
                     case ERR_NOT_ENOUGH_RESOURCES:
-                        changeMode(creep, "🛒");
+                        checkMode();
                         break;
                     case ERR_INVALID_TARGET:
                     case ERR_FULL:
@@ -120,11 +125,4 @@ const behavior = (creep) => {
 exports.default = behavior;
 function isDistributer(creep) {
     return creep.memory.role === "distributer";
-}
-function changeMode(creep, mode) {
-    if (creep.memory.mode !== mode) {
-        creep.say(mode);
-        creep.memory.mode = mode;
-        creep.memory.transferId = undefined;
-    }
 }

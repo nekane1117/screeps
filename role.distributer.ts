@@ -12,6 +12,21 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return console.log(`${creep.name} is not Harvester`);
   }
 
+  function checkMode() {
+    if (!isDistributer(creep)) {
+      return console.log(`${creep.name} is not Gatherer`);
+    }
+    const newMode = creep.store.energy > CARRY_CAPACITY ? "💪" : "🛒";
+
+    if (creep.memory.mode !== newMode) {
+      if (creep.memory.mode !== newMode) {
+        creep.say(newMode);
+        creep.memory.mode = newMode;
+        creep.memory.transferId = undefined;
+      }
+    }
+  }
+
   // 担当資源
   const source = Game.getObjectById(creep.memory.sourceId);
 
@@ -32,14 +47,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   return (
     _(OK)
       .tap(() => {
-        const capacityRate = getCapacityRate(creep);
-        if (capacityRate < 0.25) {
-          // 空っぽになったら収集モードに切り替える
-          changeMode(creep, "🛒");
-        } else if (capacityRate === 1) {
-          // 満タンだったら分配モードにしておく
-          changeMode(creep, "💪");
-        }
+        checkMode();
       })
       // withdraw
       .tap(() => {
@@ -73,10 +81,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             }
           }
         }
-        // 満タンだったら分配モードに切り替える
-        if (getCapacityRate(creep) === 1) {
-          changeMode(creep, "💪");
-        }
+        checkMode();
       })
       // transfer
       .tap(() => {
@@ -131,7 +136,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             switch (returnVal) {
               // 手持ちがない
               case ERR_NOT_ENOUGH_RESOURCES: // 値を指定しないから多分発生しない
-                changeMode(creep, "🛒");
+                checkMode();
                 break;
 
               // 対象が変
@@ -169,12 +174,4 @@ export default behavior;
 
 function isDistributer(creep: Creeps): creep is Distributer {
   return creep.memory.role === "distributer";
-}
-
-function changeMode(creep: Distributer, mode: DistributerMemory["mode"]) {
-  if (creep.memory.mode !== mode) {
-    creep.say(mode);
-    creep.memory.mode = mode;
-    creep.memory.transferId = undefined;
-  }
 }

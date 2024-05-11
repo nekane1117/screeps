@@ -23,6 +23,7 @@ module.exports.loop = function () {
             console.log("Clearing non-existing rooms memory:", name);
         }
     });
+    Memory.sources = Memory.sources || {};
     const spawnGroup = _.groupBy(Object.values(Game.spawns), (c) => c.room.name);
     const creepGroup = _.groupBy(Object.values(Game.creeps), (c) => c.room.name);
     Object.entries(Game.rooms).forEach(([_roomName, room]) => {

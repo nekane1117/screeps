@@ -22,6 +22,8 @@ module.exports.loop = function () {
     }
   });
 
+  Memory.sources = Memory.sources || {};
+
   // Room -> Spawn -> Container -> Creep
   const spawnGroup = _.groupBy(Object.values(Game.spawns), (c) => c.room.name);
   const creepGroup = _.groupBy(Object.values(Game.creeps), (c) => c.room.name);

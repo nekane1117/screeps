@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const behavior = (creep) => {
-    var _a, _b;
+    var _a, _b, _c;
     if (!isBuilder(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
@@ -53,13 +53,13 @@ const behavior = (creep) => {
         }
     }
     if (creep.memory.storeId ||
-        (creep.memory.storeId = (_b = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-            filter: (s) => {
-                return ((0, util_creep_1.isStoreTarget)(s) &&
-                    ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) &&
-                    s.store.getUsedCapacity(RESOURCE_ENERGY) / s.store.getCapacity(RESOURCE_ENERGY) > 0.6);
-            },
-        })) === null || _b === void 0 ? void 0 : _b.id)) {
+        (creep.memory.storeId =
+            creep.memory.buildingId &&
+                ((_c = (_b = Game.getObjectById(creep.memory.buildingId)) === null || _b === void 0 ? void 0 : _b.pos.findClosestByPath(FIND_STRUCTURES, {
+                    filter: (s) => {
+                        return (0, util_creep_1.isStoreTarget)(s) && s.store.energy > 0;
+                    },
+                })) === null || _c === void 0 ? void 0 : _c.id))) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
             creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY);

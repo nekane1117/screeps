@@ -1,5 +1,14 @@
 /// <reference types="screeps" />
 
+declare interface Memory {
+  sources: Record<Id[Source], SourceMemory>;
+}
+
+declare interface SourceMemory {
+  /** 使える場所の数 */
+  positions: number;
+}
+
 declare type ROLES = "harvester" | "gatherer" | "builder" | "repairer" | "upgrader" | "distributer";
 declare interface CreepMemory {
   role: ROLES;
@@ -80,6 +89,7 @@ declare interface RoomMemory {
   };
 
   energySummary?: {
+    time: number;
     production: number;
     consumes: number;
   }[];

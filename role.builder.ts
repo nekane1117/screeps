@@ -77,15 +77,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // withdraw
   if (
     creep.memory.storeId ||
-    (creep.memory.storeId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s): s is StoreTarget => {
-        return (
-          isStoreTarget(s) &&
-          ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) &&
-          s.store.getUsedCapacity(RESOURCE_ENERGY) / s.store.getCapacity(RESOURCE_ENERGY) > 0.6
-        );
-      },
-    })?.id)
+    (creep.memory.storeId =
+      creep.memory.buildingId &&
+      Game.getObjectById(creep.memory.buildingId)?.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s): s is StoreTarget => {
+          return isStoreTarget(s) && s.store.energy > 0;
+        },
+      })?.id)
   ) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {

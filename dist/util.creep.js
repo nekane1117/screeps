@@ -87,7 +87,6 @@ exports.IDEAL_BODY = Object.freeze({
         WORK,
         WORK,
         WORK,
-        WORK,
     ],
     repairer: [
         WORK,
