@@ -143,7 +143,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       })() ||
       creep.pos.findClosestByRange(_.compact([...storage, ...terminal, ...containers]), {
         filter: (s: StructureSpawn | StructureExtension | StructureContainer) => {
-          return controllerContaeiner?.id !== s.id && transferTarget.id !== s.id && s.store.getUsedCapacity(RESOURCE_ENERGY) >= CARRY_CAPACITY;
+          return controllerContaeiner?.id !== s.id && transferTarget.id !== s.id && s.store.energy >= CARRY_CAPACITY;
         },
       })
     )?.id;
