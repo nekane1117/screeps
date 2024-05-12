@@ -7,11 +7,11 @@ const behavior = (creep) => {
         ignoreCreeps: !creep.pos.inRangeTo(target, 2),
     });
     if (!isDistributer(creep)) {
-        return console.log(`${creep.name} is not Harvester`);
+        return console.log(`${creep.name} is not Distributer`);
     }
     function checkMode() {
         if (!isDistributer(creep)) {
-            return console.log(`${creep.name} is not Gatherer`);
+            return console.log(`${creep.name} is not Distributer`);
         }
         const newMode = creep.store.energy > CARRY_CAPACITY ? "💪" : "🛒";
         if (creep.memory.mode !== newMode) {

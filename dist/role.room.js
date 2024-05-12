@@ -23,7 +23,7 @@ function roomBehavior(room) {
     const gatherers = (0, util_creep_1.getCreepsInRoom)(room).filter((c) => c.memory.role === "gatherer");
     const { link } = (0, utils_1.findMyStructures)(room);
     (0, structure_links_1.default)(link);
-    _.range(4).map((n) => {
+    _.range(1).map((n) => {
         var _a;
         const name = `G_${n}`;
         if (gatherers.some((g) => g.name === name)) {
