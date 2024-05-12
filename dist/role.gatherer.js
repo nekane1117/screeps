@@ -24,6 +24,7 @@ const behavior = (creep) => {
             creep.memory.transferId = undefined;
         }
     }
+    checkMode();
     const spawn = _((0, util_creep_1.getSpawnsInRoom)(creep.room)).first();
     if (!spawn) {
         return ERR_NOT_FOUND;

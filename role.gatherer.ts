@@ -32,7 +32,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.memory.transferId = undefined;
     }
   }
-
+  checkMode();
   const spawn = _(getSpawnsInRoom(creep.room)).first();
 
   if (!spawn) {

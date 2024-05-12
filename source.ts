@@ -1,4 +1,5 @@
 import { filterBodiesByCost, getCreepsInRoom, getSpawnsInRoom, squareDiff } from "./util.creep";
+import { findMyStructures, getCapacityRate } from "./utils";
 
 export function behavior(source: Source) {
   // メモリを初期化する
@@ -63,38 +64,42 @@ export function behavior(source: Source) {
   }
 
   // 自分用のdistributerを管理する
-  const distributerName = `D_${source.pos.x}_${source.pos.y}`;
-  const creeps = getCreepsInRoom(source.room).filter((c) => c.name === distributerName);
+  for (const n of _.range(
+    source.pos.findInRange(findMyStructures(source.room).container, 3, { filter: (s: StructureContainer) => getCapacityRate(s) > 0.5 }).length,
+  )) {
+    const name = `D_${source.pos.x}_${source.pos.y}_${n}`;
+    const creeps = Game.creeps[name];
 
-  // 居なければ作る
-  if (creeps.length === 0) {
-    const spawn = _(getSpawnsInRoom(source.room))
-      .filter((s) => !s.spawning)
-      .first();
-    if (!spawn) {
-      return ERR_NOT_FOUND;
-    }
-
-    if (source.room.energyAvailable > 150) {
-      const { bodies, cost } = filterBodiesByCost("distributer", source.room.energyAvailable);
-      if (
-        spawn.spawnCreep(bodies, distributerName, {
-          memory: {
-            mode: "🛒",
-            role: "distributer",
-            sourceId: source.id,
-          } as DistributerMemory,
-        }) == OK
-      ) {
-        source.room.memory.energySummary?.push({
-          time: new Date().valueOf(),
-          consumes: cost,
-          production: 0,
-        });
-        return OK;
+    // 居なければ作る
+    if (!creeps) {
+      const spawn = _(getSpawnsInRoom(source.room))
+        .filter((s) => !s.spawning)
+        .first();
+      if (!spawn) {
+        return ERR_NOT_FOUND;
       }
-    } else {
-      return ERR_NOT_ENOUGH_ENERGY;
+
+      if (source.room.energyAvailable > 150) {
+        const { bodies, cost } = filterBodiesByCost("distributer", source.room.energyAvailable);
+        if (
+          spawn.spawnCreep(bodies, name, {
+            memory: {
+              mode: "🛒",
+              role: "distributer",
+              sourceId: source.id,
+            } as DistributerMemory,
+          }) == OK
+        ) {
+          source.room.memory.energySummary?.push({
+            time: new Date().valueOf(),
+            consumes: cost,
+            production: 0,
+          });
+          return OK;
+        }
+      } else {
+        return ERR_NOT_ENOUGH_ENERGY;
+      }
     }
   }
   return OK;

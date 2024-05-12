@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.behavior = void 0;
 const util_creep_1 = require("./util.creep");
+const utils_1 = require("./utils");
 function behavior(source) {
     var _a;
     if (!Memory.sources[source.id] || Game.time % 100 === 0) {
@@ -50,34 +51,36 @@ function behavior(source) {
             }
         }
     }
-    const distributerName = `D_${source.pos.x}_${source.pos.y}`;
-    const creeps = (0, util_creep_1.getCreepsInRoom)(source.room).filter((c) => c.name === distributerName);
-    if (creeps.length === 0) {
-        const spawn = _((0, util_creep_1.getSpawnsInRoom)(source.room))
-            .filter((s) => !s.spawning)
-            .first();
-        if (!spawn) {
-            return ERR_NOT_FOUND;
-        }
-        if (source.room.energyAvailable > 150) {
-            const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("distributer", source.room.energyAvailable);
-            if (spawn.spawnCreep(bodies, distributerName, {
-                memory: {
-                    mode: "🛒",
-                    role: "distributer",
-                    sourceId: source.id,
-                },
-            }) == OK) {
-                (_a = source.room.memory.energySummary) === null || _a === void 0 ? void 0 : _a.push({
-                    time: new Date().valueOf(),
-                    consumes: cost,
-                    production: 0,
-                });
-                return OK;
+    for (const n of _.range(source.pos.findInRange((0, utils_1.findMyStructures)(source.room).container, 3, { filter: (s) => (0, utils_1.getCapacityRate)(s) > 0.5 }).length)) {
+        const name = `D_${source.pos.x}_${source.pos.y}_${n}`;
+        const creeps = Game.creeps[name];
+        if (!creeps) {
+            const spawn = _((0, util_creep_1.getSpawnsInRoom)(source.room))
+                .filter((s) => !s.spawning)
+                .first();
+            if (!spawn) {
+                return ERR_NOT_FOUND;
             }
-        }
-        else {
-            return ERR_NOT_ENOUGH_ENERGY;
+            if (source.room.energyAvailable > 150) {
+                const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("distributer", source.room.energyAvailable);
+                if (spawn.spawnCreep(bodies, name, {
+                    memory: {
+                        mode: "🛒",
+                        role: "distributer",
+                        sourceId: source.id,
+                    },
+                }) == OK) {
+                    (_a = source.room.memory.energySummary) === null || _a === void 0 ? void 0 : _a.push({
+                        time: new Date().valueOf(),
+                        consumes: cost,
+                        production: 0,
+                    });
+                    return OK;
+                }
+            }
+            else {
+                return ERR_NOT_ENOUGH_ENERGY;
+            }
         }
     }
     return OK;

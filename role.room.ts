@@ -28,7 +28,7 @@ export function roomBehavior(room: Room) {
   const { link } = findMyStructures(room);
   linkBehavior(link);
 
-  _.range(1).map((n) => {
+  _.range(2).map((n) => {
     const name = `G_${n}`;
     if (gatherers.some((g) => g.name === name)) {
       // 居るときは無視
