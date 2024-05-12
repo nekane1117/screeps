@@ -50,7 +50,7 @@ function roomBehavior(room) {
 }
 exports.roomBehavior = roomBehavior;
 function creteStructures(room) {
-    var _a;
+    var _a, _b;
     const { visual } = room;
     const spawn = Object.values(Game.spawns).find((s) => s.room.name === room.name);
     if (!spawn) {
@@ -64,16 +64,21 @@ function creteStructures(room) {
         return sites;
     }, { all: [] });
     if (room.controller) {
-        if (CONTROLLER_STRUCTURES[STRUCTURE_LINK][room.controller.level] > 0 &&
-            spawn.pos.findInRange(FIND_STRUCTURES, 1, { filter: (s) => s.structureType === STRUCTURE_LINK }).length === 0 &&
-            (((_a = siteInRooms.link) === null || _a === void 0 ? void 0 : _a.length) || 0) === 0) {
-            for (const [dx, dy] of fourNeighbors) {
-                const pos = room.getPositionAt(spawn.pos.x + dx, spawn.pos.y + dy);
-                if (!pos) {
-                    break;
+        for (const target of staticStructures) {
+            const targets = (0, utils_1.findMyStructures)(room)[target];
+            if (CONTROLLER_STRUCTURES[target][room.controller.level] > 0 &&
+                spawn.pos.findInRange(targets, 1).length === 0 &&
+                (((_a = siteInRooms[target]) === null || _a === void 0 ? void 0 : _a.length) || 0) === 0) {
+                for (const [dx, dy] of fourNeighbors) {
+                    const pos = room.getPositionAt(spawn.pos.x + dx, spawn.pos.y + dy);
+                    console.log("search replace position", pos);
+                    if (((_b = pos === null || pos === void 0 ? void 0 : pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_EXTENSION)) === null || _b === void 0 ? void 0 : _b.destroy()) === OK) {
+                        return;
+                    }
+                    else if ((pos === null || pos === void 0 ? void 0 : pos.createConstructionSite(target)) === OK) {
+                        return;
+                    }
                 }
-                pos.lookFor(LOOK_STRUCTURES).map((s) => s.destroy());
-                return pos.createConstructionSite(STRUCTURE_LINK);
             }
         }
         const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN, STRUCTURE_STORAGE];
@@ -221,3 +226,4 @@ function initMemory(room) {
     room.memory.find = {};
     room.memory.find[FIND_STRUCTURES] = undefined;
 }
+const staticStructures = [STRUCTURE_STORAGE, STRUCTURE_LINK];

@@ -78,23 +78,31 @@ function creteStructures(room: Room) {
     );
 
   if (room.controller) {
-    // linkを扱えてspawnの横にlinkが無いとき
-    if (
-      CONTROLLER_STRUCTURES[STRUCTURE_LINK][room.controller.level] > 0 &&
-      spawn.pos.findInRange(FIND_STRUCTURES, 1, { filter: (s) => s.structureType === STRUCTURE_LINK }).length === 0 &&
-      (siteInRooms.link?.length || 0) === 0
-    ) {
-      for (const [dx, dy] of fourNeighbors) {
-        const pos = room.getPositionAt(spawn.pos.x + dx, spawn.pos.y + dy);
-        // 壁とかなら無視
-        if (!pos) {
-          break;
+    for (const target of staticStructures) {
+      const targets = findMyStructures(room)[target] as _HasRoomPosition[];
+
+      // 対象を扱えて隣にない時
+      if (
+        CONTROLLER_STRUCTURES[target][room.controller.level] > 0 &&
+        spawn.pos.findInRange(targets, 1).length === 0 &&
+        (siteInRooms[target]?.length || 0) === 0
+      ) {
+        for (const [dx, dy] of fourNeighbors) {
+          const pos = room.getPositionAt(spawn.pos.x + dx, spawn.pos.y + dy);
+          console.log("search replace position", pos);
+          if (
+            pos
+              ?.lookFor(LOOK_STRUCTURES)
+              .find((s) => s.structureType === STRUCTURE_EXTENSION)
+              ?.destroy() === OK
+          ) {
+            // extensionが見つかったらとりあえず壊して終わる
+            return;
+          } else if (pos?.createConstructionSite(target) === OK) {
+            // extensionが無ければ立ててみて、成功したら終わる
+            return;
+          }
         }
-
-        // そこにあるものは壊す
-        pos.lookFor(LOOK_STRUCTURES).map((s) => s.destroy());
-
-        return pos.createConstructionSite(STRUCTURE_LINK);
       }
     }
 
@@ -280,3 +288,5 @@ function initMemory(room: Room) {
   room.memory.find = {};
   room.memory.find[FIND_STRUCTURES] = undefined;
 }
+
+const staticStructures = [STRUCTURE_STORAGE, STRUCTURE_LINK];

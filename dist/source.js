@@ -51,7 +51,7 @@ function behavior(source) {
             }
         }
     }
-    for (const n of _.range(source.pos.findInRange((0, utils_1.findMyStructures)(source.room).container, 3, { filter: (s) => (0, utils_1.getCapacityRate)(s) > 0.5 }).length)) {
+    for (const n of _.range(source.pos.findInRange((0, utils_1.findMyStructures)(source.room).container, 3, { filter: (s) => (0, utils_1.getCapacityRate)(s) > 0 }).length)) {
         const name = `D_${source.pos.x}_${source.pos.y}_${n}`;
         const creeps = Game.creeps[name];
         if (!creeps) {

@@ -6,6 +6,9 @@ const behavior = (creep) => {
     if (!isBuilder(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
+    if (creep.room.energyAvailable < creep.room.energyCapacityAvailable * 0.9) {
+        return ERR_NOT_ENOUGH_ENERGY;
+    }
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
         changeMode(creep, "💪");
     }
@@ -57,7 +60,7 @@ const behavior = (creep) => {
             creep.memory.buildingId &&
                 ((_c = (_b = Game.getObjectById(creep.memory.buildingId)) === null || _b === void 0 ? void 0 : _b.pos.findClosestByPath(FIND_STRUCTURES, {
                     filter: (s) => {
-                        return (0, util_creep_1.isStoreTarget)(s) && s.store.energy > 0;
+                        return s.structureType !== STRUCTURE_SPAWN && (0, util_creep_1.isStoreTarget)(s) && s.store.energy > 0;
                     },
                 })) === null || _c === void 0 ? void 0 : _c.id))) {
         const store = Game.getObjectById(creep.memory.storeId);
@@ -96,7 +99,7 @@ const behavior = (creep) => {
             }
         }
     }
-    (0, util_creep_1.stealBy)(creep, ["harvester"]);
+    (0, util_creep_1.stealBy)(creep, ["harvester", "distributer", "upgrader"]);
     (0, util_creep_1.pickUpAll)(creep);
 };
 exports.default = behavior;

@@ -17,9 +17,11 @@ const behavior = (spawn) => {
     const creepsInRoom = (0, lodash_1.default)((0, util_creep_1.getCreepsInRoom)(spawn.room))
         .groupBy((c) => c.memory.role)
         .value();
+    const sitesInRoom = Object.values(Game.constructionSites).filter((s) => { var _a; return ((_a = s.room) === null || _a === void 0 ? void 0 : _a.name) === spawn.room.name; });
     const upgradeContainer = (_b = spawn.room.controller) === null || _b === void 0 ? void 0 : _b.pos.findClosestByRange(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_CONTAINER });
     const upgradeContainerRate = upgradeContainer ? (0, utils_1.getCapacityRate)(upgradeContainer) : 0;
-    if ((creepsInRoom.upgrader || []).length < Math.floor(1 + upgradeContainerRate / 0.9) &&
+    if (sitesInRoom.length === 0 &&
+        (creepsInRoom.upgrader || []).length < upgradeContainerRate / 0.9 &&
         spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.8)) {
         const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("upgrader", spawn.room.energyAvailable);
         const spawned = spawn.spawnCreep(bodies, generateCreepName("upgrader"), {
@@ -36,7 +38,7 @@ const behavior = (spawn) => {
         }
         return spawned;
     }
-    if (spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length &&
+    if (sitesInRoom.length &&
         (creepsInRoom.builder || []).length < upgradeContainerRate / 0.9 &&
         spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.6)) {
         const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("builder", spawn.room.energyAvailable);

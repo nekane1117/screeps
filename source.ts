@@ -65,7 +65,7 @@ export function behavior(source: Source) {
 
   // 自分用のdistributerを管理する
   for (const n of _.range(
-    source.pos.findInRange(findMyStructures(source.room).container, 3, { filter: (s: StructureContainer) => getCapacityRate(s) > 0.5 }).length,
+    source.pos.findInRange(findMyStructures(source.room).container, 3, { filter: (s: StructureContainer) => getCapacityRate(s) > 0 }).length,
   )) {
     const name = `D_${source.pos.x}_${source.pos.y}_${n}`;
     const creeps = Game.creeps[name];

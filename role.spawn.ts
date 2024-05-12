@@ -13,13 +13,15 @@ const behavior = (spawn: StructureSpawn) => {
   const creepsInRoom: _.Dictionary<Creep[] | undefined> = _(getCreepsInRoom(spawn.room))
     .groupBy((c) => c.memory.role)
     .value();
+  const sitesInRoom = Object.values(Game.constructionSites).filter((s) => s.room?.name === spawn.room.name);
 
   const upgradeContainer = spawn.room.controller?.pos.findClosestByRange(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_CONTAINER });
   const upgradeContainerRate = upgradeContainer ? getCapacityRate(upgradeContainer) : 0;
 
   // upgraderが居ないときもとりあえず作る
   if (
-    (creepsInRoom.upgrader || []).length < Math.floor(1 + upgradeContainerRate / 0.9) &&
+    sitesInRoom.length === 0 &&
+    (creepsInRoom.upgrader || []).length < upgradeContainerRate / 0.9 &&
     spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.8)
   ) {
     const { bodies, cost } = filterBodiesByCost("upgrader", spawn.room.energyAvailable);
@@ -40,7 +42,7 @@ const behavior = (spawn: StructureSpawn) => {
 
   // builderが不足しているとき
   if (
-    spawn.room.find(FIND_MY_CONSTRUCTION_SITES).length && // 建設がある
+    sitesInRoom.length && // 建設がある
     (creepsInRoom.builder || []).length < upgradeContainerRate / 0.9 &&
     spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.6) // エネルギー余ってる
   ) {

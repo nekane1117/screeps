@@ -35,7 +35,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return creep.suicide();
   }
   // 最寄りのコンテナ
-  const closestContainer = source?.pos.findClosestByRange(findMyStructures(creep.room).container);
+  const { container, link } = findMyStructures(creep.room);
+  const closestContainer = source?.pos.findClosestByPath([...container, ...link], {
+    plainCost: 2,
+    ignoreCreeps: true,
+  });
 
   // コンテナが見つからないときは終わる
   if (!source || !closestContainer) {
