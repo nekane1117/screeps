@@ -43,7 +43,14 @@ const behavior = (spawn: StructureSpawn) => {
   // builderが不足しているとき
   if (
     sitesInRoom.length && // 建設がある
-    (creepsInRoom.builder || []).length < upgradeContainerRate / 0.9 &&
+    (creepsInRoom.builder || []).length <
+      Math.floor(
+        (_(creepsInRoom.harvester || [])
+          .map((h) => h.getActiveBodyparts(WORK))
+          .sum() -
+          1) /
+          5,
+      ) &&
     spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.6) // エネルギー余ってる
   ) {
     const { bodies, cost } = filterBodiesByCost("builder", spawn.room.energyAvailable);

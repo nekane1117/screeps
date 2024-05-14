@@ -26,11 +26,8 @@ const behavior = (creep) => {
     if (!source) {
         return creep.suicide();
     }
-    const { container, link } = (0, utils_1.findMyStructures)(creep.room);
-    const closestContainer = source === null || source === void 0 ? void 0 : source.pos.findClosestByPath([...container, ...link], {
-        plainCost: 2,
-        ignoreCreeps: true,
-    });
+    const { container } = (0, utils_1.findMyStructures)(creep.room);
+    const closestContainer = source === null || source === void 0 ? void 0 : source.pos.findClosestByRange(container, { filter: (s) => s.store.energy > 0 });
     if (!source || !closestContainer) {
         return ERR_NOT_FOUND;
     }

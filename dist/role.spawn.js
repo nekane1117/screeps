@@ -39,7 +39,12 @@ const behavior = (spawn) => {
         return spawned;
     }
     if (sitesInRoom.length &&
-        (creepsInRoom.builder || []).length < upgradeContainerRate / 0.9 &&
+        (creepsInRoom.builder || []).length <
+            Math.floor(((0, lodash_1.default)(creepsInRoom.harvester || [])
+                .map((h) => h.getActiveBodyparts(WORK))
+                .sum() -
+                1) /
+                5) &&
         spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.6)) {
         const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("builder", spawn.room.energyAvailable);
         const spawned = spawn.spawnCreep(bodies, generateCreepName("builder"), {

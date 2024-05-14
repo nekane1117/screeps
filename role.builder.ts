@@ -5,9 +5,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isBuilder(creep)) {
     return console.log(`${creep.name} is not Builder`);
   }
-  if (creep.room.energyAvailable < creep.room.energyCapacityAvailable * 0.9) {
-    return ERR_NOT_ENOUGH_ENERGY;
-  }
 
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
     changeMode(creep, "💪");
@@ -84,7 +81,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.memory.buildingId &&
       Game.getObjectById(creep.memory.buildingId)?.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (s): s is StoreTarget => {
-          return s.structureType !== STRUCTURE_SPAWN && isStoreTarget(s) && s.store.energy > 0;
+          return (
+            s.structureType !== STRUCTURE_SPAWN &&
+            isStoreTarget(s) &&
+            (s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9 ? true : s.structureType !== STRUCTURE_EXTENSION) &&
+            s.store.energy > 0
+          );
         },
       })?.id)
   ) {
