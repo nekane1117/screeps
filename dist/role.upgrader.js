@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const behavior = (creep) => {
     var _a, _b, _c, _d;
+    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, 4) }, opt));
     if (!isUpgrader(creep)) {
         return console.log(`${creep.name} is not Upgrader`);
     }
@@ -18,7 +19,7 @@ const behavior = (creep) => {
     if (((_a = creep.room.controller.sign) === null || _a === void 0 ? void 0 : _a.username) !== "Nekane" && creep.name.endsWith("0")) {
         const signed = creep.signController(creep.room.controller, "Please teach me screeps");
         if (signed === ERR_NOT_IN_RANGE) {
-            (0, util_creep_1.customMove)(creep, creep.room.controller);
+            moveMeTo(creep.room.controller);
         }
         else {
             console.log(`${creep.name}:${util_creep_1.RETURN_CODE_DECODER[signed.toString()]}`);
@@ -32,9 +33,7 @@ const behavior = (creep) => {
             break;
         case ERR_NOT_IN_RANGE:
             if (creep.memory.mode === "💪") {
-                (0, util_creep_1.customMove)(creep, creep.room.controller, {
-                    ignoreCreeps: !creep.pos.inRangeTo(creep.room.controller, 4),
-                });
+                moveMeTo(creep.room.controller);
             }
             break;
         case ERR_NOT_OWNER:
@@ -67,7 +66,7 @@ const behavior = (creep) => {
                     break;
                 case ERR_NOT_IN_RANGE:
                     if (creep.memory.mode === "🛒") {
-                        const moved = (0, util_creep_1.customMove)(creep, store);
+                        const moved = moveMeTo(store);
                         if (moved !== OK) {
                             console.log(`${creep.name} ${util_creep_1.RETURN_CODE_DECODER[moved.toString()]}`);
                             creep.say(util_creep_1.RETURN_CODE_DECODER[moved.toString()]);

@@ -2,6 +2,12 @@ import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
+  const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
+    customMove(creep, target, {
+      ignoreCreeps: !creep.pos.inRangeTo(target, 4),
+      ...opt,
+    });
+
   if (!isUpgrader(creep)) {
     return console.log(`${creep.name} is not Upgrader`);
   }
@@ -21,7 +27,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (creep.room.controller.sign?.username !== "Nekane" && creep.name.endsWith("0")) {
     const signed = creep.signController(creep.room.controller, "Please teach me screeps");
     if (signed === ERR_NOT_IN_RANGE) {
-      customMove(creep, creep.room.controller);
+      moveMeTo(creep.room.controller);
     } else {
       console.log(`${creep.name}:${RETURN_CODE_DECODER[signed.toString()]}`);
     }
@@ -42,9 +48,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       break;
     case ERR_NOT_IN_RANGE:
       if (creep.memory.mode === "💪") {
-        customMove(creep, creep.room.controller, {
-          ignoreCreeps: !creep.pos.inRangeTo(creep.room.controller, 4),
-        });
+        moveMeTo(creep.room.controller);
       }
       break;
     // 有りえない系
@@ -85,7 +89,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           break;
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "🛒") {
-            const moved = customMove(creep, store);
+            const moved = moveMeTo(store);
             if (moved !== OK) {
               console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`);
               creep.say(RETURN_CODE_DECODER[moved.toString()]);
