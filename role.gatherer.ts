@@ -134,11 +134,18 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   if (!creep.memory.storeId) {
-    creep.memory.storeId = creep.pos.findClosestByRange(_.compact([...link, ...storage, ...terminal, ...containers]), {
-      filter: (s: StructureSpawn | StructureExtension | StructureContainer) => {
-        return controllerContaeiner?.id !== s.id && transferTarget?.id !== s.id && s.store.energy >= CARRY_CAPACITY;
-      },
-    })?.id;
+    // つっかえちゃうので取り出しようlinkは優先的に取り出す
+    creep.memory.storeId = (
+      (() => {
+        const extructor = spawn.pos.findClosestByRange(link);
+        return extructor && extructor.store.energy >= CARRY_CAPACITY ? extructor : undefined;
+      })() ||
+      creep.pos.findClosestByRange(_.compact([...storage, ...terminal, ...containers]), {
+        filter: (s: StructureSpawn | StructureExtension | StructureContainer) => {
+          return controllerContaeiner?.id !== s.id && transferTarget?.id !== s.id && s.store.energy >= CARRY_CAPACITY;
+        },
+      })
+    )?.id;
   }
   // 取り出し処理###############################################################################################
   if (creep.memory.storeId && creep.memory.mode === "🛒") {

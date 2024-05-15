@@ -96,11 +96,15 @@ const behavior = (creep) => {
         }
     }
     if (!creep.memory.storeId) {
-        creep.memory.storeId = (_g = creep.pos.findClosestByRange(_.compact([...link, ...storage, ...terminal, ...containers]), {
-            filter: (s) => {
-                return (controllerContaeiner === null || controllerContaeiner === void 0 ? void 0 : controllerContaeiner.id) !== s.id && (transferTarget === null || transferTarget === void 0 ? void 0 : transferTarget.id) !== s.id && s.store.energy >= CARRY_CAPACITY;
-            },
-        })) === null || _g === void 0 ? void 0 : _g.id;
+        creep.memory.storeId = (_g = ((() => {
+            const extructor = spawn.pos.findClosestByRange(link);
+            return extructor && extructor.store.energy >= CARRY_CAPACITY ? extructor : undefined;
+        })() ||
+            creep.pos.findClosestByRange(_.compact([...storage, ...terminal, ...containers]), {
+                filter: (s) => {
+                    return (controllerContaeiner === null || controllerContaeiner === void 0 ? void 0 : controllerContaeiner.id) !== s.id && (transferTarget === null || transferTarget === void 0 ? void 0 : transferTarget.id) !== s.id && s.store.energy >= CARRY_CAPACITY;
+                },
+            }))) === null || _g === void 0 ? void 0 : _g.id;
     }
     if (creep.memory.storeId && creep.memory.mode === "🛒") {
         const store = Game.getObjectById(creep.memory.storeId);
