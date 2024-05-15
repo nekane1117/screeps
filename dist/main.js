@@ -7,8 +7,9 @@ const role_room_1 = require("./role.room");
 const role_spawn_1 = __importDefault(require("./role.spawn"));
 const roles_1 = require("./roles");
 const structures_1 = __importDefault(require("./structures"));
+const utils_1 = require("./utils");
 module.exports.loop = function () {
-    if (Game.time % 100 === 0 && Game.cpu.bucket == 10000) {
+    if (Game.cpu.bucket === 10000) {
         Game.cpu.generatePixel();
     }
     Object.keys(Memory.creeps || {}).forEach((name) => {
@@ -30,7 +31,7 @@ module.exports.loop = function () {
         var _a, _b;
         (0, role_room_1.roomBehavior)(room);
         (_a = spawnGroup[room.name]) === null || _a === void 0 ? void 0 : _a.map(role_spawn_1.default);
-        room.find(FIND_STRUCTURES).map((s) => { var _a; return (_a = structures_1.default[s.structureType]) === null || _a === void 0 ? void 0 : _a.call(structures_1.default, s); });
+        (0, utils_1.findMyStructures)(room).all.map((s) => { var _a; return (_a = structures_1.default[s.structureType]) === null || _a === void 0 ? void 0 : _a.call(structures_1.default, s); });
         (_b = creepGroup[room.name]) === null || _b === void 0 ? void 0 : _b.map((c) => {
             var _a;
             if (c.spawning) {

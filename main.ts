@@ -2,9 +2,10 @@ import { roomBehavior } from "./role.room";
 import spawnBehavior from "./role.spawn";
 import { behaviors } from "./roles";
 import structures from "./structures";
+import { findMyStructures } from "./utils";
 
 module.exports.loop = function () {
-  if (Game.time % 100 === 0 && Game.cpu.bucket == 10000) {
+  if (Game.cpu.bucket === 10000) {
     Game.cpu.generatePixel();
   }
   //死んだcreepは削除する
@@ -34,7 +35,7 @@ module.exports.loop = function () {
     spawnGroup[room.name]?.map(spawnBehavior);
 
     // 構造物の動き
-    room.find(FIND_STRUCTURES).map((s) => structures[s.structureType]?.(s));
+    findMyStructures(room).all.map((s) => structures[s.structureType]?.(s));
 
     // Creepの動き
     creepGroup[room.name]?.map((c) => {

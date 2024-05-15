@@ -121,7 +121,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!transferTarget) {
     // 無いときはなんか変なので初期化して終わる
     creep.memory.transferId = undefined;
-    return ERR_NOT_FOUND;
   }
 
   // 取得元設定処理###############################################################################################
@@ -135,26 +134,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   if (!creep.memory.storeId) {
-    // 対象より遠い容量がある入れ物
-    creep.memory.storeId = (
-      (() => {
-        const extructor = spawn.pos.findClosestByRange(link);
-        return extructor && extructor.store.energy >= CARRY_CAPACITY ? extructor : undefined;
-      })() ||
-      creep.pos.findClosestByRange(_.compact([...storage, ...terminal, ...containers]), {
-        filter: (s: StructureSpawn | StructureExtension | StructureContainer) => {
-          return controllerContaeiner?.id !== s.id && transferTarget.id !== s.id && s.store.energy >= CARRY_CAPACITY;
-        },
-      })
-    )?.id;
+    creep.memory.storeId = creep.pos.findClosestByRange(_.compact([...link, ...storage, ...terminal, ...containers]), {
+      filter: (s: StructureSpawn | StructureExtension | StructureContainer) => {
+        return controllerContaeiner?.id !== s.id && transferTarget?.id !== s.id && s.store.energy >= CARRY_CAPACITY;
+      },
+    })?.id;
   }
-  // それでも見つからないとき
-  if (!creep.memory.storeId) {
-    return ERR_NOT_FOUND;
-  }
-
   // 取り出し処理###############################################################################################
-  if (creep.memory.mode === "🛒") {
+  if (creep.memory.storeId && creep.memory.mode === "🛒") {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
       if (!creep.pos.isNearTo(store)) {
@@ -194,7 +181,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
-  if (creep.memory.mode === "💪") {
+  if (creep.memory.transferId && creep.memory.mode === "💪") {
     const transferTarget = Game.getObjectById(creep.memory.transferId);
     if (transferTarget) {
       if (!creep.pos.isNearTo(transferTarget)) {
