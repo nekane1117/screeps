@@ -100,6 +100,8 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
     WORK,
     WORK,
     WORK,
+    MOVE,
+    MOVE,
   ],
   repairer: [
     // 最小構成
