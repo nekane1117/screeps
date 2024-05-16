@@ -181,9 +181,8 @@ declare interface RepairerMemory extends CreepMemory {
   /** 今何してるか
    * working    : 作業中
    * collecting : 資源取得中
-   * harvesting : 自力で収集中
    */
-  mode: "💪" | "🛒" | "🌾";
+  mode: "💪" | "🛒";
   /** 修理対象 */
   workTargetId?: Id<Structure> | null;
   /** 資源をもらいに行く先 */

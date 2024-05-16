@@ -120,17 +120,7 @@ function isRepairer(creep: Creeps): creep is Repairer {
 function changeMode(creep: Repairer, mode: "💪" | "🛒") {
   if (creep.memory.mode !== mode) {
     creep.say(mode);
-    if (mode === "💪") {
-      creep.memory.mode = mode;
-    } else {
-      creep.memory.mode = creep.room.find(FIND_STRUCTURES, {
-        filter: (s): s is StoreTarget => {
-          return isStoreTarget(s) && s.store.getUsedCapacity(RESOURCE_ENERGY) !== 0;
-        },
-      })
-        ? "🛒"
-        : "🌾";
-    }
+    creep.memory.mode = mode;
     creep.memory.workTargetId = undefined;
   }
 }
