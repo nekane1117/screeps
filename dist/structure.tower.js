@@ -22,11 +22,15 @@ function behaviors(tower) {
         tower.store.getUsedCapacity(RESOURCE_ENERGY) / tower.store.getCapacity(RESOURCE_ENERGY) > 0.8 &&
             _(tower.room.find(FIND_STRUCTURES, {
                 filter: (s) => {
-                    return (s.structureType === STRUCTURE_WALL ? (Game.time % (0, utils_1.findMyStructures)(s.room).tower.length) * 2 === 0 : true) && s.hits < s.hitsMax;
+                    return ((s.structureType === STRUCTURE_WALL || s.structureType === STRUCTURE_RAMPART
+                        ? (Game.time % (0, utils_1.findMyStructures)(s.room).tower.length) * 2 === 0
+                        : true) && s.hits < s.hitsMax);
                 },
             }))
                 .tap((damaged) => {
-                const target = _(damaged).min((s) => s.hits);
+                const target = _(damaged).min((s) => {
+                    return s.hits * 10000 + ("ticksToDecay" in s ? s.ticksToDecay || 0 : 0);
+                });
                 if (target) {
                     tower.repair(target);
                 }

@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { filterBodiesByCost, getCreepsInRoom } from "./util.creep";
-import { getCapacityRate } from "./utils";
+import { findMyStructures, getCapacityRate } from "./utils";
 
 const behavior = (spawn: StructureSpawn) => {
   if (Object.keys(Game.spawns)?.[0] === spawn.name) {
@@ -72,7 +72,9 @@ const behavior = (spawn: StructureSpawn) => {
 
   // repairerが不足しているとき
   if (
-    spawn.room.find(FIND_STRUCTURES, { filter: (s) => s.structureType !== STRUCTURE_WALL && s.hits < s.hitsMax * 0.5 }).length && // 建設がある
+    findMyStructures(spawn.room).all.filter((s) => {
+      return s.structureType !== STRUCTURE_WALL && s.structureType !== STRUCTURE_RAMPART && s.hits < s.hitsMax * 0.5;
+    }).length && // 半壊した建物がある
     (creepsInRoom?.repairer || []).length < 1 &&
     spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.9) // エネルギー余ってる
   ) {

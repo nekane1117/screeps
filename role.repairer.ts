@@ -1,5 +1,6 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll, randomWalk } from "./util.creep";
+import { findMyStructures } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isRepairer(creep)) {
@@ -8,13 +9,15 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // https://docs.screeps.com/simultaneous-actions.html
 
+  const searchTarget = () =>
+    _(findMyStructures(creep.room).all)
+      .filter((s) => s.hits < s.hitsMax)
+      .min((s: AnyStructure) => {
+        return s.hits * 10000 + ("ticksToDecay" in s ? s.ticksToDecay || 0 : 0);
+      });
+
   // repair
-  if (
-    creep.memory.workTargetId ||
-    (creep.memory.workTargetId = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-      filter: (s) => s.structureType !== STRUCTURE_WALL && s.hits < s.hitsMax,
-    })?.id)
-  ) {
+  if (creep.memory.workTargetId || (creep.memory.workTargetId = searchTarget()?.id)) {
     const target = Game.getObjectById(creep.memory.workTargetId);
     if (target && target.hits < target.hitsMax) {
       creep.memory.worked = creep.repair(target);
@@ -32,7 +35,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           break;
         // 問題ない系
         case OK:
-          creep.memory.workTargetId = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.hits < s.hitsMax })).min((s) => s.hits)?.id;
+          creep.memory.workTargetId = searchTarget()?.id;
         // eslint-disable-next-line no-fallthrough
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "💪") {

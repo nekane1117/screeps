@@ -49,7 +49,7 @@ declare interface HarvesterMemory extends CreepMemory {
 }
 
 declare type MyStructureCache = {
-  all: Structure[];
+  all: AnyStructure[];
   constructedWall: StructureWall[];
   container: StructureContainer[];
   controller: StructureController[];

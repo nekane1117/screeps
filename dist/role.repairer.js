@@ -1,15 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
+const utils_1 = require("./utils");
 const behavior = (creep) => {
     var _a, _b, _c;
     if (!isRepairer(creep)) {
         return console.log(`${creep.name} is not Repairer`);
     }
-    if (creep.memory.workTargetId ||
-        (creep.memory.workTargetId = (_a = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-            filter: (s) => s.structureType !== STRUCTURE_WALL && s.hits < s.hitsMax,
-        })) === null || _a === void 0 ? void 0 : _a.id)) {
+    const searchTarget = () => _((0, utils_1.findMyStructures)(creep.room).all)
+        .filter((s) => s.hits < s.hitsMax)
+        .min((s) => {
+        return s.hits * 10000 + ("ticksToDecay" in s ? s.ticksToDecay || 0 : 0);
+    });
+    if (creep.memory.workTargetId || (creep.memory.workTargetId = (_a = searchTarget()) === null || _a === void 0 ? void 0 : _a.id)) {
         const target = Game.getObjectById(creep.memory.workTargetId);
         if (target && target.hits < target.hitsMax) {
             creep.memory.worked = creep.repair(target);
@@ -24,7 +27,7 @@ const behavior = (creep) => {
                     creep.say(util_creep_1.RETURN_CODE_DECODER[creep.memory.worked.toString()]);
                     break;
                 case OK:
-                    creep.memory.workTargetId = (_b = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.hits < s.hitsMax })).min((s) => s.hits)) === null || _b === void 0 ? void 0 : _b.id;
+                    creep.memory.workTargetId = (_b = searchTarget()) === null || _b === void 0 ? void 0 : _b.id;
                 case ERR_NOT_IN_RANGE:
                     if (creep.memory.mode === "💪") {
                         (0, util_creep_1.customMove)(creep, target);

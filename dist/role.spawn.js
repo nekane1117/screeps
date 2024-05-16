@@ -62,7 +62,9 @@ const behavior = (spawn) => {
         }
         return spawned;
     }
-    if (spawn.room.find(FIND_STRUCTURES, { filter: (s) => s.structureType !== STRUCTURE_WALL && s.hits < s.hitsMax * 0.5 }).length &&
+    if ((0, utils_1.findMyStructures)(spawn.room).all.filter((s) => {
+        return s.structureType !== STRUCTURE_WALL && s.structureType !== STRUCTURE_RAMPART && s.hits < s.hitsMax * 0.5;
+    }).length &&
         ((creepsInRoom === null || creepsInRoom === void 0 ? void 0 : creepsInRoom.repairer) || []).length < 1 &&
         spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.9)) {
         const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("repairer", spawn.room.energyAvailable);

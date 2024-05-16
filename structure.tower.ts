@@ -30,13 +30,19 @@ export default function behaviors(tower: Structure) {
       _(
         tower.room.find(FIND_STRUCTURES, {
           filter: (s: Structure): s is Structure<StructureConstant> => {
-            return (s.structureType === STRUCTURE_WALL ? (Game.time % findMyStructures(s.room).tower.length) * 2 === 0 : true) && s.hits < s.hitsMax;
+            return (
+              (s.structureType === STRUCTURE_WALL || s.structureType === STRUCTURE_RAMPART
+                ? (Game.time % findMyStructures(s.room).tower.length) * 2 === 0
+                : true) && s.hits < s.hitsMax
+            );
           },
         }),
       )
         .tap((damaged) => {
           // の中で最少のHPの建物の一覧
-          const target = _(damaged).min((s) => s.hits);
+          const target = _(damaged).min((s) => {
+            return s.hits * 10000 + ("ticksToDecay" in s ? s.ticksToDecay || 0 : 0);
+          });
           // があれば修理する
           if (target) {
             tower.repair(target);
