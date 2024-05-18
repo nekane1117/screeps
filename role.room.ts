@@ -34,12 +34,17 @@ export function roomBehavior(room: Room) {
   const { link } = findMyStructures(room);
   linkBehavior(link);
 
-  if (harvester.length && gatherers.length < 2) {
+  const { bodies, cost } = filterBodiesByCost("gatherer", room.energyAvailable);
+  if (
+    harvester.length &&
+    gatherers.filter((g) => {
+      return bodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
+    }).length < 2
+  ) {
     const name = `G_${room.name}_${Game.time}`;
 
     const spawn = getSpawnsInRoom(room).find((r) => !r.spawning);
     if (spawn && room.energyAvailable > 200) {
-      const { bodies, cost } = filterBodiesByCost("gatherer", room.energyAvailable);
       if (
         spawn.spawnCreep(bodies, name, {
           memory: {

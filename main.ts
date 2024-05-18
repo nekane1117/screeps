@@ -31,7 +31,7 @@ module.exports.loop = function () {
   const spawnGroup = _.groupBy(Object.values(Game.spawns), (c) => c.room.name);
   const creepGroup = _.groupBy(Object.values(Game.creeps), (c) => c.room.name);
 
-  Object.entries(Game.rooms).forEach(([_roomName, room]) => {
+  Object.values(Game.rooms).forEach((room) => {
     roomBehavior(room);
 
     spawnGroup[room.name]?.map(spawnBehavior);

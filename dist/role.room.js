@@ -26,11 +26,14 @@ function roomBehavior(room) {
     }, { builder: [], claimer: [], distributer: [], gatherer: [], harvester: [], repairer: [], upgrader: [] });
     const { link } = (0, utils_1.findMyStructures)(room);
     (0, structure_links_1.default)(link);
-    if (harvester.length && gatherers.length < 2) {
+    const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("gatherer", room.energyAvailable);
+    if (harvester.length &&
+        gatherers.filter((g) => {
+            return bodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
+        }).length < 2) {
         const name = `G_${room.name}_${Game.time}`;
         const spawn = (0, util_creep_1.getSpawnsInRoom)(room).find((r) => !r.spawning);
         if (spawn && room.energyAvailable > 200) {
-            const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("gatherer", room.energyAvailable);
             if (spawn.spawnCreep(bodies, name, {
                 memory: {
                     mode: "🛒",

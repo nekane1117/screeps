@@ -49,6 +49,7 @@ const behavior = (spawn) => {
             memory: {
                 role: "builder",
                 mode: "💪",
+                parentRoom: spawn.room.name,
             },
         });
         if (spawned === OK && spawn.room.memory.energySummary) {

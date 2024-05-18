@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getSpawnsInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getSpawnsInRoom = exports.getSpawnsOrderByRange = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
+const util_array_1 = require("./util.array");
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -162,6 +163,21 @@ function getCreepsInRoom(room) {
         .filter((c) => c);
 }
 exports.getCreepsInRoom = getCreepsInRoom;
+function getSpawnsOrderByRange(pos) {
+    const p = "pos" in pos ? pos.pos : pos;
+    return (0, util_array_1.complexOrder)(Object.values(Game.spawns), [
+        (s) => Game.map.getRoomLinearDistance(s.room.name, p.roomName),
+        (s) => {
+            if (Game.rooms[s.room.name] && Game.rooms[p.roomName]) {
+                return p.getRangeTo(s);
+            }
+            else {
+                return 50;
+            }
+        },
+    ]);
+}
+exports.getSpawnsOrderByRange = getSpawnsOrderByRange;
 function getSpawnsInRoom(room) {
     return _((() => {
         var _a;

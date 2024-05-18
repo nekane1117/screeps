@@ -1,4 +1,5 @@
 import { CreepBehavior } from "./roles";
+import { complexOrder } from "./util.array";
 import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll, withdrawBy } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
@@ -15,27 +16,17 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // https://docs.screeps.com/simultaneous-actions.html
 
   // build
-  const sites = _(Object.values(Game.constructionSites));
-
-  if (sites.size() === 0) {
-    // 修理屋になる
-    return ((creep as Creeps).memory.role = "repairer");
-  }
-
-  const minRemaining = sites.map((s) => s.progressTotal - s.progress).min();
-
   if (
-    !(
-      creep.memory.buildingId ||
-      (creep.memory.buildingId = (
-        creep.pos.findClosestByRange(sites.filter((s) => s.structureType === STRUCTURE_CONTAINER).run()) ||
-        creep.pos.findClosestByRange(sites.filter((s) => s.progressTotal - s.progress <= minRemaining).run())
-      )?.id)
-    )
+    creep.memory.buildingId ||
+    (creep.memory.buildingId = complexOrder(Object.values(Game.constructionSites), [
+      // 同じ部屋を優先
+      (s) => (s.room?.name === creep.room.name ? 0 : 1),
+      // コンテナがあるときはコンテナ優先
+      (s) => (s.structureType === STRUCTURE_CONTAINER ? 0 : 1),
+      // 残り作業が一番少ないやつ
+      (s) => s.progressTotal - s.progress,
+    ]).first()?.id)
   ) {
-    // 修理屋になる
-    return ((creep as Creeps).memory.role = "repairer");
-  } else {
     const site = Game.getObjectById(creep.memory.buildingId);
     if (site) {
       switch ((creep.memory.built = creep.build(site))) {
@@ -72,6 +63,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       // 対象をクリア
       creep.memory.buildingId = undefined;
     }
+  } else {
+    // 修理屋になる
+    return ((creep as Creeps).memory.role = "repairer");
   }
 
   // withdraw

@@ -7,17 +7,19 @@ export enum ORDER {
   NEXT = 1,
 }
 
-type Order<T> = (e1: T, e2: T) => number;
+type Evaluation<T> = (e1: T) => number;
 
-export function complexOrder<T>(arr: T[], orders: Order<T>[]) {
-  return [...arr].sort((e1, e2) => {
-    for (const func of orders) {
-      const result = func(e1, e2);
-      // 入れ替わるときはその値を返す
-      if (result !== ORDER.KEEP) {
-        return result;
+export function complexOrder<T>(arr: T[], evaluation: Evaluation<T>[]) {
+  return _(
+    [...arr].sort((e1, e2) => {
+      for (const func of evaluation) {
+        const result = func(e1) - func(e2);
+        // 入れ替わるときはその値を返す
+        if (result !== ORDER.KEEP) {
+          return result;
+        }
       }
-    }
-    return ORDER.KEEP;
-  });
+      return ORDER.KEEP;
+    }),
+  );
 }

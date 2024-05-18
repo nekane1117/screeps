@@ -43,13 +43,6 @@ export function behavior(source: Source) {
             role: "harvester",
             harvestTargetId: source.id,
           } as HarvesterMemory,
-          energyStructures: _(
-            spawn.room.find(FIND_STRUCTURES, {
-              filter: (s): s is StructureSpawn => s.structureType === STRUCTURE_SPAWN || s.structureType === STRUCTURE_EXTENSION,
-            }),
-          )
-            .sortBy((s) => 50 - s.pos.getRangeTo(spawn))
-            .run(),
         });
         if (spawned === OK && source.room.memory.energySummary) {
           source.room.memory.energySummary.push({

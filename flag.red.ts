@@ -21,14 +21,21 @@ export default function behavior(flag: Flag) {
     Object.values(Game.constructionSites).length === 0
   ) {
     // 最寄りのspawn
-    const spawn = flag.pos.findClosestByPath(Object.values(Game.spawns), {
-      ignoreCreeps: true,
-    });
+    const spawn = _(Object.values(Game.spawns))
+      .sort((s) => Game.map.getRoomLinearDistance(flag.pos.roomName, s.pos.roomName))
+      .first();
 
     // 作らせる
     if (spawn && !spawn.spawning && spawn.room.energyAvailable > 650) {
       const { bodies, cost } = filterBodiesByCost("claimer", spawn.room.energyAvailable);
-      if (spawn.spawnCreep(bodies, `C_${flag.room?.name}_${flag.name}`) === OK) {
+      if (
+        spawn.spawnCreep(bodies, `C_${flag.pos.roomName}_${flag.name}`, {
+          memory: {
+            role: "claimer",
+            flagName: flag.name,
+          } as ClaimerMemory,
+        }) === OK
+      ) {
         flag.room?.memory.energySummary?.push({
           consumes: cost,
           production: 0,

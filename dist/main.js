@@ -29,7 +29,7 @@ module.exports.loop = function () {
     Object.values(Game.flags).map((f) => { var _a; return (_a = flags_1.default[f.color]) === null || _a === void 0 ? void 0 : _a.call(flags_1.default, f); });
     const spawnGroup = _.groupBy(Object.values(Game.spawns), (c) => c.room.name);
     const creepGroup = _.groupBy(Object.values(Game.creeps), (c) => c.room.name);
-    Object.entries(Game.rooms).forEach(([_roomName, room]) => {
+    Object.values(Game.rooms).forEach((room) => {
         var _a, _b;
         (0, role_room_1.roomBehavior)(room);
         (_a = spawnGroup[room.name]) === null || _a === void 0 ? void 0 : _a.map(role_spawn_1.default);

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const util_array_1 = require("./util.array");
 const util_creep_1 = require("./util.creep");
 const behavior = (creep) => {
     var _a, _b, _c;
@@ -12,17 +13,12 @@ const behavior = (creep) => {
     if (creep.store.energy < BUILD_POWER * creep.getActiveBodyparts(WORK)) {
         changeMode(creep, "🛒");
     }
-    const sites = _(Object.values(Game.constructionSites));
-    if (sites.size() === 0) {
-        return (creep.memory.role = "repairer");
-    }
-    const minRemaining = sites.map((s) => s.progressTotal - s.progress).min();
-    if (!(creep.memory.buildingId ||
-        (creep.memory.buildingId = (_a = (creep.pos.findClosestByRange(sites.filter((s) => s.structureType === STRUCTURE_CONTAINER).run()) ||
-            creep.pos.findClosestByRange(sites.filter((s) => s.progressTotal - s.progress <= minRemaining).run()))) === null || _a === void 0 ? void 0 : _a.id))) {
-        return (creep.memory.role = "repairer");
-    }
-    else {
+    if (creep.memory.buildingId ||
+        (creep.memory.buildingId = (_a = (0, util_array_1.complexOrder)(Object.values(Game.constructionSites), [
+            (s) => { var _a; return (((_a = s.room) === null || _a === void 0 ? void 0 : _a.name) === creep.room.name ? 0 : 1); },
+            (s) => (s.structureType === STRUCTURE_CONTAINER ? 0 : 1),
+            (s) => s.progressTotal - s.progress,
+        ]).first()) === null || _a === void 0 ? void 0 : _a.id)) {
         const site = Game.getObjectById(creep.memory.buildingId);
         if (site) {
             switch ((creep.memory.built = creep.build(site))) {
@@ -51,6 +47,9 @@ const behavior = (creep) => {
         else {
             creep.memory.buildingId = undefined;
         }
+    }
+    else {
+        return (creep.memory.role = "repairer");
     }
     if (creep.memory.storeId ||
         (creep.memory.storeId =
