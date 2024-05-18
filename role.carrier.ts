@@ -9,10 +9,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       ...opt,
     });
 
-  const logger = (..._args: Parameters<typeof console.log>) => {
-    // creep.name === "G_0" && console.log(Game.time, creep.name, ..._args);
-  };
-
   if (!isCarrier(creep)) {
     return console.log(`${creep.name} is not Carrier`);
   }
@@ -60,56 +56,35 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       .every((g) => g.memory.transferId !== id);
 
   if (!creep.memory.transferId) {
-    logger("search extension");
-    if (
-      (creep.memory.transferId = creep.pos.findClosestByRange([...extension, ...spawns], {
-        filter: (s: StructureSpawn | StructureExtension) => {
-          return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && exclusive(s);
-        },
-      })?.id)
-    ) {
-      logger("store to extension", creep.memory.transferId);
-    }
+    creep.memory.transferId = creep.pos.findClosestByRange([...extension, ...spawns], {
+      filter: (s: StructureSpawn | StructureExtension) => {
+        return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && exclusive(s);
+      },
+    })?.id;
   }
 
   if (!creep.memory.transferId) {
-    logger("search cache to storage");
-    if ((creep.memory.transferId = storage.find((s) => s.store.energy < s.room.energyCapacityAvailable)?.id)) {
-      logger("cache to storage", creep.memory.transferId);
-    }
+    creep.memory.transferId = storage.find((s) => s.store.energy < s.room.energyCapacityAvailable)?.id;
   }
 
   if (!creep.memory.transferId) {
-    logger("search tower");
-    if (
-      (creep.memory.transferId = creep.pos.findClosestByRange(tower, {
-        filter: (t: StructureTower) => {
-          return getCapacityRate(t) < 1 && exclusive(t);
-        },
-      })?.id)
-    ) {
-      logger("store to tower", creep.memory.transferId);
-    }
+    creep.memory.transferId = creep.pos.findClosestByRange(tower, {
+      filter: (t: StructureTower) => {
+        return getCapacityRate(t) < 1 && exclusive(t);
+      },
+    })?.id;
   }
 
   if (!creep.memory.transferId) {
-    logger("search controller contaeiner");
-    if ((creep.memory.transferId = (controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined)?.id)) {
-      logger("store to controller contaeiner", creep.memory.transferId);
-    }
+    creep.memory.transferId = (controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined)?.id;
   }
 
   if (!creep.memory.transferId) {
-    logger("search any storage");
-    if (
-      (creep.memory.transferId = spawn.pos.findClosestByRange([...link, ...storage, ...terminal, ...containers], {
-        filter: (s: StructureSpawn | StructureExtension) => {
-          return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
-        },
-      })?.id)
-    ) {
-      logger("cache to storage", creep.memory.transferId);
-    }
+    creep.memory.transferId = spawn.pos.findClosestByRange([...link, ...storage, ...terminal, ...containers], {
+      filter: (s: StructureSpawn | StructureExtension) => {
+        return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
+      },
+    })?.id;
   }
   // それでも見つからないとき
   if (!creep.memory.transferId) {
