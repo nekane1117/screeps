@@ -40,35 +40,6 @@ const behavior = (spawn: StructureSpawn) => {
     return spawned;
   }
 
-  // builderが不足しているとき
-  if (
-    sitesInRoom.length && // 建設がある
-    (creepsInRoom.builder || []).length <
-      Math.floor(
-        _(creepsInRoom.harvester || [])
-          .map((h) => h.getActiveBodyparts(WORK))
-          .sum() / 5,
-      ) &&
-    spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.6) // エネルギー余ってる
-  ) {
-    const { bodies, cost } = filterBodiesByCost("builder", spawn.room.energyAvailable);
-    const spawned = spawn.spawnCreep(bodies, `B_${spawn.room.name}_${Game.time}`, {
-      memory: {
-        role: "builder",
-        mode: "💪",
-        parentRoom: spawn.room.name,
-      } as BuilderMemory,
-    });
-    if (spawned === OK && spawn.room.memory.energySummary) {
-      spawn.room.memory.energySummary.push({
-        time: new Date().valueOf(),
-        consumes: cost,
-        production: 0,
-      });
-    }
-    return spawned;
-  }
-
   return OK;
 };
 
