@@ -74,13 +74,6 @@ exports.IDEAL_BODY = Object.freeze({
             .flatten()
             .run(),
     ],
-    distributer: [
-        ..._(_.range(25).map(() => {
-            return [MOVE, CARRY];
-        }))
-            .flatten()
-            .run(),
-    ],
     harvester: [
         WORK,
         MOVE,

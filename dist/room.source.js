@@ -2,9 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.behavior = void 0;
 const util_creep_1 = require("./util.creep");
-const utils_1 = require("./utils");
 function behavior(source) {
-    var _a, _b, _c;
+    var _a, _b;
     if (!((_b = (_a = source.room.memory) === null || _a === void 0 ? void 0 : _a.sources) === null || _b === void 0 ? void 0 : _b[source.id]) || Game.time % 100 === 0) {
         source.room.memory.sources = source.room.memory.sources || {};
         source.room.memory.sources[source.id] = initMemory(source);
@@ -42,36 +41,6 @@ function behavior(source) {
                     });
                 }
                 return spawned;
-            }
-        }
-    }
-    for (const n of _.range(source.pos.findInRange((0, utils_1.findMyStructures)(source.room).container, 3, { filter: (s) => (0, utils_1.getCapacityRate)(s) > 0 }).length)) {
-        const name = `D_${source.pos.x}_${source.pos.y}_${n}`;
-        const creeps = Game.creeps[name];
-        if (!creeps) {
-            const spawn = (0, util_creep_1.getMainSpawn)(source.room);
-            if (!spawn) {
-                return ERR_NOT_FOUND;
-            }
-            if (source.room.energyAvailable > 150) {
-                const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("distributer", source.room.energyAvailable);
-                if (spawn.spawnCreep(bodies, name, {
-                    memory: {
-                        mode: "🛒",
-                        role: "distributer",
-                        sourceId: source.id,
-                    },
-                }) == OK) {
-                    (_c = source.room.memory.energySummary) === null || _c === void 0 ? void 0 : _c.push({
-                        time: new Date().valueOf(),
-                        consumes: cost,
-                        production: 0,
-                    });
-                    return OK;
-                }
-            }
-            else {
-                return ERR_NOT_ENOUGH_ENERGY;
             }
         }
     }

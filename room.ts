@@ -28,7 +28,7 @@ export function roomBehavior(room: Room) {
       creeps[c.memory.role] = (creeps?.[c.memory.role] || []).concat(c);
       return creeps;
     },
-    { builder: [], claimer: [], distributer: [], gatherer: [], harvester: [], repairer: [], upgrader: [] } as Record<ROLES, Creep[]>,
+    { builder: [], claimer: [], gatherer: [], harvester: [], repairer: [], upgrader: [] } as Record<ROLES, Creep[]>,
   );
 
   const { link } = findMyStructures(room);

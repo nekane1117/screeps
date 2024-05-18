@@ -127,7 +127,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // withdraw
-  withdrawBy(creep, ["harvester", "distributer", "upgrader"]);
+  withdrawBy(creep, ["harvester", "upgrader"]);
 
   // 落っこちてるものを拾う
   pickUpAll(creep);

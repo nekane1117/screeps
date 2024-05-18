@@ -231,7 +231,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // 通りがかりに奪い取る
-  withdrawBy(creep, ["harvester", "distributer"]);
+  withdrawBy(creep, ["harvester"]);
 
   // 落っこちてるものを拾う
   pickUpAll(creep);

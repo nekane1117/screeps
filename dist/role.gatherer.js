@@ -172,7 +172,7 @@ const behavior = (creep) => {
             }
         }
     }
-    (0, util_creep_1.withdrawBy)(creep, ["harvester", "distributer"]);
+    (0, util_creep_1.withdrawBy)(creep, ["harvester"]);
     (0, util_creep_1.pickUpAll)(creep);
 };
 exports.default = behavior;

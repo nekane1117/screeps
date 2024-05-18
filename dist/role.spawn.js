@@ -89,7 +89,6 @@ const generateCreepName = (role) => {
         builder: "B",
         claimer: "C",
         gatherer: "G",
-        distributer: "D",
         harvester: "H",
         repairer: "R",
         upgrader: "U",
