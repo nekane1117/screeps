@@ -23,21 +23,21 @@ export function roomBehavior(room: Room) {
   // エクステンション建てる
   creteStructures(room);
 
-  const { gatherer: gatherers, harvester } = getCreepsInRoom(room).reduce(
+  const { carrier: carriers, harvester } = getCreepsInRoom(room).reduce(
     (creeps, c) => {
       creeps[c.memory.role] = (creeps?.[c.memory.role] || []).concat(c);
       return creeps;
     },
-    { builder: [], claimer: [], gatherer: [], harvester: [], repairer: [], upgrader: [] } as Record<ROLES, Creep[]>,
+    { builder: [], claimer: [], carrier: [], harvester: [], repairer: [], upgrader: [] } as Record<ROLES, Creep[]>,
   );
 
   const { link } = findMyStructures(room);
   linkBehavior(link);
 
-  const { bodies, cost } = filterBodiesByCost("gatherer", room.energyAvailable);
+  const { bodies, cost } = filterBodiesByCost("carrier", room.energyAvailable);
   if (
     harvester.length &&
-    gatherers.filter((g) => {
+    carriers.filter((g) => {
       return bodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
     }).length < 2
   ) {
@@ -49,8 +49,8 @@ export function roomBehavior(room: Room) {
         spawn.spawnCreep(bodies, name, {
           memory: {
             mode: "🛒",
-            role: "gatherer",
-          } as GathererMemory,
+            role: "carrier",
+          } as CarrierMemory,
         }) === OK
       ) {
         room.memory.energySummary?.push({

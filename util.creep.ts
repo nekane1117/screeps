@@ -73,7 +73,7 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       .run(),
   ],
   claimer: [CLAIM, MOVE],
-  gatherer: [
+  carrier: [
     ..._(
       _.range(25).map(() => {
         // あとはMoveとCarryの繰り返し

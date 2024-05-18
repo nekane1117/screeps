@@ -67,7 +67,7 @@ exports.IDEAL_BODY = Object.freeze({
             .run(),
     ],
     claimer: [CLAIM, MOVE],
-    gatherer: [
+    carrier: [
         ..._(_.range(25).map(() => {
             return [MOVE, CARRY];
         }))

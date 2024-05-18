@@ -101,7 +101,7 @@ const generateCreepName = (role: ROLES) => {
   const shortName: Record<ROLES, string> = {
     builder: "B",
     claimer: "C",
-    gatherer: "G",
+    carrier: "G",
     harvester: "H",
     repairer: "R",
     upgrader: "U",

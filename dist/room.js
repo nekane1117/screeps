@@ -20,15 +20,15 @@ function roomBehavior(room) {
         roadLayer(room);
     }
     creteStructures(room);
-    const { gatherer: gatherers, harvester } = (0, util_creep_1.getCreepsInRoom)(room).reduce((creeps, c) => {
+    const { carrier: carriers, harvester } = (0, util_creep_1.getCreepsInRoom)(room).reduce((creeps, c) => {
         creeps[c.memory.role] = ((creeps === null || creeps === void 0 ? void 0 : creeps[c.memory.role]) || []).concat(c);
         return creeps;
-    }, { builder: [], claimer: [], gatherer: [], harvester: [], repairer: [], upgrader: [] });
+    }, { builder: [], claimer: [], carrier: [], harvester: [], repairer: [], upgrader: [] });
     const { link } = (0, utils_1.findMyStructures)(room);
     (0, structure_links_1.default)(link);
-    const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("gatherer", room.energyAvailable);
+    const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("carrier", room.energyAvailable);
     if (harvester.length &&
-        gatherers.filter((g) => {
+        carriers.filter((g) => {
             return bodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
         }).length < 2) {
         const name = `G_${room.name}_${Game.time}`;
@@ -37,7 +37,7 @@ function roomBehavior(room) {
             if (spawn.spawnCreep(bodies, name, {
                 memory: {
                     mode: "🛒",
-                    role: "gatherer",
+                    role: "carrier",
                 },
             }) === OK) {
                 (_c = room.memory.energySummary) === null || _c === void 0 ? void 0 : _c.push({

@@ -7,12 +7,12 @@ const behavior = (creep) => {
     const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, 2) }, opt));
     const logger = (..._args) => {
     };
-    if (!isGatherer(creep)) {
-        return console.log(`${creep.name} is not Gatherer`);
+    if (!isCarrier(creep)) {
+        return console.log(`${creep.name} is not Carrier`);
     }
     function checkMode() {
-        if (!isGatherer(creep)) {
-            return console.log(`${creep.name} is not Gatherer`);
+        if (!isCarrier(creep)) {
+            return console.log(`${creep.name} is not Carrier`);
         }
         const newMode = creep.store.energy < CARRY_CAPACITY ? "🛒" : "💪";
         if (creep.memory.mode !== newMode) {
@@ -38,7 +38,7 @@ const behavior = (creep) => {
         }
     }
     const exclusive = ({ id }) => (0, util_creep_1.getCreepsInRoom)(creep.room)
-        .filter((c) => c.memory.role === "gatherer")
+        .filter((c) => c.memory.role === "carrier")
         .every((g) => g.memory.transferId !== id);
     if (!creep.memory.transferId) {
         logger("search extension");
@@ -176,6 +176,6 @@ const behavior = (creep) => {
     (0, util_creep_1.pickUpAll)(creep);
 };
 exports.default = behavior;
-function isGatherer(creep) {
-    return creep.memory.role === "gatherer";
+function isCarrier(creep) {
+    return creep.memory.role === "carrier";
 }

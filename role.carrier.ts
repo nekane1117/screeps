@@ -13,13 +13,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // creep.name === "G_0" && console.log(Game.time, creep.name, ..._args);
   };
 
-  if (!isGatherer(creep)) {
-    return console.log(`${creep.name} is not Gatherer`);
+  if (!isCarrier(creep)) {
+    return console.log(`${creep.name} is not Carrier`);
   }
 
   function checkMode() {
-    if (!isGatherer(creep)) {
-      return console.log(`${creep.name} is not Gatherer`);
+    if (!isCarrier(creep)) {
+      return console.log(`${creep.name} is not Carrier`);
     }
     const newMode = creep.store.energy < CARRY_CAPACITY ? "🛒" : "💪";
 
@@ -53,10 +53,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
-  // 他のgathererに設定されていない
+  // 他のcarrierに設定されていない
   const exclusive = ({ id }: _HasId) =>
     getCreepsInRoom(creep.room)
-      .filter((c): c is Gatherer => c.memory.role === "gatherer")
+      .filter((c): c is Carrier => c.memory.role === "carrier")
       .every((g) => g.memory.transferId !== id);
 
   if (!creep.memory.transferId) {
@@ -239,6 +239,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
 export default behavior;
 
-function isGatherer(creep: Creeps): creep is Gatherer {
-  return creep.memory.role === "gatherer";
+function isCarrier(creep: Creeps): creep is Carrier {
+  return creep.memory.role === "carrier";
 }
