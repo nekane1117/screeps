@@ -5,7 +5,7 @@ declare interface SourceMemory {
   positions: number;
 }
 
-declare type ROLES = "harvester" | "carrier" | "builder" | "repairer" | "upgrader" | "claimer";
+declare type ROLES = "harvester" | "carrier" | "builder" | "upgrader" | "claimer";
 declare interface CreepMemory {
   role: ROLES;
   // 担当作業の作業結果
@@ -147,24 +147,6 @@ declare interface CarrierMemory extends CreepMemory {
 
 declare interface Repairer extends Creep {
   memory: RepairerMemory;
-}
-
-declare interface Repairer extends Creep {
-  memory: RepairerMemory;
-}
-
-declare interface RepairerMemory extends CreepMemory {
-  role: "repairer";
-  /** 今何してるか
-   * working    : 作業中
-   * collecting : 資源取得中
-   */
-  mode: "💪" | "🛒";
-  /** 修理対象 */
-  workTargetId?: Id<Structure> | null;
-  /** 資源をもらいに行く先 */
-  storeId?: StoreTarget["id"] | null;
-  collected?: ScreepsReturnCode;
 }
 
 declare interface Claimer extends Creep {

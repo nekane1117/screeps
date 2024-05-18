@@ -63,9 +63,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       // 対象をクリア
       creep.memory.buildingId = undefined;
     }
-  } else {
-    // 修理屋になる
-    return ((creep as Creeps).memory.role = "repairer");
   }
 
   // withdraw

@@ -48,9 +48,6 @@ const behavior = (creep) => {
             creep.memory.buildingId = undefined;
         }
     }
-    else {
-        return (creep.memory.role = "repairer");
-    }
     if (creep.memory.storeId ||
         (creep.memory.storeId =
             creep.memory.buildingId &&

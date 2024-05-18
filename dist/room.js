@@ -23,7 +23,7 @@ function roomBehavior(room) {
     const { carrier: carriers, harvester } = (0, util_creep_1.getCreepsInRoom)(room).reduce((creeps, c) => {
         creeps[c.memory.role] = ((creeps === null || creeps === void 0 ? void 0 : creeps[c.memory.role]) || []).concat(c);
         return creeps;
-    }, { builder: [], claimer: [], carrier: [], harvester: [], repairer: [], upgrader: [] });
+    }, { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [] });
     const { link } = (0, utils_1.findMyStructures)(room);
     (0, structure_links_1.default)(link);
     const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("carrier", room.energyAvailable);

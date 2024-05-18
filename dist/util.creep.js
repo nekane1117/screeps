@@ -85,17 +85,6 @@ exports.IDEAL_BODY = Object.freeze({
         MOVE,
         MOVE,
     ],
-    repairer: [
-        WORK,
-        CARRY,
-        MOVE,
-        CARRY,
-        ..._(_.range(23).map(() => {
-            return [MOVE, CARRY];
-        }))
-            .flatten()
-            .run(),
-    ],
     upgrader: [CARRY, MOVE, ..._.range(5).map(() => WORK)],
 });
 exports.RETURN_CODE_DECODER = Object.freeze({

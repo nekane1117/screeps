@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { filterBodiesByCost, getCreepsInRoom } from "./util.creep";
-import { findMyStructures, getCapacityRate } from "./utils";
+import { getCapacityRate } from "./utils";
 
 const behavior = (spawn: StructureSpawn) => {
   if (Object.keys(Game.spawns)?.[0] === spawn.name) {
@@ -25,7 +25,7 @@ const behavior = (spawn: StructureSpawn) => {
     spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.8)
   ) {
     const { bodies, cost } = filterBodiesByCost("upgrader", spawn.room.energyAvailable);
-    const spawned = spawn.spawnCreep(bodies, generateCreepName("upgrader"), {
+    const spawned = spawn.spawnCreep(bodies, `U_${Game.time}`, {
       memory: {
         role: "upgrader",
       } as UpgraderMemory,
@@ -52,7 +52,7 @@ const behavior = (spawn: StructureSpawn) => {
     spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.6) // エネルギー余ってる
   ) {
     const { bodies, cost } = filterBodiesByCost("builder", spawn.room.energyAvailable);
-    const spawned = spawn.spawnCreep(bodies, generateCreepName("builder"), {
+    const spawned = spawn.spawnCreep(bodies, `B_${spawn.room.name}_${Game.time}`, {
       memory: {
         role: "builder",
         mode: "💪",
@@ -69,49 +69,7 @@ const behavior = (spawn: StructureSpawn) => {
     return spawned;
   }
 
-  // repairerが不足しているとき
-  if (
-    findMyStructures(spawn.room).all.filter((s) => {
-      return s.structureType !== STRUCTURE_WALL && s.structureType !== STRUCTURE_RAMPART && s.hits < s.hitsMax * 0.5;
-    }).length && // 半壊した建物がある
-    (creepsInRoom?.repairer || []).length < 1 &&
-    spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.9) // エネルギー余ってる
-  ) {
-    const { bodies, cost } = filterBodiesByCost("repairer", spawn.room.energyAvailable);
-    const spawned = spawn.spawnCreep(bodies, generateCreepName("repairer"), {
-      memory: {
-        role: "repairer",
-        mode: "💪",
-      } as RepairerMemory,
-    });
-    if (spawned === OK && spawn.room.memory.energySummary) {
-      spawn.room.memory.energySummary.push({
-        time: new Date().valueOf(),
-        consumes: cost,
-        production: 0,
-      });
-    }
-    return spawned;
-  }
-
   return OK;
-};
-
-const generateCreepName = (role: ROLES) => {
-  const shortName: Record<ROLES, string> = {
-    builder: "B",
-    claimer: "C",
-    carrier: "G",
-    harvester: "H",
-    repairer: "R",
-    upgrader: "U",
-  };
-
-  return (
-    _.range(100)
-      .map((i) => `${shortName[role]}_${i}`)
-      .find((name) => !Game.creeps[name]) || Game.time.toString()
-  );
 };
 
 export default behavior;

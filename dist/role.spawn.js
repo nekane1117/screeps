@@ -24,7 +24,7 @@ const behavior = (spawn) => {
         (creepsInRoom.upgrader || []).length < upgradeContainerRate / 0.9 &&
         spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.8)) {
         const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("upgrader", spawn.room.energyAvailable);
-        const spawned = spawn.spawnCreep(bodies, generateCreepName("upgrader"), {
+        const spawned = spawn.spawnCreep(bodies, `U_${Game.time}`, {
             memory: {
                 role: "upgrader",
             },
@@ -45,7 +45,7 @@ const behavior = (spawn) => {
                 .sum() / 5) &&
         spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.6)) {
         const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("builder", spawn.room.energyAvailable);
-        const spawned = spawn.spawnCreep(bodies, generateCreepName("builder"), {
+        const spawned = spawn.spawnCreep(bodies, `B_${spawn.room.name}_${Game.time}`, {
             memory: {
                 role: "builder",
                 mode: "💪",
@@ -61,40 +61,6 @@ const behavior = (spawn) => {
         }
         return spawned;
     }
-    if ((0, utils_1.findMyStructures)(spawn.room).all.filter((s) => {
-        return s.structureType !== STRUCTURE_WALL && s.structureType !== STRUCTURE_RAMPART && s.hits < s.hitsMax * 0.5;
-    }).length &&
-        ((creepsInRoom === null || creepsInRoom === void 0 ? void 0 : creepsInRoom.repairer) || []).length < 1 &&
-        spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.9)) {
-        const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("repairer", spawn.room.energyAvailable);
-        const spawned = spawn.spawnCreep(bodies, generateCreepName("repairer"), {
-            memory: {
-                role: "repairer",
-                mode: "💪",
-            },
-        });
-        if (spawned === OK && spawn.room.memory.energySummary) {
-            spawn.room.memory.energySummary.push({
-                time: new Date().valueOf(),
-                consumes: cost,
-                production: 0,
-            });
-        }
-        return spawned;
-    }
     return OK;
-};
-const generateCreepName = (role) => {
-    const shortName = {
-        builder: "B",
-        claimer: "C",
-        carrier: "G",
-        harvester: "H",
-        repairer: "R",
-        upgrader: "U",
-    };
-    return (lodash_1.default.range(100)
-        .map((i) => `${shortName[role]}_${i}`)
-        .find((name) => !Game.creeps[name]) || Game.time.toString());
 };
 exports.default = behavior;

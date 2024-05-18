@@ -96,22 +96,6 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
     MOVE,
     MOVE,
   ],
-  repairer: [
-    // 最小構成
-    WORK,
-    CARRY,
-    MOVE,
-    // 偶数にする
-    CARRY,
-    ..._(
-      _.range(23).map(() => {
-        // あとはMoveとCarryの繰り返し
-        return [MOVE, CARRY];
-      }),
-    )
-      .flatten<BodyPartConstant>()
-      .run(),
-  ],
   upgrader: [CARRY, MOVE, ..._.range(5).map(() => WORK)],
 });
 
