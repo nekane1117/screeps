@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getSpawnsInRoom, pickUpAll, stealBy } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getSpawnsInRoom, pickUpAll, withdrawBy } from "./util.creep";
 import { findMyStructures, getCapacityRate } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
@@ -231,7 +231,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // 通りがかりに奪い取る
-  stealBy(creep, ["harvester", "distributer"]);
+  withdrawBy(creep, ["harvester", "distributer"]);
 
   // 落っこちてるものを拾う
   pickUpAll(creep);

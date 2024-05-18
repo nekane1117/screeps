@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toColor = exports.stealBy = exports.pickUpAll = exports.getSpawnsInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getSpawnsInRoom = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -65,6 +65,7 @@ exports.IDEAL_BODY = Object.freeze({
             .flatten()
             .run(),
     ],
+    claimer: [CLAIM, MOVE],
     gatherer: [
         ..._(_.range(25).map(() => {
             return [MOVE, CARRY];
@@ -191,14 +192,14 @@ function pickUpAll(creep) {
     });
 }
 exports.pickUpAll = pickUpAll;
-function stealBy(creep, roles, type = RESOURCE_ENERGY) {
+function withdrawBy(creep, roles, type = RESOURCE_ENERGY) {
     return creep.pos
         .findInRange(FIND_MY_CREEPS, 1, {
         filter: (c) => roles.includes(c.memory.role),
     })
         .map((t) => t.transfer(creep, type));
 }
-exports.stealBy = stealBy;
+exports.withdrawBy = withdrawBy;
 function toColor({ id }) {
     return `#${id.slice(-6)}`;
 }

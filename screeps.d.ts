@@ -9,7 +9,7 @@ declare interface SourceMemory {
   positions: number;
 }
 
-declare type ROLES = "harvester" | "gatherer" | "builder" | "repairer" | "upgrader" | "distributer";
+declare type ROLES = "harvester" | "gatherer" | "builder" | "repairer" | "upgrader" | "distributer" | "claimer";
 declare interface CreepMemory {
   role: ROLES;
   // 担当作業の作業結果
@@ -25,7 +25,7 @@ declare interface CreepMemory {
 }
 
 /** 全部のCreepの型 */
-declare type Creeps = Creep | Harvester | Upgrader | Builder | Gatherer | Repairer;
+declare type Creeps = Creep | Harvester | Upgrader | Builder | Gatherer | Repairer | Claimer;
 
 declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink;
 
@@ -188,4 +188,13 @@ declare interface RepairerMemory extends CreepMemory {
   /** 資源をもらいに行く先 */
   storeId?: StoreTarget["id"] | null;
   collected?: ScreepsReturnCode;
+}
+
+declare interface Claimer extends Creep {
+  memory: ClaimerMemory;
+}
+
+declare interface ClaimerMemory extends CreepMemory {
+  role: "claimer";
+  flagName: string;
 }

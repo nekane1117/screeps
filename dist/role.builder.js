@@ -59,6 +59,7 @@ const behavior = (creep) => {
                     filter: (s) => {
                         return (s.structureType !== STRUCTURE_SPAWN &&
                             (0, util_creep_1.isStoreTarget)(s) &&
+                            s.structureType !== STRUCTURE_LINK &&
                             (s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9 ? true : s.structureType !== STRUCTURE_EXTENSION) &&
                             s.store.energy > 0);
                     },
@@ -99,7 +100,7 @@ const behavior = (creep) => {
             }
         }
     }
-    (0, util_creep_1.stealBy)(creep, ["harvester", "distributer", "upgrader"]);
+    (0, util_creep_1.withdrawBy)(creep, ["harvester", "distributer", "upgrader"]);
     (0, util_creep_1.pickUpAll)(creep);
 };
 exports.default = behavior;

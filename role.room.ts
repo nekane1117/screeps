@@ -23,17 +23,19 @@ export function roomBehavior(room: Room) {
   // エクステンション建てる
   creteStructures(room);
 
-  const gatherers = getCreepsInRoom(room).filter((c) => c.memory.role === "gatherer");
+  const { gatherer: gatherers, harvester } = getCreepsInRoom(room).reduce(
+    (creeps, c) => {
+      creeps[c.memory.role] = (creeps?.[c.memory.role] || []).concat(c);
+      return creeps;
+    },
+    { builder: [], claimer: [], distributer: [], gatherer: [], harvester: [], repairer: [], upgrader: [] } as Record<ROLES, Creep[]>,
+  );
 
   const { link } = findMyStructures(room);
   linkBehavior(link);
 
-  _.range(2).map((n) => {
-    const name = `G_${n}`;
-    if (gatherers.some((g) => g.name === name)) {
-      // 居るときは無視
-      return;
-    }
+  if (harvester.length && gatherers.length < 2) {
+    const name = `G_${room.name}_${Game.time}`;
 
     const spawn = getSpawnsInRoom(room).find((r) => !r.spawning);
     if (spawn && room.energyAvailable > 200) {
@@ -54,7 +56,7 @@ export function roomBehavior(room: Room) {
       }
       return OK;
     }
-  });
+  }
 }
 
 /** 部屋ごとの色々を建てる */

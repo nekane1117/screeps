@@ -70,6 +70,7 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       .flatten<BodyPartConstant>()
       .run(),
   ],
+  claimer: [CLAIM, MOVE],
   gatherer: [
     ..._(
       _.range(25).map(() => {
@@ -231,7 +232,7 @@ export function pickUpAll(creep: Creep) {
 /**
  * 通りがかりのcreepから奪い取る
  */
-export function stealBy(creep: Creep, roles: ROLES[], type: ResourceConstant = RESOURCE_ENERGY) {
+export function withdrawBy(creep: Creep, roles: ROLES[], type: ResourceConstant = RESOURCE_ENERGY) {
   return creep.pos
     .findInRange(FIND_MY_CREEPS, 1, {
       filter: (c) => roles.includes(c.memory.role),

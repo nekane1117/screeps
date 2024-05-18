@@ -9,7 +9,7 @@ const util_creep_1 = require("./util.creep");
 const structure_links_1 = __importDefault(require("./structure.links"));
 const utils_1 = require("./utils");
 function roomBehavior(room) {
-    var _a, _b;
+    var _a, _b, _c;
     if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) === null || _a === void 0 ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
         (_b = room.controller) === null || _b === void 0 ? void 0 : _b.activateSafeMode();
     }
@@ -20,15 +20,14 @@ function roomBehavior(room) {
         roadLayer(room);
     }
     creteStructures(room);
-    const gatherers = (0, util_creep_1.getCreepsInRoom)(room).filter((c) => c.memory.role === "gatherer");
+    const { gatherer: gatherers, harvester } = (0, util_creep_1.getCreepsInRoom)(room).reduce((creeps, c) => {
+        creeps[c.memory.role] = ((creeps === null || creeps === void 0 ? void 0 : creeps[c.memory.role]) || []).concat(c);
+        return creeps;
+    }, { builder: [], claimer: [], distributer: [], gatherer: [], harvester: [], repairer: [], upgrader: [] });
     const { link } = (0, utils_1.findMyStructures)(room);
     (0, structure_links_1.default)(link);
-    _.range(2).map((n) => {
-        var _a;
-        const name = `G_${n}`;
-        if (gatherers.some((g) => g.name === name)) {
-            return;
-        }
+    if (harvester.length && gatherers.length < 2) {
+        const name = `G_${room.name}_${Game.time}`;
         const spawn = (0, util_creep_1.getSpawnsInRoom)(room).find((r) => !r.spawning);
         if (spawn && room.energyAvailable > 200) {
             const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("gatherer", room.energyAvailable);
@@ -38,7 +37,7 @@ function roomBehavior(room) {
                     role: "gatherer",
                 },
             }) === OK) {
-                (_a = room.memory.energySummary) === null || _a === void 0 ? void 0 : _a.push({
+                (_c = room.memory.energySummary) === null || _c === void 0 ? void 0 : _c.push({
                     time: new Date().valueOf(),
                     consumes: cost,
                     production: 0,
@@ -46,7 +45,7 @@ function roomBehavior(room) {
             }
             return OK;
         }
-    });
+    }
 }
 exports.roomBehavior = roomBehavior;
 function creteStructures(room) {

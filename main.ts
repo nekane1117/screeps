@@ -1,3 +1,4 @@
+import flags from "./flags";
 import { roomBehavior } from "./role.room";
 import spawnBehavior from "./role.spawn";
 import { behaviors } from "./roles";
@@ -25,7 +26,8 @@ module.exports.loop = function () {
 
   Memory.sources = Memory.sources || {};
 
-  // Room -> Spawn -> Container -> Creep
+  // Flag -> Room -> Spawn -> Container -> Creep
+  Object.values(Game.flags).map((f) => flags[f.color]?.(f));
   const spawnGroup = _.groupBy(Object.values(Game.spawns), (c) => c.room.name);
   const creepGroup = _.groupBy(Object.values(Game.creeps), (c) => c.room.name);
 

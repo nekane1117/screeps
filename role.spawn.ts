@@ -45,11 +45,9 @@ const behavior = (spawn: StructureSpawn) => {
     sitesInRoom.length && // 建設がある
     (creepsInRoom.builder || []).length <
       Math.floor(
-        (_(creepsInRoom.harvester || [])
+        _(creepsInRoom.harvester || [])
           .map((h) => h.getActiveBodyparts(WORK))
-          .sum() -
-          1) /
-          5,
+          .sum() / 5,
       ) &&
     spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.6) // エネルギー余ってる
   ) {
@@ -101,6 +99,7 @@ const behavior = (spawn: StructureSpawn) => {
 const generateCreepName = (role: ROLES) => {
   const shortName: Record<ROLES, string> = {
     builder: "B",
+    claimer: "C",
     gatherer: "G",
     distributer: "D",
     harvester: "H",

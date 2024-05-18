@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll, stealBy } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll, withdrawBy } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isBuilder(creep)) {
@@ -84,6 +84,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           return (
             s.structureType !== STRUCTURE_SPAWN &&
             isStoreTarget(s) &&
+            s.structureType !== STRUCTURE_LINK &&
             (s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9 ? true : s.structureType !== STRUCTURE_EXTENSION) &&
             s.store.energy > 0
           );
@@ -132,7 +133,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // withdraw
-  stealBy(creep, ["harvester", "distributer", "upgrader"]);
+  withdrawBy(creep, ["harvester", "distributer", "upgrader"]);
 
   // 落っこちてるものを拾う
   pickUpAll(creep);
