@@ -4,11 +4,12 @@ exports.behavior = void 0;
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 function behavior(source) {
-    var _a;
-    if (!Memory.sources[source.id] || Game.time % 100 === 0) {
-        Memory.sources[source.id] = initMemory(source);
+    var _a, _b, _c;
+    if (!((_b = (_a = source.room.memory) === null || _a === void 0 ? void 0 : _a.sources) === null || _b === void 0 ? void 0 : _b[source.id]) || Game.time % 100 === 0) {
+        source.room.memory.sources = source.room.memory.sources || {};
+        source.room.memory.sources[source.id] = initMemory(source);
     }
-    const memory = _.cloneDeep(Memory.sources[source.id]);
+    const memory = _.cloneDeep(source.room.memory.sources[source.id]);
     const harvesters = _((0, util_creep_1.getCreepsInRoom)(source.room).filter((c) => {
         const isH = (c) => {
             return c.memory.role === "harvester";
@@ -61,7 +62,7 @@ function behavior(source) {
                         sourceId: source.id,
                     },
                 }) == OK) {
-                    (_a = source.room.memory.energySummary) === null || _a === void 0 ? void 0 : _a.push({
+                    (_c = source.room.memory.energySummary) === null || _c === void 0 ? void 0 : _c.push({
                         time: new Date().valueOf(),
                         consumes: cost,
                         production: 0,

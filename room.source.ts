@@ -4,11 +4,12 @@ import { findMyStructures, getCapacityRate } from "./utils";
 export function behavior(source: Source) {
   // メモリを初期化する
   // 適当に100ティックごとに再確認する
-  if (!Memory.sources[source.id] || Game.time % 100 === 0) {
-    Memory.sources[source.id] = initMemory(source);
+  if (!source.room.memory?.sources?.[source.id] || Game.time % 100 === 0) {
+    source.room.memory.sources = source.room.memory.sources || {};
+    source.room.memory.sources[source.id] = initMemory(source);
   }
 
-  const memory = _.cloneDeep(Memory.sources[source.id]) as Readonly<SourceMemory>;
+  const memory = _.cloneDeep(source.room.memory.sources[source.id]) as Readonly<SourceMemory>;
 
   // 自分用のharvesterのlodash wrapper
   const harvesters = _(

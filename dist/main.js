@@ -13,19 +13,18 @@ module.exports.loop = function () {
     if (Game.cpu.bucket === 10000) {
         Game.cpu.generatePixel();
     }
-    Object.keys(Memory.creeps || {}).forEach((name) => {
+    Object.keys(Memory.creeps).forEach((name) => {
         if (!Game.creeps[name]) {
             delete Memory.creeps[name];
             console.log("Clearing non-existing creep memory:", name);
         }
     });
-    Object.keys(Memory.rooms || {}).forEach((name) => {
+    Object.keys(Memory.rooms).forEach((name) => {
         if (!Game.rooms[name]) {
             delete Memory.rooms[name];
             console.log("Clearing non-existing rooms memory:", name);
         }
     });
-    Memory.sources = Memory.sources || {};
     Object.values(Game.flags).map((f) => { var _a; return (_a = flags_1.default[f.color]) === null || _a === void 0 ? void 0 : _a.call(flags_1.default, f); });
     const spawnGroup = _.groupBy(Object.values(Game.spawns), (c) => c.room.name);
     const creepGroup = _.groupBy(Object.values(Game.creeps), (c) => c.room.name);

@@ -10,21 +10,19 @@ module.exports.loop = function () {
     Game.cpu.generatePixel();
   }
   //死んだcreepは削除する
-  Object.keys(Memory.creeps || {}).forEach((name) => {
+  Object.keys(Memory.creeps).forEach((name) => {
     if (!Game.creeps[name]) {
       delete Memory.creeps[name];
       console.log("Clearing non-existing creep memory:", name);
     }
   });
 
-  Object.keys(Memory.rooms || {}).forEach((name) => {
+  Object.keys(Memory.rooms).forEach((name) => {
     if (!Game.rooms[name]) {
       delete Memory.rooms[name];
       console.log("Clearing non-existing rooms memory:", name);
     }
   });
-
-  Memory.sources = Memory.sources || {};
 
   // Flag -> Room -> Spawn -> Container -> Creep
   Object.values(Game.flags).map((f) => flags[f.color]?.(f));
