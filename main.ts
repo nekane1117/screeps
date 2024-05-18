@@ -1,5 +1,5 @@
 import flags from "./flags";
-import { roomBehavior } from "./role.room";
+import { roomBehavior } from "./room";
 import spawnBehavior from "./role.spawn";
 import { behaviors } from "./roles";
 import structures from "./structures";

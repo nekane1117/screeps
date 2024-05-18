@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getSpawnsInRoom = exports.getSpawnsOrderByRange = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getMainSpawn = exports.getSpawnsOrderByRange = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
 const util_array_1 = require("./util.array");
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
@@ -178,27 +178,13 @@ function getSpawnsOrderByRange(pos) {
     ]);
 }
 exports.getSpawnsOrderByRange = getSpawnsOrderByRange;
-function getSpawnsInRoom(room) {
-    return _((() => {
-        var _a;
-        if (((_a = room.memory.spawns) === null || _a === void 0 ? void 0 : _a.tick) === Game.time) {
-            return room.memory.spawns.names;
-        }
-        else {
-            room.memory.spawns = {
-                tick: Game.time,
-                names: Object.entries(Game.spawns)
-                    .filter(([_, spawns]) => spawns.room.name === room.name)
-                    .map((entry) => entry[0]),
-            };
-            return room.memory.spawns.names;
-        }
-    })())
-        .map((name) => Game.spawns[name])
-        .compact()
-        .run();
+function getMainSpawn(room) {
+    var _a;
+    return (((room.memory.mainSpawn = room.memory.mainSpawn || ((_a = _(Object.values(Game.spawns).filter((s) => s.room.name === room.name)).first()) === null || _a === void 0 ? void 0 : _a.id)) &&
+        Game.getObjectById(room.memory.mainSpawn)) ||
+        undefined);
 }
-exports.getSpawnsInRoom = getSpawnsInRoom;
+exports.getMainSpawn = getMainSpawn;
 function pickUpAll(creep) {
     creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1).forEach((resource) => {
         creep.pickup(resource);

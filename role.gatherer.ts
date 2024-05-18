@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getSpawnsInRoom, pickUpAll, withdrawBy } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, pickUpAll, withdrawBy } from "./util.creep";
 import { findMyStructures, getCapacityRate } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
@@ -33,7 +33,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
   checkMode();
-  const spawn = _(getSpawnsInRoom(creep.room)).first();
+  const spawn = getMainSpawn(creep.room);
 
   if (!spawn) {
     return ERR_NOT_FOUND;

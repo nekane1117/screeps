@@ -1,10 +1,10 @@
-import { getSpawnsInRoom } from "./util.creep";
+import { getMainSpawn } from "./util.creep";
 import { getCapacityRate } from "./utils";
 
 export default function behavior(links: StructureLink[]) {
   const spawn = (() => {
     const room = _.first(links)?.room;
-    return room && _.first(getSpawnsInRoom(room));
+    return room && getMainSpawn(room);
   })();
 
   if (!spawn) {

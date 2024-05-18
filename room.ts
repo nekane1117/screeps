@@ -1,5 +1,5 @@
-import { behavior } from "./source";
-import { filterBodiesByCost, getCreepsInRoom, getSpawnsInRoom } from "./util.creep";
+import { behavior } from "./room.source";
+import { filterBodiesByCost, getCreepsInRoom, getMainSpawn } from "./util.creep";
 import linkBehavior from "./structure.links";
 import { findMyStructures } from "./utils";
 
@@ -43,8 +43,8 @@ export function roomBehavior(room: Room) {
   ) {
     const name = `G_${room.name}_${Game.time}`;
 
-    const spawn = getSpawnsInRoom(room).find((r) => !r.spawning);
-    if (spawn && room.energyAvailable > 200) {
+    const spawn = getMainSpawn(room);
+    if (spawn && !spawn.spawning && room.energyAvailable > 200) {
       if (
         spawn.spawnCreep(bodies, name, {
           memory: {
@@ -218,27 +218,13 @@ const generateCross = (dx: number, dy: number): boolean => {
 
 // 全てのspawnからsourceまでの道を引く
 function roadLayer(room: Room) {
-  _(getSpawnsInRoom(room))
+  _(Object.values(Game.spawns).filter((s) => s.room.name === room.name))
     .forEach((spawn) => {
       const findCustomPath = (s: Source | StructureSpawn) =>
         spawn.pos.findPathTo(s, {
           ignoreCreeps: true,
-          plainCost: 1, // 道よりいくらか低い
-          swampCost: 1, // これから道を引くのでplainと同じ
-          costCallback(roomName, costMatrix) {
-            const room = Game.rooms[roomName];
-            _.range(50).forEach((x) => {
-              _.range(50).forEach((y) => {
-                const pos = room.getPositionAt(x, y);
-                if (!pos) {
-                  return;
-                } else if (pos.look().some((s) => "structureType" in s && s.structureType === STRUCTURE_ROAD)) {
-                  // 道がある or 道を引く場合道よりほんの少し高くする
-                  costMatrix.set(x, y, 2);
-                }
-              });
-            });
-          },
+          plainCost: 0.5, // 道よりいくらか低い
+          swampCost: 0.5, // これから道を引くのでplainと同じ
         });
 
       return (

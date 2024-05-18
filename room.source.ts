@@ -1,4 +1,4 @@
-import { filterBodiesByCost, getCreepsInRoom, getSpawnsInRoom, squareDiff } from "./util.creep";
+import { filterBodiesByCost, getCreepsInRoom, getMainSpawn, squareDiff } from "./util.creep";
 import { findMyStructures, getCapacityRate } from "./utils";
 
 export function behavior(source: Source) {
@@ -26,13 +26,11 @@ export function behavior(source: Source) {
     // 自分用のWORKが5個以下の時
     if (source.room.energyAvailable > 200) {
       for (const n of _.range(memory.positions)) {
-        const name = `H_${source.pos.x}_${source.pos.y}_${n}`;
+        const name = `H_${source.id}_${n}`;
         if (Game.creeps[name]) {
           continue;
         }
-        const spawn = _(getSpawnsInRoom(source.room))
-          .filter((s) => !s.spawning)
-          .first();
+        const spawn = getMainSpawn(source.room);
         if (!spawn) {
           return ERR_NOT_FOUND;
         }
@@ -65,9 +63,7 @@ export function behavior(source: Source) {
 
     // 居なければ作る
     if (!creeps) {
-      const spawn = _(getSpawnsInRoom(source.room))
-        .filter((s) => !s.spawning)
-        .first();
+      const spawn = getMainSpawn(source.room);
       if (!spawn) {
         return ERR_NOT_FOUND;
       }

@@ -6,7 +6,7 @@ function behavior(links) {
     const spawn = (() => {
         var _a;
         const room = (_a = _.first(links)) === null || _a === void 0 ? void 0 : _a.room;
-        return room && _.first((0, util_creep_1.getSpawnsInRoom)(room));
+        return room && (0, util_creep_1.getMainSpawn)(room);
     })();
     if (!spawn) {
         return ERR_NOT_FOUND;

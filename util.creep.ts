@@ -214,25 +214,12 @@ export function getSpawnsOrderByRange(pos: RoomPosition | _HasRoomPosition) {
   ]);
 }
 
-export function getSpawnsInRoom(room: Room) {
-  return _(
-    (() => {
-      if (room.memory.spawns?.tick === Game.time) {
-        return room.memory.spawns.names;
-      } else {
-        room.memory.spawns = {
-          tick: Game.time,
-          names: Object.entries(Game.spawns)
-            .filter(([_, spawns]) => spawns.room.name === room.name)
-            .map((entry) => entry[0]),
-        };
-        return room.memory.spawns.names;
-      }
-    })(),
-  )
-    .map((name) => Game.spawns[name])
-    .compact()
-    .run();
+export function getMainSpawn(room: Room) {
+  return (
+    ((room.memory.mainSpawn = room.memory.mainSpawn || _(Object.values(Game.spawns).filter((s) => s.room.name === room.name)).first()?.id) &&
+      Game.getObjectById(room.memory.mainSpawn)) ||
+    undefined
+  );
 }
 
 export function pickUpAll(creep: Creep) {

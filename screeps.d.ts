@@ -78,10 +78,9 @@ declare interface RoomMemory {
     tick: number;
     names: string[];
   };
-  spawns?: {
-    tick: number;
-    names: string[];
-  };
+
+  mainSpawn?: Id<StructureSpawn>;
+
   roadLayed: number;
 
   find: {

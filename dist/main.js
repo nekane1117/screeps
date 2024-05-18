@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const flags_1 = __importDefault(require("./flags"));
-const role_room_1 = require("./role.room");
+const room_1 = require("./room");
 const role_spawn_1 = __importDefault(require("./role.spawn"));
 const roles_1 = require("./roles");
 const structures_1 = __importDefault(require("./structures"));
@@ -31,7 +31,7 @@ module.exports.loop = function () {
     const creepGroup = _.groupBy(Object.values(Game.creeps), (c) => c.room.name);
     Object.values(Game.rooms).forEach((room) => {
         var _a, _b;
-        (0, role_room_1.roomBehavior)(room);
+        (0, room_1.roomBehavior)(room);
         (_a = spawnGroup[room.name]) === null || _a === void 0 ? void 0 : _a.map(role_spawn_1.default);
         (0, utils_1.findMyStructures)(room).all.map((s) => { var _a; return (_a = structures_1.default[s.structureType]) === null || _a === void 0 ? void 0 : _a.call(structures_1.default, s); });
         (_b = creepGroup[room.name]) === null || _b === void 0 ? void 0 : _b.map((c) => {

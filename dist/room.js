@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.roomBehavior = void 0;
-const source_1 = require("./source");
+const room_source_1 = require("./room.source");
 const util_creep_1 = require("./util.creep");
 const structure_links_1 = __importDefault(require("./structure.links"));
 const utils_1 = require("./utils");
@@ -14,7 +14,7 @@ function roomBehavior(room) {
         (_b = room.controller) === null || _b === void 0 ? void 0 : _b.activateSafeMode();
     }
     initMemory(room);
-    room.find(FIND_SOURCES).map((source) => (0, source_1.behavior)(source));
+    room.find(FIND_SOURCES).map((source) => (0, room_source_1.behavior)(source));
     if (!room.memory.roadLayed || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
         console.log("roadLayer in " + Game.time);
         roadLayer(room);
@@ -32,8 +32,8 @@ function roomBehavior(room) {
             return bodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
         }).length < 2) {
         const name = `G_${room.name}_${Game.time}`;
-        const spawn = (0, util_creep_1.getSpawnsInRoom)(room).find((r) => !r.spawning);
-        if (spawn && room.energyAvailable > 200) {
+        const spawn = (0, util_creep_1.getMainSpawn)(room);
+        if (spawn && !spawn.spawning && room.energyAvailable > 200) {
             if (spawn.spawnCreep(bodies, name, {
                 memory: {
                     mode: "🛒",
@@ -163,26 +163,12 @@ const generateCross = (dx, dy) => {
     }
 };
 function roadLayer(room) {
-    _((0, util_creep_1.getSpawnsInRoom)(room))
+    _(Object.values(Game.spawns).filter((s) => s.room.name === room.name))
         .forEach((spawn) => {
         const findCustomPath = (s) => spawn.pos.findPathTo(s, {
             ignoreCreeps: true,
-            plainCost: 1,
-            swampCost: 1,
-            costCallback(roomName, costMatrix) {
-                const room = Game.rooms[roomName];
-                _.range(50).forEach((x) => {
-                    _.range(50).forEach((y) => {
-                        const pos = room.getPositionAt(x, y);
-                        if (!pos) {
-                            return;
-                        }
-                        else if (pos.look().some((s) => "structureType" in s && s.structureType === STRUCTURE_ROAD)) {
-                            costMatrix.set(x, y, 2);
-                        }
-                    });
-                });
-            },
+            plainCost: 0.5,
+            swampCost: 0.5,
         });
         return (_([
             ...room.find(FIND_SOURCES),

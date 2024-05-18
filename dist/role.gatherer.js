@@ -25,7 +25,7 @@ const behavior = (creep) => {
         }
     }
     checkMode();
-    const spawn = _((0, util_creep_1.getSpawnsInRoom)(creep.room)).first();
+    const spawn = (0, util_creep_1.getMainSpawn)(creep.room);
     if (!spawn) {
         return ERR_NOT_FOUND;
     }

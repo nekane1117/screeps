@@ -18,13 +18,11 @@ function behavior(source) {
     if (harvesters.size() < memory.positions && harvesters.map((c) => c.getActiveBodyparts(WORK)).sum() < 5) {
         if (source.room.energyAvailable > 200) {
             for (const n of _.range(memory.positions)) {
-                const name = `H_${source.pos.x}_${source.pos.y}_${n}`;
+                const name = `H_${source.id}_${n}`;
                 if (Game.creeps[name]) {
                     continue;
                 }
-                const spawn = _((0, util_creep_1.getSpawnsInRoom)(source.room))
-                    .filter((s) => !s.spawning)
-                    .first();
+                const spawn = (0, util_creep_1.getMainSpawn)(source.room);
                 if (!spawn) {
                     return ERR_NOT_FOUND;
                 }
@@ -50,9 +48,7 @@ function behavior(source) {
         const name = `D_${source.pos.x}_${source.pos.y}_${n}`;
         const creeps = Game.creeps[name];
         if (!creeps) {
-            const spawn = _((0, util_creep_1.getSpawnsInRoom)(source.room))
-                .filter((s) => !s.spawning)
-                .first();
+            const spawn = (0, util_creep_1.getMainSpawn)(source.room);
             if (!spawn) {
                 return ERR_NOT_FOUND;
             }
