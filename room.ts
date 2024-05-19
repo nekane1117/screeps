@@ -39,10 +39,9 @@ export function roomBehavior(room: Room) {
     harvester.length &&
     carriers.filter((g) => {
       return bodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
-    }).length <
-      Object.keys(room.memory.sources).length * 2
+    }).length < Object.keys(room.memory.sources).length
   ) {
-    const name = `G_${room.name}_${Game.time}`;
+    const name = `C_${room.name}_${Game.time}`;
 
     const spawn = getMainSpawn(room);
     if (spawn && !spawn.spawning && room.energyAvailable > 200) {

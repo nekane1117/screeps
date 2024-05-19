@@ -39,6 +39,9 @@ module.exports.loop = function () {
                 return;
             }
             c.memory.moved = undefined;
+            c.room.visual.text(c.name[0], c.pos.x, c.pos.y, {
+                color: `#${c.id.slice(-6)}`,
+            });
             return (_a = roles_1.behaviors[c.memory.role]) === null || _a === void 0 ? void 0 : _a.call(roles_1.behaviors, c);
         });
     });

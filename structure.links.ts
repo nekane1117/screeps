@@ -1,6 +1,4 @@
 import { getMainSpawn } from "./util.creep";
-import { getCapacityRate } from "./utils";
-
 export default function behavior(links: StructureLink[]) {
   const spawn = (() => {
     const room = _.first(links)?.room;
@@ -15,14 +13,14 @@ export default function behavior(links: StructureLink[]) {
   if (!extracter) {
     return ERR_NOT_FOUND;
   }
-  if (getCapacityRate(extracter) > 0.5) {
-    return ERR_FULL;
-  }
-  return links.map((link) => {
-    if (getCapacityRate(link) > 0.9) {
-      return link.transferEnergy(extracter);
-    } else {
-      return ERR_NOT_ENOUGH_ENERGY;
-    }
-  });
+  return links
+    .filter((l) => l.id !== extracter.id)
+    .map((link) => {
+      const amount = _.floor(Math.min(extracter.store.getFreeCapacity(RESOURCE_ENERGY), link.store.energy), -2);
+      if (amount > 0) {
+        return link.transferEnergy(extracter, amount);
+      } else {
+        return ERR_NOT_ENOUGH_ENERGY;
+      }
+    });
 }

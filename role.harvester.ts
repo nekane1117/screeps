@@ -76,11 +76,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   });
 
+  // 優先度一番低いエネルギーがあるやつ
   const extractor = structures.filter((s) => s.store.energy).last();
   // 空きのある最初のやつ
   const store = structures.filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY)).first();
 
-  if (extractor) {
+  if (extractor && extractor !== store) {
     creep.withdraw(extractor, RESOURCE_ENERGY);
   }
   if (store) {

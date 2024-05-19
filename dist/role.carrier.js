@@ -42,7 +42,11 @@ const behavior = (creep) => {
         })() ||
             creep.pos.findClosestByRange(_.compact([...storage, ...terminal, ...containers]), {
                 filter: (s) => {
-                    return (controllerContaeiner === null || controllerContaeiner === void 0 ? void 0 : controllerContaeiner.id) !== s.id && s.store.energy >= CARRY_CAPACITY;
+                    return ((controllerContaeiner === null || controllerContaeiner === void 0 ? void 0 : controllerContaeiner.id) !== s.id &&
+                        s.store.energy >= CARRY_CAPACITY &&
+                        (s.structureType !== STRUCTURE_STORAGE ||
+                            s.store.energy > s.room.energyCapacityAvailable ||
+                            s.room.energyAvailable < s.room.energyCapacityAvailable));
                 },
             }))) === null || _b === void 0 ? void 0 : _b.id;
     }

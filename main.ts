@@ -43,6 +43,9 @@ module.exports.loop = function () {
         return;
       }
       c.memory.moved = undefined;
+      c.room.visual.text(c.name[0], c.pos.x, c.pos.y, {
+        color: `#${c.id.slice(-6)}`,
+      });
       return behaviors[c.memory.role]?.(c);
     });
   });

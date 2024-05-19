@@ -30,9 +30,8 @@ function roomBehavior(room) {
     if (harvester.length &&
         carriers.filter((g) => {
             return bodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
-        }).length <
-            Object.keys(room.memory.sources).length * 2) {
-        const name = `G_${room.name}_${Game.time}`;
+        }).length < Object.keys(room.memory.sources).length) {
+        const name = `C_${room.name}_${Game.time}`;
         const spawn = (0, util_creep_1.getMainSpawn)(room);
         if (spawn && !spawn.spawning && room.energyAvailable > 200) {
             if (spawn.spawnCreep(bodies, name, {

@@ -57,8 +57,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         return extructor && extructor.store.energy >= CARRY_CAPACITY ? extructor : undefined;
       })() ||
       creep.pos.findClosestByRange(_.compact([...storage, ...terminal, ...containers]), {
-        filter: (s: StructureSpawn | StructureExtension | StructureContainer) => {
-          return controllerContaeiner?.id !== s.id && s.store.energy >= CARRY_CAPACITY;
+        filter: (s: StructureSpawn | StructureExtension | StructureContainer | StructureStorage) => {
+          return (
+            controllerContaeiner?.id !== s.id &&
+            s.store.energy >= CARRY_CAPACITY &&
+            (s.structureType !== STRUCTURE_STORAGE ||
+              s.store.energy > s.room.energyCapacityAvailable ||
+              s.room.energyAvailable < s.room.energyCapacityAvailable)
+          );
         },
       })
     )?.id;

@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
-const utils_1 = require("./utils");
 function behavior(links) {
     const spawn = (() => {
         var _a;
@@ -15,12 +14,12 @@ function behavior(links) {
     if (!extracter) {
         return ERR_NOT_FOUND;
     }
-    if ((0, utils_1.getCapacityRate)(extracter) > 0.5) {
-        return ERR_FULL;
-    }
-    return links.map((link) => {
-        if ((0, utils_1.getCapacityRate)(link) > 0.9) {
-            return link.transferEnergy(extracter);
+    return links
+        .filter((l) => l.id !== extracter.id)
+        .map((link) => {
+        const amount = _.floor(Math.min(extracter.store.getFreeCapacity(RESOURCE_ENERGY), link.store.energy), -2);
+        if (amount > 0) {
+            return link.transferEnergy(extracter, amount);
         }
         else {
             return ERR_NOT_ENOUGH_ENERGY;
