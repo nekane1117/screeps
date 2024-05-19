@@ -12,9 +12,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return console.log(`${creep.name} is not Upgrader`);
   }
 
-  if (creep.room.name !== creep.memory.baseRoom) {
-    const controller = Game.rooms[creep.memory.baseRoom].controller;
-    return controller && moveMeTo(controller);
+  const controller = Game.rooms[creep.memory.baseRoom].controller;
+  if (!controller) {
+    return creep.suicide();
   }
 
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
@@ -23,28 +23,21 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     changeMode(creep, "🛒");
   }
 
-  if (!creep.room.controller) {
-    return creep.suicide();
-  }
   // https://docs.screeps.com/simultaneous-actions.html
 
   // signController
-  if (creep.room.controller.sign?.username !== "Nekane" && creep.name.endsWith("0")) {
-    const signed = creep.signController(creep.room.controller, "Please teach me screeps");
+  if (controller.sign?.username !== "Nekane") {
+    const signed = creep.signController(controller, "Please teach me screeps");
     if (signed === ERR_NOT_IN_RANGE) {
-      moveMeTo(creep.room.controller);
+      moveMeTo(controller);
     } else {
       console.log(`${creep.name}:${RETURN_CODE_DECODER[signed.toString()]}`);
     }
   }
 
   // upgradeController
-  creep.memory.worked = creep.upgradeController(creep.room.controller);
-  creep.room.visual.text(
-    `${(creep.room.controller.progressTotal - creep.room.controller.progress).toLocaleString()}`,
-    creep.room.controller.pos.x,
-    creep.room.controller.pos.y - 1,
-  );
+  creep.memory.worked = creep.upgradeController(controller);
+  creep.room.visual.text(`${(controller.progressTotal - controller.progress).toLocaleString()}`, controller.pos.x, controller.pos.y - 1);
 
   switch (creep.memory.worked) {
     // 資源不足
@@ -53,7 +46,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       break;
     case ERR_NOT_IN_RANGE:
       if (creep.memory.mode === "💪") {
-        moveMeTo(creep.room.controller);
+        moveMeTo(controller);
       }
       break;
     // 有りえない系
@@ -73,10 +66,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // withdraw
   if (
     creep.memory.storeId ||
-    (creep.memory.storeId = creep.room.controller.pos.findClosestByRange(FIND_STRUCTURES, {
+    (creep.memory.storeId = controller.pos.findClosestByRange(FIND_STRUCTURES, {
       // コントローラーから3マス以内の一番近い倉庫に行く
       filter: (s: Structure): s is StoreTarget => {
-        return isStoreTarget(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) && !!creep.room.controller?.pos.inRangeTo(s, 3);
+        return isStoreTarget(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) && !!controller?.pos.inRangeTo(s, 3);
       },
     })?.id)
   ) {
@@ -116,9 +109,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       }
     }
   } else {
-    // storeが無いとき
-    const { controller } = creep.room;
-
     // 建設予定を含む射程3以内のコンテナが無いとき
     if (
       controller.pos.findInRange(
