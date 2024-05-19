@@ -30,6 +30,7 @@ function behavior(source) {
                 const spawned = spawn.spawnCreep(bodies, name, {
                     memory: {
                         role: "harvester",
+                        baseRoom: spawn.room.name,
                         harvestTargetId: source.id,
                     },
                 });

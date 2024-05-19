@@ -24,6 +24,7 @@ const behavior = (spawn) => {
         const spawned = spawn.spawnCreep(bodies, `U_${Game.time}`, {
             memory: {
                 role: "upgrader",
+                baseRoom: spawn.room.name,
             },
         });
         if (spawned === OK && spawn.room.memory.energySummary) {

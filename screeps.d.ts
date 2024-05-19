@@ -8,6 +8,7 @@ declare interface SourceMemory {
 declare type ROLES = "harvester" | "carrier" | "builder" | "upgrader" | "claimer";
 declare interface CreepMemory {
   role: ROLES;
+  baseRoom: string;
   // 担当作業の作業結果
   worked?: ScreepsReturnCode;
   _move?: {

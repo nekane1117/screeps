@@ -22,6 +22,7 @@ function behavior(flag) {
             if (spawn.spawnCreep(bodies, `C_${flag.pos.roomName}_${flag.name}`, {
                 memory: {
                     role: "claimer",
+                    baseRoom: spawn.room.name,
                     flagName: flag.name,
                 },
             }) === OK) {

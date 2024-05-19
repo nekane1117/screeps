@@ -49,6 +49,7 @@ export function roomBehavior(room: Room) {
         spawn.spawnCreep(bodies, name, {
           memory: {
             mode: "🛒",
+            baseRoom: spawn.room.name,
             role: "carrier",
           } as CarrierMemory,
         }) === OK

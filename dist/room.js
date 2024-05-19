@@ -37,6 +37,7 @@ function roomBehavior(room) {
             if (spawn.spawnCreep(bodies, name, {
                 memory: {
                     mode: "🛒",
+                    baseRoom: spawn.room.name,
                     role: "carrier",
                 },
             }) === OK) {
