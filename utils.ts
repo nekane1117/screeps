@@ -43,3 +43,26 @@ export const findMyStructures = (room: Room) => {
       } as MyStructureCache,
     ));
 };
+
+export function getSpawnsOrderdByRange(src: RoomPosition | _HasRoomPosition, maxRooms?: number) {
+  const pos = "pos" in src ? src.pos : src;
+
+  return _(Object.values(Game.spawns))
+    .map((spawn) => {
+      return {
+        spawn,
+        distance: Game.map.getRoomLinearDistance(pos.roomName, spawn.room.name),
+      };
+    })
+    .filter((s) => s.distance <= (maxRooms || Infinity))
+    .sort(({ spawn: s1, distance: d1 }, { spawn: s2, distance: d2 }) => {
+      const df = d1 - d2;
+      // 部屋が違うときは部屋ごとの距離
+      if (df !== 0) {
+        return df;
+      }
+      // 同じ部屋にいるときは対象からの距離
+      return pos.getRangeTo(s1) - pos.getRangeTo(s2);
+    })
+    .map((p) => p.spawn);
+}

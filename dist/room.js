@@ -55,7 +55,7 @@ exports.roomBehavior = roomBehavior;
 function creteStructures(room) {
     var _a, _b;
     const { visual } = room;
-    const spawn = Object.values(Game.spawns).find((s) => s.room.name === room.name);
+    const spawn = (0, util_creep_1.getMainSpawn)(room);
     if (!spawn) {
         return;
     }

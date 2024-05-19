@@ -12,6 +12,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return console.log(`${creep.name} is not Upgrader`);
   }
 
+  if (creep.room.name !== creep.memory.baseRoom) {
+    const controller = Game.rooms[creep.memory.baseRoom].controller;
+    return controller && moveMeTo(controller);
+  }
+
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
     changeMode(creep, "💪");
   } else if (creep.store.energy === 0) {

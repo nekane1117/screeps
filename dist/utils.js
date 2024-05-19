@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.findMyStructures = exports.getCapacityRate = void 0;
+exports.getSpawnsOrderdByRange = exports.findMyStructures = exports.getCapacityRate = void 0;
 function getCapacityRate(s, type = RESOURCE_ENERGY) {
     if ("store" in s) {
         return s.store.getUsedCapacity(type) / s.store.getCapacity(type);
@@ -41,3 +41,23 @@ const findMyStructures = (room) => {
             }));
 };
 exports.findMyStructures = findMyStructures;
+function getSpawnsOrderdByRange(src, maxRooms) {
+    const pos = "pos" in src ? src.pos : src;
+    return _(Object.values(Game.spawns))
+        .map((spawn) => {
+        return {
+            spawn,
+            distance: Game.map.getRoomLinearDistance(pos.roomName, spawn.room.name),
+        };
+    })
+        .filter((s) => s.distance <= (maxRooms || Infinity))
+        .sort(({ spawn: s1, distance: d1 }, { spawn: s2, distance: d2 }) => {
+        const df = d1 - d2;
+        if (df !== 0) {
+            return df;
+        }
+        return pos.getRangeTo(s1) - pos.getRangeTo(s2);
+    })
+        .map((p) => p.spawn);
+}
+exports.getSpawnsOrderdByRange = getSpawnsOrderdByRange;

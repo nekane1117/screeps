@@ -69,7 +69,7 @@ export function roomBehavior(room: Room) {
 function creteStructures(room: Room) {
   const { visual } = room;
   // 多分最初のspawn
-  const spawn = Object.values(Game.spawns).find((s) => s.room.name === room.name);
+  const spawn = getMainSpawn(room);
   if (!spawn) {
     return;
   }

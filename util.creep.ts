@@ -1,5 +1,3 @@
-import { complexOrder } from "./util.array";
-
 export function isStoreTarget(x: Structure): x is StoreTarget {
   return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -62,7 +60,7 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
     CARRY,
     MOVE,
     // 偶数にする
-    CARRY,
+    WORK,
     ..._(
       _.range(23).map(() => {
         // あとはMoveとCarryの繰り返し
@@ -96,7 +94,7 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
     MOVE,
     MOVE,
   ],
-  upgrader: [CARRY, MOVE, ..._.range(10).map(() => WORK)],
+  upgrader: [CARRY, MOVE, ..._.range(10).map(() => WORK), ..._.range(10).map(() => MOVE)],
 });
 
 export const RETURN_CODE_DECODER = Object.freeze({
@@ -169,23 +167,6 @@ export function getCreepsInRoom(room: Room) {
   })()
     .map((name) => Game.creeps[name])
     .filter((c) => c);
-}
-
-export function getSpawnsOrderByRange(pos: RoomPosition | _HasRoomPosition) {
-  const p = "pos" in pos ? pos.pos : pos;
-
-  return complexOrder(Object.values(Game.spawns), [
-    // 部屋の直線距離
-    (s) => Game.map.getRoomLinearDistance(s.room.name, p.roomName),
-    // どちらの部屋にもアクセスできるときは距離
-    (s) => {
-      if (Game.rooms[s.room.name] && Game.rooms[p.roomName]) {
-        return p.getRangeTo(s);
-      } else {
-        return 50;
-      }
-    },
-  ]);
 }
 
 export function getMainSpawn(room: Room) {

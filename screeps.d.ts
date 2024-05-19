@@ -138,7 +138,6 @@ declare interface BuilderMemory extends CreepMemory {
   built?: ReturnType<Creeps["build"]>;
   /** 資源をもらいに行く先 */
   storeId?: StoreTarget["id"] | null;
-  parentRoom: string;
 }
 
 declare interface Carrier extends Creep {
