@@ -1,6 +1,5 @@
 import _ from "lodash";
 import { filterBodiesByCost, getCreepsInRoom } from "./util.creep";
-import { getCapacityRate } from "./utils";
 
 const behavior = (spawn: StructureSpawn) => {
   if (Object.keys(Game.spawns)?.[0] === spawn.name) {
@@ -15,13 +14,10 @@ const behavior = (spawn: StructureSpawn) => {
     .value();
   const sitesInRoom = Object.values(Game.constructionSites).filter((s) => s.room?.name === spawn.room.name);
 
-  const upgradeContainer = spawn.room.controller?.pos.findClosestByRange(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_CONTAINER });
-  const upgradeContainerRate = upgradeContainer ? getCapacityRate(upgradeContainer) : 0;
-
   // upgraderが居ないときもとりあえず作る
   if (
     sitesInRoom.length === 0 &&
-    (creepsInRoom.upgrader || []).length < upgradeContainerRate / 0.9 &&
+    (creepsInRoom.upgrader || []).length === 0 &&
     spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.8)
   ) {
     const { bodies, cost } = filterBodiesByCost("upgrader", spawn.room.energyAvailable);

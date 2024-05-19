@@ -25,6 +25,19 @@ declare type Creeps = Creep | Harvester | Upgrader | Builder | Carrier | Repaire
 
 declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink;
 
+declare type HasStore =
+  | StructureExtension
+  | StructureSpawn
+  | StructureLink
+  | StructureStorage
+  | StructureTower
+  | StructurePowerSpawn
+  | StructureLab
+  | StructureTerminal
+  | StructureContainer
+  | StructureNuker
+  | StructureFactory;
+
 declare interface Harvester extends Creep {
   memory: HarvesterMemory;
 }

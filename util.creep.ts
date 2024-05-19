@@ -96,7 +96,7 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
     MOVE,
     MOVE,
   ],
-  upgrader: [CARRY, MOVE, ..._.range(5).map(() => WORK)],
+  upgrader: [CARRY, MOVE, ..._.range(10).map(() => WORK)],
 });
 
 export const RETURN_CODE_DECODER = Object.freeze({

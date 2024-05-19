@@ -5,9 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const lodash_1 = __importDefault(require("lodash"));
 const util_creep_1 = require("./util.creep");
-const utils_1 = require("./utils");
 const behavior = (spawn) => {
-    var _a, _b;
+    var _a;
     if (((_a = Object.keys(Game.spawns)) === null || _a === void 0 ? void 0 : _a[0]) === spawn.name) {
         spawn.room.visual.text(`${spawn.room.energyAvailable}/${spawn.room.energyCapacityAvailable}`, spawn.pos.x + 1, spawn.pos.y - 1);
     }
@@ -18,10 +17,8 @@ const behavior = (spawn) => {
         .groupBy((c) => c.memory.role)
         .value();
     const sitesInRoom = Object.values(Game.constructionSites).filter((s) => { var _a; return ((_a = s.room) === null || _a === void 0 ? void 0 : _a.name) === spawn.room.name; });
-    const upgradeContainer = (_b = spawn.room.controller) === null || _b === void 0 ? void 0 : _b.pos.findClosestByRange(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_CONTAINER });
-    const upgradeContainerRate = upgradeContainer ? (0, utils_1.getCapacityRate)(upgradeContainer) : 0;
     if (sitesInRoom.length === 0 &&
-        (creepsInRoom.upgrader || []).length < upgradeContainerRate / 0.9 &&
+        (creepsInRoom.upgrader || []).length === 0 &&
         spawn.room.energyAvailable > Math.max(200, spawn.room.energyCapacityAvailable * 0.8)) {
         const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("upgrader", spawn.room.energyAvailable);
         const spawned = spawn.spawnCreep(bodies, `U_${Game.time}`, {

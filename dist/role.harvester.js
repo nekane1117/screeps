@@ -35,7 +35,33 @@ const behavior = (creep) => {
         creep.pos.findInRange(Object.values(Game.constructionSites), 3).map((site) => creep.build(site));
     }
     (0, util_creep_1.pickUpAll)(creep);
-    creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: (s) => "store" in s }).map((s) => creep.transfer(s, RESOURCE_ENERGY));
+    const structures = _(creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: (s) => "store" in s })).sort((s) => {
+        switch (s.structureType) {
+            case STRUCTURE_LINK:
+            case STRUCTURE_EXTENSION:
+                return 0;
+            case STRUCTURE_CONTAINER:
+            case STRUCTURE_STORAGE:
+                return 2;
+            case STRUCTURE_FACTORY:
+            case STRUCTURE_LAB:
+            case STRUCTURE_NUKER:
+            case STRUCTURE_POWER_SPAWN:
+            case STRUCTURE_SPAWN:
+            case STRUCTURE_TERMINAL:
+            case STRUCTURE_TOWER:
+            default:
+                return 1;
+        }
+    });
+    const extractor = structures.filter((s) => s.store.energy).last();
+    const store = structures.filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY)).first();
+    if (extractor) {
+        creep.withdraw(extractor, RESOURCE_ENERGY);
+    }
+    if (store) {
+        creep.transfer(store, RESOURCE_ENERGY);
+    }
 };
 exports.default = behavior;
 function isHarvester(c) {
