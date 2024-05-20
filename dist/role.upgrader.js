@@ -27,7 +27,6 @@ const behavior = (creep) => {
         }
     }
     creep.memory.worked = creep.upgradeController(controller);
-    creep.room.visual.text(`${(controller.progressTotal - controller.progress).toLocaleString()}`, controller.pos.x, controller.pos.y - 1);
     switch (creep.memory.worked) {
         case ERR_NOT_ENOUGH_RESOURCES:
             changeMode(creep, "🛒");

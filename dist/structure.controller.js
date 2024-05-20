@@ -6,6 +6,7 @@ const behavior = (controller) => {
     if (!isC(controller)) {
         return console.log("type is invalid", controller);
     }
+    controller.room.visual.text(`${(controller.progressTotal - controller.progress).toLocaleString()}`, controller.pos.x, controller.pos.y - 1);
     const upgrader = Object.values(Game.creeps).filter((c) => {
         return c.memory.role === "upgrader" && c.memory.baseRoom === controller.pos.roomName;
     });

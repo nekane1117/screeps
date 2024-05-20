@@ -37,7 +37,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // upgradeController
   creep.memory.worked = creep.upgradeController(controller);
-  creep.room.visual.text(`${(controller.progressTotal - controller.progress).toLocaleString()}`, controller.pos.x, controller.pos.y - 1);
 
   switch (creep.memory.worked) {
     // 資源不足
