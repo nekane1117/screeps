@@ -6,6 +6,10 @@ import structures from "./structures";
 import { findMyStructures, logUsage } from "./utils";
 
 module.exports.loop = function () {
+  if (Game.cpu.bucket < 20) {
+    return;
+  }
+
   logUsage("all", () => {
     // if (Game.cpu.bucket === 10000) {
     //   Game.cpu.generatePixel();

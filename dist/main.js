@@ -10,6 +10,9 @@ const room_1 = require("./room");
 const structures_1 = __importDefault(require("./structures"));
 const utils_1 = require("./utils");
 module.exports.loop = function () {
+    if (Game.cpu.bucket < 20) {
+        return;
+    }
     (0, utils_1.logUsage)("all", () => {
         (0, utils_1.logUsage)("remov", () => {
             if (Game.time % 100 === 0) {
