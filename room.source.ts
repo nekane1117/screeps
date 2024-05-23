@@ -1,27 +1,9 @@
-import { filterBodiesByCost, squareDiff } from "./util.creep";
+import { filterBodiesByCost } from "./util.creep";
 import { getSpawnsOrderdByRange } from "./utils";
 
 export function behavior(source: Source) {
-  // メモリを初期化する
-  // 適当に100ティックごとに再確認する
-  if (!source.room.memory?.sources?.[source.id] || Game.time % 100 === 0) {
-    source.room.memory.sources = source.room.memory.sources || {};
-    source.room.memory.sources[source.id] = initMemory(source);
-  }
-
-  // 自分用のharvesterのlodash wrapper
-  const harvesters = _(
-    Object.values(Game.creeps).filter((c: Creeps | undefined): c is Harvester => {
-      // 自分用のharvester
-      const isH = (c: Creeps): c is Harvester => {
-        return c.memory.role === "harvester";
-      };
-      return c !== undefined && isH(c) && c.memory.harvestTargetId === source.id;
-    }),
-  );
-
   // 最大匹数より少なく、WORKのパーツが5未満の時
-  if (harvesters.size() < 1 && harvesters.map((c) => c.getActiveBodyparts(WORK)).sum() < 5) {
+  if (!Object.values(Game.creeps).find((c): c is Harvester => isH(c) && c.memory.harvestTargetId === source.id)) {
     // 自分用のWORKが5個以下の時
     const spawn = getSpawnsOrderdByRange(source, 1).first();
     if (!spawn) {
@@ -49,17 +31,9 @@ export function behavior(source: Source) {
       return spawned;
     }
   }
-
   return OK;
 }
 
-function initMemory(source: Source): SourceMemory {
-  const terrain = source.room.getTerrain();
-  return {
-    positions: squareDiff
-      .map(([dx, dy]) => {
-        return terrain.get(source.pos.x + dx, source.pos.y + dy);
-      })
-      .filter((terrain) => terrain !== TERRAIN_MASK_WALL).length,
-  };
+function isH(c: Creeps): c is Harvester {
+  return c.memory.role === "harvester";
 }

@@ -90,12 +90,18 @@ declare interface RoomMemory {
   };
 
   mainSpawn?: Id<StructureSpawn>;
-  sources: Record<Id[Source], SourceMemory>;
 
   roadLayed: number;
 
-  find: {
-    [FIND_STRUCTURES]?: MyStructureCache;
+  find?: {
+    [FIND_STRUCTURES]?: {
+      time: number;
+      data: MyStructureCache;
+    };
+    [FIND_SOURCES]?: {
+      time: number;
+      data: Id<Source>[];
+    };
   };
 
   energySummary?: {

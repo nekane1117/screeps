@@ -9,21 +9,15 @@ const structure_links_1 = __importDefault(require("./structure.links"));
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 function roomBehavior(room) {
-    var _a;
-    (0, utils_1.logUsage)("activateSafeMode:" + room.name, () => {
-        var _a, _b;
-        if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) === null || _a === void 0 ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
-            (_b = room.controller) === null || _b === void 0 ? void 0 : _b.activateSafeMode();
-        }
-    });
-    (0, utils_1.logUsage)("initMemory:" + room.name, () => {
-        initMemory(room);
-    });
-    const mainSpawn = room.memory.mainSpawn && Game.getObjectById(room.memory.mainSpawn);
-    if (mainSpawn) {
-        room.visual.text(`${room.energyAvailable} / ${room.energyCapacityAvailable}`, mainSpawn.pos.x, mainSpawn.pos.y - 1, { align: "left" });
+    var _a, _b, _c;
+    if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) === null || _a === void 0 ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
+        (_b = room.controller) === null || _b === void 0 ? void 0 : _b.activateSafeMode();
     }
-    room.find(FIND_SOURCES).map((source) => (0, room_source_1.behavior)(source));
+    if (Game.time % 2) {
+        (0, utils_1.logUsage)("source:" + room.name, () => {
+            room.find(FIND_SOURCES).forEach((source) => (0, room_source_1.behavior)(source));
+        });
+    }
     if (!room.memory.roadLayed || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
         console.log("roadLayer in " + Game.time);
         roadLayer(room);
@@ -31,19 +25,16 @@ function roomBehavior(room) {
     if (Game.time % 100 === 0) {
         creteStructures(room);
     }
+    (0, structure_links_1.default)((0, utils_1.findMyStructures)(room).link);
     const { carrier: carriers, harvester } = (0, util_creep_1.getCreepsInRoom)(room).reduce((creeps, c) => {
         creeps[c.memory.role] = ((creeps === null || creeps === void 0 ? void 0 : creeps[c.memory.role]) || []).concat(c);
         return creeps;
     }, { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [] });
-    (0, utils_1.logUsage)("linkBehavior:" + room.name, () => {
-        const { link } = (0, utils_1.findMyStructures)(room);
-        (0, structure_links_1.default)(link);
-    });
     const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("carrier", room.energyAvailable);
     if (harvester.length &&
         carriers.filter((g) => {
             return bodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
-        }).length < Object.keys(room.memory.sources).length) {
+        }).length < room.find(FIND_SOURCES).length) {
         const name = `C_${room.name}_${Game.time}`;
         const spawn = (0, util_creep_1.getMainSpawn)(room);
         if (spawn && !spawn.spawning && room.energyAvailable > 200) {
@@ -54,7 +45,7 @@ function roomBehavior(room) {
                     role: "carrier",
                 },
             }) === OK) {
-                (_a = room.memory.energySummary) === null || _a === void 0 ? void 0 : _a.push({
+                (_c = room.memory.energySummary) === null || _c === void 0 ? void 0 : _c.push({
                     time: new Date().valueOf(),
                     consumes: cost,
                     production: 0,
@@ -63,7 +54,6 @@ function roomBehavior(room) {
             return OK;
         }
     }
-    showSummary(room);
 }
 exports.roomBehavior = roomBehavior;
 function creteStructures(room) {
@@ -173,61 +163,4 @@ const fourNeighbors = [
     [1, 0],
     [0, 1],
 ];
-function initMemory(room) {
-    room.memory.find = {};
-    room.memory.find[FIND_STRUCTURES] = undefined;
-}
 const staticStructures = [STRUCTURE_STORAGE, STRUCTURE_LINK];
-function showSummary({ visual, memory, getEventLog }) {
-    memory.energySummary = (memory.energySummary || [])
-        .concat(getEventLog().reduce((summary, event) => {
-        switch (event.event) {
-            case EVENT_HARVEST:
-                summary.production += event.data.amount;
-                break;
-            case EVENT_BUILD:
-                summary.consumes += event.data.amount;
-                break;
-            case EVENT_REPAIR:
-            case EVENT_UPGRADE_CONTROLLER:
-                summary.consumes += event.data.energySpent;
-                break;
-            default:
-                break;
-        }
-        return summary;
-    }, {
-        time: new Date().valueOf(),
-        production: 0,
-        consumes: 0,
-    }))
-        .filter((s) => {
-        return s.time && s.time >= new Date().valueOf() - 1 * 60 * 60 * 1000;
-    });
-    const total = memory.energySummary.reduce((sum, current) => {
-        sum.consumes += current.consumes || 0;
-        sum.production += current.production || 0;
-        return sum;
-    }, {
-        production: 0,
-        consumes: 0,
-    });
-    const total1min = memory.energySummary
-        .filter((s) => {
-        return s.time && s.time >= new Date().valueOf() - 1 * 60 * 1000;
-    })
-        .reduce((sum, current) => {
-        sum.consumes += current.consumes || 0;
-        sum.production += current.production || 0;
-        return sum;
-    }, {
-        production: 0,
-        consumes: 0,
-    });
-    visual.text(`生産量：${_.floor(total.production / (1 * 60 * 60), 2)}(${_.floor(total1min.production / 60, 2)})`, 25, 25, {
-        align: "left",
-    });
-    visual.text(`消費量：${_.floor(total.consumes / (1 * 60 * 60), 2)}(${_.floor(total1min.consumes / 60, 2)})`, 25, 26, {
-        align: "left",
-    });
-}

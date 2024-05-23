@@ -11,9 +11,17 @@ function getCapacityRate(s, type = RESOURCE_ENERGY) {
 }
 exports.getCapacityRate = getCapacityRate;
 const findMyStructures = (room) => {
-    return (room.memory.find[FIND_STRUCTURES] =
-        room.memory.find[FIND_STRUCTURES] ||
-            room.find(FIND_STRUCTURES).reduce((structures, s) => {
+    var _a, _b;
+    if (!room.memory.find) {
+        room.memory.find = {};
+    }
+    if (((_b = (_a = room.memory.find) === null || _a === void 0 ? void 0 : _a[FIND_STRUCTURES]) === null || _b === void 0 ? void 0 : _b.time) === Game.time) {
+        return room.memory.find[FIND_STRUCTURES].data;
+    }
+    else {
+        return (room.memory.find[FIND_STRUCTURES] = {
+            time: Game.time,
+            data: room.find(FIND_STRUCTURES).reduce((structures, s) => {
                 return Object.assign(Object.assign({}, structures), { all: (structures.all || []).concat(s), [s.structureType]: (structures[s.structureType] || []).concat(s) });
             }, {
                 all: [],
@@ -38,7 +46,9 @@ const findMyStructures = (room) => {
                 storage: [],
                 terminal: [],
                 tower: [],
-            }));
+            }),
+        }).data;
+    }
 };
 exports.findMyStructures = findMyStructures;
 function getSpawnsOrderdByRange(src, maxRooms) {
@@ -61,9 +71,13 @@ function getSpawnsOrderdByRange(src, maxRooms) {
         .map((p) => p.spawn);
 }
 exports.getSpawnsOrderdByRange = getSpawnsOrderdByRange;
+let indent = -1;
 function logUsage(title, func) {
+    indent++;
     const start = Game.cpu.getUsed();
-    func();
-    console.log(`${title} use ${Game.cpu.getUsed() - start}`);
+    const value = func();
+    console.log(`${" ".repeat(indent * 2)}${_.floor(Game.cpu.getUsed() - start, 2)} ${title}`);
+    indent--;
+    return value;
 }
 exports.logUsage = logUsage;

@@ -7,41 +7,52 @@ export function getCapacityRate(s: AnyCreep | Structure, type: ResourceConstant 
 }
 
 export const findMyStructures = (room: Room) => {
-  return (room.memory.find[FIND_STRUCTURES] =
-    room.memory.find[FIND_STRUCTURES] ||
-    room.find(FIND_STRUCTURES).reduce(
-      (structures, s) => {
-        return {
-          ...structures,
-          all: (structures.all || []).concat(s),
-          [s.structureType]: (structures[s.structureType] || []).concat(s),
-        };
-      },
-      {
-        all: [],
-        constructedWall: [],
-        container: [],
-        controller: [],
-        extension: [],
-        extractor: [],
-        factory: [],
-        invaderCore: [],
-        keeperLair: [],
-        lab: [],
-        link: [],
-        nuker: [],
-        observer: [],
-        portal: [],
-        powerBank: [],
-        powerSpawn: [],
-        rampart: [],
-        road: [],
-        spawn: [],
-        storage: [],
-        terminal: [],
-        tower: [],
-      } as MyStructureCache,
-    ));
+  // 無ければ初期化
+  if (!room.memory.find) {
+    room.memory.find = {};
+  }
+
+  // 同じ時間のキャッシュならそのまま返す
+  if (room.memory.find?.[FIND_STRUCTURES]?.time === Game.time) {
+    return room.memory.find[FIND_STRUCTURES].data;
+  } else {
+    return (room.memory.find[FIND_STRUCTURES] = {
+      time: Game.time,
+      data: room.find(FIND_STRUCTURES).reduce(
+        (structures, s) => {
+          return {
+            ...structures,
+            all: (structures.all || []).concat(s),
+            [s.structureType]: (structures[s.structureType] || []).concat(s),
+          };
+        },
+        {
+          all: [],
+          constructedWall: [],
+          container: [],
+          controller: [],
+          extension: [],
+          extractor: [],
+          factory: [],
+          invaderCore: [],
+          keeperLair: [],
+          lab: [],
+          link: [],
+          nuker: [],
+          observer: [],
+          portal: [],
+          powerBank: [],
+          powerSpawn: [],
+          rampart: [],
+          road: [],
+          spawn: [],
+          storage: [],
+          terminal: [],
+          tower: [],
+        } as MyStructureCache,
+      ),
+    }).data;
+  }
 };
 
 export function getSpawnsOrderdByRange(src: RoomPosition | _HasRoomPosition, maxRooms?: number) {
@@ -67,8 +78,12 @@ export function getSpawnsOrderdByRange(src: RoomPosition | _HasRoomPosition, max
     .map((p) => p.spawn);
 }
 
-export function logUsage(title: string, func: () => unknown) {
+let indent = -1;
+export function logUsage<T = unknown>(title: string, func: () => T) {
+  indent++;
   const start = Game.cpu.getUsed();
-  func();
-  console.log(`${title} use ${Game.cpu.getUsed() - start}`);
+  const value = func();
+  console.log(`${" ".repeat(indent * 2)}${_.floor(Game.cpu.getUsed() - start, 2)} ${title}`);
+  indent--;
+  return value;
 }
