@@ -12,21 +12,13 @@ function behavior(source) {
         }
         if (spawn.room.energyAvailable > 200) {
             const name = `H_${source.room.name}_${Game.time}`;
-            const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("harvester", spawn.room.energyAvailable);
-            const spawned = spawn.spawnCreep(bodies, name, {
+            const spawned = spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("harvester", spawn.room.energyAvailable).bodies, name, {
                 memory: {
                     role: "harvester",
                     baseRoom: source.room.name,
                     harvestTargetId: source.id,
                 },
             });
-            if (spawned === OK && source.room.memory.energySummary) {
-                source.room.memory.energySummary.push({
-                    time: Game.time,
-                    consumes: cost,
-                    production: 0,
-                });
-            }
             return spawned;
         }
     }

@@ -9,15 +9,13 @@ const structure_links_1 = __importDefault(require("./structure.links"));
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 function roomBehavior(room) {
-    var _a, _b, _c;
+    var _a, _b;
     if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) === null || _a === void 0 ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
         (_b = room.controller) === null || _b === void 0 ? void 0 : _b.activateSafeMode();
     }
-    if (Game.time % 2) {
-        (0, utils_1.logUsage)("source:" + room.name, () => {
-            room.find(FIND_SOURCES).forEach((source) => (0, room_source_1.behavior)(source));
-        });
-    }
+    (0, utils_1.logUsage)("source:" + room.name, () => {
+        room.find(FIND_SOURCES).forEach((source) => (0, room_source_1.behavior)(source));
+    });
     if (!room.memory.roadLayed || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
         console.log("roadLayer in " + Game.time);
         roadLayer(room);
@@ -30,7 +28,7 @@ function roomBehavior(room) {
         creeps[c.memory.role] = ((creeps === null || creeps === void 0 ? void 0 : creeps[c.memory.role]) || []).concat(c);
         return creeps;
     }, { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [] });
-    const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("carrier", room.energyAvailable);
+    const { bodies } = (0, util_creep_1.filterBodiesByCost)("carrier", room.energyAvailable);
     if (harvester.length &&
         carriers.filter((g) => {
             return bodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
@@ -38,19 +36,13 @@ function roomBehavior(room) {
         const name = `C_${room.name}_${Game.time}`;
         const spawn = (0, util_creep_1.getMainSpawn)(room);
         if (spawn && !spawn.spawning && room.energyAvailable > 200) {
-            if (spawn.spawnCreep(bodies, name, {
+            spawn.spawnCreep(bodies, name, {
                 memory: {
                     mode: "🛒",
                     baseRoom: spawn.room.name,
                     role: "carrier",
                 },
-            }) === OK) {
-                (_c = room.memory.energySummary) === null || _c === void 0 ? void 0 : _c.push({
-                    time: new Date().valueOf(),
-                    consumes: cost,
-                    production: 0,
-                });
-            }
+            });
             return OK;
         }
     }

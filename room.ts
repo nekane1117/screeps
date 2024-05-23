@@ -10,11 +10,9 @@ export function roomBehavior(room: Room) {
     room.controller?.activateSafeMode();
   }
 
-  if (Game.time % 2) {
-    logUsage("source:" + room.name, () => {
-      room.find(FIND_SOURCES).forEach((source) => behavior(source));
-    });
-  }
+  logUsage("source:" + room.name, () => {
+    room.find(FIND_SOURCES).forEach((source) => behavior(source));
+  });
 
   // 道を敷く
   if (!room.memory.roadLayed || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
@@ -36,7 +34,7 @@ export function roomBehavior(room: Room) {
     { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [] } as Record<ROLES, Creep[]>,
   );
 
-  const { bodies, cost } = filterBodiesByCost("carrier", room.energyAvailable);
+  const { bodies } = filterBodiesByCost("carrier", room.energyAvailable);
   if (
     harvester.length &&
     carriers.filter((g) => {
@@ -47,21 +45,13 @@ export function roomBehavior(room: Room) {
 
     const spawn = getMainSpawn(room);
     if (spawn && !spawn.spawning && room.energyAvailable > 200) {
-      if (
-        spawn.spawnCreep(bodies, name, {
-          memory: {
-            mode: "🛒",
-            baseRoom: spawn.room.name,
-            role: "carrier",
-          } as CarrierMemory,
-        }) === OK
-      ) {
-        room.memory.energySummary?.push({
-          time: new Date().valueOf(),
-          consumes: cost,
-          production: 0,
-        });
-      }
+      spawn.spawnCreep(bodies, name, {
+        memory: {
+          mode: "🛒",
+          baseRoom: spawn.room.name,
+          role: "carrier",
+        } as CarrierMemory,
+      });
       return OK;
     }
   }

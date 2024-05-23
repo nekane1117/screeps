@@ -26,22 +26,13 @@ export default function behavior(flag: Flag) {
 
     // 作らせる
     if (spawn && !spawn.spawning && spawn.room.energyAvailable > 650) {
-      const { bodies, cost } = filterBodiesByCost("claimer", spawn.room.energyAvailable);
-      if (
-        spawn.spawnCreep(bodies, `C_${flag.pos.roomName}_${flag.name}`, {
-          memory: {
-            role: "claimer",
-            baseRoom: spawn.room.name,
-            flagName: flag.name,
-          } as ClaimerMemory,
-        }) === OK
-      ) {
-        spawn.room.memory.energySummary?.push({
-          consumes: cost,
-          production: 0,
-          time: new Date().valueOf(),
-        });
-      }
+      spawn.spawnCreep(filterBodiesByCost("claimer", spawn.room.energyAvailable).bodies, `C_${flag.pos.roomName}_${flag.name}`, {
+        memory: {
+          role: "claimer",
+          baseRoom: spawn.room.name,
+          flagName: flag.name,
+        } as ClaimerMemory,
+      });
     }
   }
 

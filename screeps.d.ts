@@ -103,12 +103,6 @@ declare interface RoomMemory {
       data: Id<Source>[];
     };
   };
-
-  energySummary?: {
-    time: number;
-    production: number;
-    consumes: number;
-  }[];
 }
 
 declare interface Upgrader extends Creep {

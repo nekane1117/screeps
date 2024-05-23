@@ -12,22 +12,13 @@ export default function behavior(site: ConstructionSite) {
     const spawn = getSpawnsOrderdByRange(site, 1).find((s) => !s.spawning && s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9);
 
     if (spawn) {
-      const { bodies, cost } = filterBodiesByCost("builder", spawn.room.energyAvailable);
-      if (
-        spawn.spawnCreep(bodies, `B_${site.pos.roomName}`, {
-          memory: {
-            role: "builder",
-            baseRoom: site.pos.roomName,
-            mode: "🛒",
-          } as BuilderMemory,
-        }) === OK
-      ) {
-        spawn.room.memory.energySummary?.push({
-          consumes: cost,
-          production: 0,
-          time: new Date().valueOf(),
-        });
-      }
+      spawn.spawnCreep(filterBodiesByCost("builder", spawn.room.energyAvailable).bodies, `B_${site.pos.roomName}`, {
+        memory: {
+          role: "builder",
+          baseRoom: site.pos.roomName,
+          mode: "🛒",
+        } as BuilderMemory,
+      });
     }
   }
 }
