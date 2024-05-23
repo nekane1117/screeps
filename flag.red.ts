@@ -1,4 +1,5 @@
 import { filterBodiesByCost } from "./util.creep";
+import { getSpawnsOrderdByRange } from "./utils";
 
 /**
  * 赤い旗
@@ -21,9 +22,7 @@ export default function behavior(flag: Flag) {
     Object.values(Game.constructionSites).length === 0
   ) {
     // 最寄りのspawn
-    const spawn = _(Object.values(Game.spawns))
-      .sort((s) => Game.map.getRoomLinearDistance(flag.pos.roomName, s.pos.roomName))
-      .first();
+    const spawn = getSpawnsOrderdByRange(flag, 1).find((s) => Game.rooms[s.room.name]?.controller?.level);
 
     // 作らせる
     if (spawn && !spawn.spawning && spawn.room.energyAvailable > 650) {
@@ -32,11 +31,12 @@ export default function behavior(flag: Flag) {
         spawn.spawnCreep(bodies, `C_${flag.pos.roomName}_${flag.name}`, {
           memory: {
             role: "claimer",
+            baseRoom: spawn.room.name,
             flagName: flag.name,
           } as ClaimerMemory,
         }) === OK
       ) {
-        flag.room?.memory.energySummary?.push({
+        spawn.room.memory.energySummary?.push({
           consumes: cost,
           production: 0,
           time: new Date().valueOf(),

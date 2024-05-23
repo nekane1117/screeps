@@ -7,33 +7,33 @@ const behavior = (creep) => {
     if (!isUpgrader(creep)) {
         return console.log(`${creep.name} is not Upgrader`);
     }
+    const controller = Game.rooms[creep.memory.baseRoom].controller;
+    if (!controller) {
+        return creep.suicide();
+    }
     if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
         changeMode(creep, "💪");
     }
     else if (creep.store.energy === 0) {
         changeMode(creep, "🛒");
     }
-    if (!creep.room.controller) {
-        return creep.suicide();
-    }
-    if (((_a = creep.room.controller.sign) === null || _a === void 0 ? void 0 : _a.username) !== "Nekane" && creep.name.endsWith("0")) {
-        const signed = creep.signController(creep.room.controller, "Please teach me screeps");
+    if (((_a = controller.sign) === null || _a === void 0 ? void 0 : _a.username) !== "Nekane") {
+        const signed = creep.signController(controller, "Please teach me screeps");
         if (signed === ERR_NOT_IN_RANGE) {
-            moveMeTo(creep.room.controller);
+            moveMeTo(controller);
         }
         else {
             console.log(`${creep.name}:${util_creep_1.RETURN_CODE_DECODER[signed.toString()]}`);
         }
     }
-    creep.memory.worked = creep.upgradeController(creep.room.controller);
-    creep.room.visual.text(`${(creep.room.controller.progressTotal - creep.room.controller.progress).toLocaleString()}`, creep.room.controller.pos.x, creep.room.controller.pos.y - 1);
+    creep.memory.worked = creep.upgradeController(controller);
     switch (creep.memory.worked) {
         case ERR_NOT_ENOUGH_RESOURCES:
             changeMode(creep, "🛒");
             break;
         case ERR_NOT_IN_RANGE:
             if (creep.memory.mode === "💪") {
-                moveMeTo(creep.room.controller);
+                moveMeTo(controller);
             }
             break;
         case ERR_NOT_OWNER:
@@ -48,10 +48,9 @@ const behavior = (creep) => {
             break;
     }
     if (creep.memory.storeId ||
-        (creep.memory.storeId = (_b = creep.room.controller.pos.findClosestByRange(FIND_STRUCTURES, {
+        (creep.memory.storeId = (_b = controller.pos.findClosestByRange(FIND_STRUCTURES, {
             filter: (s) => {
-                var _a;
-                return (0, util_creep_1.isStoreTarget)(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) && !!((_a = creep.room.controller) === null || _a === void 0 ? void 0 : _a.pos.inRangeTo(s, 3));
+                return (0, util_creep_1.isStoreTarget)(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) && !!(controller === null || controller === void 0 ? void 0 : controller.pos.inRangeTo(s, 3));
             },
         })) === null || _b === void 0 ? void 0 : _b.id)) {
         const store = Game.getObjectById(creep.memory.storeId);
@@ -87,7 +86,6 @@ const behavior = (creep) => {
         }
     }
     else {
-        const { controller } = creep.room;
         if (controller.pos.findInRange([
             ...creep.room.find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_CONTAINER }),
             ...Object.values(Game.constructionSites).filter((s) => s.structureType === STRUCTURE_CONTAINER),

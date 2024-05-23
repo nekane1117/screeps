@@ -1,18 +1,20 @@
-import { behavior } from "./source";
-import { filterBodiesByCost, getCreepsInRoom, getSpawnsInRoom } from "./util.creep";
+import { behavior } from "./room.source";
 import linkBehavior from "./structure.links";
-import { findMyStructures } from "./utils";
+import { filterBodiesByCost, getCreepsInRoom, getMainSpawn } from "./util.creep";
+import { findMyStructures, logUsage } from "./utils";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
+
   if (room.find(FIND_HOSTILE_CREEPS).length && !room.controller?.safeMode && room.energyAvailable > SAFE_MODE_COST) {
     room.controller?.activateSafeMode();
   }
 
-  // tickごとのメモリの初期化
-  initMemory(room);
-
-  room.find(FIND_SOURCES).map((source) => behavior(source));
+  if (Game.time % 2) {
+    logUsage("source:" + room.name, () => {
+      room.find(FIND_SOURCES).forEach((source) => behavior(source));
+    });
+  }
 
   // 道を敷く
   if (!room.memory.roadLayed || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
@@ -21,36 +23,37 @@ export function roomBehavior(room: Room) {
   }
 
   // エクステンション建てる
-  creteStructures(room);
+  if (Game.time % 100 === 0) {
+    creteStructures(room);
+  }
 
-  const { gatherer: gatherers, harvester } = getCreepsInRoom(room).reduce(
+  linkBehavior(findMyStructures(room).link);
+  const { carrier: carriers, harvester } = getCreepsInRoom(room).reduce(
     (creeps, c) => {
       creeps[c.memory.role] = (creeps?.[c.memory.role] || []).concat(c);
       return creeps;
     },
-    { builder: [], claimer: [], distributer: [], gatherer: [], harvester: [], repairer: [], upgrader: [] } as Record<ROLES, Creep[]>,
+    { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [] } as Record<ROLES, Creep[]>,
   );
 
-  const { link } = findMyStructures(room);
-  linkBehavior(link);
-
-  const { bodies, cost } = filterBodiesByCost("gatherer", room.energyAvailable);
+  const { bodies, cost } = filterBodiesByCost("carrier", room.energyAvailable);
   if (
     harvester.length &&
-    gatherers.filter((g) => {
+    carriers.filter((g) => {
       return bodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
-    }).length < 2
+    }).length < room.find(FIND_SOURCES).length
   ) {
-    const name = `G_${room.name}_${Game.time}`;
+    const name = `C_${room.name}_${Game.time}`;
 
-    const spawn = getSpawnsInRoom(room).find((r) => !r.spawning);
-    if (spawn && room.energyAvailable > 200) {
+    const spawn = getMainSpawn(room);
+    if (spawn && !spawn.spawning && room.energyAvailable > 200) {
       if (
         spawn.spawnCreep(bodies, name, {
           memory: {
             mode: "🛒",
-            role: "gatherer",
-          } as GathererMemory,
+            baseRoom: spawn.room.name,
+            role: "carrier",
+          } as CarrierMemory,
         }) === OK
       ) {
         room.memory.energySummary?.push({
@@ -66,9 +69,8 @@ export function roomBehavior(room: Room) {
 
 /** 部屋ごとの色々を建てる */
 function creteStructures(room: Room) {
-  const { visual } = room;
   // 多分最初のspawn
-  const spawn = Object.values(Game.spawns).find((s) => s.room.name === room.name);
+  const spawn = getMainSpawn(room);
   if (!spawn) {
     return;
   }
@@ -134,74 +136,6 @@ function creteStructures(room: Room) {
       }
     }
   }
-  room.memory.energySummary = (room.memory.energySummary || [])
-    .concat(
-      room.getEventLog().reduce(
-        (summary, event) => {
-          switch (event.event) {
-            case EVENT_HARVEST:
-              summary.production += event.data.amount;
-              break;
-            case EVENT_BUILD:
-              // なんか仕様と違う形で返ってくるのでamountからとる
-              summary.consumes += event.data.amount;
-              break;
-            case EVENT_REPAIR:
-            case EVENT_UPGRADE_CONTROLLER:
-              summary.consumes += event.data.energySpent;
-              break;
-            default:
-              break;
-          }
-          return summary;
-        },
-        {
-          time: new Date().valueOf(),
-          production: 0,
-          consumes: 0,
-        },
-      ),
-    )
-    .filter((s) => {
-      // 時間指定があり、１時間以内のものに絞る
-      return s.time && s.time >= new Date().valueOf() - 1 * 60 * 60 * 1000;
-    });
-
-  const total = room.memory.energySummary.reduce(
-    (sum, current) => {
-      sum.consumes += current.consumes || 0;
-      sum.production += current.production || 0;
-      return sum;
-    },
-    {
-      production: 0,
-      consumes: 0,
-    },
-  );
-
-  const total1min = room.memory.energySummary
-    .filter((s) => {
-      // 時間指定があり、1分
-      return s.time && s.time >= new Date().valueOf() - 1 * 60 * 1000;
-    })
-    .reduce(
-      (sum, current) => {
-        sum.consumes += current.consumes || 0;
-        sum.production += current.production || 0;
-        return sum;
-      },
-      {
-        production: 0,
-        consumes: 0,
-      },
-    );
-
-  visual.text(`生産量：${_.floor(total.production / (1 * 60 * 60), 2)}(${_.floor(total1min.production / 60, 2)})`, 25, 25, {
-    align: "left",
-  });
-  visual.text(`消費量：${_.floor(total.consumes / (1 * 60 * 60), 2)}(${_.floor(total1min.consumes / 60, 2)})`, 25, 26, {
-    align: "left",
-  });
 }
 
 /**
@@ -218,27 +152,13 @@ const generateCross = (dx: number, dy: number): boolean => {
 
 // 全てのspawnからsourceまでの道を引く
 function roadLayer(room: Room) {
-  _(getSpawnsInRoom(room))
+  _(Object.values(Game.spawns).filter((s) => s.room.name === room.name))
     .forEach((spawn) => {
       const findCustomPath = (s: Source | StructureSpawn) =>
         spawn.pos.findPathTo(s, {
           ignoreCreeps: true,
-          plainCost: 1, // 道よりいくらか低い
-          swampCost: 1, // これから道を引くのでplainと同じ
-          costCallback(roomName, costMatrix) {
-            const room = Game.rooms[roomName];
-            _.range(50).forEach((x) => {
-              _.range(50).forEach((y) => {
-                const pos = room.getPositionAt(x, y);
-                if (!pos) {
-                  return;
-                } else if (pos.look().some((s) => "structureType" in s && s.structureType === STRUCTURE_ROAD)) {
-                  // 道がある or 道を引く場合道よりほんの少し高くする
-                  costMatrix.set(x, y, 2);
-                }
-              });
-            });
-          },
+          plainCost: 0.5, // 道よりいくらか低い
+          swampCost: 0.5, // これから道を引くのでplainと同じ
         });
 
       return (
@@ -287,13 +207,5 @@ const fourNeighbors = [
   [1, 0],
   [0, 1],
 ];
-
-/**
- * tickごとに初期化するメモリを初期化する
- */
-function initMemory(room: Room) {
-  room.memory.find = {};
-  room.memory.find[FIND_STRUCTURES] = undefined;
-}
 
 const staticStructures = [STRUCTURE_STORAGE, STRUCTURE_LINK];

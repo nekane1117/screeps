@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getSpawnsInRoom, pickUpAll, withdrawBy } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, pickUpAll, withdrawBy } from "./util.creep";
 import { findMyStructures, getCapacityRate } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
@@ -9,17 +9,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       ...opt,
     });
 
-  const logger = (..._args: Parameters<typeof console.log>) => {
-    // creep.name === "G_0" && console.log(Game.time, creep.name, ..._args);
-  };
-
-  if (!isGatherer(creep)) {
-    return console.log(`${creep.name} is not Gatherer`);
+  if (!isCarrier(creep)) {
+    return console.log(`${creep.name} is not Carrier`);
   }
 
   function checkMode() {
-    if (!isGatherer(creep)) {
-      return console.log(`${creep.name} is not Gatherer`);
+    if (!isCarrier(creep)) {
+      return console.log(`${creep.name} is not Carrier`);
     }
     const newMode = creep.store.energy < CARRY_CAPACITY ? "🛒" : "💪";
 
@@ -33,95 +29,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
   checkMode();
-  const spawn = _(getSpawnsInRoom(creep.room)).first();
-
+  const spawn = getMainSpawn(creep.room);
   if (!spawn) {
-    return ERR_NOT_FOUND;
+    return creep.say("spawn not found");
   }
   // https://docs.screeps.com/simultaneous-actions.html
 
   const { extension, spawn: spawns, link, tower, storage, terminal, container: containers } = findMyStructures(creep.room);
   const controllerContaeiner = creep.room.controller?.pos.findClosestByRange(containers);
-
-  // 輸送先設定処理###############################################################################################
-
-  // 輸送先が満タンになってたら消す
-  if (creep.memory.transferId) {
-    const store = Game.getObjectById(creep.memory.transferId);
-    if (store && "store" in store && store.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-      creep.memory.transferId = undefined;
-    }
-  }
-
-  // 他のgathererに設定されていない
-  const exclusive = ({ id }: _HasId) =>
-    getCreepsInRoom(creep.room)
-      .filter((c): c is Gatherer => c.memory.role === "gatherer")
-      .every((g) => g.memory.transferId !== id);
-
-  if (!creep.memory.transferId) {
-    logger("search extension");
-    if (
-      (creep.memory.transferId = creep.pos.findClosestByRange([...extension, ...spawns], {
-        filter: (s: StructureSpawn | StructureExtension) => {
-          return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && exclusive(s);
-        },
-      })?.id)
-    ) {
-      logger("store to extension", creep.memory.transferId);
-    }
-  }
-
-  if (!creep.memory.transferId) {
-    logger("search cache to storage");
-    if ((creep.memory.transferId = storage.find((s) => s.store.energy < s.room.energyCapacityAvailable)?.id)) {
-      logger("cache to storage", creep.memory.transferId);
-    }
-  }
-
-  if (!creep.memory.transferId) {
-    logger("search tower");
-    if (
-      (creep.memory.transferId = creep.pos.findClosestByRange(tower, {
-        filter: (t: StructureTower) => {
-          return getCapacityRate(t) < 1 && exclusive(t);
-        },
-      })?.id)
-    ) {
-      logger("store to tower", creep.memory.transferId);
-    }
-  }
-
-  if (!creep.memory.transferId) {
-    logger("search controller contaeiner");
-    if ((creep.memory.transferId = (controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined)?.id)) {
-      logger("store to controller contaeiner", creep.memory.transferId);
-    }
-  }
-
-  if (!creep.memory.transferId) {
-    logger("search any storage");
-    if (
-      (creep.memory.transferId = spawn.pos.findClosestByRange([...link, ...storage, ...terminal, ...containers], {
-        filter: (s: StructureSpawn | StructureExtension) => {
-          return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
-        },
-      })?.id)
-    ) {
-      logger("cache to storage", creep.memory.transferId);
-    }
-  }
-  // それでも見つからないとき
-  if (!creep.memory.transferId) {
-    return ERR_NOT_FOUND;
-  }
-
-  // 輸送先を取得
-  const transferTarget = Game.getObjectById(creep.memory.transferId);
-  if (!transferTarget) {
-    // 無いときはなんか変なので初期化して終わる
-    creep.memory.transferId = undefined;
-  }
 
   // 取得元設定処理###############################################################################################
 
@@ -141,8 +56,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         return extructor && extructor.store.energy >= CARRY_CAPACITY ? extructor : undefined;
       })() ||
       creep.pos.findClosestByRange(_.compact([...storage, ...terminal, ...containers]), {
-        filter: (s: StructureSpawn | StructureExtension | StructureContainer) => {
-          return controllerContaeiner?.id !== s.id && transferTarget?.id !== s.id && s.store.energy >= CARRY_CAPACITY;
+        filter: (s: StructureSpawn | StructureExtension | StructureContainer | StructureStorage) => {
+          return controllerContaeiner?.id !== s.id && s.store.energy >= CARRY_CAPACITY;
         },
       })
     )?.id;
@@ -188,6 +103,63 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
+  // 輸送先設定処理###############################################################################################
+
+  // 輸送先が満タンになってたら消す
+  if (creep.memory.transferId) {
+    const store = Game.getObjectById(creep.memory.transferId);
+    if (store && "store" in store && store.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+      creep.memory.transferId = undefined;
+    }
+  }
+
+  // 他のcarrierに設定されていない
+  const exclusive = ({ id }: _HasId) =>
+    getCreepsInRoom(creep.room)
+      .filter((c): c is Carrier => c.memory.role === "carrier")
+      .every((g) => g.memory.transferId !== id);
+
+  //spawnかextension
+  if (!creep.memory.transferId) {
+    creep.memory.transferId = creep.pos.findClosestByRange([...extension, ...spawns], {
+      filter: (s: StructureSpawn | StructureExtension) => {
+        return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && exclusive(s);
+      },
+    })?.id;
+  }
+
+  // storageにキャッシュ
+  if (!creep.memory.transferId) {
+    creep.memory.transferId = storage.find((s) => s.store.energy < s.room.energyCapacityAvailable)?.id;
+  }
+
+  // タワーに入れて修理や防御
+  if (!creep.memory.transferId) {
+    creep.memory.transferId = creep.pos.findClosestByRange(tower, {
+      filter: (t: StructureTower) => {
+        return getCapacityRate(t) < 1 && exclusive(t);
+      },
+    })?.id;
+  }
+
+  // コントローラー強化
+  if (!creep.memory.transferId) {
+    creep.memory.transferId = (controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined)?.id;
+  }
+
+  // 貯蓄
+  if (!creep.memory.transferId) {
+    creep.memory.transferId = spawn.pos.findClosestByRange([...link, ...storage, ...terminal, ...containers], {
+      filter: (s: StructureSpawn | StructureExtension) => {
+        return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
+      },
+    })?.id;
+  }
+  // それでも見つからないとき
+  if (!creep.memory.transferId) {
+    return ERR_NOT_FOUND;
+  }
+
   if (creep.memory.transferId && creep.memory.mode === "💪") {
     const transferTarget = Game.getObjectById(creep.memory.transferId);
     if (transferTarget) {
@@ -231,7 +203,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // 通りがかりに奪い取る
-  withdrawBy(creep, ["harvester", "distributer"]);
+  withdrawBy(creep, ["harvester"]);
 
   // 落っこちてるものを拾う
   pickUpAll(creep);
@@ -239,6 +211,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
 export default behavior;
 
-function isGatherer(creep: Creeps): creep is Gatherer {
-  return creep.memory.role === "gatherer";
+function isCarrier(creep: Creeps): creep is Carrier {
+  return creep.memory.role === "carrier";
 }

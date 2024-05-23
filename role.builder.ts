@@ -20,7 +20,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     creep.memory.buildingId ||
     (creep.memory.buildingId = complexOrder(Object.values(Game.constructionSites), [
       // 同じ部屋を優先
-      (s) => (s.room?.name === creep.room.name ? 0 : 1),
+      (s) => (s.room?.name === creep.memory.baseRoom ? 0 : 1),
       // コンテナがあるときはコンテナ優先
       (s) => (s.structureType === STRUCTURE_CONTAINER ? 0 : 1),
       // 残り作業が一番少ないやつ
@@ -63,27 +63,22 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       // 対象をクリア
       creep.memory.buildingId = undefined;
     }
-  } else {
-    // 修理屋になる
-    return ((creep as Creeps).memory.role = "repairer");
   }
 
   // withdraw
   if (
     creep.memory.storeId ||
-    (creep.memory.storeId =
-      creep.memory.buildingId &&
-      Game.getObjectById(creep.memory.buildingId)?.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s): s is StoreTarget => {
-          return (
-            s.structureType !== STRUCTURE_SPAWN &&
-            isStoreTarget(s) &&
-            s.structureType !== STRUCTURE_LINK &&
-            (s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9 ? true : s.structureType !== STRUCTURE_EXTENSION) &&
-            s.store.energy > 0
-          );
-        },
-      })?.id)
+    (creep.memory.storeId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      filter: (s): s is StoreTarget => {
+        return (
+          s.structureType !== STRUCTURE_SPAWN &&
+          isStoreTarget(s) &&
+          s.structureType !== STRUCTURE_LINK &&
+          (s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9 ? true : s.structureType !== STRUCTURE_EXTENSION) &&
+          s.store.energy > 0
+        );
+      },
+    })?.id)
   ) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
@@ -127,7 +122,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // withdraw
-  withdrawBy(creep, ["harvester", "distributer", "upgrader"]);
+  withdrawBy(creep, ["harvester", "upgrader"]);
 
   // 落っこちてるものを拾う
   pickUpAll(creep);

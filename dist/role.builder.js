@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_array_1 = require("./util.array");
 const util_creep_1 = require("./util.creep");
 const behavior = (creep) => {
-    var _a, _b, _c;
+    var _a, _b;
     if (!isBuilder(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
@@ -15,7 +15,7 @@ const behavior = (creep) => {
     }
     if (creep.memory.buildingId ||
         (creep.memory.buildingId = (_a = (0, util_array_1.complexOrder)(Object.values(Game.constructionSites), [
-            (s) => { var _a; return (((_a = s.room) === null || _a === void 0 ? void 0 : _a.name) === creep.room.name ? 0 : 1); },
+            (s) => { var _a; return (((_a = s.room) === null || _a === void 0 ? void 0 : _a.name) === creep.memory.baseRoom ? 0 : 1); },
             (s) => (s.structureType === STRUCTURE_CONTAINER ? 0 : 1),
             (s) => s.progressTotal - s.progress,
         ]).first()) === null || _a === void 0 ? void 0 : _a.id)) {
@@ -48,21 +48,16 @@ const behavior = (creep) => {
             creep.memory.buildingId = undefined;
         }
     }
-    else {
-        return (creep.memory.role = "repairer");
-    }
     if (creep.memory.storeId ||
-        (creep.memory.storeId =
-            creep.memory.buildingId &&
-                ((_c = (_b = Game.getObjectById(creep.memory.buildingId)) === null || _b === void 0 ? void 0 : _b.pos.findClosestByPath(FIND_STRUCTURES, {
-                    filter: (s) => {
-                        return (s.structureType !== STRUCTURE_SPAWN &&
-                            (0, util_creep_1.isStoreTarget)(s) &&
-                            s.structureType !== STRUCTURE_LINK &&
-                            (s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9 ? true : s.structureType !== STRUCTURE_EXTENSION) &&
-                            s.store.energy > 0);
-                    },
-                })) === null || _c === void 0 ? void 0 : _c.id))) {
+        (creep.memory.storeId = (_b = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+            filter: (s) => {
+                return (s.structureType !== STRUCTURE_SPAWN &&
+                    (0, util_creep_1.isStoreTarget)(s) &&
+                    s.structureType !== STRUCTURE_LINK &&
+                    (s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9 ? true : s.structureType !== STRUCTURE_EXTENSION) &&
+                    s.store.energy > 0);
+            },
+        })) === null || _b === void 0 ? void 0 : _b.id)) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
             creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY);
@@ -99,7 +94,7 @@ const behavior = (creep) => {
             }
         }
     }
-    (0, util_creep_1.withdrawBy)(creep, ["harvester", "distributer", "upgrader"]);
+    (0, util_creep_1.withdrawBy)(creep, ["harvester", "upgrader"]);
     (0, util_creep_1.pickUpAll)(creep);
 };
 exports.default = behavior;

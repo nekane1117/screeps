@@ -4,40 +4,45 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.roomBehavior = void 0;
-const source_1 = require("./source");
-const util_creep_1 = require("./util.creep");
+const room_source_1 = require("./room.source");
 const structure_links_1 = __importDefault(require("./structure.links"));
+const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 function roomBehavior(room) {
     var _a, _b, _c;
     if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) === null || _a === void 0 ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
         (_b = room.controller) === null || _b === void 0 ? void 0 : _b.activateSafeMode();
     }
-    initMemory(room);
-    room.find(FIND_SOURCES).map((source) => (0, source_1.behavior)(source));
+    if (Game.time % 2) {
+        (0, utils_1.logUsage)("source:" + room.name, () => {
+            room.find(FIND_SOURCES).forEach((source) => (0, room_source_1.behavior)(source));
+        });
+    }
     if (!room.memory.roadLayed || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
         console.log("roadLayer in " + Game.time);
         roadLayer(room);
     }
-    creteStructures(room);
-    const { gatherer: gatherers, harvester } = (0, util_creep_1.getCreepsInRoom)(room).reduce((creeps, c) => {
+    if (Game.time % 100 === 0) {
+        creteStructures(room);
+    }
+    (0, structure_links_1.default)((0, utils_1.findMyStructures)(room).link);
+    const { carrier: carriers, harvester } = (0, util_creep_1.getCreepsInRoom)(room).reduce((creeps, c) => {
         creeps[c.memory.role] = ((creeps === null || creeps === void 0 ? void 0 : creeps[c.memory.role]) || []).concat(c);
         return creeps;
-    }, { builder: [], claimer: [], distributer: [], gatherer: [], harvester: [], repairer: [], upgrader: [] });
-    const { link } = (0, utils_1.findMyStructures)(room);
-    (0, structure_links_1.default)(link);
-    const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("gatherer", room.energyAvailable);
+    }, { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [] });
+    const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("carrier", room.energyAvailable);
     if (harvester.length &&
-        gatherers.filter((g) => {
+        carriers.filter((g) => {
             return bodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
-        }).length < 2) {
-        const name = `G_${room.name}_${Game.time}`;
-        const spawn = (0, util_creep_1.getSpawnsInRoom)(room).find((r) => !r.spawning);
-        if (spawn && room.energyAvailable > 200) {
+        }).length < room.find(FIND_SOURCES).length) {
+        const name = `C_${room.name}_${Game.time}`;
+        const spawn = (0, util_creep_1.getMainSpawn)(room);
+        if (spawn && !spawn.spawning && room.energyAvailable > 200) {
             if (spawn.spawnCreep(bodies, name, {
                 memory: {
                     mode: "🛒",
-                    role: "gatherer",
+                    baseRoom: spawn.room.name,
+                    role: "carrier",
                 },
             }) === OK) {
                 (_c = room.memory.energySummary) === null || _c === void 0 ? void 0 : _c.push({
@@ -53,8 +58,7 @@ function roomBehavior(room) {
 exports.roomBehavior = roomBehavior;
 function creteStructures(room) {
     var _a, _b;
-    const { visual } = room;
-    const spawn = Object.values(Game.spawns).find((s) => s.room.name === room.name);
+    const spawn = (0, util_creep_1.getMainSpawn)(room);
     if (!spawn) {
         return;
     }
@@ -102,57 +106,6 @@ function creteStructures(room) {
             }
         }
     }
-    room.memory.energySummary = (room.memory.energySummary || [])
-        .concat(room.getEventLog().reduce((summary, event) => {
-        switch (event.event) {
-            case EVENT_HARVEST:
-                summary.production += event.data.amount;
-                break;
-            case EVENT_BUILD:
-                summary.consumes += event.data.amount;
-                break;
-            case EVENT_REPAIR:
-            case EVENT_UPGRADE_CONTROLLER:
-                summary.consumes += event.data.energySpent;
-                break;
-            default:
-                break;
-        }
-        return summary;
-    }, {
-        time: new Date().valueOf(),
-        production: 0,
-        consumes: 0,
-    }))
-        .filter((s) => {
-        return s.time && s.time >= new Date().valueOf() - 1 * 60 * 60 * 1000;
-    });
-    const total = room.memory.energySummary.reduce((sum, current) => {
-        sum.consumes += current.consumes || 0;
-        sum.production += current.production || 0;
-        return sum;
-    }, {
-        production: 0,
-        consumes: 0,
-    });
-    const total1min = room.memory.energySummary
-        .filter((s) => {
-        return s.time && s.time >= new Date().valueOf() - 1 * 60 * 1000;
-    })
-        .reduce((sum, current) => {
-        sum.consumes += current.consumes || 0;
-        sum.production += current.production || 0;
-        return sum;
-    }, {
-        production: 0,
-        consumes: 0,
-    });
-    visual.text(`生産量：${_.floor(total.production / (1 * 60 * 60), 2)}(${_.floor(total1min.production / 60, 2)})`, 25, 25, {
-        align: "left",
-    });
-    visual.text(`消費量：${_.floor(total.consumes / (1 * 60 * 60), 2)}(${_.floor(total1min.consumes / 60, 2)})`, 25, 26, {
-        align: "left",
-    });
 }
 const generateCross = (dx, dy) => {
     if (dx % 2 === 0) {
@@ -163,26 +116,12 @@ const generateCross = (dx, dy) => {
     }
 };
 function roadLayer(room) {
-    _((0, util_creep_1.getSpawnsInRoom)(room))
+    _(Object.values(Game.spawns).filter((s) => s.room.name === room.name))
         .forEach((spawn) => {
         const findCustomPath = (s) => spawn.pos.findPathTo(s, {
             ignoreCreeps: true,
-            plainCost: 1,
-            swampCost: 1,
-            costCallback(roomName, costMatrix) {
-                const room = Game.rooms[roomName];
-                _.range(50).forEach((x) => {
-                    _.range(50).forEach((y) => {
-                        const pos = room.getPositionAt(x, y);
-                        if (!pos) {
-                            return;
-                        }
-                        else if (pos.look().some((s) => "structureType" in s && s.structureType === STRUCTURE_ROAD)) {
-                            costMatrix.set(x, y, 2);
-                        }
-                    });
-                });
-            },
+            plainCost: 0.5,
+            swampCost: 0.5,
         });
         return (_([
             ...room.find(FIND_SOURCES),
@@ -224,8 +163,4 @@ const fourNeighbors = [
     [1, 0],
     [0, 1],
 ];
-function initMemory(room) {
-    room.memory.find = {};
-    room.memory.find[FIND_STRUCTURES] = undefined;
-}
 const staticStructures = [STRUCTURE_STORAGE, STRUCTURE_LINK];

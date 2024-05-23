@@ -1,5 +1,6 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove } from "./util.creep";
+import { getSpawnsOrderdByRange } from "./utils";
 
 const behavior: CreepBehavior = (claimer: Creeps) => {
   if (!isClaimer(claimer)) {
@@ -14,6 +15,20 @@ const behavior: CreepBehavior = (claimer: Creeps) => {
   if (!flag) {
     claimer.suicide();
   }
+  if ((flag.room?.controller?.level || 0) > 0) {
+    const spawn = getSpawnsOrderdByRange(flag).first();
+    if (spawn) {
+      const recycle = spawn.recycleCreep(claimer);
+      if (recycle === OK) {
+        return recycle;
+      } else if (recycle === ERR_NOT_IN_RANGE) {
+        return moveMeTo(spawn);
+      }
+    } else {
+      return ERR_NOT_FOUND;
+    }
+  }
+
   const target = flag.room?.controller || flag;
   if (target.room?.name === claimer.room.name && "structureType" in target) {
     const claimed = claimer.claimController(target);
@@ -30,7 +45,6 @@ const behavior: CreepBehavior = (claimer: Creeps) => {
   } else {
     moveMeTo(target);
   }
-  console.log(RETURN_CODE_DECODER[moveMeTo(flag.room?.controller || flag).toString()]);
 };
 
 export default behavior;

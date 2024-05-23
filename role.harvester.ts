@@ -54,7 +54,39 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   pickUpAll(creep);
 
   // 周りの建物に投げる
-  creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: (s) => "store" in s }).map((s) => creep.transfer(s, RESOURCE_ENERGY));
+  const structures = _(creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: (s): s is HasStore => "store" in s })).sort((s) => {
+    switch (s.structureType) {
+      case STRUCTURE_LINK:
+      case STRUCTURE_EXTENSION:
+        // 優先
+        return 0;
+      case STRUCTURE_CONTAINER:
+      case STRUCTURE_STORAGE:
+        // 取り出し
+        return 2;
+      case STRUCTURE_FACTORY:
+      case STRUCTURE_LAB:
+      case STRUCTURE_NUKER:
+      case STRUCTURE_POWER_SPAWN:
+      case STRUCTURE_SPAWN:
+      case STRUCTURE_TERMINAL:
+      case STRUCTURE_TOWER:
+      default:
+        return 1;
+    }
+  });
+
+  // 優先度一番低いエネルギーがあるやつ
+  const extractor = structures.filter((s) => s.store.energy).last();
+  // 空きのある最初のやつ
+  const store = structures.filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY)).first();
+
+  if (extractor && extractor !== store) {
+    creep.withdraw(extractor, RESOURCE_ENERGY);
+  }
+  if (store) {
+    creep.transfer(store, RESOURCE_ENERGY);
+  }
 };
 
 export default behavior;

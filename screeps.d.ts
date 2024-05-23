@@ -1,17 +1,14 @@
 /// <reference types="screeps" />
 
-declare interface Memory {
-  sources: Record<Id[Source], SourceMemory>;
-}
-
 declare interface SourceMemory {
   /** 使える場所の数 */
   positions: number;
 }
 
-declare type ROLES = "harvester" | "gatherer" | "builder" | "repairer" | "upgrader" | "distributer" | "claimer";
+declare type ROLES = "harvester" | "carrier" | "builder" | "upgrader" | "claimer";
 declare interface CreepMemory {
   role: ROLES;
+  baseRoom: string;
   // 担当作業の作業結果
   worked?: ScreepsReturnCode;
   _move?: {
@@ -25,9 +22,22 @@ declare interface CreepMemory {
 }
 
 /** 全部のCreepの型 */
-declare type Creeps = Creep | Harvester | Upgrader | Builder | Gatherer | Repairer | Claimer;
+declare type Creeps = Creep | Harvester | Upgrader | Builder | Carrier | Repairer | Claimer;
 
 declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink;
+
+declare type HasStore =
+  | StructureExtension
+  | StructureSpawn
+  | StructureLink
+  | StructureStorage
+  | StructureTower
+  | StructurePowerSpawn
+  | StructureLab
+  | StructureTerminal
+  | StructureContainer
+  | StructureNuker
+  | StructureFactory;
 
 declare interface Harvester extends Creep {
   memory: HarvesterMemory;
@@ -78,14 +88,20 @@ declare interface RoomMemory {
     tick: number;
     names: string[];
   };
-  spawns?: {
-    tick: number;
-    names: string[];
-  };
+
+  mainSpawn?: Id<StructureSpawn>;
+
   roadLayed: number;
 
-  find: {
-    [FIND_STRUCTURES]?: MyStructureCache;
+  find?: {
+    [FIND_STRUCTURES]?: {
+      time: number;
+      data: MyStructureCache;
+    };
+    [FIND_SOURCES]?: {
+      time: number;
+      data: Id<Source>[];
+    };
   };
 
   energySummary?: {
@@ -128,15 +144,14 @@ declare interface BuilderMemory extends CreepMemory {
   built?: ReturnType<Creeps["build"]>;
   /** 資源をもらいに行く先 */
   storeId?: StoreTarget["id"] | null;
-  parentRoom: string;
 }
 
-declare interface Gatherer extends Creep {
-  memory: GathererMemory;
+declare interface Carrier extends Creep {
+  memory: CarrierMemory;
 }
 
-declare interface GathererMemory extends CreepMemory {
-  role: "gatherer";
+declare interface CarrierMemory extends CreepMemory {
+  role: "carrier";
   /** 今何してるか
    * working    : 作業中
    * collecting : 資源取得中
@@ -151,44 +166,6 @@ declare interface GathererMemory extends CreepMemory {
 
 declare interface Repairer extends Creep {
   memory: RepairerMemory;
-}
-
-/**
- * Source単位で固定で担当し、Spawnに向けて配布する
- */
-declare interface Distributer extends Creep {
-  memory: DistributerMemory;
-}
-
-declare interface DistributerMemory extends CreepMemory {
-  role: "distributer";
-  /** 今何してるか
-   * 💪 : 作業中
-   * 🛒 : 資源取得中
-   */
-  mode: "💪" | "🛒";
-  /** 担当倉庫 */
-  sourceId: Id<Source>;
-  /** 配送先 */
-  transferId?: Id<Parameters<Creep["transfer"]>[0]>;
-}
-
-declare interface Repairer extends Creep {
-  memory: RepairerMemory;
-}
-
-declare interface RepairerMemory extends CreepMemory {
-  role: "repairer";
-  /** 今何してるか
-   * working    : 作業中
-   * collecting : 資源取得中
-   */
-  mode: "💪" | "🛒";
-  /** 修理対象 */
-  workTargetId?: Id<Structure> | null;
-  /** 資源をもらいに行く先 */
-  storeId?: StoreTarget["id"] | null;
-  collected?: ScreepsReturnCode;
 }
 
 declare interface Claimer extends Creep {

@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getSpawnsInRoom = exports.getSpawnsOrderByRange = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
-const util_array_1 = require("./util.array");
+exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getMainSpawn = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -59,7 +58,7 @@ exports.IDEAL_BODY = Object.freeze({
         WORK,
         CARRY,
         MOVE,
-        CARRY,
+        WORK,
         ..._(_.range(23).map(() => {
             return [MOVE, CARRY];
         }))
@@ -67,14 +66,7 @@ exports.IDEAL_BODY = Object.freeze({
             .run(),
     ],
     claimer: [CLAIM, MOVE],
-    gatherer: [
-        ..._(_.range(25).map(() => {
-            return [MOVE, CARRY];
-        }))
-            .flatten()
-            .run(),
-    ],
-    distributer: [
+    carrier: [
         ..._(_.range(25).map(() => {
             return [MOVE, CARRY];
         }))
@@ -92,18 +84,7 @@ exports.IDEAL_BODY = Object.freeze({
         MOVE,
         MOVE,
     ],
-    repairer: [
-        WORK,
-        CARRY,
-        MOVE,
-        CARRY,
-        ..._(_.range(23).map(() => {
-            return [MOVE, CARRY];
-        }))
-            .flatten()
-            .run(),
-    ],
-    upgrader: [CARRY, MOVE, ..._.range(5).map(() => WORK)],
+    upgrader: [CARRY, MOVE, ..._.range(10).map(() => WORK), ..._.range(10).map(() => MOVE)],
 });
 exports.RETURN_CODE_DECODER = Object.freeze({
     [OK.toString()]: "OK",
@@ -153,7 +134,7 @@ function getCreepsInRoom(room) {
             room.memory.creeps = {
                 tick: Game.time,
                 names: Object.entries(Game.creeps)
-                    .filter(([_, creep]) => creep.room.name === room.name)
+                    .filter(([_, creep]) => creep.memory.baseRoom === room.name)
                     .map((entry) => entry[0]),
             };
             return room.memory.creeps.names;
@@ -163,42 +144,18 @@ function getCreepsInRoom(room) {
         .filter((c) => c);
 }
 exports.getCreepsInRoom = getCreepsInRoom;
-function getSpawnsOrderByRange(pos) {
-    const p = "pos" in pos ? pos.pos : pos;
-    return (0, util_array_1.complexOrder)(Object.values(Game.spawns), [
-        (s) => Game.map.getRoomLinearDistance(s.room.name, p.roomName),
-        (s) => {
-            if (Game.rooms[s.room.name] && Game.rooms[p.roomName]) {
-                return p.getRangeTo(s);
-            }
-            else {
-                return 50;
-            }
-        },
-    ]);
+function getMainSpawn(room) {
+    var _a;
+    const spawn = room.memory.mainSpawn && Game.getObjectById(room.memory.mainSpawn);
+    if (spawn) {
+        return spawn;
+    }
+    else {
+        room.memory.mainSpawn = (_a = _(Object.values(Game.spawns).filter((s) => s.room.name === room.name)).first()) === null || _a === void 0 ? void 0 : _a.id;
+        return getMainSpawn(room);
+    }
 }
-exports.getSpawnsOrderByRange = getSpawnsOrderByRange;
-function getSpawnsInRoom(room) {
-    return _((() => {
-        var _a;
-        if (((_a = room.memory.spawns) === null || _a === void 0 ? void 0 : _a.tick) === Game.time) {
-            return room.memory.spawns.names;
-        }
-        else {
-            room.memory.spawns = {
-                tick: Game.time,
-                names: Object.entries(Game.spawns)
-                    .filter(([_, spawns]) => spawns.room.name === room.name)
-                    .map((entry) => entry[0]),
-            };
-            return room.memory.spawns.names;
-        }
-    })())
-        .map((name) => Game.spawns[name])
-        .compact()
-        .run();
-}
-exports.getSpawnsInRoom = getSpawnsInRoom;
+exports.getMainSpawn = getMainSpawn;
 function pickUpAll(creep) {
     creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1).forEach((resource) => {
         creep.pickup(resource);
