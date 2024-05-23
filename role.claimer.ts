@@ -12,6 +12,9 @@ const behavior: CreepBehavior = (claimer: Creeps) => {
     });
 
   const flag = Game.flags[claimer.memory.flagName];
+  if (!flag) {
+    claimer.suicide();
+  }
   if ((flag.room?.controller?.level || 0) > 0) {
     const spawn = getSpawnsOrderdByRange(flag).first();
     if (spawn) {
@@ -26,9 +29,6 @@ const behavior: CreepBehavior = (claimer: Creeps) => {
     }
   }
 
-  if (!flag) {
-    claimer.suicide();
-  }
   const target = flag.room?.controller || flag;
   if (target.room?.name === claimer.room.name && "structureType" in target) {
     const claimed = claimer.claimController(target);
@@ -45,7 +45,6 @@ const behavior: CreepBehavior = (claimer: Creeps) => {
   } else {
     moveMeTo(target);
   }
-  console.log(RETURN_CODE_DECODER[moveMeTo(flag.room?.controller || flag).toString()]);
 };
 
 export default behavior;

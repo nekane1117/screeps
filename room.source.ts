@@ -9,8 +9,6 @@ export function behavior(source: Source) {
     source.room.memory.sources[source.id] = initMemory(source);
   }
 
-  const memory = _.cloneDeep(source.room.memory.sources[source.id]) as Readonly<SourceMemory>;
-
   // 自分用のharvesterのlodash wrapper
   const harvesters = _(
     Object.values(Game.creeps).filter((c: Creeps | undefined): c is Harvester => {
@@ -23,7 +21,7 @@ export function behavior(source: Source) {
   );
 
   // 最大匹数より少なく、WORKのパーツが5未満の時
-  if (harvesters.size() < memory.positions && harvesters.map((c) => c.getActiveBodyparts(WORK)).sum() < 5) {
+  if (harvesters.size() < 1 && harvesters.map((c) => c.getActiveBodyparts(WORK)).sum() < 5) {
     // 自分用のWORKが5個以下の時
     const spawn = getSpawnsOrderdByRange(source, 1).first();
     if (!spawn) {
@@ -37,7 +35,7 @@ export function behavior(source: Source) {
       const spawned = spawn.spawnCreep(bodies, name, {
         memory: {
           role: "harvester",
-          baseRoom: spawn.room.name,
+          baseRoom: source.room.name,
           harvestTargetId: source.id,
         } as HarvesterMemory,
       });

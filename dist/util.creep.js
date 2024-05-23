@@ -134,7 +134,7 @@ function getCreepsInRoom(room) {
             room.memory.creeps = {
                 tick: Game.time,
                 names: Object.entries(Game.creeps)
-                    .filter(([_, creep]) => creep.room.name === room.name)
+                    .filter(([_, creep]) => creep.memory.baseRoom === room.name)
                     .map((entry) => entry[0]),
             };
             return room.memory.creeps.names;
@@ -146,9 +146,14 @@ function getCreepsInRoom(room) {
 exports.getCreepsInRoom = getCreepsInRoom;
 function getMainSpawn(room) {
     var _a;
-    return (((room.memory.mainSpawn = room.memory.mainSpawn || ((_a = _(Object.values(Game.spawns).filter((s) => s.room.name === room.name)).first()) === null || _a === void 0 ? void 0 : _a.id)) &&
-        Game.getObjectById(room.memory.mainSpawn)) ||
-        undefined);
+    const spawn = room.memory.mainSpawn && Game.getObjectById(room.memory.mainSpawn);
+    if (spawn) {
+        return spawn;
+    }
+    else {
+        room.memory.mainSpawn = (_a = _(Object.values(Game.spawns).filter((s) => s.room.name === room.name)).first()) === null || _a === void 0 ? void 0 : _a.id;
+        return getMainSpawn(room);
+    }
 }
 exports.getMainSpawn = getMainSpawn;
 function pickUpAll(creep) {

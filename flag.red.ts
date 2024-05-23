@@ -22,7 +22,7 @@ export default function behavior(flag: Flag) {
     Object.values(Game.constructionSites).length === 0
   ) {
     // 最寄りのspawn
-    const spawn = getSpawnsOrderdByRange(flag, 1).first();
+    const spawn = getSpawnsOrderdByRange(flag, 1).find((s) => Game.rooms[s.room.name]?.controller?.level);
 
     // 作らせる
     if (spawn && !spawn.spawning && spawn.room.energyAvailable > 650) {

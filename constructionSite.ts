@@ -4,9 +4,9 @@ import { getSpawnsOrderdByRange } from "./utils";
 export default function behavior(site: ConstructionSite) {
   // builderが居ないときは要求する
   if (
-    Object.values(Game.creeps)
-      .filter((c): c is Builder => c.memory.role === "builder" && (c.ticksToLive || 0) > CREEP_LIFE_TIME * 0.1)
-      .filter((b) => b.memory.baseRoom === site.pos.roomName).length === 0
+    Object.values(Game.creeps).filter((c): c is Builder => {
+      return c.memory.role === "builder" && c.memory.baseRoom === site.pos.roomName && (c.ticksToLive || 0) > CREEP_LIFE_TIME * 0.1;
+    }).length === 0
   ) {
     // 隣の部屋までの使えるspawnを探す
     const spawn = getSpawnsOrderdByRange(site, 1).find((s) => !s.spawning && s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9);

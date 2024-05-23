@@ -25,7 +25,7 @@ const behavior = (creep) => {
     checkMode();
     const spawn = (0, util_creep_1.getMainSpawn)(creep.room);
     if (!spawn) {
-        return ERR_NOT_FOUND;
+        return creep.say("spawn not found");
     }
     const { extension, spawn: spawns, link, tower, storage, terminal, container: containers } = (0, utils_1.findMyStructures)(creep.room);
     const controllerContaeiner = (_a = creep.room.controller) === null || _a === void 0 ? void 0 : _a.pos.findClosestByRange(containers);
@@ -42,11 +42,7 @@ const behavior = (creep) => {
         })() ||
             creep.pos.findClosestByRange(_.compact([...storage, ...terminal, ...containers]), {
                 filter: (s) => {
-                    return ((controllerContaeiner === null || controllerContaeiner === void 0 ? void 0 : controllerContaeiner.id) !== s.id &&
-                        s.store.energy >= CARRY_CAPACITY &&
-                        (s.structureType !== STRUCTURE_STORAGE ||
-                            s.store.energy > s.room.energyCapacityAvailable ||
-                            s.room.energyAvailable < s.room.energyCapacityAvailable));
+                    return (controllerContaeiner === null || controllerContaeiner === void 0 ? void 0 : controllerContaeiner.id) !== s.id && s.store.energy >= CARRY_CAPACITY;
                 },
             }))) === null || _b === void 0 ? void 0 : _b.id;
     }

@@ -30,9 +30,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
   checkMode();
   const spawn = getMainSpawn(creep.room);
-
   if (!spawn) {
-    return ERR_NOT_FOUND;
+    return creep.say("spawn not found");
   }
   // https://docs.screeps.com/simultaneous-actions.html
 
@@ -58,13 +57,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       })() ||
       creep.pos.findClosestByRange(_.compact([...storage, ...terminal, ...containers]), {
         filter: (s: StructureSpawn | StructureExtension | StructureContainer | StructureStorage) => {
-          return (
-            controllerContaeiner?.id !== s.id &&
-            s.store.energy >= CARRY_CAPACITY &&
-            (s.structureType !== STRUCTURE_STORAGE ||
-              s.store.energy > s.room.energyCapacityAvailable ||
-              s.room.energyAvailable < s.room.energyCapacityAvailable)
-          );
+          return controllerContaeiner?.id !== s.id && s.store.energy >= CARRY_CAPACITY;
         },
       })
     )?.id;

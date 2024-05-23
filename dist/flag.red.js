@@ -15,7 +15,7 @@ function behavior(flag) {
         return isC(c) && c.memory.flagName === flag.name;
     }) &&
         Object.values(Game.constructionSites).length === 0) {
-        const spawn = (0, utils_1.getSpawnsOrderdByRange)(flag, 1).first();
+        const spawn = (0, utils_1.getSpawnsOrderdByRange)(flag, 1).find((s) => { var _a, _b; return (_b = (_a = Game.rooms[s.room.name]) === null || _a === void 0 ? void 0 : _a.controller) === null || _b === void 0 ? void 0 : _b.level; });
         if (spawn && !spawn.spawning && spawn.room.energyAvailable > 650) {
             const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("claimer", spawn.room.energyAvailable);
             if (spawn.spawnCreep(bodies, `C_${flag.pos.roomName}_${flag.name}`, {

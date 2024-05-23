@@ -9,14 +9,13 @@ function behavior(source) {
         source.room.memory.sources = source.room.memory.sources || {};
         source.room.memory.sources[source.id] = initMemory(source);
     }
-    const memory = _.cloneDeep(source.room.memory.sources[source.id]);
     const harvesters = _(Object.values(Game.creeps).filter((c) => {
         const isH = (c) => {
             return c.memory.role === "harvester";
         };
         return c !== undefined && isH(c) && c.memory.harvestTargetId === source.id;
     }));
-    if (harvesters.size() < memory.positions && harvesters.map((c) => c.getActiveBodyparts(WORK)).sum() < 5) {
+    if (harvesters.size() < 1 && harvesters.map((c) => c.getActiveBodyparts(WORK)).sum() < 5) {
         const spawn = (0, utils_1.getSpawnsOrderdByRange)(source, 1).first();
         if (!spawn) {
             console.log(`source ${source.id} can't find spawn`);
@@ -28,7 +27,7 @@ function behavior(source) {
             const spawned = spawn.spawnCreep(bodies, name, {
                 memory: {
                     role: "harvester",
-                    baseRoom: spawn.room.name,
+                    baseRoom: source.room.name,
                     harvestTargetId: source.id,
                 },
             });

@@ -1,16 +1,25 @@
 import { behavior } from "./room.source";
-import { filterBodiesByCost, getCreepsInRoom, getMainSpawn } from "./util.creep";
 import linkBehavior from "./structure.links";
-import { findMyStructures } from "./utils";
+import { filterBodiesByCost, getCreepsInRoom, getMainSpawn } from "./util.creep";
+import { findMyStructures, logUsage } from "./utils";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
-  if (room.find(FIND_HOSTILE_CREEPS).length && !room.controller?.safeMode && room.energyAvailable > SAFE_MODE_COST) {
-    room.controller?.activateSafeMode();
-  }
+
+  logUsage("activateSafeMode:" + room.name, () => {
+    if (room.find(FIND_HOSTILE_CREEPS).length && !room.controller?.safeMode && room.energyAvailable > SAFE_MODE_COST) {
+      room.controller?.activateSafeMode();
+    }
+  });
 
   // tickごとのメモリの初期化
-  initMemory(room);
+  logUsage("initMemory:" + room.name, () => {
+    initMemory(room);
+  });
+  const mainSpawn = room.memory.mainSpawn && Game.getObjectById(room.memory.mainSpawn);
+  if (mainSpawn) {
+    room.visual.text(`${room.energyAvailable} / ${room.energyCapacityAvailable}`, mainSpawn.pos.x, mainSpawn.pos.y - 1, { align: "left" });
+  }
 
   room.find(FIND_SOURCES).map((source) => behavior(source));
 
@@ -21,7 +30,9 @@ export function roomBehavior(room: Room) {
   }
 
   // エクステンション建てる
-  creteStructures(room);
+  if (Game.time % 100 === 0) {
+    creteStructures(room);
+  }
 
   const { carrier: carriers, harvester } = getCreepsInRoom(room).reduce(
     (creeps, c) => {
@@ -31,9 +42,10 @@ export function roomBehavior(room: Room) {
     { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [] } as Record<ROLES, Creep[]>,
   );
 
-  const { link } = findMyStructures(room);
-  linkBehavior(link);
-
+  logUsage("linkBehavior:" + room.name, () => {
+    const { link } = findMyStructures(room);
+    linkBehavior(link);
+  });
   const { bodies, cost } = filterBodiesByCost("carrier", room.energyAvailable);
   if (
     harvester.length &&
@@ -63,11 +75,11 @@ export function roomBehavior(room: Room) {
       return OK;
     }
   }
+  showSummary(room);
 }
 
 /** 部屋ごとの色々を建てる */
 function creteStructures(room: Room) {
-  const { visual } = room;
   // 多分最初のspawn
   const spawn = getMainSpawn(room);
   if (!spawn) {
@@ -135,74 +147,6 @@ function creteStructures(room: Room) {
       }
     }
   }
-  room.memory.energySummary = (room.memory.energySummary || [])
-    .concat(
-      room.getEventLog().reduce(
-        (summary, event) => {
-          switch (event.event) {
-            case EVENT_HARVEST:
-              summary.production += event.data.amount;
-              break;
-            case EVENT_BUILD:
-              // なんか仕様と違う形で返ってくるのでamountからとる
-              summary.consumes += event.data.amount;
-              break;
-            case EVENT_REPAIR:
-            case EVENT_UPGRADE_CONTROLLER:
-              summary.consumes += event.data.energySpent;
-              break;
-            default:
-              break;
-          }
-          return summary;
-        },
-        {
-          time: new Date().valueOf(),
-          production: 0,
-          consumes: 0,
-        },
-      ),
-    )
-    .filter((s) => {
-      // 時間指定があり、１時間以内のものに絞る
-      return s.time && s.time >= new Date().valueOf() - 1 * 60 * 60 * 1000;
-    });
-
-  const total = room.memory.energySummary.reduce(
-    (sum, current) => {
-      sum.consumes += current.consumes || 0;
-      sum.production += current.production || 0;
-      return sum;
-    },
-    {
-      production: 0,
-      consumes: 0,
-    },
-  );
-
-  const total1min = room.memory.energySummary
-    .filter((s) => {
-      // 時間指定があり、1分
-      return s.time && s.time >= new Date().valueOf() - 1 * 60 * 1000;
-    })
-    .reduce(
-      (sum, current) => {
-        sum.consumes += current.consumes || 0;
-        sum.production += current.production || 0;
-        return sum;
-      },
-      {
-        production: 0,
-        consumes: 0,
-      },
-    );
-
-  visual.text(`生産量：${_.floor(total.production / (1 * 60 * 60), 2)}(${_.floor(total1min.production / 60, 2)})`, 25, 25, {
-    align: "left",
-  });
-  visual.text(`消費量：${_.floor(total.consumes / (1 * 60 * 60), 2)}(${_.floor(total1min.consumes / 60, 2)})`, 25, 26, {
-    align: "left",
-  });
 }
 
 /**
@@ -284,3 +228,74 @@ function initMemory(room: Room) {
 }
 
 const staticStructures = [STRUCTURE_STORAGE, STRUCTURE_LINK];
+
+function showSummary({ visual, memory, getEventLog }: Room) {
+  memory.energySummary = (memory.energySummary || [])
+    .concat(
+      getEventLog().reduce(
+        (summary, event) => {
+          switch (event.event) {
+            case EVENT_HARVEST:
+              summary.production += event.data.amount;
+              break;
+            case EVENT_BUILD:
+              // なんか仕様と違う形で返ってくるのでamountからとる
+              summary.consumes += event.data.amount;
+              break;
+            case EVENT_REPAIR:
+            case EVENT_UPGRADE_CONTROLLER:
+              summary.consumes += event.data.energySpent;
+              break;
+            default:
+              break;
+          }
+          return summary;
+        },
+        {
+          time: new Date().valueOf(),
+          production: 0,
+          consumes: 0,
+        },
+      ),
+    )
+    .filter((s) => {
+      // 時間指定があり、１時間以内のものに絞る
+      return s.time && s.time >= new Date().valueOf() - 1 * 60 * 60 * 1000;
+    });
+
+  const total = memory.energySummary.reduce(
+    (sum, current) => {
+      sum.consumes += current.consumes || 0;
+      sum.production += current.production || 0;
+      return sum;
+    },
+    {
+      production: 0,
+      consumes: 0,
+    },
+  );
+
+  const total1min = memory.energySummary
+    .filter((s) => {
+      // 時間指定があり、1分
+      return s.time && s.time >= new Date().valueOf() - 1 * 60 * 1000;
+    })
+    .reduce(
+      (sum, current) => {
+        sum.consumes += current.consumes || 0;
+        sum.production += current.production || 0;
+        return sum;
+      },
+      {
+        production: 0,
+        consumes: 0,
+      },
+    );
+
+  visual.text(`生産量：${_.floor(total.production / (1 * 60 * 60), 2)}(${_.floor(total1min.production / 60, 2)})`, 25, 25, {
+    align: "left",
+  });
+  visual.text(`消費量：${_.floor(total.consumes / (1 * 60 * 60), 2)}(${_.floor(total1min.consumes / 60, 2)})`, 25, 26, {
+    align: "left",
+  });
+}

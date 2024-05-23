@@ -66,3 +66,9 @@ export function getSpawnsOrderdByRange(src: RoomPosition | _HasRoomPosition, max
     })
     .map((p) => p.spawn);
 }
+
+export function logUsage(title: string, func: () => unknown) {
+  const start = Game.cpu.getUsed();
+  func();
+  console.log(`${title} use ${Game.cpu.getUsed() - start}`);
+}

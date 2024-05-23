@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (claimer) => {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d;
     if (!isClaimer(claimer)) {
         return console.log(`${claimer.name} is not Builder`);
     }
@@ -11,6 +11,9 @@ const behavior = (claimer) => {
         ignoreCreeps: !claimer.pos.inRangeTo(target, 2),
     });
     const flag = Game.flags[claimer.memory.flagName];
+    if (!flag) {
+        claimer.suicide();
+    }
     if ((((_b = (_a = flag.room) === null || _a === void 0 ? void 0 : _a.controller) === null || _b === void 0 ? void 0 : _b.level) || 0) > 0) {
         const spawn = (0, utils_1.getSpawnsOrderdByRange)(flag).first();
         if (spawn) {
@@ -25,9 +28,6 @@ const behavior = (claimer) => {
         else {
             return ERR_NOT_FOUND;
         }
-    }
-    if (!flag) {
-        claimer.suicide();
     }
     const target = ((_c = flag.room) === null || _c === void 0 ? void 0 : _c.controller) || flag;
     if (((_d = target.room) === null || _d === void 0 ? void 0 : _d.name) === claimer.room.name && "structureType" in target) {
@@ -46,7 +46,6 @@ const behavior = (claimer) => {
     else {
         moveMeTo(target);
     }
-    console.log(util_creep_1.RETURN_CODE_DECODER[moveMeTo(((_e = flag.room) === null || _e === void 0 ? void 0 : _e.controller) || flag).toString()]);
 };
 exports.default = behavior;
 function isClaimer(creep) {
