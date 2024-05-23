@@ -1,7 +1,7 @@
 import { behavior } from "./room.source";
 import linkBehavior from "./structure.links";
 import { filterBodiesByCost, getCreepsInRoom, getMainSpawn } from "./util.creep";
-import { findMyStructures, logUsage } from "./utils";
+import { findMyStructures } from "./utils";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
@@ -10,9 +10,7 @@ export function roomBehavior(room: Room) {
     room.controller?.activateSafeMode();
   }
 
-  logUsage("source:" + room.name, () => {
-    room.find(FIND_SOURCES).forEach((source) => behavior(source));
-  });
+  room.find(FIND_SOURCES).forEach((source) => behavior(source));
 
   // 道を敷く
   if (!room.memory.roadLayed || Math.abs(Game.time - room.memory.roadLayed) > 5000) {

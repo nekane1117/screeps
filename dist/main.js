@@ -11,37 +11,36 @@ const structures_1 = __importDefault(require("./structures"));
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 module.exports.loop = function () {
-    if (Game.cpu.bucket < 20) {
-        return;
-    }
     (0, utils_1.logUsage)("all", () => {
-        if (Game.time % 100 === 0) {
-            Object.keys(Memory.creeps).forEach((name) => {
-                if (!Game.creeps[name]) {
-                    delete Memory.creeps[name];
-                    console.log("Clearing non-existing creep memory:", name);
+        (0, utils_1.logUsage)("delete memoery", () => {
+            if (Object.keys(Game.creeps).length !== Object.keys(Memory.creeps).length) {
+                Object.keys(Memory.creeps).forEach((name) => {
+                    if (!Game.creeps[name]) {
+                        delete Memory.creeps[name];
+                        console.log("Clearing non-existing creep memory:", name);
+                    }
+                });
+            }
+        });
+        (0, utils_1.logUsage)("flags", () => {
+            Object.values(Game.flags).forEach((flag) => { var _a; return (_a = flags_1.default[flag.color]) === null || _a === void 0 ? void 0 : _a.call(flags_1.default, flag); });
+        });
+        (0, utils_1.logUsage)("sites", () => {
+            const executedRoom = {};
+            Object.values(Game.constructionSites).forEach((s) => {
+                if (executedRoom[s.pos.roomName]) {
+                    return;
+                }
+                else {
+                    (0, constructionSite_1.default)(s);
+                    executedRoom[s.pos.roomName] = true;
                 }
             });
-        }
-        Object.values(Game.flags).forEach((flag) => { var _a; return (_a = flags_1.default[flag.color]) === null || _a === void 0 ? void 0 : _a.call(flags_1.default, flag); });
-        const executedRoom = {};
-        Object.values(Game.constructionSites).forEach((s) => {
-            if (executedRoom[s.pos.roomName]) {
-                return;
-            }
-            else {
-                (0, constructionSite_1.default)(s);
-                executedRoom[s.pos.roomName] = true;
-            }
         });
         (0, utils_1.logUsage)("rooms", () => {
             Object.values(Game.rooms).forEach((room) => {
-                (0, utils_1.logUsage)(room.name, () => {
-                    (0, utils_1.logUsage)("roomBehavior:" + room.name, () => {
-                        (0, room_1.roomBehavior)(room);
-                    });
-                    (0, utils_1.findMyStructures)(room).all.forEach((s) => { var _a; return (_a = structures_1.default[s.structureType]) === null || _a === void 0 ? void 0 : _a.call(structures_1.default, s); });
-                });
+                (0, room_1.roomBehavior)(room);
+                (0, utils_1.findMyStructures)(room).all.forEach((s) => { var _a; return (_a = structures_1.default[s.structureType]) === null || _a === void 0 ? void 0 : _a.call(structures_1.default, s); });
             });
         });
         (0, utils_1.logUsage)("creep", () => {

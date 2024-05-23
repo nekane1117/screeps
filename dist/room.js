@@ -13,9 +13,7 @@ function roomBehavior(room) {
     if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) === null || _a === void 0 ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
         (_b = room.controller) === null || _b === void 0 ? void 0 : _b.activateSafeMode();
     }
-    (0, utils_1.logUsage)("source:" + room.name, () => {
-        room.find(FIND_SOURCES).forEach((source) => (0, room_source_1.behavior)(source));
-    });
+    room.find(FIND_SOURCES).forEach((source) => (0, room_source_1.behavior)(source));
     if (!room.memory.roadLayed || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
         console.log("roadLayer in " + Game.time);
         roadLayer(room);
