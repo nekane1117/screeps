@@ -15,7 +15,7 @@ const behavior: StructureBehavior = (controller: Structure) => {
 
   if (!upgrader.length) {
     const spawn = getSpawnsOrderdByRange(controller, 1).first();
-    if (spawn) {
+    if (spawn && spawn.room.energyAvailable >= 300) {
       spawn.spawnCreep(filterBodiesByCost("upgrader", spawn.room.energyAvailable).bodies, `U_${controller.room.name}_${Game.time}`, {
         memory: {
           baseRoom: controller.room.name,

@@ -13,7 +13,7 @@ const behavior = (controller) => {
     });
     if (!upgrader.length) {
         const spawn = (0, utils_1.getSpawnsOrderdByRange)(controller, 1).first();
-        if (spawn) {
+        if (spawn && spawn.room.energyAvailable >= 300) {
             spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("upgrader", spawn.room.energyAvailable).bodies, `U_${controller.room.name}_${Game.time}`, {
                 memory: {
                     baseRoom: controller.room.name,
