@@ -121,11 +121,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   //spawnかextension
   if (!creep.memory.transferId) {
-    creep.memory.transferId = creep.pos.findClosestByRange([...extension, ...spawns], {
-      filter: (s: StructureSpawn | StructureExtension) => {
-        return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && exclusive(s);
-      },
-    })?.id;
+    creep.memory.transferId = _([...extension, ...spawns])
+      .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && exclusive(s))
+      .sort((s1, s2) => s1.pos.y - s2.pos.y)
+      .first()?.id;
   }
 
   // storageにキャッシュ

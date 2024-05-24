@@ -89,11 +89,10 @@ const behavior = (creep) => {
         .filter((c) => c.memory.role === "carrier")
         .every((g) => g.memory.transferId !== id);
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_c = creep.pos.findClosestByRange([...extension, ...spawns], {
-            filter: (s) => {
-                return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && exclusive(s);
-            },
-        })) === null || _c === void 0 ? void 0 : _c.id;
+        creep.memory.transferId = (_c = _([...extension, ...spawns])
+            .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && exclusive(s))
+            .sort((s1, s2) => s1.pos.y - s2.pos.y)
+            .first()) === null || _c === void 0 ? void 0 : _c.id;
     }
     if (!creep.memory.transferId) {
         creep.memory.transferId = (_d = storage.find((s) => s.store.energy < s.room.energyCapacityAvailable)) === null || _d === void 0 ? void 0 : _d.id;
