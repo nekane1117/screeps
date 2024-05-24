@@ -60,5 +60,10 @@ module.exports.loop = function () {
         behaviors[c.memory.role]?.(c);
       });
     });
+
+    Object.values(Memory.rooms).forEach((mem) => {
+      delete mem.find;
+      delete mem.creeps;
+    });
   });
 };

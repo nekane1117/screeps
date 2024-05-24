@@ -114,7 +114,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         default:
           if (store.store.getUsedCapacity(RESOURCE_ENERGY) < creep.getActiveBodyparts(CARRY) * CARRY_CAPACITY) {
             creep.memory.storeId = undefined;
-            changeMode(creep, "💪");
           }
           break;
       }

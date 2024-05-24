@@ -56,5 +56,9 @@ module.exports.loop = function () {
                 (_a = roles_1.behaviors[c.memory.role]) === null || _a === void 0 ? void 0 : _a.call(roles_1.behaviors, c);
             });
         });
+        Object.values(Memory.rooms).forEach((mem) => {
+            delete mem.find;
+            delete mem.creeps;
+        });
     });
 };

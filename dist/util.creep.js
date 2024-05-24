@@ -84,6 +84,17 @@ exports.IDEAL_BODY = Object.freeze({
         MOVE,
         MOVE,
     ],
+    mineralHarvester: [
+        WORK,
+        MOVE,
+        CARRY,
+        WORK,
+        WORK,
+        WORK,
+        WORK,
+        MOVE,
+        MOVE,
+    ],
     upgrader: [CARRY, MOVE, ..._.range(10).map(() => WORK), ..._.range(10).map(() => MOVE)],
 });
 exports.RETURN_CODE_DECODER = Object.freeze({
@@ -156,12 +167,16 @@ function getMainSpawn(room) {
     }
 }
 exports.getMainSpawn = getMainSpawn;
-function pickUpAll(creep) {
-    creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1).forEach((resource) => {
+function pickUpAll(creep, resourceType = RESOURCE_ENERGY) {
+    creep.pos
+        .findInRange(FIND_DROPPED_RESOURCES, 1, {
+        filter: (s) => s.resourceType === resourceType,
+    })
+        .forEach((resource) => {
         creep.pickup(resource);
     });
     [...creep.pos.findInRange(FIND_TOMBSTONES, 1), ...creep.pos.findInRange(FIND_RUINS, 1)].forEach((tombstone) => {
-        creep.withdraw(tombstone, RESOURCE_ENERGY);
+        creep.withdraw(tombstone, resourceType);
     });
 }
 exports.pickUpAll = pickUpAll;

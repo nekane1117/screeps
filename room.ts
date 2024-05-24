@@ -31,7 +31,7 @@ export function roomBehavior(room: Room) {
         creeps[c.memory.role] = (creeps?.[c.memory.role] || []).concat(c);
         return creeps;
       },
-      { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [] } as Record<ROLES, Creep[]>,
+      { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [], mineralHarvester: [] } as Record<ROLES, Creep[]>,
     );
 
   const { bodies } = filterBodiesByCost("carrier", room.energyAvailable);
@@ -39,7 +39,7 @@ export function roomBehavior(room: Room) {
     harvester.length &&
     carriers.filter((g) => {
       return bodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
-    }).length < 1
+    }).length < 2
   ) {
     const name = `C_${room.name}_${Game.time}`;
 
