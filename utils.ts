@@ -78,6 +78,17 @@ export function getSpawnsOrderdByRange(src: RoomPosition | _HasRoomPosition, max
     .map((p) => p.spawn);
 }
 
+export function getSpawnsWithDistance(src: RoomPosition | _HasRoomPosition) {
+  const pos = "pos" in src ? src.pos : src;
+
+  return _(Object.values(Game.spawns)).map((spawn) => {
+    return {
+      spawn,
+      distance: Game.map.getRoomLinearDistance(pos.roomName, spawn.room.name),
+    };
+  });
+}
+
 let indent = -1;
 export function logUsage<T = unknown>(title: string, func: () => T) {
   indent++;
@@ -86,4 +97,9 @@ export function logUsage<T = unknown>(title: string, func: () => T) {
   console.log(`${" ".repeat(indent * 2)}${_.floor(Game.cpu.getUsed() - start, 2)} ${title}`);
   indent--;
   return value;
+}
+
+export function isHighway(room: Room) {
+  const parsed = /^[WE]([0-9]+)[NS]([0-9]+)$/.exec(room.name);
+  return parsed && (Number(parsed[1]) % 10 === 0 || Number(parsed[2]) % 10 === 0);
 }

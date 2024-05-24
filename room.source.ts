@@ -1,5 +1,5 @@
-import { filterBodiesByCost } from "./util.creep";
-import { getSpawnsOrderdByRange } from "./utils";
+import { filterBodiesByCost, getMainSpawn } from "./util.creep";
+import { findMyStructures, getSpawnsOrderdByRange } from "./utils";
 
 export function behavior(source: Source) {
   // 最大匹数より少なく、WORKのパーツが5未満の時
@@ -21,6 +21,26 @@ export function behavior(source: Source) {
         } as HarvesterMemory,
       });
       return spawned;
+    }
+  }
+
+  if (
+    source.pos.findInRange(
+      [
+        ...findMyStructures(source.room).container,
+        ...Object.values(Game.constructionSites).filter((s) => s.pos.roomName === source.pos.roomName && s.structureType === STRUCTURE_CONTAINER),
+      ],
+      1,
+    ).length === 0
+  ) {
+    const spawn = getMainSpawn(source.room);
+    if (spawn) {
+      const pos = _(
+        source.pos.findPathTo(spawn, {
+          ignoreCreeps: true,
+        }),
+      ).first();
+      pos && source.room.createConstructionSite(pos.x, pos.y, STRUCTURE_CONTAINER);
     }
   }
   return OK;

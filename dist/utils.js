@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logUsage = exports.getSpawnsOrderdByRange = exports.findMyStructures = exports.getCapacityRate = void 0;
+exports.isHighway = exports.logUsage = exports.getSpawnsWithDistance = exports.getSpawnsOrderdByRange = exports.findMyStructures = exports.getCapacityRate = void 0;
 function getCapacityRate(s, type = RESOURCE_ENERGY) {
     if ("store" in s) {
         return s.store.getUsedCapacity(type) / s.store.getCapacity(type);
@@ -71,6 +71,16 @@ function getSpawnsOrderdByRange(src, maxRooms) {
         .map((p) => p.spawn);
 }
 exports.getSpawnsOrderdByRange = getSpawnsOrderdByRange;
+function getSpawnsWithDistance(src) {
+    const pos = "pos" in src ? src.pos : src;
+    return _(Object.values(Game.spawns)).map((spawn) => {
+        return {
+            spawn,
+            distance: Game.map.getRoomLinearDistance(pos.roomName, spawn.room.name),
+        };
+    });
+}
+exports.getSpawnsWithDistance = getSpawnsWithDistance;
 let indent = -1;
 function logUsage(title, func) {
     indent++;
@@ -81,3 +91,8 @@ function logUsage(title, func) {
     return value;
 }
 exports.logUsage = logUsage;
+function isHighway(room) {
+    const parsed = /^[WE]([0-9]+)[NS]([0-9]+)$/.exec(room.name);
+    return parsed && (Number(parsed[1]) % 10 === 0 || Number(parsed[2]) % 10 === 0);
+}
+exports.isHighway = isHighway;

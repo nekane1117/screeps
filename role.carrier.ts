@@ -57,7 +57,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       })() ||
       creep.pos.findClosestByRange(_.compact([...storage, ...terminal, ...containers]), {
         filter: (s: StructureSpawn | StructureExtension | StructureContainer | StructureStorage) => {
-          return controllerContaeiner?.id !== s.id && s.store.energy >= CARRY_CAPACITY;
+          return (containers.length < 2 || controllerContaeiner?.id !== s.id) && s.store.energy >= CARRY_CAPACITY;
         },
       })
     )?.id;
@@ -197,6 +197,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             }
             break;
         }
+      } else {
+        _(extension.filter((e) => creep.pos.isNearTo(e)))
+          .tap(([head]) => {
+            if (head) {
+              creep.transfer(head, RESOURCE_ENERGY);
+            }
+          })
+          .run();
       }
     }
   }

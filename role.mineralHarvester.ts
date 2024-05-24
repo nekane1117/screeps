@@ -73,15 +73,20 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   } else {
     // 存在もしてないし建設中でもない時
-    const pos = _(
-      mineral.pos.findPathTo(getMainSpawn(creep.room), {
-        ignoreCreeps: true,
-        swampCost: 1,
-        plainCost: 1,
-      }),
-    ).run()[1];
-    if (pos) {
-      creep.room.createConstructionSite(pos.x, pos.y, STRUCTURE_CONTAINER);
+    const spawn = getMainSpawn(creep.room);
+    if (spawn) {
+      const pos = _(
+        mineral.pos.findPathTo(spawn, {
+          ignoreCreeps: true,
+          swampCost: 1,
+          plainCost: 1,
+        }),
+      ).run()[1];
+      if (pos) {
+        creep.room.createConstructionSite(pos.x, pos.y, STRUCTURE_CONTAINER);
+      }
+    } else {
+      console.log("spawn not found");
     }
   }
 };

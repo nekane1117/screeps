@@ -182,14 +182,15 @@ export function getCreepsInRoom(room: Room) {
     .filter((c) => c);
 }
 
-export function getMainSpawn(room: Room): StructureSpawn {
+export function getMainSpawn(room: Room): StructureSpawn | undefined {
   const spawn = room.memory.mainSpawn && Game.getObjectById(room.memory.mainSpawn);
 
   if (spawn) {
     return spawn;
   } else {
-    room.memory.mainSpawn = _(Object.values(Game.spawns).filter((s) => s.room.name === room.name)).first()?.id;
-    return getMainSpawn(room);
+    const spawn = _(Object.values(Game.spawns).filter((s) => s.room.name === room.name)).first();
+    room.memory.mainSpawn = spawn?.id;
+    return spawn;
   }
 }
 

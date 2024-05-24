@@ -4,7 +4,7 @@ import { behaviors } from "./roles";
 import { roomBehavior } from "./room";
 import structures from "./structures";
 import { toColor } from "./util.creep";
-import { findMyStructures, logUsage } from "./utils";
+import { findMyStructures, isHighway, logUsage } from "./utils";
 
 module.exports.loop = function () {
   logUsage("all", () => {
@@ -41,11 +41,13 @@ module.exports.loop = function () {
       });
     });
     logUsage("rooms", () => {
-      Object.values(Game.rooms).forEach((room) => {
-        roomBehavior(room);
-        // 構造物の動き
-        findMyStructures(room).all.forEach((s) => structures[s.structureType]?.(s));
-      });
+      Object.values(Game.rooms)
+        .filter((room) => !isHighway(room))
+        .forEach((room) => {
+          roomBehavior(room);
+          // 構造物の動き
+          findMyStructures(room).all.forEach((s) => structures[s.structureType]?.(s));
+        });
     });
     // Creepの動き
     logUsage("creep", () => {

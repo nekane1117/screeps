@@ -47,13 +47,19 @@ const behavior = (creep) => {
         }
     }
     else {
-        const pos = _(mineral.pos.findPathTo((0, util_creep_1.getMainSpawn)(creep.room), {
-            ignoreCreeps: true,
-            swampCost: 1,
-            plainCost: 1,
-        })).run()[1];
-        if (pos) {
-            creep.room.createConstructionSite(pos.x, pos.y, STRUCTURE_CONTAINER);
+        const spawn = (0, util_creep_1.getMainSpawn)(creep.room);
+        if (spawn) {
+            const pos = _(mineral.pos.findPathTo(spawn, {
+                ignoreCreeps: true,
+                swampCost: 1,
+                plainCost: 1,
+            })).run()[1];
+            if (pos) {
+                creep.room.createConstructionSite(pos.x, pos.y, STRUCTURE_CONTAINER);
+            }
+        }
+        else {
+            console.log("spawn not found");
         }
     }
 };

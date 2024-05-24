@@ -1,5 +1,5 @@
 import { filterBodiesByCost } from "./util.creep";
-import { getSpawnsOrderdByRange } from "./utils";
+import { getSpawnsWithDistance } from "./utils";
 
 export default function behavior(site: ConstructionSite) {
   // builderが居ないときは要求する
@@ -9,7 +9,15 @@ export default function behavior(site: ConstructionSite) {
     }).length === 0
   ) {
     // 隣の部屋までの使えるspawnを探す
-    const spawn = getSpawnsOrderdByRange(site, 1).find((s) => !s.spawning && s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9);
+    const spawn = getSpawnsWithDistance(site)
+      .sort((a, b) => b.spawn.room.energyAvailable / (a.distance + 1) - a.spawn.room.energyAvailable / (a.distance + 1))
+      .find(
+        ({
+          spawn: {
+            room: { energyAvailable, energyCapacityAvailable },
+          },
+        }) => energyAvailable / energyCapacityAvailable > 0.9,
+      )?.spawn;
 
     if (spawn) {
       spawn.spawnCreep(filterBodiesByCost("builder", spawn.room.energyAvailable).bodies, `B_${site.pos.roomName}`, {

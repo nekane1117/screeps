@@ -7,12 +7,17 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return console.log(`${creep.name} is not Builder`);
   }
 
-  if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-    changeMode(creep, "💪");
-  }
-  if (creep.store.energy < BUILD_POWER * creep.getActiveBodyparts(WORK)) {
-    changeMode(creep, "🛒");
-  }
+  const checkMode = () => {
+    const newMode: BuilderMemory["mode"] = creep.store.energy > CARRY_CAPACITY ? "💪" : "🛒";
+    if (newMode !== creep.memory.mode) {
+      creep.memory.mode = newMode;
+      creep.memory.buildingId = undefined;
+      creep.memory.storeId = undefined;
+      creep.say(creep.memory.mode);
+    }
+  };
+  checkMode();
+
   // https://docs.screeps.com/simultaneous-actions.html
 
   // build
@@ -30,10 +35,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     const site = Game.getObjectById(creep.memory.buildingId);
     if (site) {
       switch ((creep.memory.built = creep.build(site))) {
-        case ERR_NOT_ENOUGH_RESOURCES:
-          // 手持ちが足らないときは収集モードに切り替える
-          changeMode(creep, "🛒");
-          break;
         // 対象が変な時はクリアする
         case ERR_INVALID_TARGET:
           creep.memory.buildingId = undefined;
@@ -55,6 +56,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         // 問題ない系
         case OK:
         case ERR_BUSY:
+        case ERR_NOT_ENOUGH_RESOURCES:
         default:
           break;
       }
@@ -75,9 +77,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           isStoreTarget(s) &&
           s.structureType !== STRUCTURE_LINK &&
           (s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9 ? true : s.structureType !== STRUCTURE_EXTENSION) &&
-          s.store.energy > 0
+          s.store.energy > CARRY_CAPACITY
         );
       },
+      maxRooms: 2,
     })?.id)
   ) {
     const store = Game.getObjectById(creep.memory.storeId);
@@ -88,10 +91,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         case ERR_INVALID_TARGET: // 対象が変
           creep.memory.storeId = undefined;
           break;
-
-        // 満タンまで取った
-        case ERR_FULL:
-          changeMode(creep, "💪");
           break;
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "🛒") {
@@ -110,6 +109,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           break;
         // 問題ない系
         case OK:
+        case ERR_FULL:
         case ERR_BUSY:
         default:
           if (store.store.getUsedCapacity(RESOURCE_ENERGY) < creep.getActiveBodyparts(CARRY) * CARRY_CAPACITY) {
@@ -132,11 +132,3 @@ export default behavior;
 function isBuilder(creep: Creep): creep is Builder {
   return creep.memory.role === "builder";
 }
-const changeMode = (creep: Builder, mode: "💪" | "🛒") => {
-  if (mode !== creep.memory.mode) {
-    creep.memory.mode = mode;
-    creep.memory.buildingId = undefined;
-    creep.memory.storeId = undefined;
-    creep.say(creep.memory.mode);
-  }
-};

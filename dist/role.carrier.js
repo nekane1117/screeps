@@ -42,7 +42,7 @@ const behavior = (creep) => {
         })() ||
             creep.pos.findClosestByRange(_.compact([...storage, ...terminal, ...containers]), {
                 filter: (s) => {
-                    return (controllerContaeiner === null || controllerContaeiner === void 0 ? void 0 : controllerContaeiner.id) !== s.id && s.store.energy >= CARRY_CAPACITY;
+                    return (containers.length < 2 || (controllerContaeiner === null || controllerContaeiner === void 0 ? void 0 : controllerContaeiner.id) !== s.id) && s.store.energy >= CARRY_CAPACITY;
                 },
             }))) === null || _b === void 0 ? void 0 : _b.id;
     }
@@ -147,6 +147,15 @@ const behavior = (creep) => {
                         }
                         break;
                 }
+            }
+            else {
+                _(extension.filter((e) => creep.pos.isNearTo(e)))
+                    .tap(([head]) => {
+                    if (head) {
+                        creep.transfer(head, RESOURCE_ENERGY);
+                    }
+                })
+                    .run();
             }
         }
     }

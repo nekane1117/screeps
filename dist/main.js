@@ -38,7 +38,9 @@ module.exports.loop = function () {
             });
         });
         (0, utils_1.logUsage)("rooms", () => {
-            Object.values(Game.rooms).forEach((room) => {
+            Object.values(Game.rooms)
+                .filter((room) => !(0, utils_1.isHighway)(room))
+                .forEach((room) => {
                 (0, room_1.roomBehavior)(room);
                 (0, utils_1.findMyStructures)(room).all.forEach((s) => { var _a; return (_a = structures_1.default[s.structureType]) === null || _a === void 0 ? void 0 : _a.call(structures_1.default, s); });
             });
