@@ -94,6 +94,19 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
     MOVE,
     MOVE,
   ],
+  mineralHarvester: [
+    // 最小構成
+    WORK,
+    MOVE,
+    CARRY,
+    // 作業効率
+    WORK,
+    WORK,
+    WORK,
+    WORK,
+    MOVE,
+    MOVE,
+  ],
   upgrader: [CARRY, MOVE, ..._.range(10).map(() => WORK), ..._.range(10).map(() => MOVE)],
 });
 
@@ -169,27 +182,32 @@ export function getCreepsInRoom(room: Room) {
     .filter((c) => c);
 }
 
-export function getMainSpawn(room: Room): StructureSpawn {
+export function getMainSpawn(room: Room): StructureSpawn | undefined {
   const spawn = room.memory.mainSpawn && Game.getObjectById(room.memory.mainSpawn);
 
   if (spawn) {
     return spawn;
   } else {
-    room.memory.mainSpawn = _(Object.values(Game.spawns).filter((s) => s.room.name === room.name)).first()?.id;
-    return getMainSpawn(room);
+    const spawn = _(Object.values(Game.spawns).filter((s) => s.room.name === room.name)).first();
+    room.memory.mainSpawn = spawn?.id;
+    return spawn;
   }
 }
 
-export function pickUpAll(creep: Creep) {
+export function pickUpAll(creep: Creep, resourceType: ResourceConstant = RESOURCE_ENERGY) {
   //withdraw
   // 通りがかりに落っこちてるリソースを拾う
-  creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1).forEach((resource) => {
-    creep.pickup(resource);
-  });
+  creep.pos
+    .findInRange(FIND_DROPPED_RESOURCES, 1, {
+      filter: (s) => s.resourceType === resourceType,
+    })
+    .forEach((resource) => {
+      creep.pickup(resource);
+    });
 
   // 通りがかりの墓から拾う
   [...creep.pos.findInRange(FIND_TOMBSTONES, 1), ...creep.pos.findInRange(FIND_RUINS, 1)].forEach((tombstone) => {
-    creep.withdraw(tombstone, RESOURCE_ENERGY);
+    creep.withdraw(tombstone, resourceType);
   });
 }
 

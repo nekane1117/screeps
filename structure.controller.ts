@@ -15,22 +15,14 @@ const behavior: StructureBehavior = (controller: Structure) => {
 
   if (!upgrader.length) {
     const spawn = getSpawnsOrderdByRange(controller, 1).first();
-    if (spawn) {
-      const { bodies, cost } = filterBodiesByCost("upgrader", spawn.room.energyAvailable);
-      const spawned = spawn.spawnCreep(bodies, `U_${controller.room.name}_${Game.time}`, {
+    if (spawn && spawn.room.energyAvailable >= 300) {
+      spawn.spawnCreep(filterBodiesByCost("upgrader", spawn.room.energyAvailable).bodies, `U_${controller.room.name}_${Game.time}`, {
         memory: {
           baseRoom: controller.room.name,
           mode: "🛒",
           role: "upgrader",
         } as UpgraderMemory,
       });
-      if (spawned === OK) {
-        spawn.room.memory.energySummary = (spawn.room.memory.energySummary || []).concat({
-          consumes: cost,
-          production: 0,
-          time: new Date().valueOf(),
-        });
-      }
     } else {
       console.log("controller can't find spawn");
     }

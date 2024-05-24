@@ -18,30 +18,30 @@ export default function behavior(flag: Flag) {
         return c.memory.role === "claimer";
       };
       return isC(c) && c.memory.flagName === flag.name;
-    }) &&
-    Object.values(Game.constructionSites).length === 0
+    })
   ) {
     // 最寄りのspawn
-    const spawn = getSpawnsOrderdByRange(flag, 1).find((s) => Game.rooms[s.room.name]?.controller?.level);
+    const spawn = getSpawnsOrderdByRange(flag).find((s) => Game.rooms[s.room.name]?.controller?.level);
 
     // 作らせる
-    if (spawn && !spawn.spawning && spawn.room.energyAvailable > 650) {
-      const { bodies, cost } = filterBodiesByCost("claimer", spawn.room.energyAvailable);
-      if (
-        spawn.spawnCreep(bodies, `C_${flag.pos.roomName}_${flag.name}`, {
-          memory: {
-            role: "claimer",
-            baseRoom: spawn.room.name,
-            flagName: flag.name,
-          } as ClaimerMemory,
-        }) === OK
-      ) {
-        spawn.room.memory.energySummary?.push({
-          consumes: cost,
-          production: 0,
-          time: new Date().valueOf(),
-        });
+    if (spawn) {
+      if (spawn.spawning) {
+        console.log("closest spawn spawning");
+      } else {
+        if (spawn.room.energyAvailable > 650) {
+          spawn.spawnCreep(filterBodiesByCost("claimer", spawn.room.energyAvailable).bodies, `C_${flag.pos.roomName}_${flag.name}`, {
+            memory: {
+              role: "claimer",
+              baseRoom: spawn.room.name,
+              flagName: flag.name,
+            } as ClaimerMemory,
+          });
+        } else {
+          console.log(spawn.name, "spawn energy is shorage");
+        }
       }
+    } else {
+      console.log("spawn not found");
     }
   }
 

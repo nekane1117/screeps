@@ -54,26 +54,29 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   pickUpAll(creep);
 
   // 周りの建物に投げる
-  const structures = _(creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: (s): s is HasStore => "store" in s })).sort((s) => {
-    switch (s.structureType) {
-      case STRUCTURE_LINK:
-      case STRUCTURE_EXTENSION:
-        // 優先
-        return 0;
-      case STRUCTURE_CONTAINER:
-      case STRUCTURE_STORAGE:
-        // 取り出し
-        return 2;
-      case STRUCTURE_FACTORY:
-      case STRUCTURE_LAB:
-      case STRUCTURE_NUKER:
-      case STRUCTURE_POWER_SPAWN:
-      case STRUCTURE_SPAWN:
-      case STRUCTURE_TERMINAL:
-      case STRUCTURE_TOWER:
-      default:
-        return 1;
-    }
+  const structures = _(creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: (s): s is HasStore => "store" in s })).sort((s, t) => {
+    const getPriority = (s: HasStore) => {
+      switch (s.structureType) {
+        case STRUCTURE_LINK:
+        case STRUCTURE_EXTENSION:
+          // 優先
+          return 0;
+        case STRUCTURE_CONTAINER:
+        case STRUCTURE_STORAGE:
+          // 取り出し
+          return 2;
+        case STRUCTURE_FACTORY:
+        case STRUCTURE_LAB:
+        case STRUCTURE_NUKER:
+        case STRUCTURE_POWER_SPAWN:
+        case STRUCTURE_SPAWN:
+        case STRUCTURE_TERMINAL:
+        case STRUCTURE_TOWER:
+        default:
+          return 1;
+      }
+    };
+    return getPriority(s) - getPriority(t);
   });
 
   // 優先度一番低いエネルギーがあるやつ

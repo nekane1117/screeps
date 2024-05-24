@@ -84,6 +84,17 @@ exports.IDEAL_BODY = Object.freeze({
         MOVE,
         MOVE,
     ],
+    mineralHarvester: [
+        WORK,
+        MOVE,
+        CARRY,
+        WORK,
+        WORK,
+        WORK,
+        WORK,
+        MOVE,
+        MOVE,
+    ],
     upgrader: [CARRY, MOVE, ..._.range(10).map(() => WORK), ..._.range(10).map(() => MOVE)],
 });
 exports.RETURN_CODE_DECODER = Object.freeze({
@@ -145,23 +156,27 @@ function getCreepsInRoom(room) {
 }
 exports.getCreepsInRoom = getCreepsInRoom;
 function getMainSpawn(room) {
-    var _a;
     const spawn = room.memory.mainSpawn && Game.getObjectById(room.memory.mainSpawn);
     if (spawn) {
         return spawn;
     }
     else {
-        room.memory.mainSpawn = (_a = _(Object.values(Game.spawns).filter((s) => s.room.name === room.name)).first()) === null || _a === void 0 ? void 0 : _a.id;
-        return getMainSpawn(room);
+        const spawn = _(Object.values(Game.spawns).filter((s) => s.room.name === room.name)).first();
+        room.memory.mainSpawn = spawn === null || spawn === void 0 ? void 0 : spawn.id;
+        return spawn;
     }
 }
 exports.getMainSpawn = getMainSpawn;
-function pickUpAll(creep) {
-    creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1).forEach((resource) => {
+function pickUpAll(creep, resourceType = RESOURCE_ENERGY) {
+    creep.pos
+        .findInRange(FIND_DROPPED_RESOURCES, 1, {
+        filter: (s) => s.resourceType === resourceType,
+    })
+        .forEach((resource) => {
         creep.pickup(resource);
     });
     [...creep.pos.findInRange(FIND_TOMBSTONES, 1), ...creep.pos.findInRange(FIND_RUINS, 1)].forEach((tombstone) => {
-        creep.withdraw(tombstone, RESOURCE_ENERGY);
+        creep.withdraw(tombstone, resourceType);
     });
 }
 exports.pickUpAll = pickUpAll;

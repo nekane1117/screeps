@@ -7,22 +7,17 @@ function behavior(site) {
     if (Object.values(Game.creeps).filter((c) => {
         return c.memory.role === "builder" && c.memory.baseRoom === site.pos.roomName && (c.ticksToLive || 0) > CREEP_LIFE_TIME * 0.1;
     }).length === 0) {
-        const spawn = (0, utils_1.getSpawnsOrderdByRange)(site, 1).find((s) => !s.spawning && s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9);
+        const spawn = (_a = (0, utils_1.getSpawnsWithDistance)(site)
+            .sort((a, b) => b.spawn.room.energyAvailable / (a.distance + 1) - a.spawn.room.energyAvailable / (a.distance + 1))
+            .find(({ spawn: { room: { energyAvailable, energyCapacityAvailable }, }, }) => energyAvailable / energyCapacityAvailable > 0.9)) === null || _a === void 0 ? void 0 : _a.spawn;
         if (spawn) {
-            const { bodies, cost } = (0, util_creep_1.filterBodiesByCost)("builder", spawn.room.energyAvailable);
-            if (spawn.spawnCreep(bodies, `B_${site.pos.roomName}`, {
+            spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("builder", spawn.room.energyAvailable).bodies, `B_${site.pos.roomName}`, {
                 memory: {
                     role: "builder",
                     baseRoom: site.pos.roomName,
                     mode: "🛒",
                 },
-            }) === OK) {
-                (_a = spawn.room.memory.energySummary) === null || _a === void 0 ? void 0 : _a.push({
-                    consumes: cost,
-                    production: 0,
-                    time: new Date().valueOf(),
-                });
-            }
+            });
         }
     }
 }

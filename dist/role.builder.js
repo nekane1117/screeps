@@ -7,12 +7,16 @@ const behavior = (creep) => {
     if (!isBuilder(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
-    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-        changeMode(creep, "💪");
-    }
-    if (creep.store.energy < BUILD_POWER * creep.getActiveBodyparts(WORK)) {
-        changeMode(creep, "🛒");
-    }
+    const checkMode = () => {
+        const newMode = creep.store.energy > CARRY_CAPACITY ? "💪" : "🛒";
+        if (newMode !== creep.memory.mode) {
+            creep.memory.mode = newMode;
+            creep.memory.buildingId = undefined;
+            creep.memory.storeId = undefined;
+            creep.say(creep.memory.mode);
+        }
+    };
+    checkMode();
     if (creep.memory.buildingId ||
         (creep.memory.buildingId = (_a = (0, util_array_1.complexOrder)(Object.values(Game.constructionSites), [
             (s) => { var _a; return (((_a = s.room) === null || _a === void 0 ? void 0 : _a.name) === creep.memory.baseRoom ? 0 : 1); },
@@ -22,9 +26,6 @@ const behavior = (creep) => {
         const site = Game.getObjectById(creep.memory.buildingId);
         if (site) {
             switch ((creep.memory.built = creep.build(site))) {
-                case ERR_NOT_ENOUGH_RESOURCES:
-                    changeMode(creep, "🛒");
-                    break;
                 case ERR_INVALID_TARGET:
                     creep.memory.buildingId = undefined;
                     break;
@@ -40,6 +41,7 @@ const behavior = (creep) => {
                     break;
                 case OK:
                 case ERR_BUSY:
+                case ERR_NOT_ENOUGH_RESOURCES:
                 default:
                     break;
             }
@@ -55,8 +57,9 @@ const behavior = (creep) => {
                     (0, util_creep_1.isStoreTarget)(s) &&
                     s.structureType !== STRUCTURE_LINK &&
                     (s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9 ? true : s.structureType !== STRUCTURE_EXTENSION) &&
-                    s.store.energy > 0);
+                    s.store.energy > CARRY_CAPACITY);
             },
+            maxRooms: 2,
         })) === null || _b === void 0 ? void 0 : _b.id)) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
@@ -66,8 +69,6 @@ const behavior = (creep) => {
                 case ERR_INVALID_TARGET:
                     creep.memory.storeId = undefined;
                     break;
-                case ERR_FULL:
-                    changeMode(creep, "💪");
                     break;
                 case ERR_NOT_IN_RANGE:
                     if (creep.memory.mode === "🛒") {
@@ -84,11 +85,11 @@ const behavior = (creep) => {
                     creep.say(util_creep_1.RETURN_CODE_DECODER[creep.memory.worked.toString()]);
                     break;
                 case OK:
+                case ERR_FULL:
                 case ERR_BUSY:
                 default:
                     if (store.store.getUsedCapacity(RESOURCE_ENERGY) < creep.getActiveBodyparts(CARRY) * CARRY_CAPACITY) {
                         creep.memory.storeId = undefined;
-                        changeMode(creep, "💪");
                     }
                     break;
             }
@@ -101,11 +102,3 @@ exports.default = behavior;
 function isBuilder(creep) {
     return creep.memory.role === "builder";
 }
-const changeMode = (creep, mode) => {
-    if (mode !== creep.memory.mode) {
-        creep.memory.mode = mode;
-        creep.memory.buildingId = undefined;
-        creep.memory.storeId = undefined;
-        creep.say(creep.memory.mode);
-    }
-};
