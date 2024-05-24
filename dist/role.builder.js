@@ -3,10 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_array_1 = require("./util.array");
 const util_creep_1 = require("./util.creep");
 const behavior = (creep) => {
-    var _a, _b;
+    var _a, _b, _c;
     if (!isBuilder(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
+    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, 2) }, opt));
     const checkMode = () => {
         const newMode = creep.store.energy > CARRY_CAPACITY ? "💪" : "🛒";
         if (newMode !== creep.memory.mode) {
@@ -31,7 +32,7 @@ const behavior = (creep) => {
                     break;
                 case ERR_NOT_IN_RANGE:
                     if (creep.memory.mode === "💪") {
-                        (0, util_creep_1.customMove)(creep, site);
+                        moveMeTo(site);
                     }
                     break;
                 case ERR_NOT_OWNER:
@@ -50,8 +51,19 @@ const behavior = (creep) => {
             creep.memory.buildingId = undefined;
         }
     }
+    else if ((creep.memory.repairId = (_b = (0, util_array_1.complexOrder)(Object.values(Game.structures).filter((s) => s.hits < s.hitsMax), [
+        (s) => { var _a; return (((_a = s.room) === null || _a === void 0 ? void 0 : _a.name) === creep.memory.baseRoom ? 0 : 1); },
+        (s) => (s.structureType === STRUCTURE_CONTAINER ? 0 : 1),
+        (s) => s.hits,
+    ]).first()) === null || _b === void 0 ? void 0 : _b.id)) {
+        const target = Game.getObjectById(creep.memory.repairId);
+        if (target) {
+            creep.repair(target) === ERR_NOT_IN_RANGE;
+            moveMeTo(target);
+        }
+    }
     if (creep.memory.storeId ||
-        (creep.memory.storeId = (_b = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        (creep.memory.storeId = (_c = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (s) => {
                 return (s.structureType !== STRUCTURE_SPAWN &&
                     (0, util_creep_1.isStoreTarget)(s) &&
@@ -60,7 +72,7 @@ const behavior = (creep) => {
                     s.store.energy > CARRY_CAPACITY);
             },
             maxRooms: 2,
-        })) === null || _b === void 0 ? void 0 : _b.id)) {
+        })) === null || _c === void 0 ? void 0 : _c.id)) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
             creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY);
@@ -72,7 +84,7 @@ const behavior = (creep) => {
                     break;
                 case ERR_NOT_IN_RANGE:
                     if (creep.memory.mode === "🛒") {
-                        const moved = (0, util_creep_1.customMove)(creep, store);
+                        const moved = moveMeTo(store);
                         if (moved !== OK) {
                             console.log(`${creep.name} ${util_creep_1.RETURN_CODE_DECODER[moved.toString()]}`);
                             creep.say(util_creep_1.RETURN_CODE_DECODER[moved.toString()]);

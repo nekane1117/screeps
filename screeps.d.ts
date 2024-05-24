@@ -136,6 +136,9 @@ declare interface BuilderMemory extends CreepMemory {
   /** 今建てたいもの */
   buildingId?: ConstructionSite["id"] | null;
   built?: ReturnType<Creeps["build"]>;
+  /** 今建てたいもの */
+  repairId?: Id<Parameters<Creep["repair"]>[0]>;
+  built?: ReturnType<Creeps["build"]>;
   /** 資源をもらいに行く先 */
   storeId?: StoreTarget["id"] | null;
 }
