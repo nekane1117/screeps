@@ -22,7 +22,9 @@ function roomBehavior(room) {
         creteStructures(room);
     }
     (0, structure_links_1.default)((0, utils_1.findMyStructures)(room).link);
-    const { carrier: carriers, harvester } = (0, util_creep_1.getCreepsInRoom)(room).reduce((creeps, c) => {
+    const { carrier: carriers, harvester } = Object.values(Game.creeps)
+        .filter((c) => c.memory.baseRoom === room.name)
+        .reduce((creeps, c) => {
         creeps[c.memory.role] = ((creeps === null || creeps === void 0 ? void 0 : creeps[c.memory.role]) || []).concat(c);
         return creeps;
     }, { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [] });
@@ -30,7 +32,7 @@ function roomBehavior(room) {
     if (harvester.length &&
         carriers.filter((g) => {
             return bodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
-        }).length < room.find(FIND_SOURCES).length) {
+        }).length < 1) {
         const name = `C_${room.name}_${Game.time}`;
         const spawn = (0, util_creep_1.getMainSpawn)(room);
         if (spawn && !spawn.spawning && room.energyAvailable > 200) {
@@ -60,6 +62,13 @@ function creteStructures(room) {
         return sites;
     }, { all: [] });
     if (room.controller) {
+        if (CONTROLLER_STRUCTURES[STRUCTURE_EXTRACTOR][room.controller.level] && !siteInRooms.extractor && (0, utils_1.findMyStructures)(room).extractor.length === 0) {
+            const mineral = _(room.find(FIND_MINERALS)).first();
+            if (mineral) {
+                mineral.pos.createConstructionSite(STRUCTURE_EXTRACTOR);
+            }
+            return;
+        }
         for (const target of staticStructures) {
             const targets = (0, utils_1.findMyStructures)(room)[target];
             if (CONTROLLER_STRUCTURES[target][room.controller.level] > 0 &&
@@ -77,7 +86,7 @@ function creteStructures(room) {
                 }
             }
         }
-        const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN, STRUCTURE_STORAGE];
+        const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN, STRUCTURE_STORAGE, STRUCTURE_LAB];
         const terrain = room.getTerrain();
         for (const target of targets) {
             const extensions = [...siteInRooms.all, ...room.find(FIND_MY_STRUCTURES)].filter((s) => s.structureType === target);
@@ -116,7 +125,7 @@ function roadLayer(room) {
         return (_([
             ...room.find(FIND_SOURCES),
             ...room.find(FIND_MY_STRUCTURES, {
-                filter: (s) => s.structureType === STRUCTURE_CONTROLLER,
+                filter: (s) => s.structureType === STRUCTURE_CONTROLLER || s.structureType === STRUCTURE_EXTRACTOR,
             }),
         ])
             .sortBy((s) => findCustomPath(s).length)
@@ -153,4 +162,4 @@ const fourNeighbors = [
     [1, 0],
     [0, 1],
 ];
-const staticStructures = [STRUCTURE_STORAGE, STRUCTURE_LINK];
+const staticStructures = [STRUCTURE_STORAGE, STRUCTURE_LINK, STRUCTURE_TERMINAL];

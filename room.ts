@@ -1,6 +1,6 @@
 import { behavior } from "./room.source";
 import linkBehavior from "./structure.links";
-import { filterBodiesByCost, getCreepsInRoom, getMainSpawn } from "./util.creep";
+import { filterBodiesByCost, getMainSpawn } from "./util.creep";
 import { findMyStructures } from "./utils";
 
 export function roomBehavior(room: Room) {
@@ -24,20 +24,22 @@ export function roomBehavior(room: Room) {
   }
 
   linkBehavior(findMyStructures(room).link);
-  const { carrier: carriers, harvester } = getCreepsInRoom(room).reduce(
-    (creeps, c) => {
-      creeps[c.memory.role] = (creeps?.[c.memory.role] || []).concat(c);
-      return creeps;
-    },
-    { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [] } as Record<ROLES, Creep[]>,
-  );
+  const { carrier: carriers, harvester } = Object.values(Game.creeps)
+    .filter((c) => c.memory.baseRoom === room.name)
+    .reduce(
+      (creeps, c) => {
+        creeps[c.memory.role] = (creeps?.[c.memory.role] || []).concat(c);
+        return creeps;
+      },
+      { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [] } as Record<ROLES, Creep[]>,
+    );
 
   const { bodies } = filterBodiesByCost("carrier", room.energyAvailable);
   if (
     harvester.length &&
     carriers.filter((g) => {
       return bodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
-    }).length < room.find(FIND_SOURCES).length
+    }).length < 1
   ) {
     const name = `C_${room.name}_${Game.time}`;
 
@@ -75,6 +77,15 @@ function creteStructures(room: Room) {
     );
 
   if (room.controller) {
+    if (CONTROLLER_STRUCTURES[STRUCTURE_EXTRACTOR][room.controller.level] && !siteInRooms.extractor && findMyStructures(room).extractor.length === 0) {
+      const mineral = _(room.find(FIND_MINERALS)).first();
+
+      if (mineral) {
+        mineral.pos.createConstructionSite(STRUCTURE_EXTRACTOR);
+      }
+      return;
+    }
+
     for (const target of staticStructures) {
       const targets = findMyStructures(room)[target] as _HasRoomPosition[];
 
@@ -103,7 +114,7 @@ function creteStructures(room: Room) {
       }
     }
 
-    const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN, STRUCTURE_STORAGE];
+    const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN, STRUCTURE_STORAGE, STRUCTURE_LAB];
     const terrain = room.getTerrain();
     for (const target of targets) {
       const extensions = [...siteInRooms.all, ...room.find(FIND_MY_STRUCTURES)].filter((s) => s.structureType === target);
@@ -142,7 +153,7 @@ const generateCross = (dx: number, dy: number): boolean => {
 function roadLayer(room: Room) {
   _(Object.values(Game.spawns).filter((s) => s.room.name === room.name))
     .forEach((spawn) => {
-      const findCustomPath = (s: Source | StructureSpawn) =>
+      const findCustomPath = (s: _HasRoomPosition) =>
         spawn.pos.findPathTo(s, {
           ignoreCreeps: true,
           plainCost: 0.5, // 道よりいくらか低い
@@ -153,7 +164,7 @@ function roadLayer(room: Room) {
         _([
           ...room.find(FIND_SOURCES),
           ...room.find(FIND_MY_STRUCTURES, {
-            filter: (s): s is StructureSpawn => s.structureType === STRUCTURE_CONTROLLER,
+            filter: (s): s is StructureSpawn | StructureExtractor => s.structureType === STRUCTURE_CONTROLLER || s.structureType === STRUCTURE_EXTRACTOR,
           }),
         ])
           // 近い順にする
@@ -196,4 +207,4 @@ const fourNeighbors = [
   [0, 1],
 ];
 
-const staticStructures = [STRUCTURE_STORAGE, STRUCTURE_LINK];
+const staticStructures = [STRUCTURE_STORAGE, STRUCTURE_LINK, STRUCTURE_TERMINAL];
