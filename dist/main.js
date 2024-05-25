@@ -55,7 +55,7 @@ module.exports.loop = function () {
                     return;
                 }
                 c.memory.moved = undefined;
-                c.room.visual.text(c.name[0], c.pos.x, c.pos.y, {
+                c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
                     color: (0, util_creep_1.toColor)(c),
                 });
                 (_a = roles_1.behaviors[c.memory.role]) === null || _a === void 0 ? void 0 : _a.call(roles_1.behaviors, c);

@@ -97,6 +97,16 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       .flatten<BodyPartConstant>()
       .run(),
   ],
+  mineralCarrier: [
+    ..._(
+      _.range(25).map(() => {
+        // あとはMoveとCarryの繰り返し
+        return [MOVE, CARRY];
+      }),
+    )
+      .flatten<BodyPartConstant>()
+      .run(),
+  ],
   harvester: [
     // 最小構成
     WORK,

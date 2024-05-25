@@ -5,7 +5,7 @@ declare interface SourceMemory {
   positions: number;
 }
 
-declare type ROLES = "harvester" | "carrier" | "builder" | "repairer" | "upgrader" | "claimer" | "mineralHarvester";
+declare type ROLES = "harvester" | "carrier" | "builder" | "repairer" | "upgrader" | "claimer" | "mineralHarvester" | "mineralCarrier";
 declare interface CreepMemory {
   role: ROLES;
   baseRoom: string;
@@ -22,7 +22,7 @@ declare interface CreepMemory {
 }
 
 /** 全部のCreepの型 */
-declare type Creeps = Creep | Harvester | Upgrader | Builder | Carrier | Repairer | Claimer | MineralHarvester;
+declare type Creeps = Creep | Harvester | Upgrader | Builder | Carrier | Repairer | Claimer | MineralHarvester | MineralCarrier;
 
 declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink;
 
@@ -159,6 +159,22 @@ declare interface CarrierMemory extends CreepMemory {
   storeId?: Id<StructureExtension | StructureSpawn | StructureLink | StructureStorage | StructureTerminal | StructureContainer>;
   /** 配送先 */
   transferId?: Id<Parameters<Creep["transfer"]>[0]>;
+}
+declare interface MineralCarrier extends Creep {
+  memory: MineralCarrierMemory;
+}
+
+declare interface MineralCarrierMemory extends CreepMemory {
+  role: "mineralCarrier";
+  /** 今何してるか
+   * 💪 : 輸送中
+   * 🛒 : 資源取得中
+   */
+  mode: "💪" | "🛒";
+  /** 担当倉庫 */
+  storeId?: Id<StructureStorage | StructureTerminal | StructureContainer>;
+  /** 配送先 */
+  transferId?: Id<StructureContainer | StructureLab | StructureTerminal>;
 }
 
 declare interface Repairer extends Creep {

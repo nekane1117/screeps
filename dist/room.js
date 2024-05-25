@@ -27,7 +27,7 @@ function roomBehavior(room) {
         .reduce((creeps, c) => {
         creeps[c.memory.role] = ((creeps === null || creeps === void 0 ? void 0 : creeps[c.memory.role]) || []).concat(c);
         return creeps;
-    }, { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [], mineralHarvester: [], repairer: [] });
+    }, { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [], mineralHarvester: [], repairer: [], mineralCarrier: [] });
     const { bodies: carrierBodies } = (0, util_creep_1.filterBodiesByCost)("carrier", room.energyAvailable);
     if (harvester.length &&
         carriers.filter((g) => {

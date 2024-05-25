@@ -7,17 +7,27 @@ function behavior(extractor) {
         return console.log("type is invalid", JSON.stringify(extractor));
     }
     const mineral = _(extractor.pos.lookFor(LOOK_MINERALS)).first();
-    if (!mineral) {
+    const terminal = _((0, utils_1.findMyStructures)(extractor.room).terminal).first();
+    if (!mineral || !terminal) {
         return ERR_NOT_FOUND;
     }
-    if (!Object.values(Game.creeps).find((c) => isM(c) && c.memory.targetId === mineral.id)) {
+    if (terminal.store[mineral.mineralType] > 10000) {
+        return;
+    }
+    const { mineralHarvester = [], mineralCarrier = [] } = Object.values(Game.creeps)
+        .filter((c) => c.memory.baseRoom === extractor.pos.roomName)
+        .reduce((groups, c) => {
+        (groups[c.memory.role] = groups[c.memory.role] || []).push(c);
+        return groups;
+    }, {});
+    if (!mineralHarvester.find((c) => c.memory.targetId === mineral.id)) {
         const spawn = (0, utils_1.getSpawnsOrderdByRange)(extractor, 1).first();
         if (!spawn) {
             console.log(`source ${extractor.id} can't find spawn`);
             return ERR_NOT_FOUND;
         }
         if (spawn.room.energyAvailable > 200) {
-            const name = `M_${extractor.room.name}_${Game.time}`;
+            const name = `Mh_${extractor.room.name}_${Game.time}`;
             const spawned = spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("mineralHarvester", spawn.room.energyAvailable).bodies, name, {
                 memory: {
                     role: "mineralHarvester",
@@ -28,12 +38,27 @@ function behavior(extractor) {
             return spawned;
         }
     }
+    else if (mineralCarrier.length < 1) {
+        const spawn = (0, utils_1.getSpawnsOrderdByRange)(extractor, 1).first();
+        if (!spawn) {
+            console.log(`source ${extractor.id} can't find spawn`);
+            return ERR_NOT_FOUND;
+        }
+        if (spawn.room.energyAvailable > 1000) {
+            const name = `Mc_${extractor.room.name}_${Game.time}`;
+            const spawned = spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("mineralCarrier", spawn.room.energyAvailable).bodies, name, {
+                memory: {
+                    role: "mineralCarrier",
+                    baseRoom: extractor.room.name,
+                    mode: "🛒",
+                },
+            });
+            return spawned;
+        }
+    }
     return OK;
 }
 exports.default = behavior;
-function isM(c) {
-    return c.memory.role === "mineralHarvester";
-}
 function isE(s) {
     return s.structureType === STRUCTURE_EXTRACTOR;
 }

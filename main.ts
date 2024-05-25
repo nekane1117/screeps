@@ -56,7 +56,7 @@ module.exports.loop = function () {
           return;
         }
         c.memory.moved = undefined;
-        c.room.visual.text(c.name[0], c.pos.x, c.pos.y, {
+        c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
           color: toColor(c),
         });
         behaviors[c.memory.role]?.(c);

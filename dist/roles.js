@@ -9,6 +9,7 @@ const role_carrier_1 = __importDefault(require("./role.carrier"));
 const role_claimer_1 = __importDefault(require("./role.claimer"));
 const role_harvester_1 = __importDefault(require("./role.harvester"));
 const role_mineralHarvester_1 = __importDefault(require("./role.mineralHarvester"));
+const role_mineralCarrier_1 = __importDefault(require("./role.mineralCarrier"));
 const role_upgrader_1 = __importDefault(require("./role.upgrader"));
 const role_repairer_1 = __importDefault(require("./role.repairer"));
 exports.behaviors = {
@@ -18,5 +19,6 @@ exports.behaviors = {
     carrier: role_carrier_1.default,
     claimer: role_claimer_1.default,
     mineralHarvester: role_mineralHarvester_1.default,
+    mineralCarrier: role_mineralCarrier_1.default,
     repairer: role_repairer_1.default,
 };

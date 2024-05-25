@@ -38,7 +38,7 @@ export function roomBehavior(room: Room) {
         creeps[c.memory.role] = (creeps?.[c.memory.role] || []).concat(c);
         return creeps;
       },
-      { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [], mineralHarvester: [], repairer: [] } as Record<ROLES, Creep[]>,
+      { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [], mineralHarvester: [], repairer: [], mineralCarrier: [] } as Record<ROLES, Creep[]>,
     );
 
   const { bodies: carrierBodies } = filterBodiesByCost("carrier", room.energyAvailable);
