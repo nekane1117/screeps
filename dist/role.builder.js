@@ -9,7 +9,15 @@ const behavior = (creep) => {
     }
     const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, 4) }, opt));
     const checkMode = () => {
-        const newMode = creep.store.energy > CARRY_CAPACITY ? "💪" : "🛒";
+        const newMode = ((c) => {
+            if (c.memory.mode === "💪" && c.store.energy === 0) {
+                return "🛒";
+            }
+            if (c.memory.mode === "🛒" && creep.store.energy > CARRY_CAPACITY) {
+                return "💪";
+            }
+            return c.memory.mode;
+        })(creep);
         if (newMode !== creep.memory.mode) {
             creep.memory.mode = newMode;
             creep.memory.buildingId = undefined;

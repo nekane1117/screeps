@@ -13,7 +13,20 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     });
 
   const checkMode = () => {
-    const newMode: BuilderMemory["mode"] = creep.store.energy > CARRY_CAPACITY ? "💪" : "🛒";
+    const newMode: BuilderMemory["mode"] = ((c: Builder) => {
+      if (c.memory.mode === "💪" && c.store.energy === 0) {
+        // 作業モードで空になったら収集モードにする
+        return "🛒";
+      }
+
+      if (c.memory.mode === "🛒" && creep.store.energy > CARRY_CAPACITY) {
+        // 収集モードで50超えたら作業モードにする
+        return "💪";
+      }
+
+      // そのまま
+      return c.memory.mode;
+    })(creep);
     if (newMode !== creep.memory.mode) {
       creep.memory.mode = newMode;
       creep.memory.buildingId = undefined;
