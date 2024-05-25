@@ -12,6 +12,9 @@ const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 module.exports.loop = function () {
     (0, utils_1.logUsage)("all", () => {
+        if (Game.cpu.bucket === 10000) {
+            Game.cpu.generatePixel();
+        }
         (0, utils_1.logUsage)("delete memoery", () => {
             if (Object.keys(Game.creeps).length !== Object.keys(Memory.creeps).length) {
                 Object.keys(Memory.creeps).forEach((name) => {

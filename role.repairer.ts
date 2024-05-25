@@ -1,22 +1,23 @@
 import { CreepBehavior } from "./roles";
 import { complexOrder } from "./util.array";
-import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll, withdrawBy } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, getRepairTarget, isStoreTarget, pickUpAll, withdrawBy } from "./util.creep";
+import { findMyStructures } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
-  if (!isBuilder(creep)) {
-    return console.log(`${creep.name} is not Builder`);
+  if (!isRepairer(creep)) {
+    return console.log(`${creep.name} is not Repairer`);
   }
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
     customMove(creep, target, {
-      ignoreCreeps: !creep.pos.inRangeTo(target, 4),
+      ignoreCreeps: !creep.pos.inRangeTo(target, 2),
       ...opt,
     });
 
   const checkMode = () => {
-    const newMode: BuilderMemory["mode"] = creep.store.energy > CARRY_CAPACITY ? "💪" : "🛒";
+    const newMode: RepairerMemory["mode"] = creep.store.energy >= CARRY_CAPACITY ? "🔧" : "🛒";
     if (newMode !== creep.memory.mode) {
       creep.memory.mode = newMode;
-      creep.memory.buildingId = undefined;
+      creep.memory.targetId = undefined;
       creep.memory.storeId = undefined;
       creep.say(creep.memory.mode);
     }
@@ -25,63 +26,60 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // https://docs.screeps.com/simultaneous-actions.html
 
-  // build
-  if (
-    creep.memory.buildingId ||
-    (creep.memory.buildingId = complexOrder(Object.values(Game.constructionSites), [
+  // 空きのあるタワーがあるときはそちらに運ぶ
+  if (creep.memory.towerId || (creep.memory.towerId = findMyStructures(creep.room).tower.find((t) => t.store.getFreeCapacity(RESOURCE_ENERGY) > 0)?.id)) {
+    const tower = Game.getObjectById(creep.memory.towerId);
+    if (!tower) {
+      creep.memory.towerId = undefined;
+      return;
+    }
+
+    if (creep.transfer(tower, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+      moveMeTo(tower);
+    }
+  }
+  // repair
+  else if (
+    (creep.memory.targetId = complexOrder(getRepairTarget(creep.memory.baseRoom), [
       // 同じ部屋を優先
-      (s) => (s.pos.roomName === creep.memory.baseRoom ? 0 : 1),
-      // コンテナがあるときはコンテナ優先
+      (s) => (s.pos.roomName === creep.pos.roomName ? 0 : 1),
+      // 壊れそうな壁を優先
       (s) => {
         switch (s.structureType) {
-          case STRUCTURE_CONTAINER:
-            return 0;
+          case STRUCTURE_WALL:
+          case STRUCTURE_RAMPART:
+            if (s.hits < 3000) {
+              return "ticksToDecay" in s ? s.hits * RAMPART_DECAY_TIME + s.ticksToDecay : s.hits * RAMPART_DECAY_TIME;
+            } else {
+              return 30001 * RAMPART_DECAY_TIME;
+            }
           default:
-            return 1;
+            return 30001 * RAMPART_DECAY_TIME;
         }
       },
-      // 残り作業が一番少ないやつ
-      (s) => s.progressTotal - s.progress,
-      // 近いやつ
-      (s) => s.pos.getRangeTo(creep),
+      // 多少非効率でもすぐ壊れそうなやつから
+      (s) => s.hits,
     ]).first()?.id)
   ) {
-    const site = Game.getObjectById(creep.memory.buildingId);
-    if (site) {
-      switch ((creep.memory.built = creep.build(site))) {
-        // 対象が変な時はクリアする
-        case ERR_INVALID_TARGET:
-          creep.memory.buildingId = undefined;
-          break;
-        // 建築モードで離れてるときは近寄る
+    // repair
+    const target = Game.getObjectById(creep.memory.targetId);
+    if (target) {
+      switch (creep.repair(target)) {
         case ERR_NOT_IN_RANGE:
-          if (creep.memory.mode === "💪") {
-            moveMeTo(site);
+          if (creep.memory.mode === "🔧") {
+            moveMeTo(target);
           }
           break;
-
-        // 有りえない系
-        case ERR_NOT_OWNER: // 自creepじゃない
-        case ERR_NO_BODYPART:
-          console.log(`${creep.name} build returns ${RETURN_CODE_DECODER[creep.memory.built.toString()]}`);
-          creep.say(RETURN_CODE_DECODER[creep.memory.built.toString()]);
-          break;
-
-        // 問題ない系
         case OK:
-        case ERR_BUSY:
-        case ERR_NOT_ENOUGH_RESOURCES:
         default:
           break;
       }
-    } else {
-      // 指定されていたソースが見つからないとき
-      // 対象をクリア
-      creep.memory.buildingId = undefined;
     }
-  } else {
-    // 強引に修理屋になっておく
-    return ((creep.memory as unknown as RepairerMemory).role = "repairer");
+  }
+
+  // 向かってる途中とかに空になったらクリアする
+  if ((creep.memory.storeId && Game.getObjectById(creep.memory.storeId))?.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+    creep.memory.storeId = undefined;
   }
 
   // withdraw
@@ -97,7 +95,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           s.store.energy > CARRY_CAPACITY
         );
       },
-      maxRooms: 2,
     })?.id)
   ) {
     const store = Game.getObjectById(creep.memory.storeId);
@@ -107,7 +104,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
         case ERR_INVALID_TARGET: // 対象が変
           creep.memory.storeId = undefined;
-          break;
           break;
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "🛒") {
@@ -121,7 +117,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         // 有りえない系
         case ERR_NOT_OWNER:
         case ERR_INVALID_ARGS:
-          console.log(`${creep.name} build returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
+          console.log(`${creep.name} withdraw returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
           creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
           break;
         // 問題ない系
@@ -146,6 +142,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
 export default behavior;
 
-function isBuilder(creep: Creep): creep is Builder {
-  return creep.memory.role === "builder";
+function isRepairer(creep: Creep): creep is Repairer {
+  return creep.memory.role === "repairer";
 }

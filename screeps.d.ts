@@ -5,7 +5,7 @@ declare interface SourceMemory {
   positions: number;
 }
 
-declare type ROLES = "harvester" | "carrier" | "builder" | "upgrader" | "claimer" | "mineralHarvester";
+declare type ROLES = "harvester" | "carrier" | "builder" | "repairer" | "upgrader" | "claimer" | "mineralHarvester";
 declare interface CreepMemory {
   role: ROLES;
   baseRoom: string;
@@ -163,6 +163,13 @@ declare interface CarrierMemory extends CreepMemory {
 
 declare interface Repairer extends Creep {
   memory: RepairerMemory;
+}
+declare interface RepairerMemory extends CreepMemory {
+  role: "repairer";
+  mode: "🔧" | "🛒";
+  targetId?: Id<Structure>;
+  storeId?: StoreTarget["id"] | null;
+  towerId?: Id<StructureTower> | null;
 }
 
 declare interface Claimer extends Creep {

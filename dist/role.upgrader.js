@@ -98,7 +98,10 @@ const behavior = (creep) => {
             }))
                 .flatten(false)
                 .compact()
-                .run())) === null || _d === void 0 ? void 0 : _d.createConstructionSite(STRUCTURE_CONTAINER);
+                .run(), {
+                ignoreCreeps: true,
+                swampCost: 1,
+            })) === null || _d === void 0 ? void 0 : _d.createConstructionSite(STRUCTURE_CONTAINER);
         }
     }
     (0, util_creep_1.pickUpAll)(creep);

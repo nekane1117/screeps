@@ -137,6 +137,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             .flatten<RoomPosition | null>(false)
             .compact()
             .run(),
+          {
+            ignoreCreeps: true,
+            swampCost: 1,
+          },
         )
         ?.createConstructionSite(STRUCTURE_CONTAINER);
     }
