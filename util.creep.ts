@@ -70,6 +70,22 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       .flatten<BodyPartConstant>()
       .run(),
   ],
+  repairer: [
+    // 最小構成
+    WORK,
+    CARRY,
+    MOVE,
+    // 偶数にする
+    WORK,
+    ..._(
+      _.range(23).map(() => {
+        // あとはMoveとCarryの繰り返し
+        return [MOVE, CARRY];
+      }),
+    )
+      .flatten<BodyPartConstant>()
+      .run(),
+  ],
   claimer: [CLAIM, MOVE],
   carrier: [
     ..._(
@@ -224,4 +240,18 @@ export function withdrawBy(creep: Creep, roles: ROLES[], type: ResourceConstant 
 
 export function toColor({ id }: Creeps) {
   return `#${id.slice(-6)}`;
+}
+
+export function getRepairTarget(roomName: string) {
+  return Game.rooms[roomName].find(FIND_STRUCTURES, {
+    filter: (s) => {
+      switch (s.structureType) {
+        case STRUCTURE_RAMPART:
+        case STRUCTURE_WALL:
+          return s.hits < 3000;
+        default:
+          return s.hits < s.hits * 0.5;
+      }
+    },
+  });
 }

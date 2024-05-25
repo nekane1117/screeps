@@ -1,17 +1,36 @@
-import { filterBodiesByCost, getMainSpawn } from "./util.creep";
-import { findMyStructures, getSpawnsOrderdByRange } from "./utils";
+import { filterBodiesByCost, getMainSpawn, squareDiff } from "./util.creep";
+import { findMyStructures, getSpawnsWithDistance } from "./utils";
 
 export function behavior(source: Source) {
+  const positions = squareDiff.filter(([x, y]) => {
+    return source.room
+      .getPositionAt(source.pos.x + x, source.pos.y + y)
+      ?.lookFor(LOOK_TERRAIN)
+      .find((t) => t !== "wall");
+  }).length;
+
+  const harvesters = Object.values(Game.creeps).filter((c): c is Harvester => isH(c) && c.memory.harvestTargetId === source.id);
+
   // 最大匹数より少なく、WORKのパーツが5未満の時
-  if (!Object.values(Game.creeps).find((c): c is Harvester => isH(c) && c.memory.harvestTargetId === source.id)) {
+  if (
+    harvesters.length < positions &&
+    _(harvesters)
+      .map((h) => h.getActiveBodyparts(WORK))
+      .flatten()
+      .sum() < 5
+  ) {
     // 自分用のWORKが5個以下の時
-    const spawn = getSpawnsOrderdByRange(source, 1).first() || getSpawnsOrderdByRange(source).first();
+    const spawn = getSpawnsWithDistance(source)
+      .sort((a, b) => {
+        return b.spawn.room.energyAvailable / Math.max(b.distance, 1) - a.spawn.room.energyAvailable / Math.max(a.distance, 1);
+      })
+      .first()?.spawn;
     if (!spawn) {
       console.log(`source ${source.id} can't find spawn`);
       return ERR_NOT_FOUND;
     }
 
-    if (spawn.room.energyAvailable > 200) {
+    if (spawn.room.energyAvailable > 300) {
       const name = `H_${source.room.name}_${Game.time}`;
       const spawned = spawn.spawnCreep(filterBodiesByCost("harvester", spawn.room.energyAvailable).bodies, name, {
         memory: {

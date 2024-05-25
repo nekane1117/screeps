@@ -6,12 +6,12 @@ function behavior(site) {
     var _a;
     if (Object.values(Game.creeps).filter((c) => {
         return c.memory.role === "builder" && c.memory.baseRoom === site.pos.roomName && (c.ticksToLive || 0) > CREEP_LIFE_TIME * 0.1;
-    }).length === 0) {
+    }).length < 2) {
         const spawn = (_a = (0, utils_1.getSpawnsWithDistance)(site)
-            .sort((a, b) => b.spawn.room.energyAvailable / (a.distance + 1) - a.spawn.room.energyAvailable / (a.distance + 1))
+            .sort((a, b) => b.spawn.room.energyAvailable / (b.distance + 1) - a.spawn.room.energyAvailable / (a.distance + 1))
             .find(({ spawn: { room: { energyAvailable, energyCapacityAvailable }, }, }) => energyAvailable / energyCapacityAvailable > 0.9)) === null || _a === void 0 ? void 0 : _a.spawn;
         if (spawn) {
-            spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("builder", spawn.room.energyAvailable).bodies, `B_${site.pos.roomName}`, {
+            spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("builder", spawn.room.energyAvailable).bodies, `B_${site.pos.roomName}_${Game.time}`, {
                 memory: {
                     role: "builder",
                     baseRoom: site.pos.roomName,

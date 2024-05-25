@@ -22,25 +22,44 @@ function roomBehavior(room) {
         creteStructures(room);
     }
     (0, structure_links_1.default)((0, utils_1.findMyStructures)(room).link);
-    const { carrier: carriers, harvester } = Object.values(Game.creeps)
+    const { carrier: carriers, harvester, repairer, } = Object.values(Game.creeps)
         .filter((c) => c.memory.baseRoom === room.name)
         .reduce((creeps, c) => {
         creeps[c.memory.role] = ((creeps === null || creeps === void 0 ? void 0 : creeps[c.memory.role]) || []).concat(c);
         return creeps;
-    }, { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [], mineralHarvester: [] });
-    const { bodies } = (0, util_creep_1.filterBodiesByCost)("carrier", room.energyAvailable);
+    }, { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [], mineralHarvester: [], repairer: [] });
+    const { bodies: carrierBodies } = (0, util_creep_1.filterBodiesByCost)("carrier", room.energyAvailable);
     if (harvester.length &&
         carriers.filter((g) => {
-            return bodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
+            return carrierBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
         }).length < 2) {
         const name = `C_${room.name}_${Game.time}`;
         const spawn = (0, util_creep_1.getMainSpawn)(room);
         if (spawn && !spawn.spawning && room.energyAvailable > 200) {
-            spawn.spawnCreep(bodies, name, {
+            spawn.spawnCreep(carrierBodies, name, {
                 memory: {
                     mode: "🛒",
                     baseRoom: spawn.room.name,
                     role: "carrier",
+                },
+            });
+            return OK;
+        }
+    }
+    const { bodies: repairerBodies } = (0, util_creep_1.filterBodiesByCost)("repairer", Math.max(room.energyAvailable, 300));
+    if (harvester.length &&
+        (0, util_creep_1.getRepairTarget)(room.name).length > 0 &&
+        repairer.filter((g) => {
+            return repairerBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
+        }).length < 1) {
+        const name = `R_${room.name}_${Game.time}`;
+        const spawn = (0, util_creep_1.getMainSpawn)(room);
+        if (spawn && !spawn.spawning && room.energyAvailable >= 300) {
+            spawn.spawnCreep(repairerBodies, name, {
+                memory: {
+                    mode: "🛒",
+                    baseRoom: spawn.room.name,
+                    role: "repairer",
                 },
             });
             return OK;

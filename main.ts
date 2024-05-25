@@ -8,9 +8,9 @@ import { findMyStructures, isHighway, logUsage } from "./utils";
 
 module.exports.loop = function () {
   logUsage("all", () => {
-    // if (Game.cpu.bucket === 10000) {
-    //   Game.cpu.generatePixel();
-    // }
+    if (Game.cpu.bucket === 10000) {
+      Game.cpu.generatePixel();
+    }
     //死んだcreepは削除する
     logUsage("delete memoery", () => {
       if (Object.keys(Game.creeps).length !== Object.keys(Memory.creeps).length) {

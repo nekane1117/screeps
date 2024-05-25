@@ -5,7 +5,7 @@ declare interface SourceMemory {
   positions: number;
 }
 
-declare type ROLES = "harvester" | "carrier" | "builder" | "upgrader" | "claimer" | "mineralHarvester";
+declare type ROLES = "harvester" | "carrier" | "builder" | "repairer" | "upgrader" | "claimer" | "mineralHarvester";
 declare interface CreepMemory {
   role: ROLES;
   baseRoom: string;
@@ -136,6 +136,9 @@ declare interface BuilderMemory extends CreepMemory {
   /** 今建てたいもの */
   buildingId?: ConstructionSite["id"] | null;
   built?: ReturnType<Creeps["build"]>;
+  /** 今建てたいもの */
+  repairId?: Id<Parameters<Creep["repair"]>[0]>;
+  built?: ReturnType<Creeps["build"]>;
   /** 資源をもらいに行く先 */
   storeId?: StoreTarget["id"] | null;
 }
@@ -160,6 +163,13 @@ declare interface CarrierMemory extends CreepMemory {
 
 declare interface Repairer extends Creep {
   memory: RepairerMemory;
+}
+declare interface RepairerMemory extends CreepMemory {
+  role: "repairer";
+  mode: "🔧" | "🛒";
+  targetId?: Id<Structure>;
+  storeId?: StoreTarget["id"] | null;
+  towerId?: Id<StructureTower> | null;
 }
 
 declare interface Claimer extends Creep {
