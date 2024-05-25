@@ -6,8 +6,18 @@ const behavior: StructureBehavior = (controller: Structure) => {
   if (!isC(controller)) {
     return console.log("type is invalid", controller);
   }
-  controller.room.visual.text(`bucket  : ${Game.cpu.bucket.toLocaleString()}`, controller.pos.x, controller.pos.y - 2);
-  controller.room.visual.text(`progress:${(controller.progressTotal - controller.progress).toLocaleString()}`, controller.pos.x, controller.pos.y - 1);
+
+  const showSummary = (texts: string[]) => {
+    texts.forEach((text, i) => {
+      controller.room.visual.text(text, Math.max(controller.pos.x - 3, 1), Math.max(1, controller.pos.y - texts.length + i), { align: "left" });
+    });
+  };
+
+  showSummary([
+    `energy  : ${controller.room.energyAvailable} / ${controller.room.energyCapacityAvailable}`,
+    `bucket  : ${Game.cpu.bucket.toLocaleString()}`,
+    `progress:${(controller.progressTotal - controller.progress).toLocaleString()}`,
+  ]);
 
   const upgrader = Object.values(Game.creeps).filter((c): c is Upgrader => {
     return c.memory.role === "upgrader" && c.memory.baseRoom === controller.pos.roomName;
