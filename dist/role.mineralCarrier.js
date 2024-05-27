@@ -14,10 +14,10 @@ const behavior = (creep) => {
             return console.log(`${creep.name} is not MineralCarrier`);
         }
         const newMode = ((c) => {
-            if (c.memory.mode === "💪" && c.store[mineral.mineralType] === 0) {
+            if (c.memory.mode === "💪" && creep.store.getUsedCapacity() === 0) {
                 return "🛒";
             }
-            if (c.memory.mode === "🛒" && creep.store[mineral.mineralType] > CARRY_CAPACITY) {
+            if (c.memory.mode === "🛒" && creep.store.getUsedCapacity() > CARRY_CAPACITY) {
                 return "💪";
             }
             return c.memory.mode;
@@ -32,7 +32,6 @@ const behavior = (creep) => {
         }
     }
     checkMode();
-    const { terminal } = (0, utils_1.findMyStructures)(creep.room);
     if (!mineral) {
         return creep.suicide();
     }
@@ -89,7 +88,7 @@ const behavior = (creep) => {
         }
     }
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_b = _(terminal).first()) === null || _b === void 0 ? void 0 : _b.id;
+        creep.memory.transferId = (_b = creep.room.terminal) === null || _b === void 0 ? void 0 : _b.id;
     }
     if (!creep.memory.transferId) {
         return ERR_NOT_FOUND;
@@ -101,34 +100,36 @@ const behavior = (creep) => {
                 moveMeTo(transferTarget);
             }
             if (creep.pos.isNearTo(transferTarget)) {
-                const returnVal = creep.transfer(transferTarget, mineral.mineralType);
-                switch (returnVal) {
-                    case ERR_NOT_ENOUGH_RESOURCES:
-                        checkMode();
-                        break;
-                    case ERR_INVALID_TARGET:
-                    case ERR_FULL:
-                        creep.memory.transferId = undefined;
-                        break;
-                    case ERR_NOT_IN_RANGE:
-                    case ERR_NOT_OWNER:
-                    case ERR_INVALID_ARGS:
-                        console.log(`${creep.name} transfer returns ${util_creep_1.RETURN_CODE_DECODER[returnVal.toString()]}`);
-                        creep.say(util_creep_1.RETURN_CODE_DECODER[returnVal.toString()]);
-                        break;
-                    case OK:
-                    case ERR_BUSY:
-                    default:
-                        if ((0, utils_1.getCapacityRate)(transferTarget) > 0.9) {
+                Object.keys(creep.store).forEach((type) => {
+                    const returnVal = creep.transfer(transferTarget, type);
+                    switch (returnVal) {
+                        case ERR_NOT_ENOUGH_RESOURCES:
+                            checkMode();
+                            break;
+                        case ERR_INVALID_TARGET:
+                        case ERR_FULL:
                             creep.memory.transferId = undefined;
-                        }
-                        break;
-                }
+                            break;
+                        case ERR_NOT_IN_RANGE:
+                        case ERR_NOT_OWNER:
+                        case ERR_INVALID_ARGS:
+                            console.log(`${creep.name} transfer returns ${util_creep_1.RETURN_CODE_DECODER[returnVal.toString()]}`);
+                            creep.say(util_creep_1.RETURN_CODE_DECODER[returnVal.toString()]);
+                            break;
+                        case OK:
+                        case ERR_BUSY:
+                        default:
+                            if ((0, utils_1.getCapacityRate)(transferTarget) > 0.9) {
+                                creep.memory.transferId = undefined;
+                            }
+                            break;
+                    }
+                });
             }
         }
     }
-    (0, util_creep_1.withdrawBy)(creep, ["harvester"]);
-    (0, util_creep_1.pickUpAll)(creep);
+    (0, util_creep_1.withdrawBy)(creep, ["mineralHarvester"], mineral.mineralType);
+    (0, util_creep_1.pickUpAll)(creep, mineral.mineralType);
 };
 exports.default = behavior;
 function isMc(creep) {

@@ -19,7 +19,8 @@ const behavior = (controller) => {
     const upgrader = Object.values(Game.creeps).filter((c) => {
         return c.memory.role === "upgrader" && c.memory.baseRoom === controller.pos.roomName;
     });
-    if (!upgrader.length) {
+    const upgradeContainer = _(controller.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.structureType === STRUCTURE_CONTAINER })).first();
+    if (upgrader.length < (upgradeContainer ? (0, utils_1.getCapacityRate)(upgradeContainer) / 0.9 : 1)) {
         const spawn = (0, utils_1.getSpawnsOrderdByRange)(controller, 1).first();
         if (spawn && spawn.room.energyAvailable >= 300) {
             spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("upgrader", spawn.room.energyAvailable).bodies, `U_${controller.room.name}_${Game.time}`, {

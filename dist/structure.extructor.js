@@ -8,7 +8,7 @@ function behavior(extractor) {
     }
     const mineral = _(extractor.pos.lookFor(LOOK_MINERALS)).first();
     const terminal = _((0, utils_1.findMyStructures)(extractor.room).terminal).first();
-    if (!mineral || !terminal) {
+    if (!mineral || mineral.ticksToRegeneration || !terminal) {
         return ERR_NOT_FOUND;
     }
     if (terminal.store[mineral.mineralType] > 10000) {

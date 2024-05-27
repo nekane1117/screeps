@@ -3,6 +3,7 @@ import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, pickUpA
 import { findMyStructures, getCapacityRate } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
+  const { room } = creep;
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
     customMove(creep, target, {
       ignoreCreeps: !creep.pos.inRangeTo(target, 2),
@@ -29,21 +30,21 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
   checkMode();
-  const spawn = getMainSpawn(creep.room);
+  const spawn = getMainSpawn(room);
   if (!spawn) {
     return creep.say("spawn not found");
   }
   // https://docs.screeps.com/simultaneous-actions.html
 
-  const { extension, spawn: spawns, link, tower, storage, terminal, container: containers } = findMyStructures(creep.room);
-  const controllerContaeiner = creep.room.controller?.pos.findClosestByRange(containers);
+  const { extension, spawn: spawns, link, tower, container: containers } = findMyStructures(room);
+  const controllerContaeiner = room.controller?.pos.findClosestByRange(containers);
 
   // 取得元設定処理###############################################################################################
 
   // 取得元が空になってたら消す
   if (creep.memory.storeId) {
     const store = Game.getObjectById(creep.memory.storeId);
-    if (store && "store" in store && store.store.energy === 0) {
+    if (store && "store" in store && store.store.energy < CARRY_CAPACITY) {
       creep.memory.storeId = undefined;
     }
   }
@@ -55,9 +56,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         const extructor = spawn.pos.findClosestByRange(link);
         return extructor && extructor.store.energy >= CARRY_CAPACITY ? extructor : undefined;
       })() ||
-      creep.pos.findClosestByRange(_.compact([...storage, ...terminal, ...containers]), {
-        filter: (s: StructureSpawn | StructureExtension | StructureContainer | StructureStorage) => {
+      creep.pos.findClosestByRange(_.compact([...(room.energyAvailable < room.energyCapacityAvailable ? [room.storage, room.terminal] : []), ...containers]), {
+        filter: (s: StructureContainer) => {
           return (containers.length < 2 || controllerContaeiner?.id !== s.id) && s.store.energy >= CARRY_CAPACITY;
+        },
+      }) ||
+      creep.pos.findClosestByRange(_.compact([room.storage, room.terminal]), {
+        filter: (s: StructureTerminal | StructureStorage) => {
+          return s.store.energy >= room.energyCapacityAvailable + creep.store.getCapacity(RESOURCE_ENERGY);
         },
       })
     )?.id;
@@ -115,7 +121,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // 他のcarrierに設定されていない
   const exclusive = ({ id }: _HasId) =>
-    getCreepsInRoom(creep.room)
+    getCreepsInRoom(room)
       .filter((c): c is Carrier => c.memory.role === "carrier")
       .every((g) => g.memory.transferId !== id);
 
@@ -128,15 +134,20 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // storageにキャッシュ
-  if (!creep.memory.transferId) {
-    creep.memory.transferId = storage.find((s) => s.store.energy < s.room.energyCapacityAvailable)?.id;
+  if (!creep.memory.transferId && room.terminal && room.terminal.store.energy < room.energyCapacityAvailable) {
+    creep.memory.transferId = room.terminal.id;
+  }
+
+  // storageにキャッシュ
+  if (!creep.memory.transferId && room.storage && room.storage.store.energy < room.energyCapacityAvailable) {
+    creep.memory.transferId = room.storage.id;
   }
 
   // タワーに入れて修理や防御
   if (!creep.memory.transferId) {
     creep.memory.transferId = creep.pos.findClosestByRange(tower, {
       filter: (t: StructureTower) => {
-        return getCapacityRate(t) < 1 && exclusive(t);
+        return getCapacityRate(t) < 1 && (tower.length < 2 || exclusive(t));
       },
     })?.id;
   }
@@ -148,7 +159,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // 貯蓄
   if (!creep.memory.transferId) {
-    creep.memory.transferId = spawn.pos.findClosestByRange([...link, ...storage, ...terminal, ...containers], {
+    creep.memory.transferId = spawn.pos.findClosestByRange(_.compact([...link, room.storage, room.terminal, ...containers]), {
       filter: (s: StructureSpawn | StructureExtension) => {
         return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
       },
@@ -198,7 +209,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             break;
         }
       } else {
-        _(extension.filter((e) => creep.pos.isNearTo(e)))
+        _(extension.filter((e) => creep.pos.isNearTo(e) && e.store.getFreeCapacity(RESOURCE_ENERGY)))
           .tap(([head]) => {
             if (head) {
               creep.transfer(head, RESOURCE_ENERGY);

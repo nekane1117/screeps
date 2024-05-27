@@ -106,12 +106,12 @@ exports.IDEAL_BODY = Object.freeze({
         WORK,
         MOVE,
         CARRY,
-        WORK,
-        WORK,
-        WORK,
-        WORK,
-        MOVE,
-        MOVE,
+        CARRY,
+        ..._(_.range(23).map(() => {
+            return [WORK, MOVE];
+        }))
+            .flatten()
+            .run(),
     ],
     upgrader: [CARRY, MOVE, ..._.range(10).map(() => WORK), ..._.range(10).map(() => MOVE)],
 });

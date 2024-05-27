@@ -94,24 +94,31 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   } else {
     // 強引に修理屋になっておく
-    return ((creep.memory as unknown as RepairerMemory).role = "repairer");
+    return Object.assign(creep.memory, { role: "upgrader", mode: "🛒" } as UpgraderMemory);
   }
+
+  const upgradeContainer =
+    creep.room?.controller &&
+    _(creep.room.controller.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s): s is StructureContainer => s.structureType === STRUCTURE_CONTAINER })).first();
 
   // withdraw
   if (
     creep.memory.storeId ||
-    (creep.memory.storeId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-      filter: (s): s is StoreTarget => {
-        return (
-          s.structureType !== STRUCTURE_SPAWN &&
-          isStoreTarget(s) &&
-          s.structureType !== STRUCTURE_LINK &&
-          (s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9 ? true : s.structureType !== STRUCTURE_EXTENSION) &&
-          s.store.energy > CARRY_CAPACITY
-        );
-      },
-      maxRooms: 2,
-    })?.id)
+    (creep.memory.storeId = (
+      upgradeContainer ||
+      creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s): s is StoreTarget => {
+          return (
+            s.structureType !== STRUCTURE_SPAWN &&
+            isStoreTarget(s) &&
+            s.structureType !== STRUCTURE_LINK &&
+            (s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9 ? true : s.structureType !== STRUCTURE_EXTENSION) &&
+            s.store.energy > CARRY_CAPACITY * creep.getActiveBodyparts(CARRY)
+          );
+        },
+        maxRooms: 2,
+      })
+    )?.id)
   ) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {

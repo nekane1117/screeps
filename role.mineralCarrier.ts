@@ -1,6 +1,6 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, pickUpAll, withdrawBy } from "./util.creep";
-import { findMyStructures, getCapacityRate } from "./utils";
+import { getCapacityRate } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
@@ -19,12 +19,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       return console.log(`${creep.name} is not MineralCarrier`);
     }
     const newMode = ((c: MineralCarrier) => {
-      if (c.memory.mode === "💪" && c.store[mineral.mineralType] === 0) {
+      if (c.memory.mode === "💪" && creep.store.getUsedCapacity() === 0) {
         // 作業モードで空になったら収集モードにする
         return "🛒";
       }
 
-      if (c.memory.mode === "🛒" && creep.store[mineral.mineralType] > CARRY_CAPACITY) {
+      if (c.memory.mode === "🛒" && creep.store.getUsedCapacity() > CARRY_CAPACITY) {
         // 収集モードで50超えたら作業モードにする
         return "💪";
       }
@@ -43,7 +43,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
   checkMode();
-  const { terminal } = findMyStructures(creep.room);
   if (!mineral) {
     return creep.suicide();
   }
@@ -119,7 +118,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   //lab
   if (!creep.memory.transferId) {
-    creep.memory.transferId = _(terminal).first()?.id;
+    creep.memory.transferId = creep.room.terminal?.id;
   }
 
   // それでも見つからないとき
@@ -135,45 +134,47 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       }
 
       if (creep.pos.isNearTo(transferTarget)) {
-        const returnVal = creep.transfer(transferTarget, mineral.mineralType);
-        switch (returnVal) {
-          // 手持ちがない
-          case ERR_NOT_ENOUGH_RESOURCES: // 値を指定しないから多分発生しない
-            checkMode();
-            break;
+        (Object.keys(creep.store) as ResourceConstant[]).forEach((type) => {
+          const returnVal = creep.transfer(transferTarget, type);
+          switch (returnVal) {
+            // 手持ちがない
+            case ERR_NOT_ENOUGH_RESOURCES: // 値を指定しないから多分発生しない
+              checkMode();
+              break;
 
-          // 対象が変
-          case ERR_INVALID_TARGET: // 対象が変
-          case ERR_FULL: // 満タン
-            creep.memory.transferId = undefined;
-            break;
-
-          // 有りえない系
-          case ERR_NOT_IN_RANGE: //先に判定してるのでないはず
-          case ERR_NOT_OWNER: // 自creepじゃない
-          case ERR_INVALID_ARGS: // 引数が変
-            console.log(`${creep.name} transfer returns ${RETURN_CODE_DECODER[returnVal.toString()]}`);
-            creep.say(RETURN_CODE_DECODER[returnVal.toString()]);
-            break;
-
-          // 問題ない系
-          case OK:
-          case ERR_BUSY: // spawining
-          default:
-            if (getCapacityRate(transferTarget) > 0.9) {
+            // 対象が変
+            case ERR_INVALID_TARGET: // 対象が変
+            case ERR_FULL: // 満タン
               creep.memory.transferId = undefined;
-            }
-            break;
-        }
+              break;
+
+            // 有りえない系
+            case ERR_NOT_IN_RANGE: //先に判定してるのでないはず
+            case ERR_NOT_OWNER: // 自creepじゃない
+            case ERR_INVALID_ARGS: // 引数が変
+              console.log(`${creep.name} transfer returns ${RETURN_CODE_DECODER[returnVal.toString()]}`);
+              creep.say(RETURN_CODE_DECODER[returnVal.toString()]);
+              break;
+
+            // 問題ない系
+            case OK:
+            case ERR_BUSY: // spawining
+            default:
+              if (getCapacityRate(transferTarget) > 0.9) {
+                creep.memory.transferId = undefined;
+              }
+              break;
+          }
+        });
       }
     }
   }
 
   // 通りがかりに奪い取る
-  withdrawBy(creep, ["harvester"]);
+  withdrawBy(creep, ["mineralHarvester"], mineral.mineralType);
 
   // 落っこちてるものを拾う
-  pickUpAll(creep);
+  pickUpAll(creep, mineral.mineralType);
 };
 
 export default behavior;

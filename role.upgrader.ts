@@ -11,6 +11,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isUpgrader(creep)) {
     return console.log(`${creep.name} is not Upgrader`);
   }
+  if (creep.name.startsWith("B") && Object.values(Game.constructionSites).length) {
+    return Object.assign(creep.memory, { role: "builder", mode: "🛒" } as BuilderMemory);
+  }
 
   const controller = Game.rooms[creep.memory.baseRoom].controller;
   if (!controller) {

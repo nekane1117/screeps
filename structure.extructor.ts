@@ -9,7 +9,7 @@ export default function behavior(extractor: Structure) {
   const mineral = _(extractor.pos.lookFor(LOOK_MINERALS)).first();
   const terminal = _(findMyStructures(extractor.room).terminal).first();
 
-  if (!mineral || !terminal) {
+  if (!mineral || mineral.ticksToRegeneration || !terminal) {
     return ERR_NOT_FOUND;
   }
 

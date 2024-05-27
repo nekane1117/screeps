@@ -1,6 +1,6 @@
 import { StructureBehavior } from "./structures";
 import { filterBodiesByCost } from "./util.creep";
-import { getSpawnsOrderdByRange } from "./utils";
+import { getCapacityRate, getSpawnsOrderdByRange } from "./utils";
 
 const behavior: StructureBehavior = (controller: Structure) => {
   if (!isC(controller)) {
@@ -23,7 +23,11 @@ const behavior: StructureBehavior = (controller: Structure) => {
     return c.memory.role === "upgrader" && c.memory.baseRoom === controller.pos.roomName;
   });
 
-  if (!upgrader.length) {
+  const upgradeContainer = _(
+    controller.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s): s is StructureContainer => s.structureType === STRUCTURE_CONTAINER }),
+  ).first();
+
+  if (upgrader.length < (upgradeContainer ? getCapacityRate(upgradeContainer) / 0.9 : 1)) {
     const spawn = getSpawnsOrderdByRange(controller, 1).first();
     if (spawn && spawn.room.energyAvailable >= 300) {
       spawn.spawnCreep(filterBodiesByCost("upgrader", spawn.room.energyAvailable).bodies, `U_${controller.room.name}_${Game.time}`, {

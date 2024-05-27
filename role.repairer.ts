@@ -7,6 +7,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isRepairer(creep)) {
     return console.log(`${creep.name} is not Repairer`);
   }
+
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
     customMove(creep, target, {
       ignoreCreeps: !creep.pos.inRangeTo(target, 2),

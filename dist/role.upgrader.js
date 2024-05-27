@@ -7,6 +7,9 @@ const behavior = (creep) => {
     if (!isUpgrader(creep)) {
         return console.log(`${creep.name} is not Upgrader`);
     }
+    if (creep.name.startsWith("B") && Object.values(Game.constructionSites).length) {
+        return Object.assign(creep.memory, { role: "builder", mode: "🛒" });
+    }
     const controller = Game.rooms[creep.memory.baseRoom].controller;
     if (!controller) {
         return creep.suicide();
