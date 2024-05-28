@@ -195,7 +195,9 @@ function roadLayer(room: Room) {
         _([
           ...room.find(FIND_SOURCES),
           ...room.find(FIND_MY_STRUCTURES, {
-            filter: (s): s is StructureSpawn | StructureExtractor => s.structureType === STRUCTURE_CONTROLLER || s.structureType === STRUCTURE_EXTRACTOR,
+            filter: (s): s is StructureSpawn | StructureExtractor => {
+              return s.structureType === STRUCTURE_CONTROLLER || s.structureType === STRUCTURE_EXTRACTOR || s.structureType === STRUCTURE_TOWER;
+            },
           }),
         ])
           // 近い順にする

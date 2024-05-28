@@ -42,7 +42,7 @@ module.exports.loop = function () {
     });
     logUsage("rooms", () => {
       Object.values(Game.rooms)
-        .filter((room) => !isHighway(room))
+        .filter((room) => !isHighway(room) && room.controller?.my)
         .forEach((room) => {
           roomBehavior(room);
           // 構造物の動き
@@ -61,6 +61,12 @@ module.exports.loop = function () {
         });
         behaviors[c.memory.role]?.(c);
       });
+    });
+
+    Object.keys(Memory.rooms).forEach((name) => {
+      if (!Game.rooms[name]?.controller?.my) {
+        delete Memory.rooms[name];
+      }
     });
 
     Object.values(Memory.rooms).forEach((mem) => {

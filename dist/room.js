@@ -144,7 +144,9 @@ function roadLayer(room) {
         return (_([
             ...room.find(FIND_SOURCES),
             ...room.find(FIND_MY_STRUCTURES, {
-                filter: (s) => s.structureType === STRUCTURE_CONTROLLER || s.structureType === STRUCTURE_EXTRACTOR,
+                filter: (s) => {
+                    return s.structureType === STRUCTURE_CONTROLLER || s.structureType === STRUCTURE_EXTRACTOR || s.structureType === STRUCTURE_TOWER;
+                },
             }),
         ])
             .sortBy((s) => findCustomPath(s).length)

@@ -6,6 +6,7 @@ export default function behaviors(tower: Structure) {
   }
 
   //   https://docs.screeps.com/simultaneous-actions.html
+  const { tower: towers } = findMyStructures(tower.room);
 
   const target = _(tower.room.find(FIND_HOSTILE_CREEPS))
     .sort((c) => c.getActiveBodyparts(HEAL))
@@ -15,7 +16,9 @@ export default function behaviors(tower: Structure) {
     tower.attack(target);
   } else {
     // repair
-    const brokenRampart = _(tower.room.find(FIND_STRUCTURES, { filter: (s): s is StructureRampart => s.structureType === STRUCTURE_RAMPART && s.hits < 1000 }));
+    const brokenRampart = _(
+      tower.room.find(FIND_STRUCTURES, { filter: (s): s is StructureRampart => s.structureType === STRUCTURE_RAMPART && s.hits < RAMPART_DECAY_AMOUNT * 2 }),
+    );
     // Rampartはすぐ壊れるのでとにかく直す
     if (brokenRampart.size() > 0) {
       return tower.repair(
@@ -25,8 +28,8 @@ export default function behaviors(tower: Structure) {
       );
     }
 
-    // ダメージを受けている建物
-    tower.store.getUsedCapacity(RESOURCE_ENERGY) / tower.store.getCapacity(RESOURCE_ENERGY) > 0.8 &&
+    if (Game.time % (towers.length * 2) === 0 && tower.store.getUsedCapacity(RESOURCE_ENERGY) / tower.store.getCapacity(RESOURCE_ENERGY) > 0.8) {
+      // ダメージを受けている建物
       _(
         tower.room.find(FIND_STRUCTURES, {
           filter: (s: Structure): s is Structure<StructureConstant> => {
@@ -49,6 +52,8 @@ export default function behaviors(tower: Structure) {
           }
         })
         .run();
+    }
+
     // heal
     _(tower.room.find(FIND_MY_CREEPS, { filter: (s: Creep): s is Creep => s.hits < s.hitsMax }))
       .tap((damaged) => {

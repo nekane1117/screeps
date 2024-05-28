@@ -15,7 +15,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return Object.assign(creep.memory, { role: "builder", mode: "🛒" } as BuilderMemory);
   }
 
-  const controller = Game.rooms[creep.memory.baseRoom].controller;
+  const controller = Game.rooms[creep.memory.baseRoom]?.controller;
   if (!controller) {
     return creep.suicide();
   }

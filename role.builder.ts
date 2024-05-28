@@ -47,10 +47,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       // コンテナがあるときはコンテナ優先
       (s) => {
         switch (s.structureType) {
-          case STRUCTURE_CONTAINER:
+          case STRUCTURE_TOWER:
             return 0;
-          default:
+          case STRUCTURE_CONTAINER:
             return 1;
+          default:
+            return 2;
         }
       },
       // 残り作業が一番少ないやつ
@@ -97,28 +99,21 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return Object.assign(creep.memory, { role: "upgrader", mode: "🛒" } as UpgraderMemory);
   }
 
-  const upgradeContainer =
-    creep.room?.controller &&
-    _(creep.room.controller.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s): s is StructureContainer => s.structureType === STRUCTURE_CONTAINER })).first();
-
   // withdraw
   if (
     creep.memory.storeId ||
-    (creep.memory.storeId = (
-      upgradeContainer ||
-      creep.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (s): s is StoreTarget => {
-          return (
-            s.structureType !== STRUCTURE_SPAWN &&
-            isStoreTarget(s) &&
-            s.structureType !== STRUCTURE_LINK &&
-            (s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9 ? true : s.structureType !== STRUCTURE_EXTENSION) &&
-            s.store.energy > CARRY_CAPACITY * creep.getActiveBodyparts(CARRY)
-          );
-        },
-        maxRooms: 2,
-      })
-    )?.id)
+    (creep.memory.storeId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+      filter: (s): s is StoreTarget => {
+        return (
+          s.structureType !== STRUCTURE_SPAWN &&
+          isStoreTarget(s) &&
+          s.structureType !== STRUCTURE_LINK &&
+          (s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9 ? true : s.structureType !== STRUCTURE_EXTENSION) &&
+          s.store.energy > CARRY_CAPACITY
+        );
+      },
+      maxRooms: 2,
+    })?.id)
   ) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
@@ -154,6 +149,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           }
           break;
       }
+    }
+  } else {
+    const harvester = creep.pos.findClosestByRange(Object.values(Game.creeps), { filter: (c: Creeps) => c.memory.role === "harvester" });
+    if (harvester && !creep.pos.isNearTo(harvester)) {
+      moveMeTo(harvester);
     }
   }
 

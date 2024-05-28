@@ -42,7 +42,7 @@ module.exports.loop = function () {
         });
         (0, utils_1.logUsage)("rooms", () => {
             Object.values(Game.rooms)
-                .filter((room) => !(0, utils_1.isHighway)(room))
+                .filter((room) => { var _a; return !(0, utils_1.isHighway)(room) && ((_a = room.controller) === null || _a === void 0 ? void 0 : _a.my); })
                 .forEach((room) => {
                 (0, room_1.roomBehavior)(room);
                 (0, utils_1.findMyStructures)(room).all.forEach((s) => { var _a; return (_a = structures_1.default[s.structureType]) === null || _a === void 0 ? void 0 : _a.call(structures_1.default, s); });
@@ -60,6 +60,12 @@ module.exports.loop = function () {
                 });
                 (_a = roles_1.behaviors[c.memory.role]) === null || _a === void 0 ? void 0 : _a.call(roles_1.behaviors, c);
             });
+        });
+        Object.keys(Memory.rooms).forEach((name) => {
+            var _a, _b;
+            if (!((_b = (_a = Game.rooms[name]) === null || _a === void 0 ? void 0 : _a.controller) === null || _b === void 0 ? void 0 : _b.my)) {
+                delete Memory.rooms[name];
+            }
         });
         Object.values(Memory.rooms).forEach((mem) => {
             delete mem.find;
