@@ -14,7 +14,8 @@ function roomBehavior(room) {
         (_b = room.controller) === null || _b === void 0 ? void 0 : _b.activateSafeMode();
     }
     room.find(FIND_SOURCES).forEach((source) => (0, room_source_1.behavior)(source));
-    if (!room.memory.roadLayed || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
+    const { tower } = (0, utils_1.findMyStructures)(room);
+    if ((tower.length > 0 && !room.memory.roadLayed) || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
         console.log("roadLayer in " + Game.time);
         roadLayer(room);
     }

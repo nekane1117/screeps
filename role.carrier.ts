@@ -37,7 +37,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // https://docs.screeps.com/simultaneous-actions.html
 
   const { extension, spawn: spawns, link, tower, container: containers } = findMyStructures(room);
-  const controllerContaeiner = room.controller?.pos.findClosestByRange(containers);
+  const controllerContaeiner = room.controller && _(room.controller.pos.findInRange(containers, 3)).first();
 
   // 取得元設定処理###############################################################################################
 
@@ -157,9 +157,15 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     creep.memory.transferId = (controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined)?.id;
   }
 
+  if (!creep.memory.transferId) {
+    // 最寄りのbuilderに向かう
+    creep.memory.transferId = creep.pos.findClosestByRange(
+      Object.values(Game.creeps).filter((c) => c.memory.role === "builder" && c.store.getFreeCapacity(RESOURCE_ENERGY) && exclusive(c)),
+    )?.id;
+  }
   // 貯蓄
   if (!creep.memory.transferId) {
-    creep.memory.transferId = spawn.pos.findClosestByRange(_.compact([...link, room.storage, room.terminal, ...containers]), {
+    creep.memory.transferId = spawn.pos.findClosestByRange(_.compact([...link, room.storage, room.terminal]), {
       filter: (s: StructureSpawn | StructureExtension) => {
         return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
       },

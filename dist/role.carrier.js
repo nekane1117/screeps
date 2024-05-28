@@ -29,7 +29,7 @@ const behavior = (creep) => {
         return creep.say("spawn not found");
     }
     const { extension, spawn: spawns, link, tower, container: containers } = (0, utils_1.findMyStructures)(room);
-    const controllerContaeiner = (_a = room.controller) === null || _a === void 0 ? void 0 : _a.pos.findClosestByRange(containers);
+    const controllerContaeiner = room.controller && _(room.controller.pos.findInRange(containers, 3)).first();
     if (creep.memory.storeId) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store && "store" in store && store.store.energy < CARRY_CAPACITY) {
@@ -37,7 +37,7 @@ const behavior = (creep) => {
         }
     }
     if (!creep.memory.storeId) {
-        creep.memory.storeId = (_b = ((() => {
+        creep.memory.storeId = (_a = ((() => {
             const extructor = spawn.pos.findClosestByRange(link);
             return extructor && extructor.store.energy >= CARRY_CAPACITY ? extructor : undefined;
         })() ||
@@ -50,7 +50,7 @@ const behavior = (creep) => {
                 filter: (s) => {
                     return s.store.energy >= room.energyCapacityAvailable + creep.store.getCapacity(RESOURCE_ENERGY);
                 },
-            }))) === null || _b === void 0 ? void 0 : _b.id;
+            }))) === null || _a === void 0 ? void 0 : _a.id;
     }
     if (creep.memory.storeId && creep.memory.mode === "🛒") {
         const store = Game.getObjectById(creep.memory.storeId);
@@ -95,10 +95,10 @@ const behavior = (creep) => {
         .filter((c) => c.memory.role === "carrier")
         .every((g) => g.memory.transferId !== id);
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_c = _([...extension, ...spawns])
+        creep.memory.transferId = (_b = _([...extension, ...spawns])
             .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && exclusive(s))
             .sort((s1, s2) => s1.pos.y - s2.pos.y)
-            .first()) === null || _c === void 0 ? void 0 : _c.id;
+            .first()) === null || _b === void 0 ? void 0 : _b.id;
     }
     if (!creep.memory.transferId && room.terminal && room.terminal.store.energy < room.energyCapacityAvailable) {
         creep.memory.transferId = room.terminal.id;
@@ -107,17 +107,20 @@ const behavior = (creep) => {
         creep.memory.transferId = room.storage.id;
     }
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_d = creep.pos.findClosestByRange(tower, {
+        creep.memory.transferId = (_c = creep.pos.findClosestByRange(tower, {
             filter: (t) => {
                 return (0, utils_1.getCapacityRate)(t) < 1 && (tower.length < 2 || exclusive(t));
             },
-        })) === null || _d === void 0 ? void 0 : _d.id;
+        })) === null || _c === void 0 ? void 0 : _c.id;
     }
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_e = (controllerContaeiner && (0, utils_1.getCapacityRate)(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined)) === null || _e === void 0 ? void 0 : _e.id;
+        creep.memory.transferId = (_d = (controllerContaeiner && (0, utils_1.getCapacityRate)(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined)) === null || _d === void 0 ? void 0 : _d.id;
     }
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_f = spawn.pos.findClosestByRange(_.compact([...link, room.storage, room.terminal, ...containers]), {
+        creep.memory.transferId = (_e = creep.pos.findClosestByRange(Object.values(Game.creeps).filter((c) => c.memory.role === "builder" && c.store.getFreeCapacity(RESOURCE_ENERGY) && exclusive(c)))) === null || _e === void 0 ? void 0 : _e.id;
+    }
+    if (!creep.memory.transferId) {
+        creep.memory.transferId = (_f = spawn.pos.findClosestByRange(_.compact([...link, room.storage, room.terminal]), {
             filter: (s) => {
                 return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
             },

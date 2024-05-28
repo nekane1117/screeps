@@ -19,7 +19,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         return "🛒";
       }
 
-      if (c.memory.mode === "🛒" && creep.store.energy > CARRY_CAPACITY) {
+      if (c.memory.mode === "🛒" && creep.store.energy >= CARRY_CAPACITY) {
         // 収集モードで50超えたら作業モードにする
         return "💪";
       }
@@ -95,8 +95,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.memory.buildingId = undefined;
     }
   } else {
-    // 強引に修理屋になっておく
-    return Object.assign(creep.memory, { role: "upgrader", mode: "🛒" } as UpgraderMemory);
+    // 本当に何もなければ死ぬ
+    return creep.suicide();
   }
 
   // withdraw
@@ -150,7 +150,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           break;
       }
     }
-  } else {
+  } else if (creep.memory.mode === "🛒") {
     const harvester = creep.pos.findClosestByRange(Object.values(Game.creeps), { filter: (c: Creeps) => c.memory.role === "harvester" });
     if (harvester && !creep.pos.isNearTo(harvester)) {
       moveMeTo(harvester);

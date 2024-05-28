@@ -12,8 +12,10 @@ export function roomBehavior(room: Room) {
 
   room.find(FIND_SOURCES).forEach((source) => behavior(source));
 
+  const { tower } = findMyStructures(room);
+
   // 道を敷く
-  if (!room.memory.roadLayed || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
+  if ((tower.length > 0 && !room.memory.roadLayed) || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
     console.log("roadLayer in " + Game.time);
     roadLayer(room);
   }

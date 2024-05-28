@@ -15,7 +15,21 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     });
 
   const checkMode = () => {
-    const newMode: RepairerMemory["mode"] = creep.store.energy >= CARRY_CAPACITY ? "🔧" : "🛒";
+    const newMode: RepairerMemory["mode"] = ((c: Repairer) => {
+      if (c.memory.mode === "🔧" && creep.store.getUsedCapacity() === 0) {
+        // 作業モードで空になったら収集モードにする
+        return "🛒";
+      }
+
+      if (c.memory.mode === "🛒" && creep.store.getUsedCapacity() > CARRY_CAPACITY) {
+        // 収集モードで50超えたら作業モードにする
+        return "🔧";
+      }
+
+      // そのまま
+      return c.memory.mode;
+    })(creep);
+
     if (newMode !== creep.memory.mode) {
       creep.memory.mode = newMode;
       creep.memory.targetId = undefined;
@@ -41,6 +55,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
   // repair
   else if (
+    creep.memory.targetId ||
     (creep.memory.targetId = complexOrder(getRepairTarget(creep.memory.baseRoom), [
       // 同じ部屋を優先
       (s) => (s.pos.roomName === creep.pos.roomName ? 0 : 1),
@@ -72,6 +87,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           }
           break;
         case OK:
+          creep.memory.targetId = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.hits < s.hitsMax })).min((s) => s.hits)?.id;
+          break;
         default:
           break;
       }

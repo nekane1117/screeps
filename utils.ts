@@ -94,6 +94,7 @@ export function logUsage<T = unknown>(title: string, func: () => T) {
   indent++;
   const start = Game.cpu.getUsed();
   const value = func();
+
   console.log(`${" ".repeat(indent * 2)}${_.floor(Game.cpu.getUsed() - start, 2)} ${title}`);
   indent--;
   return value;

@@ -5,7 +5,6 @@ function behaviors(tower) {
     if (!isTower(tower)) {
         return console.log(`${tower.id} is not tower`);
     }
-    const { tower: towers } = (0, utils_1.findMyStructures)(tower.room);
     const target = _(tower.room.find(FIND_HOSTILE_CREEPS))
         .sort((c) => c.getActiveBodyparts(HEAL))
         .reverse()
@@ -20,7 +19,7 @@ function behaviors(tower) {
                 return s.hits * (s.ticksToDecay / RAMPART_DECAY_TIME);
             }));
         }
-        if (Game.time % (towers.length * 2) === 0 && tower.store.getUsedCapacity(RESOURCE_ENERGY) / tower.store.getCapacity(RESOURCE_ENERGY) > 0.8) {
+        if (tower.store.getUsedCapacity(RESOURCE_ENERGY) / tower.store.getCapacity(RESOURCE_ENERGY) > 0.8) {
             _(tower.room.find(FIND_STRUCTURES, {
                 filter: (s) => {
                     return ((s.structureType === STRUCTURE_WALL || s.structureType === STRUCTURE_RAMPART

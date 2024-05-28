@@ -29,7 +29,11 @@ const behavior: StructureBehavior = (controller: Structure) => {
 
   if (upgrader.length < (upgradeContainer ? getCapacityRate(upgradeContainer) / 0.9 : 1)) {
     const spawn = getSpawnsOrderdByRange(controller, 1).first();
-    if (spawn && spawn.room.energyAvailable >= 300) {
+    if (!spawn) {
+      console.log(controller.room.name, "controller can't find spawn");
+    } else if (spawn.room.energyAvailable < 300) {
+      console.log(controller.room.name, "Not enough spawn energy");
+    } else {
       spawn.spawnCreep(filterBodiesByCost("upgrader", spawn.room.energyAvailable).bodies, `U_${controller.room.name}_${Game.time}`, {
         memory: {
           baseRoom: controller.room.name,
@@ -37,8 +41,6 @@ const behavior: StructureBehavior = (controller: Structure) => {
           role: "upgrader",
         } as UpgraderMemory,
       });
-    } else {
-      console.log("controller can't find spawn");
     }
   }
 };

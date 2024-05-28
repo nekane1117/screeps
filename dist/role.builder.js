@@ -13,7 +13,7 @@ const behavior = (creep) => {
             if (c.memory.mode === "💪" && c.store.energy === 0) {
                 return "🛒";
             }
-            if (c.memory.mode === "🛒" && creep.store.energy > CARRY_CAPACITY) {
+            if (c.memory.mode === "🛒" && creep.store.energy >= CARRY_CAPACITY) {
                 return "💪";
             }
             return c.memory.mode;
@@ -70,7 +70,7 @@ const behavior = (creep) => {
         }
     }
     else {
-        return Object.assign(creep.memory, { role: "upgrader", mode: "🛒" });
+        return creep.suicide();
     }
     if (creep.memory.storeId ||
         (creep.memory.storeId = (_b = creep.pos.findClosestByPath(FIND_STRUCTURES, {
@@ -117,7 +117,7 @@ const behavior = (creep) => {
             }
         }
     }
-    else {
+    else if (creep.memory.mode === "🛒") {
         const harvester = creep.pos.findClosestByRange(Object.values(Game.creeps), { filter: (c) => c.memory.role === "harvester" });
         if (harvester && !creep.pos.isNearTo(harvester)) {
             moveMeTo(harvester);
