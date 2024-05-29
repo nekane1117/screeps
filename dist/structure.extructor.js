@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const constants_1 = require("./constants");
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 function behavior(extractor) {
@@ -11,7 +12,7 @@ function behavior(extractor) {
     if (!mineral || mineral.ticksToRegeneration || !terminal) {
         return ERR_NOT_FOUND;
     }
-    if (terminal.store[mineral.mineralType] > 10000) {
+    if (terminal.store[mineral.mineralType] > constants_1.MINERAL_THRESHOLD * 2) {
         return;
     }
     const { mineralHarvester = [], mineralCarrier = [] } = Object.values(Game.creeps)

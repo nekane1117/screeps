@@ -1,6 +1,7 @@
 import builder from "./role.builder";
 import carrier from "./role.carrier";
 import claimer from "./role.claimer";
+import defender from "./role.defender";
 import harvester from "./role.harvester";
 import mineralHarvester from "./role.mineralHarvester";
 import mineralCarrier from "./role.mineralCarrier";
@@ -14,6 +15,7 @@ export const behaviors: Record<ROLES, CreepBehavior> = {
   builder,
   carrier,
   claimer,
+  defender,
   mineralHarvester,
   mineralCarrier,
   repairer,

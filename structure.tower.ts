@@ -93,7 +93,7 @@ export default function behaviors(tower: Structure) {
         filter: (s: Structure): s is Structure<StructureConstant> => {
           return (
             (s.structureType === STRUCTURE_WALL || s.structureType === STRUCTURE_RAMPART
-              ? (Game.time % findMyStructures(s.room).tower.length) * 2 === 0
+              ? Game.time % (findMyStructures(s.room).tower.length * 2) === 0
               : true) && s.hits < s.hitsMax
           );
         },

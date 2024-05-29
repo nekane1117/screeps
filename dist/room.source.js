@@ -10,7 +10,9 @@ function behavior(source) {
         return (_a = source.room
             .getPositionAt(source.pos.x + x, source.pos.y + y)) === null || _a === void 0 ? void 0 : _a.lookFor(LOOK_TERRAIN).find((t) => t !== "wall");
     }).length;
-    const harvesters = Object.values(Game.creeps).filter((c) => isH(c) && c.memory.harvestTargetId === source.id);
+    const harvesters = Object.values(Game.creeps).filter((c) => {
+        return isH(c) && c.memory.harvestTargetId === source.id && ((c === null || c === void 0 ? void 0 : c.ticksToLive) || 0) > (0, util_creep_1.filterBodiesByCost)("harvester", 10000).bodies.length * CREEP_SPAWN_TIME;
+    });
     if (harvesters.length < positions &&
         _(harvesters)
             .map((h) => h.getActiveBodyparts(WORK))
@@ -25,7 +27,7 @@ function behavior(source) {
             console.log(`source ${source.id} can't find spawn`);
             return ERR_NOT_FOUND;
         }
-        if (spawn.room.energyAvailable > 300) {
+        if (spawn.room.energyAvailable >= 300) {
             const name = `H_${source.room.name}_${Game.time}`;
             const spawned = spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("harvester", spawn.room.energyAvailable).bodies, name, {
                 memory: {

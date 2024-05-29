@@ -15,7 +15,7 @@ function behaviors(tower) {
         _(tower.room.find(FIND_STRUCTURES, {
             filter: (s) => {
                 return ((s.structureType === STRUCTURE_WALL || s.structureType === STRUCTURE_RAMPART
-                    ? (Game.time % (0, utils_1.findMyStructures)(s.room).tower.length) * 2 === 0
+                    ? Game.time % ((0, utils_1.findMyStructures)(s.room).tower.length * 2) === 0
                     : true) && s.hits < s.hitsMax);
             },
         }))

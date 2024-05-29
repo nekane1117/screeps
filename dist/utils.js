@@ -60,7 +60,7 @@ function getSpawnsOrderdByRange(src, maxRooms) {
             distance: Game.map.getRoomLinearDistance(pos.roomName, spawn.room.name),
         };
     })
-        .filter((s) => s.distance <= (maxRooms || Infinity))
+        .filter((s) => s.spawn.room.name === "sim" || s.distance <= (maxRooms || Infinity))
         .sort(({ spawn: s1, distance: d1 }, { spawn: s2, distance: d2 }) => {
         const df = d1 - d2;
         if (df !== 0) {

@@ -1,3 +1,5 @@
+import { MINERAL_THRESHOLD } from "./constants";
+
 export default function behaviors(terminal: Structure) {
   if (!isTerminal(terminal)) {
     return console.log(`${terminal.id} is not terminal`);
@@ -18,12 +20,12 @@ export default function behaviors(terminal: Structure) {
     room.visual.text(`${mineral.mineralType}:${terminal.store[mineral.mineralType] - remainingTotal}(${remainingTotal})`, terminal.pos.x, terminal.pos.y - 1, {
       align: "left",
     });
-    if (terminal.store[mineral.mineralType] - remainingTotal > 10000) {
+    if (terminal.store[mineral.mineralType] - remainingTotal > MINERAL_THRESHOLD * 2) {
       Game.market.createOrder({
         type: ORDER_SELL,
         resourceType: mineral.mineralType,
         price: _(Game.market.getHistory(mineral.mineralType)).last().avgPrice,
-        totalAmount: 10000,
+        totalAmount: MINERAL_THRESHOLD,
         roomName: room.name,
       });
     }

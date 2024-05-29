@@ -23,17 +23,19 @@ function roomBehavior(room) {
         creteStructures(room);
     }
     (0, structure_links_1.default)((0, utils_1.findMyStructures)(room).link);
-    const { carrier: carriers, harvester, repairer, } = Object.values(Game.creeps)
+    const { carrier: carriers = [], harvester = [], repairer = [], } = Object.values(Game.creeps)
         .filter((c) => c.memory.baseRoom === room.name)
         .reduce((creeps, c) => {
         creeps[c.memory.role] = ((creeps === null || creeps === void 0 ? void 0 : creeps[c.memory.role]) || []).concat(c);
         return creeps;
-    }, { builder: [], claimer: [], carrier: [], harvester: [], upgrader: [], mineralHarvester: [], repairer: [], mineralCarrier: [] });
+    }, {});
     const { bodies: carrierBodies } = (0, util_creep_1.filterBodiesByCost)("carrier", room.energyAvailable);
-    if (harvester.length &&
-        carriers.filter((g) => {
-            return carrierBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
-        }).length < 2) {
+    if (harvester.length === 0) {
+        return ERR_NOT_FOUND;
+    }
+    if (carriers.filter((g) => {
+        return carrierBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
+    }).length < 2) {
         const name = `C_${room.name}_${Game.time}`;
         const spawn = (0, util_creep_1.getMainSpawn)(room);
         if (spawn && !spawn.spawning && room.energyAvailable > 200) {
@@ -47,9 +49,26 @@ function roomBehavior(room) {
             return OK;
         }
     }
+    if (room.find(FIND_HOSTILE_CREEPS).length > 0 && room.energyAvailable >= 240) {
+        const { bodies: defenderBodies, cost } = (0, util_creep_1.filterBodiesByCost)("defender", room.energyAvailable);
+        const spawn = room.controller &&
+            (0, utils_1.getSpawnsOrderdByRange)(room.controller)
+                .filter((s) => !s.spawning && s.room.energyAvailable >= cost)
+                .first();
+        if (spawn) {
+            return spawn.spawnCreep(defenderBodies, `D_${room.name}_${Game.time}`, {
+                memory: {
+                    baseRoom: room.name,
+                    role: "defender",
+                },
+            });
+        }
+        else {
+            console.log("can't find spawn for defender");
+        }
+    }
     const { bodies: repairerBodies } = (0, util_creep_1.filterBodiesByCost)("repairer", Math.max(room.energyAvailable, 300));
-    if (harvester.length &&
-        (0, util_creep_1.getRepairTarget)(room.name).length > 0 &&
+    if ((0, util_creep_1.getRepairTarget)(room.name).length > 0 &&
         repairer.filter((g) => {
             return repairerBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
         }).length < 1) {
@@ -153,7 +172,11 @@ function roadLayer(room) {
             .sortBy((s) => findCustomPath(s).length)
             .map((s) => {
             return findCustomPath(s).map((path) => {
-                if (room.getTerrain().get(path.x, path.y) !== TERRAIN_MASK_WALL) {
+                var _a;
+                const pos = room.getPositionAt(path.x, path.y);
+                if (pos &&
+                    ((_a = pos.lookFor(LOOK_TERRAIN)) === null || _a === void 0 ? void 0 : _a[0]) !== "wall" &&
+                    !pos.lookFor(LOOK_STRUCTURES).find((s) => OBSTACLE_OBJECT_TYPES.includes(s.structureType))) {
                     room.createConstructionSite(path.x, path.y, STRUCTURE_ROAD);
                 }
             });

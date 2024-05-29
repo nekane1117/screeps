@@ -5,7 +5,7 @@ declare interface SourceMemory {
   positions: number;
 }
 
-declare type ROLES = "harvester" | "carrier" | "builder" | "repairer" | "upgrader" | "claimer" | "mineralHarvester" | "mineralCarrier";
+declare type ROLES = "harvester" | "carrier" | "builder" | "repairer" | "upgrader" | "claimer" | "mineralHarvester" | "mineralCarrier" | "defender";
 declare interface CreepMemory {
   role: ROLES;
   baseRoom: string;
@@ -22,7 +22,7 @@ declare interface CreepMemory {
 }
 
 /** 全部のCreepの型 */
-declare type Creeps = Creep | Harvester | Upgrader | Builder | Carrier | Repairer | Claimer | MineralHarvester | MineralCarrier;
+declare type Creeps = Creep | Harvester | Upgrader | Builder | Carrier | Repairer | Claimer | MineralHarvester | MineralCarrier | Defender;
 
 declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink;
 
@@ -205,4 +205,12 @@ declare interface MineralHarvesterMemory extends CreepMemory {
   role: "mineralHarvester";
   targetId: Id<Mineral>;
   storeId?: Id<Parameters<Creep["transfer"]>[0]>;
+}
+
+declare interface Defender extends Creep {
+  memory: DefenderMemory;
+}
+declare interface DefenderMemory extends CreepMemory {
+  role: "defender";
+  targetId?: Id<AnyCreep>;
 }

@@ -1,0 +1,37 @@
+digraph G {
+    rankdir = "BT"
+    {G, H} -> GH
+    {G, O} -> GO
+    {GH, OH} -> GH2O
+    {GH2O, X} -> XGH2O
+    {GHO2, X} -> XGHO2
+    {GO, OH} -> GHO2
+    {H, K} -> KH
+    {H, L} -> LH
+    {H, O} -> OH
+    {H, U} -> UH
+    {H, Z} -> ZH
+    {K, O} -> KO
+    {K, Z} -> ZK
+    {KH, OH} -> KH2O
+    {KH2O, X} -> XKH2O
+    {KHO2, X} -> XKHO2
+    {KO, OH} -> KHO2
+    {L, O} -> LO
+    {L, U} -> UL
+    {LH, OH} -> LH2O
+    {LH2O, X} -> XLH2O
+    {LHO2, X} -> XLHO2
+    {LO, OH} -> LHO2
+    {O, U} -> UO
+    {O, Z} -> ZO
+    {OH, UH} -> UH2O
+    {OH, UO} -> UHO2
+    {OH, ZH} -> ZH2O
+    {OH, ZO} -> ZHO2
+    {UH2O, X} -> XUH2O
+    {UHO2, X} -> XUHO2
+    {UL, ZK} -> G
+    {X, ZH2O} -> XZH2O
+    {X, ZHO2} -> XZHO2
+}

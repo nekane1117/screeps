@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (controller) => {
+    var _a;
     if (!isC(controller)) {
         return console.log("type is invalid", controller);
     }
@@ -13,7 +14,7 @@ const behavior = (controller) => {
     };
     showSummary([
         `energy  : ${controller.room.energyAvailable} / ${controller.room.energyCapacityAvailable}`,
-        `bucket  : ${Game.cpu.bucket.toLocaleString()}`,
+        `bucket  : ${(_a = Game.cpu.bucket) === null || _a === void 0 ? void 0 : _a.toLocaleString()}`,
         `progress:${(controller.progressTotal - controller.progress).toLocaleString()}`,
     ]);
     const upgrader = Object.values(Game.creeps).filter((c) => {

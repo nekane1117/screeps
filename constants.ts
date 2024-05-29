@@ -1,0 +1,1 @@
+export const MINERAL_THRESHOLD = 10000;

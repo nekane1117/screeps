@@ -15,7 +15,7 @@ const behavior: StructureBehavior = (controller: Structure) => {
 
   showSummary([
     `energy  : ${controller.room.energyAvailable} / ${controller.room.energyCapacityAvailable}`,
-    `bucket  : ${Game.cpu.bucket.toLocaleString()}`,
+    `bucket  : ${Game.cpu.bucket?.toLocaleString()}`,
     `progress:${(controller.progressTotal - controller.progress).toLocaleString()}`,
   ]);
 

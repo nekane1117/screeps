@@ -65,7 +65,7 @@ export function getSpawnsOrderdByRange(src: RoomPosition | _HasRoomPosition, max
         distance: Game.map.getRoomLinearDistance(pos.roomName, spawn.room.name),
       };
     })
-    .filter((s) => s.distance <= (maxRooms || Infinity))
+    .filter((s) => s.spawn.room.name === "sim" || s.distance <= (maxRooms || Infinity))
     .sort(({ spawn: s1, distance: d1 }, { spawn: s2, distance: d2 }) => {
       const df = d1 - d2;
       // 部屋が違うときは部屋ごとの距離

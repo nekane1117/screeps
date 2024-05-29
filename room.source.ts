@@ -9,7 +9,9 @@ export function behavior(source: Source) {
       .find((t) => t !== "wall");
   }).length;
 
-  const harvesters = Object.values(Game.creeps).filter((c): c is Harvester => isH(c) && c.memory.harvestTargetId === source.id);
+  const harvesters = Object.values(Game.creeps).filter((c): c is Harvester => {
+    return isH(c) && c.memory.harvestTargetId === source.id && (c?.ticksToLive || 0) > filterBodiesByCost("harvester", 10000).bodies.length * CREEP_SPAWN_TIME;
+  });
 
   // 最大匹数より少なく、WORKのパーツが5未満の時
   if (
@@ -30,7 +32,7 @@ export function behavior(source: Source) {
       return ERR_NOT_FOUND;
     }
 
-    if (spawn.room.energyAvailable > 300) {
+    if (spawn.room.energyAvailable >= 300) {
       const name = `H_${source.room.name}_${Game.time}`;
       const spawned = spawn.spawnCreep(filterBodiesByCost("harvester", spawn.room.energyAvailable).bodies, name, {
         memory: {

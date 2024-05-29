@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getRepairTarget = exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getMainSpawn = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
+const util_array_1 = require("./util.array");
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -30,7 +31,11 @@ function filterBodiesByCost(role, cost) {
         return total <= cost;
     });
     return {
-        bodies: bodies.map((c) => c.parts),
+        bodies: (0, util_array_1.complexOrder)(bodies.map((c) => c.parts), [
+            (p) => {
+                return [TOUGH, HEAL, RANGED_ATTACK, ATTACK, CLAIM, MOVE, CARRY, WORK].indexOf(p);
+            },
+        ]).run(),
         cost: ((_a = _.last(bodies)) === null || _a === void 0 ? void 0 : _a.total) || 0,
     };
 }
@@ -80,6 +85,13 @@ exports.IDEAL_BODY = Object.freeze({
     carrier: [
         ..._(_.range(25).map(() => {
             return [MOVE, CARRY];
+        }))
+            .flatten()
+            .run(),
+    ],
+    defender: [
+        ..._(_.range(5).map(() => {
+            return [ATTACK, MOVE, ATTACK, MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, TOUGH, MOVE];
         }))
             .flatten()
             .run(),

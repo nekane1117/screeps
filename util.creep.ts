@@ -1,3 +1,5 @@
+import { complexOrder } from "./util.array";
+
 export function isStoreTarget(x: Structure): x is StoreTarget {
   return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -29,7 +31,14 @@ export function filterBodiesByCost(role: ROLES, cost: number) {
       return total <= cost;
     });
   return {
-    bodies: bodies.map((c) => c.parts),
+    bodies: complexOrder(
+      bodies.map((c) => c.parts),
+      [
+        (p) => {
+          return ([TOUGH, HEAL, RANGED_ATTACK, ATTACK, CLAIM, MOVE, CARRY, WORK] as BodyPartConstant[]).indexOf(p);
+        },
+      ],
+    ).run(),
     cost: _.last(bodies)?.total || 0,
   };
 }
@@ -92,6 +101,15 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       _.range(25).map(() => {
         // あとはMoveとCarryの繰り返し
         return [MOVE, CARRY];
+      }),
+    )
+      .flatten<BodyPartConstant>()
+      .run(),
+  ],
+  defender: [
+    ..._(
+      _.range(5).map(() => {
+        return [ATTACK, MOVE, ATTACK, MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, TOUGH, MOVE];
       }),
     )
       .flatten<BodyPartConstant>()

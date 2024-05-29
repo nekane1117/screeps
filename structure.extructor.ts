@@ -1,3 +1,4 @@
+import { MINERAL_THRESHOLD } from "./constants";
 import { filterBodiesByCost } from "./util.creep";
 import { findMyStructures, getSpawnsOrderdByRange } from "./utils";
 
@@ -13,7 +14,7 @@ export default function behavior(extractor: Structure) {
     return ERR_NOT_FOUND;
   }
 
-  if (terminal.store[mineral.mineralType] > 10000) {
+  if (terminal.store[mineral.mineralType] > MINERAL_THRESHOLD * 2) {
     // とりあえずいっぱいあるときはいい
     return;
   }
