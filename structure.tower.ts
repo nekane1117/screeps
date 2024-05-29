@@ -5,74 +5,133 @@ export default function behaviors(tower: Structure) {
     return console.log(`${tower.id} is not tower`);
   }
 
-  //   https://docs.screeps.com/simultaneous-actions.html
-  const target = _(tower.room.find(FIND_HOSTILE_CREEPS))
-    .sort((c) => c.getActiveBodyparts(HEAL))
-    .reverse()
-    .first();
-  if (target) {
-    tower.attack(target);
-  } else {
-    // repair
-    const brokenRampart = _(
-      tower.room.find(FIND_STRUCTURES, { filter: (s): s is StructureRampart => s.structureType === STRUCTURE_RAMPART && s.hits < RAMPART_DECAY_AMOUNT * 2 }),
+  // https://docs.screeps.com/simultaneous-actions.html
+  // const target = _(tower.room.find(FIND_HOSTILE_CREEPS))
+  //   .sort((c) => c.getActiveBodyparts(HEAL))
+  //   .reverse()
+  //   .first();
+  // if (target) {
+  //   tower.attack(target);
+  // } else {
+  //   // repair
+  //   const brokenRampart = _(
+  //     tower.room.find(FIND_STRUCTURES, { filter: (s): s is StructureRampart => s.structureType === STRUCTURE_RAMPART && s.hits < RAMPART_DECAY_AMOUNT * 2 }),
+  //   );
+  //   // Rampartはすぐ壊れるのでとにかく直す
+  //   if (brokenRampart.size() > 0) {
+  //     return tower.repair(
+  //       brokenRampart.min((s) => {
+  //         return s.hits * (s.ticksToDecay / RAMPART_DECAY_TIME);
+  //       }),
+  //     );
+  //   }
+
+  //   if (tower.store.getUsedCapacity(RESOURCE_ENERGY) / tower.store.getCapacity(RESOURCE_ENERGY) > 0.8) {
+  //     // ダメージを受けている建物
+  //     _(
+  //       tower.room.find(FIND_STRUCTURES, {
+  //         filter: (s: Structure): s is Structure<StructureConstant> => {
+  //           return (
+  //             (s.structureType === STRUCTURE_WALL || s.structureType === STRUCTURE_RAMPART
+  //               ? (Game.time % findMyStructures(s.room).tower.length) * 2 === 0
+  //               : true) && s.hits < s.hitsMax
+  //           );
+  //         },
+  //       }),
+  //     )
+  //       .tap((damaged) => {
+  //         // の中で最少のHPの建物の一覧
+  //         const target = _(damaged).min((s) => {
+  //           return s.hits * 10000 + ("ticksToDecay" in s ? s.ticksToDecay || 0 : 0);
+  //         });
+  //         // があれば修理する
+  //         if (target) {
+  //           tower.repair(target);
+  //         }
+  //       })
+  //       .run();
+  //   }
+
+  //   // heal
+  //   _(tower.room.find(FIND_MY_CREEPS, { filter: (s: Creep): s is Creep => s.hits < s.hitsMax }))
+  //     .tap((damaged) => {
+  //       // の中で最少のHP
+  //       const minHit = _(damaged)
+  //         .map((s) => s.hits)
+  //         .min();
+  //       // の建物の一覧
+  //       const minHits =
+  //         _(damaged)
+  //           .filter((s) => s.hits === minHit)
+  //           .run() || [];
+  //       // の中から一番近いやつ
+  //       const target = tower.pos.findClosestByRange(minHits);
+  //       // があれば修理する
+  //       if (target) {
+  //         tower.heal(target);
+  //       }
+  //     })
+  //     .run();
+  // }
+  // repair
+  const brokenRampart = _(
+    tower.room.find(FIND_STRUCTURES, { filter: (s): s is StructureRampart => s.structureType === STRUCTURE_RAMPART && s.hits < RAMPART_DECAY_AMOUNT * 2 }),
+  );
+  // Rampartはすぐ壊れるのでとにかく直す
+  if (brokenRampart.size() > 0) {
+    return tower.repair(
+      brokenRampart.min((s) => {
+        return s.hits * (s.ticksToDecay / RAMPART_DECAY_TIME);
+      }),
     );
-    // Rampartはすぐ壊れるのでとにかく直す
-    if (brokenRampart.size() > 0) {
-      return tower.repair(
-        brokenRampart.min((s) => {
-          return s.hits * (s.ticksToDecay / RAMPART_DECAY_TIME);
-        }),
-      );
-    }
+  }
 
-    if (tower.store.getUsedCapacity(RESOURCE_ENERGY) / tower.store.getCapacity(RESOURCE_ENERGY) > 0.8) {
-      // ダメージを受けている建物
-      _(
-        tower.room.find(FIND_STRUCTURES, {
-          filter: (s: Structure): s is Structure<StructureConstant> => {
-            return (
-              (s.structureType === STRUCTURE_WALL || s.structureType === STRUCTURE_RAMPART
-                ? (Game.time % findMyStructures(s.room).tower.length) * 2 === 0
-                : true) && s.hits < s.hitsMax
-            );
-          },
-        }),
-      )
-        .tap((damaged) => {
-          // の中で最少のHPの建物の一覧
-          const target = _(damaged).min((s) => {
-            return s.hits * 10000 + ("ticksToDecay" in s ? s.ticksToDecay || 0 : 0);
-          });
-          // があれば修理する
-          if (target) {
-            tower.repair(target);
-          }
-        })
-        .run();
-    }
-
-    // heal
-    _(tower.room.find(FIND_MY_CREEPS, { filter: (s: Creep): s is Creep => s.hits < s.hitsMax }))
+  if (tower.store.getUsedCapacity(RESOURCE_ENERGY) / tower.store.getCapacity(RESOURCE_ENERGY) > 0.8) {
+    // ダメージを受けている建物
+    _(
+      tower.room.find(FIND_STRUCTURES, {
+        filter: (s: Structure): s is Structure<StructureConstant> => {
+          return (
+            (s.structureType === STRUCTURE_WALL || s.structureType === STRUCTURE_RAMPART
+              ? (Game.time % findMyStructures(s.room).tower.length) * 2 === 0
+              : true) && s.hits < s.hitsMax
+          );
+        },
+      }),
+    )
       .tap((damaged) => {
-        // の中で最少のHP
-        const minHit = _(damaged)
-          .map((s) => s.hits)
-          .min();
-        // の建物の一覧
-        const minHits =
-          _(damaged)
-            .filter((s) => s.hits === minHit)
-            .run() || [];
-        // の中から一番近いやつ
-        const target = tower.pos.findClosestByRange(minHits);
+        // の中で最少のHPの建物の一覧
+        const target = _(damaged).min((s) => {
+          return s.hits * 10000 + ("ticksToDecay" in s ? s.ticksToDecay || 0 : 0);
+        });
         // があれば修理する
         if (target) {
-          tower.heal(target);
+          tower.repair(target);
         }
       })
       .run();
   }
+
+  // heal
+  _(tower.room.find(FIND_MY_CREEPS, { filter: (s: Creep): s is Creep => s.hits < s.hitsMax }))
+    .tap((damaged) => {
+      // の中で最少のHP
+      const minHit = _(damaged)
+        .map((s) => s.hits)
+        .min();
+      // の建物の一覧
+      const minHits =
+        _(damaged)
+          .filter((s) => s.hits === minHit)
+          .run() || [];
+      // の中から一番近いやつ
+      const target = tower.pos.findClosestByRange(minHits);
+      // があれば修理する
+      if (target) {
+        tower.heal(target);
+      }
+    })
+    .run();
 }
 
 function isTower(s: Structure): s is StructureTower {
