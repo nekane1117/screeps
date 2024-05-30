@@ -102,7 +102,7 @@ export default function behaviors(tower: Structure) {
       .tap((damaged) => {
         // の中で最少のHPの建物の一覧
         const target = _(damaged).min((s) => {
-          return s.hits * 10000 + ("ticksToDecay" in s ? s.ticksToDecay || 0 : 0);
+          return s.hits * 10000 + ("ticksToDecay" in s ? s.ticksToDecay || 0 : 9999);
         });
         // があれば修理する
         if (target) {

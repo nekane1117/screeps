@@ -24,7 +24,11 @@ export function behavior(source: Source) {
     // 自分用のWORKが5個以下の時
     const spawn = getSpawnsWithDistance(source)
       .sort((a, b) => {
-        return b.spawn.room.energyAvailable / Math.max(b.distance, 1) - a.spawn.room.energyAvailable / Math.max(a.distance, 1);
+        const evaluation = (v: typeof a) => {
+          return v.spawn.room.energyAvailable / ((v.distance + 1) ^ 2);
+        };
+
+        return evaluation(b) - evaluation(a);
       })
       .first()?.spawn;
     if (!spawn) {

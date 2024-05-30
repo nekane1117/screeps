@@ -5,7 +5,17 @@ declare interface SourceMemory {
   positions: number;
 }
 
-declare type ROLES = "harvester" | "carrier" | "builder" | "repairer" | "upgrader" | "claimer" | "mineralHarvester" | "mineralCarrier" | "defender";
+declare type ROLES =
+  | "harvester"
+  | "carrier"
+  | "builder"
+  | "repairer"
+  | "upgrader"
+  | "claimer"
+  | "mineralHarvester"
+  | "mineralCarrier"
+  | "defender"
+  | "labManager";
 declare interface CreepMemory {
   role: ROLES;
   baseRoom: string;
@@ -22,7 +32,7 @@ declare interface CreepMemory {
 }
 
 /** 全部のCreepの型 */
-declare type Creeps = Creep | Harvester | Upgrader | Builder | Carrier | Repairer | Claimer | MineralHarvester | MineralCarrier | Defender;
+declare type Creeps = Creep | Harvester | Upgrader | Builder | Carrier | Repairer | Claimer | MineralHarvester | MineralCarrier | Defender | LabManager;
 
 declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink;
 
@@ -84,10 +94,7 @@ declare type MyStructureCache = {
 };
 
 declare interface RoomMemory {
-  creeps?: {
-    tick: number;
-    names: string[];
-  };
+  creeps?: CreepsCache;
 
   mainSpawn?: Id<StructureSpawn>;
 
@@ -103,6 +110,25 @@ declare interface RoomMemory {
       data: Id<Source>[];
     };
   };
+
+  labs: Partial<Record<Id<StructureLab>, LabMemory>>;
+}
+
+declare type CreepsCache = Partial<{
+  harvester: Harvester[];
+  carrier: Carrier[];
+  builder: Builder[];
+  repairer: Repairer[];
+  upgrader: Upgrader[];
+  claimer: Claimer[];
+  mineralHarvester: MineralHarvester[];
+  mineralCarrier: MineralCarrier[];
+  defender: Defender[];
+  labManager: LabManager[];
+}>;
+
+declare interface LabMemory {
+  expectedType: MineralConstant | MineralCompoundConstant;
 }
 
 declare interface Upgrader extends Creep {
@@ -213,4 +239,23 @@ declare interface Defender extends Creep {
 declare interface DefenderMemory extends CreepMemory {
   role: "defender";
   targetId?: Id<AnyCreep>;
+}
+
+declare interface LabManager extends Creep {
+  memory: LabManagerMemory;
+}
+
+declare interface LabManagerMemory extends CreepMemory {
+  role: "labManager";
+  /** 今何してるか
+   * working    : 作業中
+   * collecting : 資源取得中
+   */
+  mode: "🚛" | "🛒";
+  /** 担当倉庫 */
+  storeId?: Id<StructureLab | StructureTerminal>;
+  /** 担当倉庫 */
+  mineralType?: MineralConstant | MineralCompoundConstant;
+  /** 配送先 */
+  transferId?: Id<Parameters<Creep["transfer"]>[0]>;
 }

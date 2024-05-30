@@ -1,7 +1,8 @@
+import labManager from "./room.labManager";
 import { behavior } from "./room.source";
 import linkBehavior from "./structure.links";
 import { filterBodiesByCost, getMainSpawn, getRepairTarget } from "./util.creep";
-import { findMyStructures, getSpawnsOrderdByRange } from "./utils";
+import { findMyStructures, getSpawnsWithDistance } from "./utils";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
@@ -10,17 +11,22 @@ export function roomBehavior(room: Room) {
     room.controller?.activateSafeMode();
   }
 
-  room.find(FIND_SOURCES).forEach((source) => behavior(source));
+  const sources = room.find(FIND_SOURCES);
+  sources.forEach((source) => behavior(source));
 
-  const { tower } = findMyStructures(room);
+  const { tower, lab, link } = findMyStructures(room);
 
+  const mineral = _(room.find(FIND_MINERALS)).first();
+  if (mineral) {
+    labManager(lab, mineral);
+  }
   // 道を敷く
   if ((tower.length > 0 && !room.memory.roadLayed) || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
     console.log("roadLayer in " + Game.time);
     roadLayer(room);
   }
 
-  // エクステンション建てる
+  // 部屋ごとの色々を建てる
   if (Game.time % 100 === 0) {
     creteStructures(room);
   }
@@ -51,7 +57,7 @@ export function roomBehavior(room: Room) {
   if (
     carriers.filter((g) => {
       return carrierBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
-    }).length < 2
+    }).length < (link.length >= sources.length + 1 ? 1 : 2)
   ) {
     const name = `C_${room.name}_${Game.time}`;
 
@@ -72,9 +78,15 @@ export function roomBehavior(room: Room) {
     const { bodies: defenderBodies, cost } = filterBodiesByCost("defender", room.energyAvailable);
     const spawn =
       room.controller &&
-      getSpawnsOrderdByRange(room.controller)
-        .filter((s) => !s.spawning && s.room.energyAvailable >= cost)
-        .first();
+      getSpawnsWithDistance(room.controller)
+        .filter((s) => !s.spawn.spawning && s.spawn.room.energyAvailable >= cost)
+        .sort((a, b) => {
+          const evaluation = (v: typeof a) => {
+            return v.spawn.room.energyAvailable / ((v.distance + 1) ^ 2);
+          };
+          return evaluation(b) - evaluation(a);
+        })
+        .first()?.spawn;
     if (spawn) {
       return spawn.spawnCreep(defenderBodies, `D_${room.name}_${Game.time}`, {
         memory: {

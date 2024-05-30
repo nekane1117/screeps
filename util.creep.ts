@@ -106,6 +106,16 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       .flatten<BodyPartConstant>()
       .run(),
   ],
+  labManager: [
+    ..._(
+      _.range(25).map(() => {
+        // あとはMoveとCarryの繰り返し
+        return [MOVE, CARRY];
+      }),
+    )
+      .flatten<BodyPartConstant>()
+      .run(),
+  ],
   defender: [
     ..._(
       _.range(5).map(() => {
@@ -212,21 +222,20 @@ export const customMove: CustomMove = (creep, target, opt) => {
 };
 
 export function getCreepsInRoom(room: Room) {
-  return (() => {
-    if (room.memory.creeps?.tick === Game.time) {
-      return room.memory.creeps.names;
-    } else {
-      room.memory.creeps = {
-        tick: Game.time,
-        names: Object.entries(Game.creeps)
-          .filter(([_, creep]) => creep.memory.baseRoom === room.name)
-          .map((entry) => entry[0]),
-      };
-      return room.memory.creeps.names;
-    }
-  })()
-    .map((name) => Game.creeps[name])
-    .filter((c) => c);
+  if (room.memory.creeps) {
+    return room.memory.creeps;
+  } else {
+    return (room.memory.creeps = Object.values(Game.creeps)
+      .filter((c) => c.memory.baseRoom === room.name)
+      .reduce((creeps, c) => {
+        if (!creeps[c.memory.role]) {
+          creeps[c.memory.role] = [];
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        creeps[c.memory.role]!.push(c as any);
+        return creeps;
+      }, {} as CreepsCache));
+  }
 }
 
 export function getMainSpawn(room: Room): StructureSpawn | undefined {

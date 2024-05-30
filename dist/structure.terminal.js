@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const constants_1 = require("./constants");
 function behaviors(terminal) {
     if (!isTerminal(terminal)) {
         return console.log(`${terminal.id} is not terminal`);
@@ -19,15 +18,6 @@ function behaviors(terminal) {
         room.visual.text(`${mineral.mineralType}:${terminal.store[mineral.mineralType] - remainingTotal}(${remainingTotal})`, terminal.pos.x, terminal.pos.y - 1, {
             align: "left",
         });
-        if (terminal.store[mineral.mineralType] - remainingTotal > constants_1.MINERAL_THRESHOLD * 2) {
-            Game.market.createOrder({
-                type: ORDER_SELL,
-                resourceType: mineral.mineralType,
-                price: _(Game.market.getHistory(mineral.mineralType)).last().avgPrice,
-                totalAmount: constants_1.MINERAL_THRESHOLD,
-                roomName: room.name,
-            });
-        }
     }
 }
 exports.default = behaviors;

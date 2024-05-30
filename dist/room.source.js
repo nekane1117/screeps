@@ -20,7 +20,10 @@ function behavior(source) {
             .sum() < 5) {
         const spawn = (_a = (0, utils_1.getSpawnsWithDistance)(source)
             .sort((a, b) => {
-            return b.spawn.room.energyAvailable / Math.max(b.distance, 1) - a.spawn.room.energyAvailable / Math.max(a.distance, 1);
+            const evaluation = (v) => {
+                return v.spawn.room.energyAvailable / ((v.distance + 1) ^ 2);
+            };
+            return evaluation(b) - evaluation(a);
         })
             .first()) === null || _a === void 0 ? void 0 : _a.spawn;
         if (!spawn) {

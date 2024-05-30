@@ -1,5 +1,12 @@
 digraph G {
     rankdir = "BT"
+    L[style = "filled",fillcolor="green"]
+    LH[style = "filled",fillcolor="green"]
+    LO[style = "filled",fillcolor="green"]
+    LH2O[style = "filled",fillcolor="green"]
+    LHO2[style = "filled",fillcolor="green"]
+    XLH2O[style = "filled",fillcolor="green"]
+    XLHO2[style = "filled",fillcolor="green"]
     {G, H} -> GH
     {G, O} -> GO
     {GH, OH} -> GH2O

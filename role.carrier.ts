@@ -36,7 +36,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
   // https://docs.screeps.com/simultaneous-actions.html
 
-  const { extension, spawn: spawns, link, tower, container: containers } = findMyStructures(room);
+  const { extension, spawn: spawns, link, tower, container: containers, lab: labs } = findMyStructures(room);
   const controllerContaeiner = room.controller && _(room.controller.pos.findInRange(containers, 3)).first();
 
   // 取得元設定処理###############################################################################################
@@ -127,10 +127,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // 他のcarrierに設定されていない
-  const exclusive = ({ id }: _HasId) =>
-    getCreepsInRoom(room)
-      .filter((c): c is Carrier => c.memory.role === "carrier")
-      .every((g) => g.memory.transferId !== id);
+  const exclusive = ({ id }: _HasId) => (getCreepsInRoom(room).carrier || []).every((g) => g.memory.transferId !== id);
 
   //spawnかextension
   if (!creep.memory.transferId) {
@@ -140,7 +137,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       .first()?.id;
   }
 
-  // storageにキャッシュ
+  // terminalにキャッシュ
   if (!creep.memory.transferId && room.terminal && room.terminal.store.energy < room.energyCapacityAvailable) {
     creep.memory.transferId = room.terminal.id;
   }
@@ -154,9 +151,15 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!creep.memory.transferId) {
     creep.memory.transferId = creep.pos.findClosestByRange(tower, {
       filter: (t: StructureTower) => {
-        return getCapacityRate(t) < 1 && (tower.length < 2 || exclusive(t));
+        return getCapacityRate(t) < 0.9 && (tower.length < 2 || exclusive(t));
       },
     })?.id;
+  }
+
+  if (!creep.memory.transferId) {
+    creep.memory.transferId = _(labs)
+      .sort((l1, l2) => l1.store.energy - l2.store.energy)
+      .first()?.id;
   }
 
   // コントローラー強化

@@ -21,7 +21,7 @@ function behaviors(tower) {
         }))
             .tap((damaged) => {
             const target = _(damaged).min((s) => {
-                return s.hits * 10000 + ("ticksToDecay" in s ? s.ticksToDecay || 0 : 0);
+                return s.hits * 10000 + ("ticksToDecay" in s ? s.ticksToDecay || 0 : 9999);
             });
             if (target) {
                 tower.repair(target);

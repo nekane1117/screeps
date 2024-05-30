@@ -89,6 +89,13 @@ exports.IDEAL_BODY = Object.freeze({
             .flatten()
             .run(),
     ],
+    labManager: [
+        ..._(_.range(25).map(() => {
+            return [MOVE, CARRY];
+        }))
+            .flatten()
+            .run(),
+    ],
     defender: [
         ..._(_.range(5).map(() => {
             return [ATTACK, MOVE, ATTACK, MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, TOUGH, MOVE];
@@ -166,23 +173,20 @@ const customMove = (creep, target, opt) => {
 };
 exports.customMove = customMove;
 function getCreepsInRoom(room) {
-    return (() => {
-        var _a;
-        if (((_a = room.memory.creeps) === null || _a === void 0 ? void 0 : _a.tick) === Game.time) {
-            return room.memory.creeps.names;
-        }
-        else {
-            room.memory.creeps = {
-                tick: Game.time,
-                names: Object.entries(Game.creeps)
-                    .filter(([_, creep]) => creep.memory.baseRoom === room.name)
-                    .map((entry) => entry[0]),
-            };
-            return room.memory.creeps.names;
-        }
-    })()
-        .map((name) => Game.creeps[name])
-        .filter((c) => c);
+    if (room.memory.creeps) {
+        return room.memory.creeps;
+    }
+    else {
+        return (room.memory.creeps = Object.values(Game.creeps)
+            .filter((c) => c.memory.baseRoom === room.name)
+            .reduce((creeps, c) => {
+            if (!creeps[c.memory.role]) {
+                creeps[c.memory.role] = [];
+            }
+            creeps[c.memory.role].push(c);
+            return creeps;
+        }, {}));
+    }
 }
 exports.getCreepsInRoom = getCreepsInRoom;
 function getMainSpawn(room) {

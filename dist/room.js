@@ -4,17 +4,23 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.roomBehavior = void 0;
+const room_labManager_1 = __importDefault(require("./room.labManager"));
 const room_source_1 = require("./room.source");
 const structure_links_1 = __importDefault(require("./structure.links"));
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 function roomBehavior(room) {
-    var _a, _b;
+    var _a, _b, _c;
     if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) === null || _a === void 0 ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
         (_b = room.controller) === null || _b === void 0 ? void 0 : _b.activateSafeMode();
     }
-    room.find(FIND_SOURCES).forEach((source) => (0, room_source_1.behavior)(source));
-    const { tower } = (0, utils_1.findMyStructures)(room);
+    const sources = room.find(FIND_SOURCES);
+    sources.forEach((source) => (0, room_source_1.behavior)(source));
+    const { tower, lab, link } = (0, utils_1.findMyStructures)(room);
+    const mineral = _(room.find(FIND_MINERALS)).first();
+    if (mineral) {
+        (0, room_labManager_1.default)(lab, mineral);
+    }
     if ((tower.length > 0 && !room.memory.roadLayed) || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
         console.log("roadLayer in " + Game.time);
         roadLayer(room);
@@ -35,7 +41,7 @@ function roomBehavior(room) {
     }
     if (carriers.filter((g) => {
         return carrierBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
-    }).length < 2) {
+    }).length < (link.length >= sources.length + 1 ? 1 : 2)) {
         const name = `C_${room.name}_${Game.time}`;
         const spawn = (0, util_creep_1.getMainSpawn)(room);
         if (spawn && !spawn.spawning && room.energyAvailable > 200) {
@@ -52,9 +58,15 @@ function roomBehavior(room) {
     if (room.find(FIND_HOSTILE_CREEPS).length > 0 && room.energyAvailable >= 240) {
         const { bodies: defenderBodies, cost } = (0, util_creep_1.filterBodiesByCost)("defender", room.energyAvailable);
         const spawn = room.controller &&
-            (0, utils_1.getSpawnsOrderdByRange)(room.controller)
-                .filter((s) => !s.spawning && s.room.energyAvailable >= cost)
-                .first();
+            ((_c = (0, utils_1.getSpawnsWithDistance)(room.controller)
+                .filter((s) => !s.spawn.spawning && s.spawn.room.energyAvailable >= cost)
+                .sort((a, b) => {
+                const evaluation = (v) => {
+                    return v.spawn.room.energyAvailable / ((v.distance + 1) ^ 2);
+                };
+                return evaluation(b) - evaluation(a);
+            })
+                .first()) === null || _c === void 0 ? void 0 : _c.spawn);
         if (spawn) {
             return spawn.spawnCreep(defenderBodies, `D_${room.name}_${Game.time}`, {
                 memory: {

@@ -9,18 +9,20 @@ const role_carrier_1 = __importDefault(require("./role.carrier"));
 const role_claimer_1 = __importDefault(require("./role.claimer"));
 const role_defender_1 = __importDefault(require("./role.defender"));
 const role_harvester_1 = __importDefault(require("./role.harvester"));
-const role_mineralHarvester_1 = __importDefault(require("./role.mineralHarvester"));
+const role_labManager_1 = __importDefault(require("./role.labManager"));
 const role_mineralCarrier_1 = __importDefault(require("./role.mineralCarrier"));
-const role_upgrader_1 = __importDefault(require("./role.upgrader"));
+const role_mineralHarvester_1 = __importDefault(require("./role.mineralHarvester"));
 const role_repairer_1 = __importDefault(require("./role.repairer"));
+const role_upgrader_1 = __importDefault(require("./role.upgrader"));
 exports.behaviors = {
-    harvester: role_harvester_1.default,
-    upgrader: role_upgrader_1.default,
     builder: role_builder_1.default,
     carrier: role_carrier_1.default,
     claimer: role_claimer_1.default,
     defender: role_defender_1.default,
-    mineralHarvester: role_mineralHarvester_1.default,
+    harvester: role_harvester_1.default,
+    labManager: role_labManager_1.default,
     mineralCarrier: role_mineralCarrier_1.default,
+    mineralHarvester: role_mineralHarvester_1.default,
     repairer: role_repairer_1.default,
+    upgrader: role_upgrader_1.default,
 };
