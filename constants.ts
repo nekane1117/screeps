@@ -1,4 +1,4 @@
-export const MINERAL_THRESHOLD = 10000;
+export const TERMINAL_THRESHOLD = 10000;
 
 type AllMinerals = MineralConstant | MineralCompoundConstant;
 

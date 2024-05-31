@@ -14,7 +14,13 @@ const behavior = (creep) => {
     if (creep.memory.targetId || (creep.memory.targetId = (_b = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS)) === null || _b === void 0 ? void 0 : _b.id)) {
         const target = Game.getObjectById(creep.memory.targetId);
         if (target) {
-            if (!creep.pos.isNearTo(target)) {
+            const rampartInRange = target.pos.findClosestByRange(FIND_STRUCTURES, {
+                filter: (s) => s.structureType === STRUCTURE_RAMPART && s.my && target.pos.inRangeTo(s, 3),
+            });
+            if (rampartInRange) {
+                moveMeTo(rampartInRange);
+            }
+            else if (!creep.pos.inRangeTo(target, 3)) {
                 moveMeTo(target);
             }
             _(creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3))

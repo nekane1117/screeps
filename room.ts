@@ -1,7 +1,7 @@
 import labManager from "./room.labManager";
 import { behavior } from "./room.source";
 import linkBehavior from "./structure.links";
-import { filterBodiesByCost, getMainSpawn, getRepairTarget } from "./util.creep";
+import { filterBodiesByCost, getCreepsInRoom, getMainSpawn, getRepairTarget } from "./util.creep";
 import { findMyStructures, getSpawnsWithDistance } from "./utils";
 
 export function roomBehavior(room: Room) {
@@ -74,7 +74,11 @@ export function roomBehavior(room: Room) {
     }
   }
 
-  if (room.find(FIND_HOSTILE_CREEPS).length > 0 && room.energyAvailable >= 240) {
+  if (
+    room.find(FIND_HOSTILE_CREEPS).length > 0 &&
+    room.energyAvailable >= room.energyCapacityAvailable * 0.9 &&
+    (getCreepsInRoom(room).defender?.length || 0) === 0
+  ) {
     const { bodies: defenderBodies, cost } = filterBodiesByCost("defender", room.energyAvailable);
     const spawn =
       room.controller &&

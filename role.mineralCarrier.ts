@@ -60,8 +60,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   if (!creep.memory.storeId) {
     creep.memory.storeId = mineral.pos.findClosestByRange(FIND_STRUCTURES, {
-      filter: (s): s is StructureContainer | StructureStorage | StructureTerminal => {
-        return isStore(s) && s.structureType !== STRUCTURE_TERMINAL && s.store[mineral.mineralType] > CARRY_CAPACITY;
+      filter: (s): s is StructureContainer => {
+        return s.structureType === STRUCTURE_CONTAINER && s.store[mineral.mineralType] > CARRY_CAPACITY;
       },
     })?.id;
   }
@@ -182,9 +182,3 @@ export default behavior;
 function isMc(creep: Creeps): creep is MineralCarrier {
   return creep.memory.role === "mineralCarrier";
 }
-
-const mineralStore: StructureConstant[] = [STRUCTURE_LAB, STRUCTURE_TERMINAL, STRUCTURE_CONTAINER];
-
-const isStore = (s: Structure): s is StructureContainer | StructureStorage | StructureTerminal => {
-  return mineralStore.includes(s.structureType);
-};

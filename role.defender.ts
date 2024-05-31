@@ -21,7 +21,15 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     const target = Game.getObjectById(creep.memory.targetId);
     if (target) {
       // 目標に近寄る
-      if (!creep.pos.isNearTo(target)) {
+
+      // ターゲットの周囲にrampartがある場合
+      const rampartInRange = target.pos.findClosestByRange(FIND_STRUCTURES, {
+        filter: (s): s is StructureRampart => s.structureType === STRUCTURE_RAMPART && s.my && target.pos.inRangeTo(s, 3),
+      });
+
+      if (rampartInRange) {
+        moveMeTo(rampartInRange);
+      } else if (!creep.pos.inRangeTo(target, 3)) {
         moveMeTo(target);
       }
 

@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DECAY = exports.REVERSE_REACTIONS = exports.LAB_STRATEGY = exports.MINERAL_THRESHOLD = void 0;
-exports.MINERAL_THRESHOLD = 10000;
+exports.DECAY = exports.REVERSE_REACTIONS = exports.LAB_STRATEGY = exports.TERMINAL_THRESHOLD = void 0;
+exports.TERMINAL_THRESHOLD = 10000;
 exports.LAB_STRATEGY = {
     [RESOURCE_LEMERGIUM]: [
         RESOURCE_LEMERGIUM,

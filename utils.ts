@@ -104,3 +104,14 @@ export function isHighway(room: Room) {
   const parsed = /^[WE]([0-9]+)[NS]([0-9]+)$/.exec(room.name);
   return parsed && (Number(parsed[1]) % 10 === 0 || Number(parsed[2]) % 10 === 0);
 }
+
+/**
+ * 今のエネルギー保有量で輸送可能な最大量
+ */
+export function calcMaxTransferAmount(order: Order, terminal: StructureTerminal) {
+  // 部屋名がないのはよくわからないので無視する
+  if (!order.roomName) {
+    return 0;
+  }
+  return Math.floor(terminal.store.energy / (1 - Math.exp(-Game.map.getRoomLinearDistance(terminal.room.name, order.roomName) / 30)));
+}

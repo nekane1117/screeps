@@ -44,7 +44,7 @@ const behavior = (creep) => {
     if (!creep.memory.storeId) {
         creep.memory.storeId = (_a = mineral.pos.findClosestByRange(FIND_STRUCTURES, {
             filter: (s) => {
-                return isStore(s) && s.structureType !== STRUCTURE_TERMINAL && s.store[mineral.mineralType] > CARRY_CAPACITY;
+                return s.structureType === STRUCTURE_CONTAINER && s.store[mineral.mineralType] > CARRY_CAPACITY;
             },
         })) === null || _a === void 0 ? void 0 : _a.id;
     }
@@ -135,7 +135,3 @@ exports.default = behavior;
 function isMc(creep) {
     return creep.memory.role === "mineralCarrier";
 }
-const mineralStore = [STRUCTURE_LAB, STRUCTURE_TERMINAL, STRUCTURE_CONTAINER];
-const isStore = (s) => {
-    return mineralStore.includes(s.structureType);
-};

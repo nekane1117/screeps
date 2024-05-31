@@ -51,29 +51,33 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   if (!creep.memory.storeId) {
     // つっかえちゃうので取り出しようlinkは優先的に取り出す
-    creep.memory.storeId = (
-      (() => {
-        const extructor = spawn.pos.findClosestByRange(link);
-        return extructor && extructor.store.energy >= CARRY_CAPACITY ? extructor : undefined;
-      })() ||
-      creep.pos.findClosestByRange(
-        _.compact([
-          room.energyAvailable < room.energyCapacityAvailable && room.storage,
-          (room.terminal?.store.energy || 0) > room.energyCapacityAvailable + creep.store.getCapacity(RESOURCE_ENERGY) && room.terminal,
-          ...containers,
-        ]),
-        {
-          filter: (s: StructureContainer) => {
-            return (containers.length < 2 || controllerContaeiner?.id !== s.id) && s.store.energy >= CARRY_CAPACITY;
-          },
+    creep.memory.storeId = (() => {
+      const extructor = spawn.pos.findClosestByRange(link);
+      return extructor && extructor.store.energy >= CARRY_CAPACITY ? extructor : undefined;
+    })()?.id;
+  }
+  // extensionが満たされてないときはとにかく取り出す
+  if (!creep.memory.storeId) {
+    creep.memory.storeId = creep.pos.findClosestByRange(
+      _.compact([
+        room.energyAvailable < room.energyCapacityAvailable && room.storage,
+        (room.terminal?.store.energy || 0) > room.energyCapacityAvailable + creep.store.getCapacity(RESOURCE_ENERGY) && room.terminal,
+        ...containers,
+      ]),
+      {
+        filter: (s: StructureContainer) => {
+          return (containers.length < 2 || controllerContaeiner?.id !== s.id) && s.store.energy >= CARRY_CAPACITY;
         },
-      ) ||
-      creep.pos.findClosestByRange(_.compact([room.storage, room.terminal]), {
-        filter: (s: StructureTerminal | StructureStorage) => {
-          return s.store.energy >= room.energyCapacityAvailable + creep.store.getCapacity(RESOURCE_ENERGY);
-        },
-      })
+      },
     )?.id;
+  }
+  // 余剰分を確保しつつstorageやターミナルから持っていく
+  if (!creep.memory.storeId) {
+    creep.memory.storeId = creep.pos.findClosestByRange(_.compact([room.storage, room.terminal]), {
+      filter: (s: StructureTerminal | StructureStorage) => {
+        return s.store.energy >= room.energyCapacityAvailable + creep.store.getCapacity(RESOURCE_ENERGY);
+      },
+    })?.id;
   }
   // 取り出し処理###############################################################################################
   if (creep.memory.storeId && creep.memory.mode === "🛒") {

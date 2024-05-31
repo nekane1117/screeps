@@ -12,7 +12,7 @@ function behavior(extractor) {
     if (!mineral || mineral.ticksToRegeneration || !terminal) {
         return ERR_NOT_FOUND;
     }
-    if (terminal.store[mineral.mineralType] > constants_1.MINERAL_THRESHOLD * 2) {
+    if (terminal.store[mineral.mineralType] > constants_1.TERMINAL_THRESHOLD * 2) {
         return;
     }
     const { mineralHarvester = [], mineralCarrier = [] } = Object.values(Game.creeps)

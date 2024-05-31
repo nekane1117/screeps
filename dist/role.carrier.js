@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
     const { room } = creep;
     const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, 2) }, opt));
     if (!isCarrier(creep)) {
@@ -37,24 +37,28 @@ const behavior = (creep) => {
         }
     }
     if (!creep.memory.storeId) {
-        creep.memory.storeId = (_b = ((() => {
+        creep.memory.storeId = (_a = (() => {
             const extructor = spawn.pos.findClosestByRange(link);
             return extructor && extructor.store.energy >= CARRY_CAPACITY ? extructor : undefined;
-        })() ||
-            creep.pos.findClosestByRange(_.compact([
-                room.energyAvailable < room.energyCapacityAvailable && room.storage,
-                (((_a = room.terminal) === null || _a === void 0 ? void 0 : _a.store.energy) || 0) > room.energyCapacityAvailable + creep.store.getCapacity(RESOURCE_ENERGY) && room.terminal,
-                ...containers,
-            ]), {
-                filter: (s) => {
-                    return (containers.length < 2 || (controllerContaeiner === null || controllerContaeiner === void 0 ? void 0 : controllerContaeiner.id) !== s.id) && s.store.energy >= CARRY_CAPACITY;
-                },
-            }) ||
-            creep.pos.findClosestByRange(_.compact([room.storage, room.terminal]), {
-                filter: (s) => {
-                    return s.store.energy >= room.energyCapacityAvailable + creep.store.getCapacity(RESOURCE_ENERGY);
-                },
-            }))) === null || _b === void 0 ? void 0 : _b.id;
+        })()) === null || _a === void 0 ? void 0 : _a.id;
+    }
+    if (!creep.memory.storeId) {
+        creep.memory.storeId = (_c = creep.pos.findClosestByRange(_.compact([
+            room.energyAvailable < room.energyCapacityAvailable && room.storage,
+            (((_b = room.terminal) === null || _b === void 0 ? void 0 : _b.store.energy) || 0) > room.energyCapacityAvailable + creep.store.getCapacity(RESOURCE_ENERGY) && room.terminal,
+            ...containers,
+        ]), {
+            filter: (s) => {
+                return (containers.length < 2 || (controllerContaeiner === null || controllerContaeiner === void 0 ? void 0 : controllerContaeiner.id) !== s.id) && s.store.energy >= CARRY_CAPACITY;
+            },
+        })) === null || _c === void 0 ? void 0 : _c.id;
+    }
+    if (!creep.memory.storeId) {
+        creep.memory.storeId = (_d = creep.pos.findClosestByRange(_.compact([room.storage, room.terminal]), {
+            filter: (s) => {
+                return s.store.energy >= room.energyCapacityAvailable + creep.store.getCapacity(RESOURCE_ENERGY);
+            },
+        })) === null || _d === void 0 ? void 0 : _d.id;
     }
     if (creep.memory.storeId && creep.memory.mode === "🛒") {
         const store = Game.getObjectById(creep.memory.storeId);
@@ -97,10 +101,10 @@ const behavior = (creep) => {
     }
     const exclusive = ({ id }) => ((0, util_creep_1.getCreepsInRoom)(room).carrier || []).every((g) => g.memory.transferId !== id);
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_c = _([...extension, ...spawns])
+        creep.memory.transferId = (_e = _([...extension, ...spawns])
             .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && exclusive(s))
             .sort((s1, s2) => s1.pos.y - s2.pos.y)
-            .first()) === null || _c === void 0 ? void 0 : _c.id;
+            .first()) === null || _e === void 0 ? void 0 : _e.id;
     }
     if (!creep.memory.transferId && room.terminal && room.terminal.store.energy < room.energyCapacityAvailable) {
         creep.memory.transferId = room.terminal.id;
@@ -109,29 +113,29 @@ const behavior = (creep) => {
         creep.memory.transferId = room.storage.id;
     }
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_d = creep.pos.findClosestByRange(tower, {
+        creep.memory.transferId = (_f = creep.pos.findClosestByRange(tower, {
             filter: (t) => {
                 return (0, utils_1.getCapacityRate)(t) < 0.9 && (tower.length < 2 || exclusive(t));
             },
-        })) === null || _d === void 0 ? void 0 : _d.id;
+        })) === null || _f === void 0 ? void 0 : _f.id;
     }
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_e = _(labs)
+        creep.memory.transferId = (_g = _(labs)
             .sort((l1, l2) => l1.store.energy - l2.store.energy)
-            .first()) === null || _e === void 0 ? void 0 : _e.id;
+            .first()) === null || _g === void 0 ? void 0 : _g.id;
     }
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_f = (controllerContaeiner && (0, utils_1.getCapacityRate)(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined)) === null || _f === void 0 ? void 0 : _f.id;
+        creep.memory.transferId = (_h = (controllerContaeiner && (0, utils_1.getCapacityRate)(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined)) === null || _h === void 0 ? void 0 : _h.id;
     }
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_g = creep.pos.findClosestByRange(Object.values(Game.creeps).filter((c) => c.memory.role === "builder" && c.store.getFreeCapacity(RESOURCE_ENERGY) && exclusive(c)))) === null || _g === void 0 ? void 0 : _g.id;
+        creep.memory.transferId = (_j = creep.pos.findClosestByRange(Object.values(Game.creeps).filter((c) => c.memory.role === "builder" && c.store.getFreeCapacity(RESOURCE_ENERGY) && exclusive(c)))) === null || _j === void 0 ? void 0 : _j.id;
     }
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_h = spawn.pos.findClosestByRange(_.compact([...link, room.storage, room.terminal]), {
+        creep.memory.transferId = (_k = spawn.pos.findClosestByRange(_.compact([...link, room.storage, room.terminal]), {
             filter: (s) => {
                 return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
             },
-        })) === null || _h === void 0 ? void 0 : _h.id;
+        })) === null || _k === void 0 ? void 0 : _k.id;
     }
     if (!creep.memory.transferId) {
         return ERR_NOT_FOUND;

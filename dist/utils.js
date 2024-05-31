@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isHighway = exports.logUsage = exports.getSpawnsWithDistance = exports.getSpawnsOrderdByRange = exports.findMyStructures = exports.getCapacityRate = void 0;
+exports.calcMaxTransferAmount = exports.isHighway = exports.logUsage = exports.getSpawnsWithDistance = exports.getSpawnsOrderdByRange = exports.findMyStructures = exports.getCapacityRate = void 0;
 function getCapacityRate(s, type = RESOURCE_ENERGY) {
     if ("store" in s) {
         return s.store.getUsedCapacity(type) / s.store.getCapacity(type);
@@ -96,3 +96,10 @@ function isHighway(room) {
     return parsed && (Number(parsed[1]) % 10 === 0 || Number(parsed[2]) % 10 === 0);
 }
 exports.isHighway = isHighway;
+function calcMaxTransferAmount(order, terminal) {
+    if (!order.roomName) {
+        return 0;
+    }
+    return Math.floor(terminal.store.energy / (1 - Math.exp(-Game.map.getRoomLinearDistance(terminal.room.name, order.roomName) / 30)));
+}
+exports.calcMaxTransferAmount = calcMaxTransferAmount;
