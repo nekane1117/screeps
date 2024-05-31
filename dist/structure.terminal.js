@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const constants_1 = require("./constants");
+const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 function behaviors(terminal) {
     if (!isTerminal(terminal)) {
@@ -26,29 +27,57 @@ function behaviors(terminal) {
         RESOURCE_UTRIUM,
         RESOURCE_CATALYST,
         RESOURCE_ZYNTHIUM,
-    ].find((m) => m !== (mineral === null || mineral === void 0 ? void 0 : mineral.mineralType) && terminal.store[m] < 1000);
+    ].filter((m) => m !== (mineral === null || mineral === void 0 ? void 0 : mineral.mineralType) && terminal.store[m] < 1000);
     if (terminal.store.energy > room.energyCapacityAvailable && terminal.store.energy < constants_1.TERMINAL_THRESHOLD) {
         const order = getOrderWithEffectivity(RESOURCE_ENERGY, terminal).max((o) => o.rate);
         if (order && order.rate > 1.5) {
-            Game.market.deal(order.id, order.amount, terminal.room.name);
+            return Game.market.deal(order.id, order.amount, terminal.room.name);
         }
         else {
             console.log(`${terminal.room.name}:order is not effective, ${order.rate}`);
         }
     }
-    else if (mineral && terminal.store.energy > room.energyCapacityAvailable && terminal.store[mineral.mineralType] > constants_1.TERMINAL_THRESHOLD) {
+    if (mineral && terminal.store.energy > room.energyCapacityAvailable && terminal.store[mineral.mineralType] > constants_1.TERMINAL_THRESHOLD) {
         const order = _(Game.market.getAllOrders({ type: ORDER_BUY, resourceType: mineral.mineralType }))
             .filter((o) => o.roomName)
             .max((o) => o.price);
         if (order) {
-            Game.market.deal(order.id, Math.min(order.remainingAmount, (0, utils_1.calcMaxTransferAmount)(order, terminal), terminal.store[mineral.mineralType]), room.name);
+            return Game.market.deal(order.id, Math.min(order.remainingAmount, (0, utils_1.calcMaxTransferAmount)(order, terminal), terminal.store[mineral.mineralType]), room.name);
         }
     }
-    else if (missingIngredient) {
-        const order = _(Game.market.getAllOrders({ type: ORDER_SELL, resourceType: missingIngredient })).min((o) => o.price);
-        console.log(JSON.stringify({ order }));
-        if (order) {
-            Game.market.deal(order.id, Math.min(order.remainingAmount, (0, utils_1.calcMaxTransferAmount)(order, terminal)), room.name);
+    if (missingIngredient.length) {
+        missingIngredient.forEach((ingredient) => {
+            const order = getOrderWithEffectivity(ingredient, terminal).min((o) => o.price);
+            if (order) {
+                const maxTransferAmount = (0, utils_1.calcMaxTransferAmount)(order, terminal);
+                const maxCredits = Game.market.credits / order.price;
+                const amount = Math.min(order.remainingAmount, maxTransferAmount, maxCredits);
+                if (amount > 100) {
+                    const dealt = Game.market.deal(order.id, Math.min(order.remainingAmount, (0, utils_1.calcMaxTransferAmount)(order, terminal), Game.market.credits / order.price), room.name);
+                    if (dealt !== OK) {
+                        console.log(util_creep_1.RETURN_CODE_DECODER[dealt.toString()]);
+                    }
+                }
+                else {
+                    console.log("not enough credits", JSON.stringify({
+                        remainingAmount: order.remainingAmount,
+                        maxTransferAmount,
+                        maxCredits,
+                    }));
+                }
+            }
+        });
+    }
+    for (const resourceType of Object.keys(terminal.store).filter((resourceType) => {
+        return resourceType.length >= 2 && terminal.store[resourceType] > 1100;
+    })) {
+        const order = _(Game.market.getAllOrders({ type: ORDER_BUY, resourceType })).max((o) => o.price);
+        const result = Game.market.deal(order.id, Math.min(order.amount, terminal.store[resourceType] - 1000), terminal.room.name);
+        if (result === OK) {
+            return;
+        }
+        else {
+            console.log(util_creep_1.RETURN_CODE_DECODER[result.toString()], JSON.stringify(order));
         }
     }
 }

@@ -71,7 +71,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           } else if (lab.mineralType.length >= 2) {
             // 化合物の時
 
-            if (lab.store[lab.mineralType] > LAB_MINERAL_CAPACITY / 2) {
+            if (lab.store[lab.mineralType] > LAB_MINERAL_CAPACITY) {
               // 完成
               mapping.completed.push(lab);
             } else {
@@ -80,7 +80,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             }
           } else {
             // 原料の時
-            if (lab.store.getFreeCapacity(lab.mineralType)) {
+            if (lab.store.getFreeCapacity(lab.mineralType) > 1000) {
               // 空きがあるときは要求中
               mapping.requesting.push(lab);
             } else {

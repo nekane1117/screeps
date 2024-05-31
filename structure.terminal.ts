@@ -1,4 +1,5 @@
 import { TERMINAL_THRESHOLD } from "./constants";
+import { RETURN_CODE_DECODER } from "./util.creep";
 import { calcMaxTransferAmount } from "./utils";
 
 export default function behaviors(terminal: Structure) {
@@ -32,7 +33,7 @@ export default function behaviors(terminal: Structure) {
     RESOURCE_UTRIUM,
     RESOURCE_CATALYST,
     RESOURCE_ZYNTHIUM,
-  ].find((m) => m !== mineral?.mineralType && terminal.store[m] < 1000);
+  ].filter((m) => m !== mineral?.mineralType && terminal.store[m] < 1000);
 
   // 基本はエネルギーを買うことを目的とする
   if (terminal.store.energy > room.energyCapacityAvailable && terminal.store.energy < TERMINAL_THRESHOLD) {
@@ -40,13 +41,13 @@ export default function behaviors(terminal: Structure) {
     const order = getOrderWithEffectivity(RESOURCE_ENERGY, terminal).max((o) => o.rate);
 
     if (order && order.rate > 1.5) {
-      Game.market.deal(order.id, order.amount, terminal.room.name);
+      return Game.market.deal(order.id, order.amount, terminal.room.name);
     } else {
       console.log(`${terminal.room.name}:order is not effective, ${order.rate}`);
     }
   }
   // 自室のミネラルをため込んでるときはとにかく売る
-  else if (mineral && terminal.store.energy > room.energyCapacityAvailable && terminal.store[mineral.mineralType] > TERMINAL_THRESHOLD) {
+  if (mineral && terminal.store.energy > room.energyCapacityAvailable && terminal.store[mineral.mineralType] > TERMINAL_THRESHOLD) {
     // 一番高く買ってくれるオーダー
     const order = _(Game.market.getAllOrders({ type: ORDER_BUY, resourceType: mineral.mineralType }))
       // 部屋名がないのはよくわからないので無視する
@@ -55,7 +56,7 @@ export default function behaviors(terminal: Structure) {
 
     // 今のエネルギーで支払える最大量
     if (order) {
-      Game.market.deal(
+      return Game.market.deal(
         order.id,
         // オーダーの残量、支払える上限、保有上限の中で一番少ない分売る
         Math.min(order.remainingAmount, calcMaxTransferAmount(order, terminal), terminal.store[mineral.mineralType]),
@@ -64,17 +65,50 @@ export default function behaviors(terminal: Structure) {
     }
   }
   // 不足してる原材料は買っておく
-  else if (missingIngredient) {
+  if (missingIngredient.length) {
     // とにかく一番安いのを買う
-    const order = _(Game.market.getAllOrders({ type: ORDER_SELL, resourceType: missingIngredient })).min((o) => o.price);
-    console.log(JSON.stringify({ order }));
-    if (order) {
-      Game.market.deal(
-        order.id,
-        // オーダーの残量、支払える上限中で一番少ない分買う
-        Math.min(order.remainingAmount, calcMaxTransferAmount(order, terminal)),
-        room.name,
-      );
+    missingIngredient.forEach((ingredient) => {
+      const order = getOrderWithEffectivity(ingredient, terminal).min((o) => o.price);
+
+      if (order) {
+        const maxTransferAmount = calcMaxTransferAmount(order, terminal);
+        const maxCredits = Game.market.credits / order.price;
+        const amount = Math.min(order.remainingAmount, maxTransferAmount, maxCredits);
+
+        if (amount > 100) {
+          const dealt = Game.market.deal(
+            order.id,
+            // オーダーの残量、輸送上限、支払える上限中で一番少ない分買う
+            Math.min(order.remainingAmount, calcMaxTransferAmount(order, terminal), Game.market.credits / order.price),
+            room.name,
+          );
+          if (dealt !== OK) {
+            console.log(RETURN_CODE_DECODER[dealt.toString()]);
+          }
+        } else {
+          console.log(
+            "not enough credits",
+            JSON.stringify({
+              remainingAmount: order.remainingAmount,
+              maxTransferAmount,
+              maxCredits,
+            }),
+          );
+        }
+      }
+    });
+  }
+
+  for (const resourceType of (Object.keys(terminal.store) as ResourceConstant[]).filter((resourceType) => {
+    // とりあえず1000以上ある化合物
+    return resourceType.length >= 2 && terminal.store[resourceType] > 1100;
+  })) {
+    const order = _(Game.market.getAllOrders({ type: ORDER_BUY, resourceType })).max((o) => o.price);
+    const result = Game.market.deal(order.id, Math.min(order.amount, terminal.store[resourceType] - 1000), terminal.room.name);
+    if (result === OK) {
+      return;
+    } else {
+      console.log(RETURN_CODE_DECODER[result.toString()], JSON.stringify(order));
     }
   }
 }

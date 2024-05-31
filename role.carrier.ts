@@ -56,21 +56,21 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       return extructor && extructor.store.energy >= CARRY_CAPACITY ? extructor : undefined;
     })()?.id;
   }
+
   // extensionが満たされてないときはとにかく取り出す
-  if (!creep.memory.storeId) {
-    creep.memory.storeId = creep.pos.findClosestByRange(
-      _.compact([
-        room.energyAvailable < room.energyCapacityAvailable && room.storage,
-        (room.terminal?.store.energy || 0) > room.energyCapacityAvailable + creep.store.getCapacity(RESOURCE_ENERGY) && room.terminal,
-        ...containers,
-      ]),
-      {
-        filter: (s: StructureContainer) => {
-          return (containers.length < 2 || controllerContaeiner?.id !== s.id) && s.store.energy >= CARRY_CAPACITY;
-        },
+  if (!creep.memory.storeId && room.energyAvailable < room.energyCapacityAvailable) {
+    creep.memory.storeId = creep.pos.findClosestByRange(_.compact([room.storage, ...containers]), {
+      filter: (s: StructureContainer) => {
+        return (containers.length < 2 || controllerContaeiner?.id !== s.id) && s.store.energy >= CARRY_CAPACITY;
       },
-    )?.id;
+    })?.id;
   }
+
+  // storageにもないときはターミナルからももらう
+  if (!creep.memory.storeId && room.energyAvailable < room.energyCapacityAvailable && (room.terminal?.store.energy || 0) >= CARRY_CAPACITY) {
+    creep.memory.storeId = room.terminal?.id;
+  }
+
   // 余剰分を確保しつつstorageやターミナルから持っていく
   if (!creep.memory.storeId) {
     creep.memory.storeId = creep.pos.findClosestByRange(_.compact([room.storage, room.terminal]), {
@@ -162,6 +162,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   if (!creep.memory.transferId) {
     creep.memory.transferId = _(labs)
+      .filter((lab) => getCapacityRate(lab) < 0.8)
       .sort((l1, l2) => l1.store.energy - l2.store.energy)
       .first()?.id;
   }

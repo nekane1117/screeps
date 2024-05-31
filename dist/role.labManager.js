@@ -51,7 +51,7 @@ const behavior = (creep) => {
                 mapping.wrong.push(lab);
             }
             else if (lab.mineralType.length >= 2) {
-                if (lab.store[lab.mineralType] > LAB_MINERAL_CAPACITY / 2) {
+                if (lab.store[lab.mineralType] > LAB_MINERAL_CAPACITY) {
                     mapping.completed.push(lab);
                 }
                 else {
@@ -59,7 +59,7 @@ const behavior = (creep) => {
                 }
             }
             else {
-                if (lab.store.getFreeCapacity(lab.mineralType)) {
+                if (lab.store.getFreeCapacity(lab.mineralType) > 1000) {
                     mapping.requesting.push(lab);
                 }
                 else {
