@@ -18,7 +18,20 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     if (!isCarrier(creep)) {
       return console.log(`${creep.name} is not Carrier`);
     }
-    const newMode = creep.store.energy < CARRY_CAPACITY ? "🛒" : "💪";
+    const newMode = ((c: Carrier) => {
+      if (c.memory.mode === "💪" && creep.store.getUsedCapacity() === 0) {
+        // 作業モードで空になったら収集モードにする
+        return "🛒";
+      }
+
+      if (c.memory.mode === "🛒" && getCapacityRate(creep) > 0.5) {
+        // 収集モードで半分超えたら作業モードにする
+        return "💪";
+      }
+
+      // そのまま
+      return c.memory.mode;
+    })(creep);
 
     if (creep.memory.mode !== newMode) {
       creep.say(newMode);
@@ -71,6 +84,15 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     creep.memory.storeId = room.terminal?.id;
   }
 
+  // extensionが満たされてないときはとにかく取り出す
+  if (!creep.memory.storeId) {
+    creep.memory.storeId = creep.pos.findClosestByRange(containers, {
+      filter: (s: StructureContainer) => {
+        return (containers.length < 2 || controllerContaeiner?.id !== s.id) && s.store.energy >= CARRY_CAPACITY;
+      },
+    })?.id;
+  }
+
   // 余剰分を確保しつつstorageやターミナルから持っていく
   if (!creep.memory.storeId) {
     creep.memory.storeId = creep.pos.findClosestByRange(_.compact([room.storage, room.terminal]), {
@@ -79,6 +101,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       },
     })?.id;
   }
+
+  // それすらないときは作業モードになる
+  if (!creep.memory.storeId) {
+    creep.memory.transferId = undefined;
+    creep.memory.mode = "💪";
+  }
+
   // 取り出し処理###############################################################################################
   if (creep.memory.storeId && creep.memory.mode === "🛒") {
     const store = Game.getObjectById(creep.memory.storeId);

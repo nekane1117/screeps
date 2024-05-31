@@ -33,9 +33,6 @@ function behaviors(terminal) {
         if (order && order.rate > 1.5) {
             return Game.market.deal(order.id, order.amount, terminal.room.name);
         }
-        else {
-            console.log(`${terminal.room.name}:order is not effective, ${order.rate}`);
-        }
     }
     if (mineral && terminal.store.energy > room.energyCapacityAvailable && terminal.store[mineral.mineralType] > constants_1.TERMINAL_THRESHOLD) {
         const order = _(Game.market.getAllOrders({ type: ORDER_BUY, resourceType: mineral.mineralType }))
@@ -58,13 +55,6 @@ function behaviors(terminal) {
                         console.log(util_creep_1.RETURN_CODE_DECODER[dealt.toString()]);
                     }
                 }
-                else {
-                    console.log("not enough credits", JSON.stringify({
-                        remainingAmount: order.remainingAmount,
-                        maxTransferAmount,
-                        maxCredits,
-                    }));
-                }
             }
         });
     }
@@ -75,9 +65,6 @@ function behaviors(terminal) {
         const result = Game.market.deal(order.id, Math.min(order.amount, terminal.store[resourceType] - 1000), terminal.room.name);
         if (result === OK) {
             return;
-        }
-        else {
-            console.log(util_creep_1.RETURN_CODE_DECODER[result.toString()], JSON.stringify(order));
         }
     }
 }

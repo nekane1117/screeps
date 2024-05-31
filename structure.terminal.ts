@@ -42,8 +42,6 @@ export default function behaviors(terminal: Structure) {
 
     if (order && order.rate > 1.5) {
       return Game.market.deal(order.id, order.amount, terminal.room.name);
-    } else {
-      console.log(`${terminal.room.name}:order is not effective, ${order.rate}`);
     }
   }
   // 自室のミネラルをため込んでるときはとにかく売る
@@ -85,15 +83,6 @@ export default function behaviors(terminal: Structure) {
           if (dealt !== OK) {
             console.log(RETURN_CODE_DECODER[dealt.toString()]);
           }
-        } else {
-          console.log(
-            "not enough credits",
-            JSON.stringify({
-              remainingAmount: order.remainingAmount,
-              maxTransferAmount,
-              maxCredits,
-            }),
-          );
         }
       }
     });
@@ -106,8 +95,6 @@ export default function behaviors(terminal: Structure) {
     const result = Game.market.deal(order.id, Math.min(order.amount, terminal.store[resourceType] - 1000), terminal.room.name);
     if (result === OK) {
       return;
-    } else {
-      console.log(RETURN_CODE_DECODER[result.toString()], JSON.stringify(order));
     }
   }
 }
