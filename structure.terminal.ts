@@ -98,10 +98,9 @@ export default function behaviors(terminal: Structure) {
       }
     });
   }
-
   for (const resourceType of (Object.keys(terminal.store) as ResourceConstant[]).filter((resourceType) => {
     // とりあえず1000以上ある化合物
-    return resourceType.length >= 2 && terminal.store[resourceType] > 1100;
+    return resourceType[0] === resourceType[0].toUpperCase() && resourceType.length >= 2 && terminal.store[resourceType] > 1100;
   })) {
     const order = _(Game.market.getAllOrders({ type: ORDER_BUY, resourceType })).max((o) => o.price);
     const result = Game.market.deal(order.id, Math.min(order.amount, terminal.store[resourceType] - 1000), terminal.room.name);
