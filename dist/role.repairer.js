@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const util_array_1 = require("./util.array");
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
@@ -14,7 +13,7 @@ const behavior = (creep) => {
             if (c.memory.mode === "🔧" && creep.store.getUsedCapacity() === 0) {
                 return "🛒";
             }
-            if (c.memory.mode === "🛒" && creep.store.getUsedCapacity() > CARRY_CAPACITY) {
+            if (c.memory.mode === "🛒" && creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
                 return "🔧";
             }
             return c.memory.mode;
@@ -27,35 +26,36 @@ const behavior = (creep) => {
         }
     };
     checkMode();
-    if (creep.memory.towerId || (creep.memory.towerId = (_a = (0, utils_1.findMyStructures)(creep.room).tower.find((t) => t.store.getFreeCapacity(RESOURCE_ENERGY) > 0)) === null || _a === void 0 ? void 0 : _a.id)) {
-        const tower = Game.getObjectById(creep.memory.towerId);
-        if (!tower) {
-            creep.memory.towerId = undefined;
-            return;
-        }
-        if (creep.transfer(tower, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-            moveMeTo(tower);
+    const labs = (0, utils_1.findMyStructures)(creep.room).lab.map((lab) => {
+        return Object.assign(lab, {
+            memory: creep.room.memory.labs[lab.id],
+        });
+    });
+    const parts = creep.body.filter((b) => b.type === WORK);
+    if (!creep.body.filter((b) => b.type === WORK).find((e) => boosts.includes(e.boost))) {
+        const lab = (_a = boosts
+            .map((mineralType) => {
+            return {
+                mineralType,
+                lab: labs.find((l) => {
+                    return (l.mineralType === mineralType && l.store[mineralType] >= parts.length * LAB_BOOST_MINERAL && l.store.energy >= parts.length * LAB_BOOST_ENERGY);
+                }),
+            };
+        })
+            .find((o) => o.lab)) === null || _a === void 0 ? void 0 : _a.lab;
+        if (lab) {
+            if (creep.pos.isNearTo(lab)) {
+                return lab.boostCreep(creep);
+            }
+            else {
+                return moveMeTo(lab);
+            }
         }
     }
-    else if (creep.memory.targetId ||
-        (creep.memory.targetId = (_b = (0, util_array_1.complexOrder)((0, util_creep_1.getRepairTarget)(creep.memory.baseRoom), [
-            (s) => (s.pos.roomName === creep.pos.roomName ? 0 : 1),
-            (s) => {
-                switch (s.structureType) {
-                    case STRUCTURE_WALL:
-                    case STRUCTURE_RAMPART:
-                        if (s.hits < 3000) {
-                            return "ticksToDecay" in s ? s.hits * RAMPART_DECAY_TIME + s.ticksToDecay : s.hits * RAMPART_DECAY_TIME;
-                        }
-                        else {
-                            return 30001 * RAMPART_DECAY_TIME;
-                        }
-                    default:
-                        return 30001 * RAMPART_DECAY_TIME;
-                }
-            },
-            (s) => s.hits,
-        ]).first()) === null || _b === void 0 ? void 0 : _b.id)) {
+    if (creep.memory.targetId ||
+        (creep.memory.targetId = (_b = _(creep.room.find(FIND_STRUCTURES, {
+            filter: (s) => s.hits < s.hitsMax,
+        })).min((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME - 1))) === null || _b === void 0 ? void 0 : _b.id)) {
         const target = Game.getObjectById(creep.memory.targetId);
         if (target) {
             switch (creep.repair(target)) {
@@ -65,7 +65,8 @@ const behavior = (creep) => {
                     }
                     break;
                 case OK:
-                    creep.memory.targetId = (_c = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.hits < s.hitsMax })).min((s) => s.hits)) === null || _c === void 0 ? void 0 : _c.id;
+                    creep.move(creep.pos.getDirectionTo(target));
+                    creep.memory.targetId = (_c = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.structureType === target.structureType && s.hits < s.hitsMax })).min((s) => s.hits)) === null || _c === void 0 ? void 0 : _c.id;
                     break;
                 default:
                     break;
@@ -125,3 +126,4 @@ exports.default = behavior;
 function isRepairer(creep) {
     return creep.memory.role === "repairer";
 }
+const boosts = [RESOURCE_CATALYZED_LEMERGIUM_ACID, RESOURCE_LEMERGIUM_ACID, RESOURCE_LEMERGIUM_HYDRIDE];

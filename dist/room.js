@@ -82,14 +82,16 @@ function roomBehavior(room) {
         }
     }
     const { bodies: repairerBodies } = (0, util_creep_1.filterBodiesByCost)("repairer", Math.max(room.energyAvailable, 300));
-    if ((0, util_creep_1.getRepairTarget)(room.name).length > 0 &&
+    if (room.energyAvailable >= room.energyCapacityAvailable &&
         repairer.filter((g) => {
             return repairerBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
-        }).length < 1) {
-        const name = `R_${room.name}_${Game.time}`;
-        const spawn = (0, util_creep_1.getMainSpawn)(room);
-        if (spawn && !spawn.spawning && room.energyAvailable >= 300) {
-            spawn.spawnCreep(repairerBodies, name, {
+        }).length < 1 &&
+        room.find(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax }).length > 0) {
+        const spawn = Object.values(Game.spawns)
+            .filter((s) => s.pos.roomName === room.name)
+            .find((s) => !s.spawning);
+        if (spawn && !spawn.spawning) {
+            spawn.spawnCreep(repairerBodies, `R_${room.name}_${Game.time}`, {
                 memory: {
                     mode: "🛒",
                     baseRoom: spawn.room.name,

@@ -25,10 +25,13 @@ export function behavior(source: Source) {
     const spawn = getSpawnsWithDistance(source)
       .sort((a, b) => {
         const evaluation = (v: typeof a) => {
-          return v.spawn.room.energyAvailable / ((v.distance + 1) ^ 2);
+          return v.spawn.room.energyAvailable / (v.distance + 1) ** 2;
         };
 
         return evaluation(b) - evaluation(a);
+      })
+      .tap((spawns) => {
+        console.log(JSON.stringify(spawns));
       })
       .first()?.spawn;
     if (!spawn) {

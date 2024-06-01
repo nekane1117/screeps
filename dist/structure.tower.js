@@ -1,33 +1,43 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = require("./utils");
+const constants_1 = require("./constants");
 function behaviors(tower) {
     if (!isTower(tower)) {
         return console.log(`${tower.id} is not tower`);
     }
-    const brokenRampart = _(tower.room.find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_RAMPART && s.hits < RAMPART_DECAY_AMOUNT * 2 }));
-    if (brokenRampart.size() > 0) {
-        return tower.repair(brokenRampart.min((s) => {
-            return s.hits * (s.ticksToDecay / RAMPART_DECAY_TIME);
-        }));
+    const target = _(tower.room.find(FIND_HOSTILE_CREEPS))
+        .sort((c) => c.getActiveBodyparts(HEAL))
+        .reverse()
+        .first();
+    if (target) {
+        tower.attack(target);
     }
-    if (tower.store.getUsedCapacity(RESOURCE_ENERGY) / tower.store.getCapacity(RESOURCE_ENERGY) > 0.8) {
-        _(tower.room.find(FIND_STRUCTURES, {
-            filter: (s) => {
-                return ((s.structureType === STRUCTURE_WALL || s.structureType === STRUCTURE_RAMPART
-                    ? Game.time % ((0, utils_1.findMyStructures)(s.room).tower.length * 2) === 0
-                    : true) && s.hits < s.hitsMax);
-            },
-        }))
-            .tap((damaged) => {
-            const target = _(damaged).min((s) => {
-                return s.hits * 10000 + ("ticksToDecay" in s ? s.ticksToDecay || 0 : 9999);
-            });
-            if (target) {
-                tower.repair(target);
+    const decayStructures = _(tower.room.find(FIND_STRUCTURES, {
+        filter: (s) => {
+            if (s.structureType === STRUCTURE_RAMPART) {
+                return s.hits < RAMPART_DECAY_AMOUNT * 10;
             }
-        })
-            .run();
+            else if (s.structureType === STRUCTURE_ROAD) {
+                switch (_.first(s.pos.lookFor(LOOK_TERRAIN))) {
+                    case "plain":
+                        return s.hits < ROAD_DECAY_AMOUNT * 10;
+                    case "swamp":
+                        return s.hits < constants_1.ROAD_DECAY_AMOUNT_SWAMP * 10;
+                    case "wall":
+                        return s.hits < constants_1.ROAD_DECAY_AMOUNT_WALL * 10;
+                    default:
+                        return false;
+                }
+            }
+            else {
+                return false;
+            }
+        },
+    }));
+    if (decayStructures.size() > 0) {
+        return tower.repair(decayStructures.min((s) => {
+            return s.hits * ROAD_DECAY_TIME + s.ticksToDecay;
+        }));
     }
     _(tower.room.find(FIND_MY_CREEPS, { filter: (s) => s.hits < s.hitsMax }))
         .tap((damaged) => {

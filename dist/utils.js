@@ -22,7 +22,9 @@ const findMyStructures = (room) => {
         return (room.memory.find[FIND_STRUCTURES] = {
             time: Game.time,
             data: room.find(FIND_STRUCTURES).reduce((structures, s) => {
-                return Object.assign(Object.assign({}, structures), { all: (structures.all || []).concat(s), [s.structureType]: (structures[s.structureType] || []).concat(s) });
+                structures.all.push(s);
+                structures[s.structureType].push(s);
+                return structures;
             }, {
                 all: [],
                 constructedWall: [],

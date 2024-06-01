@@ -51,16 +51,30 @@ module.exports.loop = function () {
     });
     // Creepの動き
     logUsage("creep", () => {
-      Object.values(Game.creeps).forEach((c) => {
-        if (c.spawning) {
-          return;
-        }
-        c.memory.moved = undefined;
-        c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
-          color: toColor(c),
+      Object.values(Game.creeps)
+        .sort((c1, c2) => {
+          const getPriority = (creep: Creeps) => {
+            switch (creep.memory.role) {
+              case "harvester":
+                return 0;
+              case "carrier":
+                return 1;
+              default:
+                return 2;
+            }
+          };
+          return getPriority(c1) - getPriority(c2);
+        })
+        .forEach((c) => {
+          if (c.spawning) {
+            return;
+          }
+          c.memory.moved = undefined;
+          c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
+            color: toColor(c),
+          });
+          behaviors[c.memory.role]?.(c);
         });
-        behaviors[c.memory.role]?.(c);
-      });
     });
 
     Object.keys(Memory.rooms).forEach((name) => {

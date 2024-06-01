@@ -160,7 +160,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // 他のcarrierに設定されていない
-  const exclusive = ({ id }: _HasId) => (getCreepsInRoom(room).carrier || []).every((g) => g.memory.transferId !== id);
+  const exclusive = ({ id }: _HasId) =>
+    _(getCreepsInRoom(room).carrier || [])
+      .compact()
+      .every((g) => g?.memory?.transferId !== id);
 
   //spawnかextension
   if (!creep.memory.transferId) {

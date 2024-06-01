@@ -1,6 +1,7 @@
 import { CreepBehavior } from "./roles";
 
 import { RETURN_CODE_DECODER, customMove, pickUpAll } from "./util.creep";
+import { findMyStructures } from "./utils";
 
 /**
  * sourceにとりついて資源を取り続けるだけで移動しない
@@ -54,41 +55,31 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   pickUpAll(creep);
 
   // 周りの建物に投げる
-  const structures = _(creep.pos.findInRange(FIND_STRUCTURES, 1, { filter: (s): s is HasStore => "store" in s })).sort((s, t) => {
-    const getPriority = (s: HasStore) => {
-      switch (s.structureType) {
-        case STRUCTURE_LINK:
-        case STRUCTURE_EXTENSION:
-          // 優先
-          return 0;
-        case STRUCTURE_CONTAINER:
-        case STRUCTURE_STORAGE:
-          // 取り出し
-          return 2;
-        case STRUCTURE_FACTORY:
-        case STRUCTURE_LAB:
-        case STRUCTURE_NUKER:
-        case STRUCTURE_POWER_SPAWN:
-        case STRUCTURE_SPAWN:
-        case STRUCTURE_TERMINAL:
-        case STRUCTURE_TOWER:
-        default:
-          return 1;
-      }
-    };
-    return getPriority(s) - getPriority(t);
+  const { container: containers, link: links } = findMyStructures(creep.room);
+
+  const link = source.pos.findClosestByRange(links, {
+    filter: (s: StructureLink) => s.pos.inRangeTo(source, 2),
   });
+  if (link) {
+    // リンクがあるときは周囲のコンテナから吸う
+    creep.pos.findInRange(containers, 2).forEach((c) => {
+      if (creep.withdraw(c, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+        customMove(creep, c);
+      }
+    });
 
-  // 優先度一番低いエネルギーがあるやつ
-  const extractor = structures.filter((s) => s.store.energy).last();
-  // 空きのある最初のやつ
-  const store = structures.filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY)).first();
-
-  if (extractor && extractor !== store) {
-    creep.withdraw(extractor, RESOURCE_ENERGY);
-  }
-  if (store) {
-    creep.transfer(store, RESOURCE_ENERGY);
+    if (creep.transfer(link, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE && creep.store.energy > 10) {
+      customMove(creep, link);
+    }
+  } else {
+    const container = source.pos.findClosestByRange(containers, {
+      filter: (s: StructureContainer) => s.pos.inRangeTo(source, 2),
+    });
+    if (container) {
+      if (creep.transfer(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+        customMove(creep, container);
+      }
+    }
   }
 };
 

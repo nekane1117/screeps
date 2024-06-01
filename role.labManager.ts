@@ -2,6 +2,8 @@ import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, pickUpAll } from "./util.creep";
 import { findMyStructures } from "./utils";
 
+const MINERAL_KEEP_VALUE = 500;
+
 const behavior: CreepBehavior = (creep: Creeps) => {
   const { room } = creep;
   const terminal = room.terminal;
@@ -71,7 +73,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           } else if (lab.mineralType.length >= 2) {
             // 化合物の時
 
-            if (lab.store[lab.mineralType] > LAB_MINERAL_CAPACITY) {
+            if (lab.store[lab.mineralType] > MINERAL_KEEP_VALUE * 2) {
               // 完成
               mapping.completed.push(lab);
             } else {
@@ -155,7 +157,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             // LABの時
             if (store.mineralType) {
               // 取り出す
-              return creep.withdraw(store, store.mineralType);
+              return creep.withdraw(store, store.mineralType, store.store[store.mineralType] - MINERAL_KEEP_VALUE);
             } else {
               // 無いときはおかしいので初期化してエラーを返す
               creep.memory.storeId = undefined;

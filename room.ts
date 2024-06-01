@@ -1,7 +1,7 @@
 import labManager from "./room.labManager";
 import { behavior } from "./room.source";
 import linkBehavior from "./structure.links";
-import { filterBodiesByCost, getCreepsInRoom, getMainSpawn, getRepairTarget } from "./util.creep";
+import { filterBodiesByCost, getCreepsInRoom, getMainSpawn } from "./util.creep";
 import { findMyStructures, getSpawnsWithDistance } from "./utils";
 
 export function roomBehavior(room: Room) {
@@ -50,7 +50,6 @@ export function roomBehavior(room: Room) {
     );
 
   const { bodies: carrierBodies } = filterBodiesByCost("carrier", room.energyAvailable);
-
   if (harvester.length === 0) {
     return ERR_NOT_FOUND;
   }
@@ -73,7 +72,6 @@ export function roomBehavior(room: Room) {
       return OK;
     }
   }
-
   if (
     room.find(FIND_HOSTILE_CREEPS).length > 0 &&
     room.energyAvailable >= room.energyCapacityAvailable * 0.9 &&
@@ -102,20 +100,20 @@ export function roomBehavior(room: Room) {
       console.log("can't find spawn for defender");
     }
   }
-
   const { bodies: repairerBodies } = filterBodiesByCost("repairer", Math.max(room.energyAvailable, 300));
 
   if (
-    getRepairTarget(room.name).length > 0 &&
+    room.energyAvailable >= room.energyCapacityAvailable &&
     repairer.filter((g) => {
       return repairerBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
-    }).length < 1
+    }).length < 1 &&
+    room.find(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax }).length > 0
   ) {
-    const name = `R_${room.name}_${Game.time}`;
-
-    const spawn = getMainSpawn(room);
-    if (spawn && !spawn.spawning && room.energyAvailable >= 300) {
-      spawn.spawnCreep(repairerBodies, name, {
+    const spawn = Object.values(Game.spawns)
+      .filter((s) => s.pos.roomName === room.name)
+      .find((s) => !s.spawning);
+    if (spawn && !spawn.spawning) {
+      spawn.spawnCreep(repairerBodies, `R_${room.name}_${Game.time}`, {
         memory: {
           mode: "🛒",
           baseRoom: spawn.room.name,

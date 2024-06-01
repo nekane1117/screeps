@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
+const MINERAL_KEEP_VALUE = 500;
 const behavior = (creep) => {
     var _a, _b, _c, _d;
     const { room } = creep;
@@ -51,7 +52,7 @@ const behavior = (creep) => {
                 mapping.wrong.push(lab);
             }
             else if (lab.mineralType.length >= 2) {
-                if (lab.store[lab.mineralType] > LAB_MINERAL_CAPACITY) {
+                if (lab.store[lab.mineralType] > MINERAL_KEEP_VALUE * 2) {
                     mapping.completed.push(lab);
                 }
                 else {
@@ -117,7 +118,7 @@ const behavior = (creep) => {
                     }
                     else {
                         if (store.mineralType) {
-                            return creep.withdraw(store, store.mineralType);
+                            return creep.withdraw(store, store.mineralType, store.store[store.mineralType] - MINERAL_KEEP_VALUE);
                         }
                         else {
                             creep.memory.storeId = undefined;

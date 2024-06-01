@@ -1,6 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { complexOrder } from "./util.array";
-import { RETURN_CODE_DECODER, customMove, getRepairTarget, isStoreTarget, pickUpAll, withdrawBy } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll, withdrawBy } from "./util.creep";
 import { findMyStructures } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
@@ -21,7 +20,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         return "🛒";
       }
 
-      if (c.memory.mode === "🛒" && creep.store.getUsedCapacity() > CARRY_CAPACITY) {
+      if (c.memory.mode === "🛒" && creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
         // 収集モードで50超えたら作業モードにする
         return "🔧";
       }
@@ -41,41 +40,48 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // https://docs.screeps.com/simultaneous-actions.html
 
-  // 空きのあるタワーがあるときはそちらに運ぶ
-  if (creep.memory.towerId || (creep.memory.towerId = findMyStructures(creep.room).tower.find((t) => t.store.getFreeCapacity(RESOURCE_ENERGY) > 0)?.id)) {
-    const tower = Game.getObjectById(creep.memory.towerId);
-    if (!tower) {
-      creep.memory.towerId = undefined;
-      return;
-    }
+  const labs = findMyStructures(creep.room).lab.map((lab) => {
+    return Object.assign(lab, {
+      memory: creep.room.memory.labs[lab.id],
+    }) as StructureLab & { memory: LabMemory };
+  });
 
-    if (creep.transfer(tower, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-      moveMeTo(tower);
+  // boostされてない場合
+  const parts = creep.body.filter((b) => b.type === WORK);
+  if (!creep.body.filter((b) => b.type === WORK).find((e) => boosts.includes(e.boost as ResourceConstant))) {
+    //
+    const lab = boosts
+      .map((mineralType) => {
+        return {
+          mineralType,
+          lab: labs.find((l) => {
+            // 指定のミネラルでミネラル、エネルギーが足りるラボ
+            return (
+              l.mineralType === mineralType && l.store[mineralType] >= parts.length * LAB_BOOST_MINERAL && l.store.energy >= parts.length * LAB_BOOST_ENERGY
+            );
+          }),
+        };
+      })
+      .find((o) => o.lab)?.lab;
+
+    if (lab) {
+      if (creep.pos.isNearTo(lab)) {
+        return lab.boostCreep(creep);
+      } else {
+        return moveMeTo(lab);
+      }
     }
   }
+
   // repair
-  else if (
+  if (
     creep.memory.targetId ||
-    (creep.memory.targetId = complexOrder(getRepairTarget(creep.memory.baseRoom), [
-      // 同じ部屋を優先
-      (s) => (s.pos.roomName === creep.pos.roomName ? 0 : 1),
-      // 壊れそうな壁を優先
-      (s) => {
-        switch (s.structureType) {
-          case STRUCTURE_WALL:
-          case STRUCTURE_RAMPART:
-            if (s.hits < 3000) {
-              return "ticksToDecay" in s ? s.hits * RAMPART_DECAY_TIME + s.ticksToDecay : s.hits * RAMPART_DECAY_TIME;
-            } else {
-              return 30001 * RAMPART_DECAY_TIME;
-            }
-          default:
-            return 30001 * RAMPART_DECAY_TIME;
-        }
-      },
-      // 多少非効率でもすぐ壊れそうなやつから
-      (s) => s.hits,
-    ]).first()?.id)
+    (creep.memory.targetId = _(
+      creep.room.find(FIND_STRUCTURES, {
+        // ダメージのある建物
+        filter: (s) => s.hits < s.hitsMax,
+      }),
+    ).min((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME - 1))?.id)
   ) {
     // repair
     const target = Game.getObjectById(creep.memory.targetId);
@@ -87,7 +93,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           }
           break;
         case OK:
-          creep.memory.targetId = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.hits < s.hitsMax })).min((s) => s.hits)?.id;
+          // 成功しても近寄る
+          creep.move(creep.pos.getDirectionTo(target));
+          // 成功したら同じ種類で近くの一番壊れてるやつにリタゲする
+          creep.memory.targetId = _(
+            creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.structureType === target.structureType && s.hits < s.hitsMax }),
+          ).min((s) => s.hits)?.id;
           break;
         default:
           break;
@@ -163,3 +174,5 @@ export default behavior;
 function isRepairer(creep: Creep): creep is Repairer {
   return creep.memory.role === "repairer";
 }
+
+const boosts: ResourceConstant[] = [RESOURCE_CATALYZED_LEMERGIUM_ACID, RESOURCE_LEMERGIUM_ACID, RESOURCE_LEMERGIUM_HYDRIDE];

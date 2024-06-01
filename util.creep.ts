@@ -80,16 +80,11 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       .run(),
   ],
   repairer: [
-    // 最小構成
     WORK,
-    CARRY,
     MOVE,
-    // 偶数にする
-    WORK,
     ..._(
-      _.range(23).map(() => {
-        // あとはMoveとCarryの繰り返し
-        return [MOVE, CARRY];
+      _.range(12).map(() => {
+        return [CARRY, MOVE, WORK, MOVE];
       }),
     )
       .flatten<BodyPartConstant>()
@@ -116,15 +111,11 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       .flatten<BodyPartConstant>()
       .run(),
   ],
-  defender: [
-    ..._(
-      _.range(5).map(() => {
-        return [ATTACK, MOVE, ATTACK, MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, TOUGH, MOVE];
-      }),
-    )
-      .flatten<BodyPartConstant>()
-      .run(),
-  ],
+  defender: ([MOVE] as BodyPartConstant[])
+    .concat(..._.range(31).map(() => RANGED_ATTACK))
+    .concat(..._.range(5).map(() => HEAL))
+    .concat(..._.range(50).map(() => MOVE))
+    .slice(0, 50),
   mineralCarrier: [
     ..._(
       _.range(25).map(() => {
@@ -280,18 +271,4 @@ export function withdrawBy(creep: Creep, roles: ROLES[], type: ResourceConstant 
 
 export function toColor({ id }: Creeps) {
   return `#${id.slice(-6)}`;
-}
-
-export function getRepairTarget(roomName: string) {
-  return Game.rooms[roomName].find(FIND_STRUCTURES, {
-    filter: (s) => {
-      switch (s.structureType) {
-        case STRUCTURE_RAMPART:
-        case STRUCTURE_WALL:
-          return s.hits < 3000;
-        default:
-          return s.hits < s.hits * 0.5;
-      }
-    },
-  });
 }

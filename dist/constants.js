@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DECAY = exports.REVERSE_REACTIONS = exports.LAB_STRATEGY = exports.TERMINAL_THRESHOLD = void 0;
+exports.ROAD_DECAY_AMOUNT_WALL = exports.ROAD_DECAY_AMOUNT_SWAMP = exports.REVERSE_REACTIONS = exports.LAB_STRATEGY = exports.TERMINAL_THRESHOLD = void 0;
 exports.TERMINAL_THRESHOLD = 10000;
 exports.LAB_STRATEGY = {
     [RESOURCE_LEMERGIUM]: [
@@ -59,8 +59,5 @@ exports.REVERSE_REACTIONS = {
     X: undefined,
     Z: undefined,
 };
-exports.DECAY = {
-    [STRUCTURE_ROAD]: ROAD_DECAY_AMOUNT,
-    [STRUCTURE_RAMPART]: RAMPART_DECAY_AMOUNT,
-    [STRUCTURE_CONTAINER]: CONTAINER_DECAY,
-};
+exports.ROAD_DECAY_AMOUNT_SWAMP = 500;
+exports.ROAD_DECAY_AMOUNT_WALL = 15000;

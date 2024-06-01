@@ -21,9 +21,12 @@ function behavior(source) {
         const spawn = (_a = (0, utils_1.getSpawnsWithDistance)(source)
             .sort((a, b) => {
             const evaluation = (v) => {
-                return v.spawn.room.energyAvailable / ((v.distance + 1) ^ 2);
+                return v.spawn.room.energyAvailable / Math.pow((v.distance + 1), 2);
             };
             return evaluation(b) - evaluation(a);
+        })
+            .tap((spawns) => {
+            console.log(JSON.stringify(spawns));
         })
             .first()) === null || _a === void 0 ? void 0 : _a.spawn;
         if (!spawn) {

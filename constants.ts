@@ -17,7 +17,7 @@ export const LAB_STRATEGY: Partial<Record<MineralConstant, AllMinerals[]>> = {
   [RESOURCE_HYDROGEN]: [RESOURCE_OXYGEN, RESOURCE_HYDROGEN, RESOURCE_HYDROXIDE],
 };
 
-export const REVERSE_REACTIONS: Record<MineralConstant | MineralCompoundConstant, [AllMinerals, AllMinerals] | undefined> = {
+export const REVERSE_REACTIONS: Record<AllMinerals, [AllMinerals, AllMinerals] | undefined> = {
   GH: ["G", "H"],
   GO: ["G", "O"],
   GH2O: ["GH", "OH"],
@@ -61,8 +61,5 @@ export const REVERSE_REACTIONS: Record<MineralConstant | MineralCompoundConstant
   Z: undefined,
 };
 
-export const DECAY = {
-  [STRUCTURE_ROAD]: ROAD_DECAY_AMOUNT,
-  [STRUCTURE_RAMPART]: RAMPART_DECAY_AMOUNT,
-  [STRUCTURE_CONTAINER]: CONTAINER_DECAY,
-};
+export const ROAD_DECAY_AMOUNT_SWAMP = 500;
+export const ROAD_DECAY_AMOUNT_WALL = 15000;

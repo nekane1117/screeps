@@ -117,7 +117,9 @@ const behavior = (creep) => {
             creep.memory.transferId = undefined;
         }
     }
-    const exclusive = ({ id }) => ((0, util_creep_1.getCreepsInRoom)(room).carrier || []).every((g) => g.memory.transferId !== id);
+    const exclusive = ({ id }) => _((0, util_creep_1.getCreepsInRoom)(room).carrier || [])
+        .compact()
+        .every((g) => { var _a; return ((_a = g === null || g === void 0 ? void 0 : g.memory) === null || _a === void 0 ? void 0 : _a.transferId) !== id; });
     if (!creep.memory.transferId) {
         creep.memory.transferId = (_g = _([...extension, ...spawns])
             .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && exclusive(s))

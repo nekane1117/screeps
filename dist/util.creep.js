@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getRepairTarget = exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getMainSpawn = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getMainSpawn = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
 const util_array_1 = require("./util.array");
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
@@ -72,11 +72,9 @@ exports.IDEAL_BODY = Object.freeze({
     ],
     repairer: [
         WORK,
-        CARRY,
         MOVE,
-        WORK,
-        ..._(_.range(23).map(() => {
-            return [MOVE, CARRY];
+        ..._(_.range(12).map(() => {
+            return [CARRY, MOVE, WORK, MOVE];
         }))
             .flatten()
             .run(),
@@ -96,13 +94,11 @@ exports.IDEAL_BODY = Object.freeze({
             .flatten()
             .run(),
     ],
-    defender: [
-        ..._(_.range(5).map(() => {
-            return [ATTACK, MOVE, ATTACK, MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, TOUGH, MOVE];
-        }))
-            .flatten()
-            .run(),
-    ],
+    defender: [MOVE]
+        .concat(..._.range(31).map(() => RANGED_ATTACK))
+        .concat(..._.range(5).map(() => HEAL))
+        .concat(..._.range(50).map(() => MOVE))
+        .slice(0, 50),
     mineralCarrier: [
         ..._(_.range(25).map(() => {
             return [MOVE, CARRY];
@@ -226,17 +222,3 @@ function toColor({ id }) {
     return `#${id.slice(-6)}`;
 }
 exports.toColor = toColor;
-function getRepairTarget(roomName) {
-    return Game.rooms[roomName].find(FIND_STRUCTURES, {
-        filter: (s) => {
-            switch (s.structureType) {
-                case STRUCTURE_RAMPART:
-                case STRUCTURE_WALL:
-                    return s.hits < 3000;
-                default:
-                    return s.hits < s.hits * 0.5;
-            }
-        },
-    });
-}
-exports.getRepairTarget = getRepairTarget;

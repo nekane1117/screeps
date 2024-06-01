@@ -21,7 +21,7 @@ const behavior = (creep) => {
                 moveMeTo(rampartInRange);
             }
             else if (!creep.pos.inRangeTo(target, 3)) {
-                moveMeTo(target);
+                moveMeTo(target, { range: 3 });
             }
             _(creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3))
                 .tap((hostiles) => {
@@ -37,6 +37,19 @@ const behavior = (creep) => {
                 }
                 else {
                     creep.rangedMassAttack();
+                }
+            })
+                .run();
+            _(creep.pos.findInRange(FIND_MY_CREEPS, 3))
+                .tap((creeps) => {
+                const target = _(creeps).min((c) => c.hits);
+                if (target) {
+                    if (creep.pos.isNearTo(target)) {
+                        creep.heal(target);
+                    }
+                    else {
+                        creep.rangedHeal(target);
+                    }
                 }
             })
                 .run();

@@ -20,11 +20,9 @@ export const findMyStructures = (room: Room) => {
       time: Game.time,
       data: room.find(FIND_STRUCTURES).reduce(
         (structures, s) => {
-          return {
-            ...structures,
-            all: (structures.all || []).concat(s),
-            [s.structureType]: (structures[s.structureType] || []).concat(s),
-          };
+          structures.all.push(s);
+          (structures[s.structureType] as AnyStructure[]).push(s);
+          return structures;
         },
         {
           all: [],
