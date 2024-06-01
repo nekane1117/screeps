@@ -7,6 +7,10 @@ digraph G {
     LHO2[style = "filled",fillcolor="green"]
     XLH2O[style = "filled",fillcolor="green"]
     XLHO2[style = "filled",fillcolor="green"]
+    OH[style = "filled",fillcolor="lightgray"]
+    H[style = "filled",fillcolor="lightgray"]
+    O[style = "filled",fillcolor="lightgray"]
+    X[style = "filled",fillcolor="lightpink"]
     {G, H} -> GH
     {G, O} -> GO
     {GH, OH} -> GH2O

@@ -30,9 +30,6 @@ export function behavior(source: Source) {
 
         return evaluation(b) - evaluation(a);
       })
-      .tap((spawns) => {
-        console.log(JSON.stringify(spawns));
-      })
       .first()?.spawn;
     if (!spawn) {
       console.log(`source ${source.id} can't find spawn`);

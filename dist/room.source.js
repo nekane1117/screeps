@@ -25,9 +25,6 @@ function behavior(source) {
             };
             return evaluation(b) - evaluation(a);
         })
-            .tap((spawns) => {
-            console.log(JSON.stringify(spawns));
-        })
             .first()) === null || _a === void 0 ? void 0 : _a.spawn;
         if (!spawn) {
             console.log(`source ${source.id} can't find spawn`);
