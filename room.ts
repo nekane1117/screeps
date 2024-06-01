@@ -2,7 +2,7 @@ import labManager from "./room.labManager";
 import { behavior } from "./room.source";
 import linkBehavior from "./structure.links";
 import { filterBodiesByCost, getCreepsInRoom, getMainSpawn } from "./util.creep";
-import { findMyStructures, getSpawnsWithDistance } from "./utils";
+import { findMyStructures } from "./utils";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
@@ -77,20 +77,12 @@ export function roomBehavior(room: Room) {
     room.energyAvailable >= room.energyCapacityAvailable * 0.9 &&
     (getCreepsInRoom(room).defender?.length || 0) === 0
   ) {
-    const { bodies: defenderBodies, cost } = filterBodiesByCost("defender", room.energyAvailable);
-    const spawn =
-      room.controller &&
-      getSpawnsWithDistance(room.controller)
-        .filter((s) => !s.spawn.spawning && s.spawn.room.energyAvailable >= cost)
-        .sort((a, b) => {
-          const evaluation = (v: typeof a) => {
-            return v.spawn.room.energyAvailable / ((v.distance + 1) ^ 2);
-          };
-          return evaluation(b) - evaluation(a);
-        })
-        .first()?.spawn;
+    const spawn = _(Object.values(Game.spawns))
+      .filter((s) => s.pos.roomName === room.name)
+      .filter((s) => !s.spawning)
+      .first();
     if (spawn) {
-      return spawn.spawnCreep(defenderBodies, `D_${room.name}_${Game.time}`, {
+      return spawn.spawnCreep(filterBodiesByCost("defender", room.energyAvailable).bodies, `D_${room.name}_${Game.time}`, {
         memory: {
           baseRoom: room.name,
           role: "defender",

@@ -72,7 +72,7 @@ function behaviors(terminal) {
             });
         }
         for (const resourceType of Object.keys(terminal.store).filter((resourceType) => {
-            return resourceType[0] === resourceType[0].toUpperCase() && resourceType.length >= 2 && terminal.store[resourceType] > 1100;
+            return resourceType[0] === resourceType[0].toUpperCase() && resourceType.length >= 2 && terminal.store[resourceType] > 1000;
         })) {
             const avg = ((_a = _(Game.market.getHistory(resourceType)).last()) === null || _a === void 0 ? void 0 : _a.avgPrice) || Infinity;
             const order = _(Game.market.getAllOrders({ type: ORDER_BUY, resourceType }))

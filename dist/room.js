@@ -10,7 +10,7 @@ const structure_links_1 = __importDefault(require("./structure.links"));
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 function roomBehavior(room) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c;
     if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) === null || _a === void 0 ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
         (_b = room.controller) === null || _b === void 0 ? void 0 : _b.activateSafeMode();
     }
@@ -58,19 +58,12 @@ function roomBehavior(room) {
     if (room.find(FIND_HOSTILE_CREEPS).length > 0 &&
         room.energyAvailable >= room.energyCapacityAvailable * 0.9 &&
         (((_c = (0, util_creep_1.getCreepsInRoom)(room).defender) === null || _c === void 0 ? void 0 : _c.length) || 0) === 0) {
-        const { bodies: defenderBodies, cost } = (0, util_creep_1.filterBodiesByCost)("defender", room.energyAvailable);
-        const spawn = room.controller &&
-            ((_d = (0, utils_1.getSpawnsWithDistance)(room.controller)
-                .filter((s) => !s.spawn.spawning && s.spawn.room.energyAvailable >= cost)
-                .sort((a, b) => {
-                const evaluation = (v) => {
-                    return v.spawn.room.energyAvailable / ((v.distance + 1) ^ 2);
-                };
-                return evaluation(b) - evaluation(a);
-            })
-                .first()) === null || _d === void 0 ? void 0 : _d.spawn);
+        const spawn = _(Object.values(Game.spawns))
+            .filter((s) => s.pos.roomName === room.name)
+            .filter((s) => !s.spawning)
+            .first();
         if (spawn) {
-            return spawn.spawnCreep(defenderBodies, `D_${room.name}_${Game.time}`, {
+            return spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("defender", room.energyAvailable).bodies, `D_${room.name}_${Game.time}`, {
                 memory: {
                     baseRoom: room.name,
                     role: "defender",

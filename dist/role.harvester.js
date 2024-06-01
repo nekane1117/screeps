@@ -42,7 +42,7 @@ const behavior = (creep) => {
     });
     if (link) {
         creep.pos.findInRange(containers, 2).forEach((c) => {
-            if (creep.withdraw(c, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+            if (creep.withdraw(c, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE && creep.store.energy > 10) {
                 (0, util_creep_1.customMove)(creep, c);
             }
         });

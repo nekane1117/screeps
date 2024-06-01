@@ -103,8 +103,26 @@ export default function behaviors(terminal: Structure) {
     }
     for (const resourceType of (Object.keys(terminal.store) as (MineralConstant | MineralCompoundConstant)[]).filter((resourceType) => {
       // とりあえず1000以上ある化合物
-      return resourceType[0] === resourceType[0].toUpperCase() && resourceType.length >= 2 && terminal.store[resourceType] > 1100;
+      return resourceType[0] === resourceType[0].toUpperCase() && resourceType.length >= 2 && terminal.store[resourceType] > 1000;
     })) {
+      // const ingredients = REVERSE_REACTIONS[resourceType];
+      // if (!ingredients) {
+      //   return console.log("化合物でない", resourceType);
+      // }
+
+      // const orders = _(ingredients)
+      //   .map((ingredient) => {
+      //     // 素材の売り注文の一番安いやつを探す
+      //     return _(Game.market.getAllOrders({ type: ORDER_SELL, resourceType: ingredient })).min((o) => o.price);
+      //   })
+      //   .compact()
+      //   .run();
+      // if (orders.length !== 2) {
+      //   return console.log("素材の売り注文がない", JSON.stringify(ingredients), JSON.stringify(orders));
+      // }
+
+      // const totalCost = _(orders).sum((o) => o.price);
+      // console.log(JSON.stringify({ resourceType, totalCost }));
       const avg = _(Game.market.getHistory(resourceType)).last()?.avgPrice || Infinity;
       const order = _(Game.market.getAllOrders({ type: ORDER_BUY, resourceType }))
         .filter((o) => o.price >= avg)

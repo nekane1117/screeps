@@ -63,7 +63,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (link) {
     // リンクがあるときは周囲のコンテナから吸う
     creep.pos.findInRange(containers, 2).forEach((c) => {
-      if (creep.withdraw(c, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+      if (creep.withdraw(c, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE && creep.store.energy > 10) {
         customMove(creep, c);
       }
     });

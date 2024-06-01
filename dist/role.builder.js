@@ -2,9 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_array_1 = require("./util.array");
 const util_creep_1 = require("./util.creep");
-const utils_1 = require("./utils");
 const behavior = (creep) => {
-    var _a, _b, _c;
+    var _a, _b;
     if (!isBuilder(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
@@ -27,34 +26,8 @@ const behavior = (creep) => {
         }
     };
     checkMode();
-    const labs = (0, utils_1.findMyStructures)(creep.room).lab.map((lab) => {
-        return Object.assign(lab, {
-            memory: creep.room.memory.labs[lab.id],
-        });
-    });
-    const parts = creep.body.filter((b) => b.type === WORK);
-    if (!creep.body.filter((b) => b.type === WORK).find((e) => boosts.includes(e.boost))) {
-        const lab = (_a = boosts
-            .map((mineralType) => {
-            return {
-                mineralType,
-                lab: labs.find((l) => {
-                    return (l.mineralType === mineralType && l.store[mineralType] >= parts.length * LAB_BOOST_MINERAL && l.store.energy >= parts.length * LAB_BOOST_ENERGY);
-                }),
-            };
-        })
-            .find((o) => o.lab)) === null || _a === void 0 ? void 0 : _a.lab;
-        if (lab) {
-            if (creep.pos.isNearTo(lab)) {
-                return lab.boostCreep(creep);
-            }
-            else {
-                return moveMeTo(lab);
-            }
-        }
-    }
     if (creep.memory.buildingId ||
-        (creep.memory.buildingId = (_b = (0, util_array_1.complexOrder)(Object.values(Game.constructionSites), [
+        (creep.memory.buildingId = (_a = (0, util_array_1.complexOrder)(Object.values(Game.constructionSites), [
             (s) => (s.pos.roomName === creep.memory.baseRoom ? 0 : 1),
             (s) => {
                 switch (s.structureType) {
@@ -68,7 +41,7 @@ const behavior = (creep) => {
             },
             (s) => s.progressTotal - s.progress,
             (s) => s.pos.getRangeTo(creep),
-        ]).first()) === null || _b === void 0 ? void 0 : _b.id)) {
+        ]).first()) === null || _a === void 0 ? void 0 : _a.id)) {
         const site = Game.getObjectById(creep.memory.buildingId);
         if (site) {
             switch ((creep.memory.built = creep.build(site))) {
@@ -100,7 +73,7 @@ const behavior = (creep) => {
         return creep.suicide();
     }
     if (creep.memory.storeId ||
-        (creep.memory.storeId = (_c = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        (creep.memory.storeId = (_b = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (s) => {
                 return (s.structureType !== STRUCTURE_SPAWN &&
                     (0, util_creep_1.isStoreTarget)(s) &&
@@ -109,7 +82,7 @@ const behavior = (creep) => {
                     s.store.energy > CARRY_CAPACITY);
             },
             maxRooms: 2,
-        })) === null || _c === void 0 ? void 0 : _c.id)) {
+        })) === null || _b === void 0 ? void 0 : _b.id)) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
             creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY);
@@ -157,4 +130,3 @@ exports.default = behavior;
 function isBuilder(creep) {
     return creep.memory.role === "builder";
 }
-const boosts = [RESOURCE_CATALYZED_LEMERGIUM_ACID, RESOURCE_LEMERGIUM_ACID, RESOURCE_LEMERGIUM_HYDRIDE];

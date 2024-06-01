@@ -18,7 +18,7 @@ const behavior = (creep) => {
         if (!isLabManager(creep)) {
             return console.log(`${creep.name} is not LabManager`);
         }
-        const newMode = creep.store.getUsedCapacity() < CARRY_CAPACITY ? "🛒" : "🚛";
+        const newMode = creep.store.getUsedCapacity() === 0 ? "🛒" : "🚛";
         if (creep.memory.mode !== newMode) {
             creep.say(newMode);
             creep.memory.mode = newMode;
@@ -52,7 +52,7 @@ const behavior = (creep) => {
                 mapping.wrong.push(lab);
             }
             else if (lab.mineralType.length >= 2) {
-                if (lab.store[lab.mineralType] > MINERAL_KEEP_VALUE * 2) {
+                if (lab.store[lab.mineralType] > MINERAL_KEEP_VALUE) {
                     mapping.completed.push(lab);
                 }
                 else {
