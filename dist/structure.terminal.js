@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const constants_1 = require("./constants");
-const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 function behaviors(terminal) {
     (0, utils_1.logUsage)(`terminal:${terminal.room.name}`, () => {
@@ -21,47 +20,11 @@ function behaviors(terminal) {
         if (terminal.cooldown) {
             return ERR_TIRED;
         }
-        const missingIngredient = [
-            RESOURCE_HYDROGEN,
-            RESOURCE_KEANIUM,
-            RESOURCE_LEMERGIUM,
-            RESOURCE_OXYGEN,
-            RESOURCE_UTRIUM,
-            RESOURCE_CATALYST,
-            RESOURCE_ZYNTHIUM,
-        ].filter((m) => m !== (mineral === null || mineral === void 0 ? void 0 : mineral.mineralType) && terminal.store[m] < 1000);
         if (Game.market.credits > 1000000 && terminal.store.energy > room.energyCapacityAvailable && terminal.store.energy < constants_1.TERMINAL_THRESHOLD) {
             const order = getSellOrderWithEffectivity(RESOURCE_ENERGY, terminal).max((o) => o.rate);
             if (order && order.rate > 1.5) {
                 return Game.market.deal(order.id, order.amount, terminal.room.name);
             }
-        }
-        if (missingIngredient.length) {
-            missingIngredient.forEach((ingredient) => {
-                var _a;
-                const avg = ((_a = _(Game.market.getHistory(ingredient)).last()) === null || _a === void 0 ? void 0 : _a.avgPrice) || 0;
-                const order = getSellOrderWithEffectivity(ingredient, terminal)
-                    .filter((o) => o.price <= avg)
-                    .min((o) => o.price);
-                if (order) {
-                    const maxTransferAmount = (0, utils_1.calcMaxTransferAmount)(order, terminal);
-                    const maxCredits = Game.market.credits / order.price;
-                    const amount = Math.min(order.remainingAmount, maxTransferAmount, maxCredits);
-                    if (amount > 100) {
-                        const dealt = Game.market.deal(order.id, amount, room.name);
-                        if (dealt !== OK) {
-                            console.log(util_creep_1.RETURN_CODE_DECODER[dealt.toString()], JSON.stringify({
-                                order,
-                                amount,
-                                name: room.name,
-                            }));
-                        }
-                        else {
-                            return;
-                        }
-                    }
-                }
-            });
         }
         for (const resourceType of Object.keys(terminal.store).filter((resourceType) => {
             return resourceType[0] === resourceType[0].toUpperCase() && resourceType.length >= 2 && terminal.store[resourceType] > 1000;

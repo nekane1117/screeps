@@ -115,8 +115,14 @@ function harvest(creep: RemoteHarvester) {
     if ((creep.memory.worked = creep.harvest(source)) === ERR_NOT_IN_RANGE && memory.mode === "🌾") {
       // 範囲内でなくて収穫モードの時は近寄る
       const moveing = _(memory._move?.path || []).first();
+      const isInRange = (n: number) => {
+        return 0 < n && n < 49;
+      };
+
       const blocker =
         moveing &&
+        isInRange(creep.pos.x + moveing.dx) &&
+        isInRange(creep.pos.y + moveing.dy) &&
         creep.room
           .lookForAt(LOOK_STRUCTURES, creep.pos.x + moveing.dx, creep.pos.y + moveing.dy)
           .find((s) => (OBSTACLE_OBJECT_TYPES as StructureConstant[]).includes(s.structureType));

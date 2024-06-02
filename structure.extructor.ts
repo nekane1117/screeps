@@ -1,6 +1,6 @@
 import { TERMINAL_THRESHOLD } from "./constants";
-import { filterBodiesByCost } from "./util.creep";
-import { findMyStructures, getSpawnsOrderdByRange } from "./utils";
+import { filterBodiesByCost, getCarrierBody } from "./util.creep";
+import { findMyStructures, getSpawnsInRoom, getSpawnsOrderdByRange } from "./utils";
 
 export default function behavior(extractor: Structure) {
   if (!isE(extractor)) {
@@ -52,15 +52,17 @@ export default function behavior(extractor: Structure) {
       return spawned;
     }
   } else if ((extractor.room.terminal?.store.energy || 0) > extractor.room.energyCapacityAvailable && (mineralCarrier as MineralCarrier[]).length < 1) {
-    const spawn = getSpawnsOrderdByRange(extractor, 1).first();
+    const spawn = _(getSpawnsInRoom(extractor.room))
+      .filter((s) => !s.spawning)
+      .first();
     if (!spawn) {
       console.log(`source ${extractor.id} can't find spawn`);
       return ERR_NOT_FOUND;
     }
 
-    if (spawn.room.energyAvailable > 1000) {
+    if (extractor.room.energyAvailable >= extractor.room.energyCapacityAvailable) {
       const name = `Mc_${extractor.room.name}_${Game.time}`;
-      const spawned = spawn.spawnCreep(filterBodiesByCost("mineralCarrier", spawn.room.energyAvailable).bodies, name, {
+      const spawned = spawn.spawnCreep(getCarrierBody(extractor.room, "mineralCarrier"), name, {
         memory: {
           role: "mineralCarrier",
           baseRoom: extractor.room.name,

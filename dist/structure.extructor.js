@@ -42,14 +42,16 @@ function behavior(extractor) {
         }
     }
     else if ((((_b = extractor.room.terminal) === null || _b === void 0 ? void 0 : _b.store.energy) || 0) > extractor.room.energyCapacityAvailable && mineralCarrier.length < 1) {
-        const spawn = (0, utils_1.getSpawnsOrderdByRange)(extractor, 1).first();
+        const spawn = _((0, utils_1.getSpawnsInRoom)(extractor.room))
+            .filter((s) => !s.spawning)
+            .first();
         if (!spawn) {
             console.log(`source ${extractor.id} can't find spawn`);
             return ERR_NOT_FOUND;
         }
-        if (spawn.room.energyAvailable > 1000) {
+        if (extractor.room.energyAvailable >= extractor.room.energyCapacityAvailable) {
             const name = `Mc_${extractor.room.name}_${Game.time}`;
-            const spawned = spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("mineralCarrier", spawn.room.energyAvailable).bodies, name, {
+            const spawned = spawn.spawnCreep((0, util_creep_1.getCarrierBody)(extractor.room, "mineralCarrier"), name, {
                 memory: {
                     role: "mineralCarrier",
                     baseRoom: extractor.room.name,

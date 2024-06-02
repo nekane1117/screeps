@@ -71,7 +71,7 @@ export function roomBehavior(room: Room) {
       {} as Partial<Record<ROLES, Creep[]>>,
     );
 
-  const carrierBodies = getCarrierBody(room);
+  const carrierBodies = getCarrierBody(room, "carrier");
   if (harvester.length === 0) {
     return ERR_NOT_FOUND;
   }
@@ -170,7 +170,7 @@ export function roomBehavior(room: Room) {
     if (
       (remoteHarvester as RemoteHarvester[]).filter(
         (c) => c.memory.targetRoomName === targetRoomName && (c.ticksToLive || 0) > bodies.length * CREEP_SPAWN_TIME,
-      ).length === 0
+      ).length < 2
     ) {
       const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
       if (spawn) {

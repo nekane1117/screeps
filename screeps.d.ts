@@ -30,7 +30,7 @@ declare interface CreepMemory {
     room: string;
   };
   moved?: ReturnType<Creep["moveTo"]>;
-  __avoidCreep?: boolean;
+  __avoidCreep?: number;
 
   __moveRoom?: {
     route?: ReturnType<(typeof Game)["map"]["findRoute"]>;

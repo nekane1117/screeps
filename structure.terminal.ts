@@ -1,5 +1,4 @@
 import { TERMINAL_THRESHOLD } from "./constants";
-import { RETURN_CODE_DECODER } from "./util.creep";
 import { calcMaxTransferAmount, logUsage } from "./utils";
 
 export default function behaviors(terminal: Structure) {
@@ -25,17 +24,6 @@ export default function behaviors(terminal: Structure) {
     if (terminal.cooldown) {
       return ERR_TIRED;
     }
-    // 不足してる原材料
-    const missingIngredient = [
-      RESOURCE_HYDROGEN,
-      RESOURCE_KEANIUM,
-      RESOURCE_LEMERGIUM,
-      RESOURCE_OXYGEN,
-      RESOURCE_UTRIUM,
-      RESOURCE_CATALYST,
-      RESOURCE_ZYNTHIUM,
-    ].filter((m) => m !== mineral?.mineralType && terminal.store[m] < 1000);
-
     // 基本はエネルギーを買うことを目的とする
     if (Game.market.credits > 1000000 && terminal.store.energy > room.energyCapacityAvailable && terminal.store.energy < TERMINAL_THRESHOLD) {
       // 実質一番安いオーダー
@@ -45,6 +33,7 @@ export default function behaviors(terminal: Structure) {
         return Game.market.deal(order.id, order.amount, terminal.room.name);
       }
     }
+
     // // 自室のミネラルをため込んでるときはとにかく売る
     // if (mineral && terminal.store.energy > room.energyCapacityAvailable && terminal.store[mineral.mineralType] > TERMINAL_THRESHOLD) {
     //   // 一番高く買ってくれるオーダー
@@ -63,44 +52,7 @@ export default function behaviors(terminal: Structure) {
     //     );
     //   }
     // }
-    // 不足してる原材料は買っておく
-    if (missingIngredient.length) {
-      // とにかく一番安いのを買う
-      missingIngredient.forEach((ingredient) => {
-        const avg = _(Game.market.getHistory(ingredient)).last()?.avgPrice || 0;
-        const order = getSellOrderWithEffectivity(ingredient, terminal)
-          .filter((o) => o.price <= avg)
-          .min((o) => o.price);
 
-        if (order) {
-          const maxTransferAmount = calcMaxTransferAmount(order, terminal);
-          const maxCredits = Game.market.credits / order.price;
-          // オーダーの残量、輸送上限、支払える上限中で一番少ない分買う
-          const amount = Math.min(order.remainingAmount, maxTransferAmount, maxCredits);
-
-          if (amount > 100) {
-            const dealt = Game.market.deal(
-              order.id,
-              // オーダーの残量、輸送上限、支払える上限中で一番少ない分買う
-              amount,
-              room.name,
-            );
-            if (dealt !== OK) {
-              console.log(
-                RETURN_CODE_DECODER[dealt.toString()],
-                JSON.stringify({
-                  order,
-                  amount,
-                  name: room.name,
-                }),
-              );
-            } else {
-              return;
-            }
-          }
-        }
-      });
-    }
     for (const resourceType of (Object.keys(terminal.store) as (MineralConstant | MineralCompoundConstant)[]).filter((resourceType) => {
       // とりあえず1000以上ある化合物
       return resourceType[0] === resourceType[0].toUpperCase() && resourceType.length >= 2 && terminal.store[resourceType] > 1000;

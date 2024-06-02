@@ -80,6 +80,7 @@ module.exports.loop = function () {
               .lookFor(LOOK_STRUCTURES)
               .filter((s) => s.structureType === STRUCTURE_ROAD && s.hits < s.hitsMax)
               .forEach((s) => c.repair(s));
+          c.memory.__avoidCreep = Math.max(0, (c.memory.__avoidCreep || 0) - 1);
         });
     });
 

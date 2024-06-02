@@ -199,7 +199,14 @@ export const customMove: CustomMove = (creep, target, opt) => {
 
   creep.memory.moved = creep.moveTo(target, {
     plainCost: 2,
-    ignoreCreeps: !creep.memory.__avoidCreep && !creep.pos.inRangeTo(target, 4),
+    ignoreCreeps: (() => {
+      if ((creep.memory.__avoidCreep || 0) > 0) {
+        creep.say("avoid " + creep.memory.__avoidCreep);
+        return false;
+      } else {
+        return opt?.ignoreCreeps || !creep.pos.inRangeTo(target, 4);
+      }
+    })(),
     serializeMemory: false,
     ...opt,
     visualizePathStyle: {
@@ -208,7 +215,6 @@ export const customMove: CustomMove = (creep, target, opt) => {
       ...opt?.visualizePathStyle,
     },
   });
-  creep.memory.__avoidCreep = undefined;
   if (creep.memory.moved === OK && Game.time % 3) {
     const { dy, dx } = creep.memory._move?.path?.[0] || {};
     const isInRange = (n: number) => {
@@ -220,7 +226,8 @@ export const customMove: CustomMove = (creep, target, opt) => {
       if (blocker && blocker.memory.moved !== OK) {
         const pull = creep.pull(blocker);
         const move = blocker.move(creep);
-        blocker.memory.__avoidCreep = true;
+        blocker.memory.__avoidCreep = 5;
+        blocker.memory._move = undefined;
         (pull || move) &&
           console.log(JSON.stringify({ name: creep.name, pull: RETURN_CODE_DECODER[pull.toString()], move: RETURN_CODE_DECODER[move.toString()] }));
       }
@@ -347,16 +354,16 @@ export function moveRoom(creep: Creeps, fromRoom: string, toRoom: string) {
   return moved;
 }
 
-export function getCarrierBody(room: Room): BodyPartConstant[] {
+export function getCarrierBody(room: Room, role: ROLES): BodyPartConstant[] {
   const safetyFactor = 2;
 
-  const bodyCycle: BodyPartConstant[] = [CARRY, MOVE];
+  const bodyCycle: BodyPartConstant[] = [MOVE, CARRY, CARRY];
   let costTotal = 0;
-  const avgSize = room.memory.carrySize.carrier;
+  const avgSize = room.memory.carrySize[role];
   // 個数 (÷50の切り上げ)
   // 安全係数
   // の２倍(CARRY,MOVE)
-  return _.range(Math.ceil(avgSize / 50) * safetyFactor * 2)
+  return _.range(Math.ceil(avgSize / 50) * safetyFactor * 1.5)
     .map((i) => {
       const parts = bodyCycle[i % bodyCycle.length];
       costTotal += BODYPART_COST[parts];

@@ -53,7 +53,7 @@ function roomBehavior(room) {
         creeps[c.memory.role] = ((creeps === null || creeps === void 0 ? void 0 : creeps[c.memory.role]) || []).concat(c);
         return creeps;
     }, {});
-    const carrierBodies = (0, util_creep_1.getCarrierBody)(room);
+    const carrierBodies = (0, util_creep_1.getCarrierBody)(room, "carrier");
     if (harvester.length === 0) {
         return ERR_NOT_FOUND;
     }
@@ -137,7 +137,7 @@ function roomBehavior(room) {
             }
         }
         const { bodies } = (0, util_creep_1.filterBodiesByCost)("remoteHarvester", room.energyAvailable);
-        if (remoteHarvester.filter((c) => c.memory.targetRoomName === targetRoomName && (c.ticksToLive || 0) > bodies.length * CREEP_SPAWN_TIME).length === 0) {
+        if (remoteHarvester.filter((c) => c.memory.targetRoomName === targetRoomName && (c.ticksToLive || 0) > bodies.length * CREEP_SPAWN_TIME).length < 2) {
             const spawn = (_d = (0, utils_2.getSpawnsInRoom)(room)) === null || _d === void 0 ? void 0 : _d.find((s) => !s.spawning);
             if (spawn) {
                 const spawned = spawn.spawnCreep(bodies, `Rh_${room.name}_${targetRoomName}_${Game.time}`, {

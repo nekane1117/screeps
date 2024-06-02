@@ -56,7 +56,7 @@ exports.findMyStructures = findMyStructures;
 function getSpawnsInRoom(r) {
     const room = _.isString(r) ? Game.rooms[r] : r;
     if (!room) {
-        return undefined;
+        return [];
     }
     return Object.values(Game.spawns).filter((s) => s.pos.roomName === room.name);
 }

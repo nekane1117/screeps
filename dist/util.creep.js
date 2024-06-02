@@ -166,8 +166,15 @@ const customMove = (creep, target, opt) => {
     if (creep.fatigue) {
         return OK;
     }
-    creep.memory.moved = creep.moveTo(target, Object.assign(Object.assign({ plainCost: 2, ignoreCreeps: !creep.memory.__avoidCreep && !creep.pos.inRangeTo(target, 4), serializeMemory: false }, opt), { visualizePathStyle: Object.assign({ opacity: 0.55, stroke: toColor(creep) }, opt === null || opt === void 0 ? void 0 : opt.visualizePathStyle) }));
-    creep.memory.__avoidCreep = undefined;
+    creep.memory.moved = creep.moveTo(target, Object.assign(Object.assign({ plainCost: 2, ignoreCreeps: (() => {
+            if ((creep.memory.__avoidCreep || 0) > 0) {
+                creep.say("avoid " + creep.memory.__avoidCreep);
+                return false;
+            }
+            else {
+                return (opt === null || opt === void 0 ? void 0 : opt.ignoreCreeps) || !creep.pos.inRangeTo(target, 4);
+            }
+        })(), serializeMemory: false }, opt), { visualizePathStyle: Object.assign({ opacity: 0.55, stroke: toColor(creep) }, opt === null || opt === void 0 ? void 0 : opt.visualizePathStyle) }));
     if (creep.memory.moved === OK && Game.time % 3) {
         const { dy, dx } = ((_b = (_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b[0]) || {};
         const isInRange = (n) => {
@@ -178,7 +185,8 @@ const customMove = (creep, target, opt) => {
             if (blocker && blocker.memory.moved !== OK) {
                 const pull = creep.pull(blocker);
                 const move = blocker.move(creep);
-                blocker.memory.__avoidCreep = true;
+                blocker.memory.__avoidCreep = 5;
+                blocker.memory._move = undefined;
                 (pull || move) &&
                     console.log(JSON.stringify({ name: creep.name, pull: exports.RETURN_CODE_DECODER[pull.toString()], move: exports.RETURN_CODE_DECODER[move.toString()] }));
             }
@@ -283,12 +291,12 @@ function moveRoom(creep, fromRoom, toRoom) {
     return moved;
 }
 exports.moveRoom = moveRoom;
-function getCarrierBody(room) {
+function getCarrierBody(room, role) {
     const safetyFactor = 2;
-    const bodyCycle = [CARRY, MOVE];
+    const bodyCycle = [MOVE, CARRY, CARRY];
     let costTotal = 0;
-    const avgSize = room.memory.carrySize.carrier;
-    return _.range(Math.ceil(avgSize / 50) * safetyFactor * 2)
+    const avgSize = room.memory.carrySize[role];
+    return _.range(Math.ceil(avgSize / 50) * safetyFactor * 1.5)
         .map((i) => {
         const parts = bodyCycle[i % bodyCycle.length];
         costTotal += BODYPART_COST[parts];

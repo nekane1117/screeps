@@ -87,7 +87,12 @@ function harvest(creep) {
         }
         if ((creep.memory.worked = creep.harvest(source)) === ERR_NOT_IN_RANGE && memory.mode === "🌾") {
             const moveing = _(((_b = memory._move) === null || _b === void 0 ? void 0 : _b.path) || []).first();
+            const isInRange = (n) => {
+                return 0 < n && n < 49;
+            };
             const blocker = moveing &&
+                isInRange(creep.pos.x + moveing.dx) &&
+                isInRange(creep.pos.y + moveing.dy) &&
                 creep.room
                     .lookForAt(LOOK_STRUCTURES, creep.pos.x + moveing.dx, creep.pos.y + moveing.dy)
                     .find((s) => OBSTACLE_OBJECT_TYPES.includes(s.structureType));
