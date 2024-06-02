@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getMainSpawn = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.moveRoom = exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getMainSpawn = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
 const util_array_1 = require("./util.array");
+const utils_1 = require("./utils");
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
@@ -80,20 +81,33 @@ exports.IDEAL_BODY = Object.freeze({
             .run(),
     ],
     claimer: [CLAIM, MOVE],
-    carrier: [
-        ..._(_.range(25).map(() => {
-            return [MOVE, CARRY];
-        }))
-            .flatten()
-            .run(),
-    ],
-    labManager: [
-        ..._(_.range(25).map(() => {
-            return [MOVE, CARRY];
-        }))
-            .flatten()
-            .run(),
-    ],
+    reserver: _.range(4).map((i) => {
+        const bodies = [CLAIM, MOVE];
+        return bodies[i % bodies.length];
+    }),
+    remoteHarvester: [
+        MOVE,
+        WORK,
+        CARRY,
+        MOVE,
+        ATTACK,
+        ATTACK,
+        MOVE,
+        HEAL,
+        HEAL,
+    ]
+        .concat(..._.range(50).map((i) => {
+        const b = [MOVE, WORK, CARRY];
+        return b[i % b.length];
+    }))
+        .slice(0, 50),
+    carrier: []
+        .concat(..._.range(12).map((i) => {
+        const b = [MOVE, CARRY];
+        return b[i % b.length];
+    }))
+        .slice(0, 50),
+    labManager: [MOVE, CARRY, CARRY],
     defender: [MOVE]
         .concat(..._.range(31).map(() => RANGED_ATTACK))
         .concat(..._.range(5).map(() => HEAL))
@@ -152,14 +166,16 @@ const customMove = (creep, target, opt) => {
     if (creep.fatigue) {
         return OK;
     }
-    creep.memory.moved = creep.moveTo(target, Object.assign(Object.assign({ plainCost: 2, ignoreCreeps: !creep.pos.inRangeTo(target, 4), serializeMemory: false }, opt), { visualizePathStyle: Object.assign({ opacity: 0.55, stroke: toColor(creep) }, opt === null || opt === void 0 ? void 0 : opt.visualizePathStyle) }));
-    if (creep.memory.moved === OK && Game.time % 2) {
+    creep.memory.moved = creep.moveTo(target, Object.assign(Object.assign({ plainCost: 2, ignoreCreeps: !creep.memory.__avoidCreep && !creep.pos.inRangeTo(target, 4), serializeMemory: false }, opt), { visualizePathStyle: Object.assign({ opacity: 0.55, stroke: toColor(creep) }, opt === null || opt === void 0 ? void 0 : opt.visualizePathStyle) }));
+    creep.memory.__avoidCreep = undefined;
+    if (creep.memory.moved === OK && Game.time % 3) {
         const { dy, dx } = ((_b = (_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b[0]) || {};
         if (dx !== undefined && dy !== undefined) {
             const blocker = (_c = creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + dx, creep.pos.y + dy)) === null || _c === void 0 ? void 0 : _c[0];
             if (blocker && blocker.memory.moved !== OK) {
                 const pull = creep.pull(blocker);
                 const move = blocker.move(creep);
+                blocker.memory.__avoidCreep = true;
                 (pull || move) &&
                     console.log(JSON.stringify({ name: creep.name, pull: exports.RETURN_CODE_DECODER[pull.toString()], move: exports.RETURN_CODE_DECODER[move.toString()] }));
             }
@@ -222,3 +238,45 @@ function toColor({ id }) {
     return `#${id.slice(-6)}`;
 }
 exports.toColor = toColor;
+function moveRoom(creep, fromRoom, toRoom) {
+    var _a, _b, _c, _d;
+    const memory = (0, utils_1.readonly)(creep.memory);
+    creep.memory.__moveRoom = memory.__moveRoom || {};
+    const route = ((_a = memory.__moveRoom) === null || _a === void 0 ? void 0 : _a.route) ||
+        (creep.memory.__moveRoom.route = Game.map.findRoute(fromRoom, toRoom, {
+            routeCallback(roomName) {
+                var _a;
+                const parsed = /^[WE]([0-9]+)[NS]([0-9]+)$/.exec(roomName);
+                const isHighway = parsed && (Number(parsed[1]) % 10 === 0 || Number(parsed[2]) % 10 === 0);
+                const isMyRoom = Game.rooms[roomName] && Game.rooms[roomName].controller && ((_a = Game.rooms[roomName].controller) === null || _a === void 0 ? void 0 : _a.my);
+                if (isHighway || isMyRoom) {
+                    return 1;
+                }
+                else {
+                    return 2.5;
+                }
+            },
+        }));
+    if (!Array.isArray(route)) {
+        creep.memory.__moveRoom.route = undefined;
+        return route;
+    }
+    const current = route[route.findIndex((r) => r.room === creep.pos.roomName) + 1];
+    if (!current) {
+        creep.memory.__moveRoom.route = undefined;
+        return;
+    }
+    if (((_c = (_b = memory.__moveRoom) === null || _b === void 0 ? void 0 : _b.exit) === null || _c === void 0 ? void 0 : _c.roomName) !== creep.pos.roomName) {
+        creep.memory.__moveRoom.exit = creep.pos.findClosestByPath(current.exit);
+    }
+    const moved = ((_d = memory.__moveRoom) === null || _d === void 0 ? void 0 : _d.exit) && (0, exports.customMove)(creep, new RoomPosition(memory.__moveRoom.exit.x, memory.__moveRoom.exit.y, memory.__moveRoom.exit.roomName));
+    if (moved !== OK) {
+        const code = moved ? exports.RETURN_CODE_DECODER[moved.toString()] : "no exit";
+        console.log(`${creep.name}:${code}`);
+        creep.say(code.replace("ERR_", ""));
+        creep.memory.__moveRoom.route = undefined;
+        creep.memory.__moveRoom.exit = undefined;
+    }
+    return moved;
+}
+exports.moveRoom = moveRoom;

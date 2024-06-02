@@ -1,6 +1,7 @@
 import { CreepBehavior } from "./roles";
 import { complexOrder } from "./util.array";
 import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll, withdrawBy } from "./util.creep";
+import { findMyStructures } from "./utils";
 // import { findMyStructures } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
@@ -15,14 +16,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   const checkMode = () => {
     const newMode: BuilderMemory["mode"] = ((c: Builder) => {
-      if (c.memory.mode === "💪" && c.store.energy === 0) {
+      if (c.memory.mode === "👷" && c.store.energy === 0) {
         // 作業モードで空になったら収集モードにする
         return "🛒";
       }
 
       if (c.memory.mode === "🛒" && creep.store.energy >= CARRY_CAPACITY) {
         // 収集モードで50超えたら作業モードにする
-        return "💪";
+        return "👷";
       }
 
       // そのまま
@@ -40,37 +41,37 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // https://docs.screeps.com/simultaneous-actions.html
 
   // boostされてない場合
-  // const labs = findMyStructures(creep.room).lab.map((lab) => {
-  //   return Object.assign(lab, {
-  //     memory: creep.room.memory.labs[lab.id],
-  //   }) as StructureLab & { memory: LabMemory };
-  // });
+  const labs = findMyStructures(creep.room).lab.map((lab) => {
+    return Object.assign(lab, {
+      memory: creep.room.memory.labs[lab.id],
+    }) as StructureLab & { memory: LabMemory };
+  });
 
-  // const parts = creep.body.filter((b) => b.type === WORK);
-  // if (!creep.body.filter((b) => b.type === WORK).find((e) => boosts.includes(e.boost as ResourceConstant))) {
-  //   //
-  //   const lab = boosts
-  //     .map((mineralType) => {
-  //       return {
-  //         mineralType,
-  //         lab: labs.find((l) => {
-  //           // 指定のミネラルでミネラル、エネルギーが足りるラボ
-  //           return (
-  //             l.mineralType === mineralType && l.store[mineralType] >= parts.length * LAB_BOOST_MINERAL && l.store.energy >= parts.length * LAB_BOOST_ENERGY
-  //           );
-  //         }),
-  //       };
-  //     })
-  //     .find((o) => o.lab)?.lab;
+  const parts = creep.body.filter((b) => b.type === WORK);
+  if (!creep.body.filter((b) => b.type === WORK).find((e) => boosts.includes(e.boost as ResourceConstant))) {
+    //
+    const lab = boosts
+      .map((mineralType) => {
+        return {
+          mineralType,
+          lab: labs.find((l) => {
+            // 指定のミネラルでミネラル、エネルギーが足りるラボ
+            return (
+              l.mineralType === mineralType && l.store[mineralType] >= parts.length * LAB_BOOST_MINERAL && l.store.energy >= parts.length * LAB_BOOST_ENERGY
+            );
+          }),
+        };
+      })
+      .find((o) => o.lab)?.lab;
 
-  //   if (lab) {
-  //     if (creep.pos.isNearTo(lab)) {
-  //       return lab.boostCreep(creep);
-  //     } else {
-  //       return moveMeTo(lab);
-  //     }
-  //   }
-  // }
+    if (lab) {
+      if (creep.pos.isNearTo(lab)) {
+        return lab.boostCreep(creep);
+      } else {
+        return moveMeTo(lab);
+      }
+    }
+  }
 
   // build
   if (
@@ -104,7 +105,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           break;
         // 建築モードで離れてるときは近寄る
         case ERR_NOT_IN_RANGE:
-          if (creep.memory.mode === "💪") {
+          if (creep.memory.mode === "👷") {
             moveMeTo(site);
           }
           break;
@@ -157,7 +158,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         case ERR_INVALID_TARGET: // 対象が変
           creep.memory.storeId = undefined;
           break;
-          break;
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "🛒") {
             const moved = moveMeTo(store);
@@ -185,14 +185,16 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       }
     }
   } else if (creep.memory.mode === "🛒") {
-    const harvester = creep.pos.findClosestByRange(Object.values(Game.creeps), { filter: (c: Creeps) => c.memory.role === "harvester" });
+    const harvester = creep.pos.findClosestByRange(Object.values(Game.creeps), {
+      filter: (c: Creeps) => c.memory.role === "harvester" || c.memory.role === "remoteHarvester",
+    });
     if (harvester && !creep.pos.isNearTo(harvester)) {
       moveMeTo(harvester);
     }
   }
 
   // withdraw
-  withdrawBy(creep, ["harvester", "upgrader"]);
+  withdrawBy(creep, ["harvester", "upgrader", "remoteHarvester"]);
 
   // 落っこちてるものを拾う
   pickUpAll(creep);
@@ -204,4 +206,4 @@ function isBuilder(creep: Creep): creep is Builder {
   return creep.memory.role === "builder";
 }
 
-// const boosts: ResourceConstant[] = [RESOURCE_CATALYZED_LEMERGIUM_ACID, RESOURCE_LEMERGIUM_ACID, RESOURCE_LEMERGIUM_HYDRIDE];
+const boosts: ResourceConstant[] = [RESOURCE_CATALYZED_LEMERGIUM_ACID, RESOURCE_LEMERGIUM_ACID, RESOURCE_LEMERGIUM_HYDRIDE];

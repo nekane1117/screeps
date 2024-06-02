@@ -14,11 +14,11 @@ const behavior = (creep) => {
             return console.log(`${creep.name} is not MineralCarrier`);
         }
         const newMode = ((c) => {
-            if (c.memory.mode === "💪" && creep.store.getUsedCapacity() === 0) {
+            if (c.memory.mode === "🚛" && creep.store.getUsedCapacity() === 0) {
                 return "🛒";
             }
             if (c.memory.mode === "🛒" && creep.store.getUsedCapacity() > CARRY_CAPACITY) {
-                return "💪";
+                return "🚛";
             }
             return c.memory.mode;
         })(creep);
@@ -93,7 +93,7 @@ const behavior = (creep) => {
     if (!creep.memory.transferId) {
         return ERR_NOT_FOUND;
     }
-    if (creep.memory.transferId && creep.memory.mode === "💪") {
+    if (creep.memory.transferId && creep.memory.mode === "🚛") {
         const transferTarget = Game.getObjectById(creep.memory.transferId);
         if (transferTarget) {
             if (!creep.pos.isNearTo(transferTarget)) {

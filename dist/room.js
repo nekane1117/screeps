@@ -9,8 +9,10 @@ const room_source_1 = require("./room.source");
 const structure_links_1 = __importDefault(require("./structure.links"));
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
+const util_creep_2 = require("./util.creep");
+const utils_2 = require("./utils");
 function roomBehavior(room) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) === null || _a === void 0 ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
         (_b = room.controller) === null || _b === void 0 ? void 0 : _b.activateSafeMode();
     }
@@ -29,7 +31,7 @@ function roomBehavior(room) {
         creteStructures(room);
     }
     (0, structure_links_1.default)((0, utils_1.findMyStructures)(room).link);
-    const { carrier: carriers = [], harvester = [], repairer = [], } = Object.values(Game.creeps)
+    const { carrier: carriers = [], harvester = [], repairer = [], remoteHarvester = [], reserver = [], } = Object.values(Game.creeps)
         .filter((c) => c.memory.baseRoom === room.name)
         .reduce((creeps, c) => {
         creeps[c.memory.role] = ((creeps === null || creeps === void 0 ? void 0 : creeps[c.memory.role]) || []).concat(c);
@@ -94,6 +96,48 @@ function roomBehavior(room) {
             return OK;
         }
     }
+    (_d = room.memory.remote) === null || _d === void 0 ? void 0 : _d.forEach((targetRoomName) => {
+        var _a, _b, _c, _d;
+        if (room.energyAvailable < room.energyCapacityAvailable) {
+            return;
+        }
+        const targetRoom = Game.rooms[targetRoomName];
+        if (!targetRoom) {
+            return;
+        }
+        if ((((_b = (_a = targetRoom.controller) === null || _a === void 0 ? void 0 : _a.reservation) === null || _b === void 0 ? void 0 : _b.ticksToEnd) || 0) < 1000 && !reserver.find((c) => c.memory.targetRoomName === targetRoomName)) {
+            const spawn = (_c = (0, utils_2.getSpawnsInRoom)(room)) === null || _c === void 0 ? void 0 : _c.find((s) => !s.spawning);
+            if (spawn) {
+                const spawned = spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("reserver", room.energyAvailable).bodies, `V_${room.name}_${targetRoomName}`, {
+                    memory: {
+                        baseRoom: room.name,
+                        role: "reserver",
+                        targetRoomName,
+                    },
+                });
+                if (spawned !== OK) {
+                    console.log(util_creep_2.RETURN_CODE_DECODER[spawned.toString()]);
+                }
+            }
+        }
+        const { bodies } = (0, util_creep_1.filterBodiesByCost)("remoteHarvester", room.energyAvailable);
+        if (remoteHarvester.filter((c) => c.memory.targetRoomName === targetRoomName && (c.ticksToLive || 0) > bodies.length * CREEP_SPAWN_TIME).length < 2) {
+            const spawn = (_d = (0, utils_2.getSpawnsInRoom)(room)) === null || _d === void 0 ? void 0 : _d.find((s) => !s.spawning);
+            if (spawn) {
+                const spawned = spawn.spawnCreep(bodies, `Rh_${room.name}_${targetRoomName}_${Game.time}`, {
+                    memory: {
+                        baseRoom: room.name,
+                        role: "remoteHarvester",
+                        targetRoomName,
+                        mode: "🌾",
+                    },
+                });
+                if (spawned !== OK) {
+                    console.log(util_creep_2.RETURN_CODE_DECODER[spawned.toString()]);
+                }
+            }
+        }
+    });
 }
 exports.roomBehavior = roomBehavior;
 function creteStructures(room) {

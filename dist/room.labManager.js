@@ -2,7 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const constants_1 = require("./constants");
 const util_creep_1 = require("./util.creep");
+const utils_1 = require("./utils");
 function behavior(labs, mineral) {
+    var _a;
     const strategy = constants_1.LAB_STRATEGY[mineral.mineralType];
     if (!strategy) {
         return console.log(mineral.mineralType, "not have strategy");
@@ -20,9 +22,11 @@ function behavior(labs, mineral) {
     });
     const { labManager = [] } = (0, util_creep_1.getCreepsInRoom)(firstLab.room);
     const bodies = (0, util_creep_1.filterBodiesByCost)("labManager", firstLab.room.energyAvailable).bodies;
-    if (firstLab.room.energyAvailable === firstLab.room.energyCapacityAvailable &&
+    if (firstLab.room.terminal &&
+        firstLab.room.terminal.store.energy > firstLab.room.energyCapacityAvailable &&
+        firstLab.room.energyAvailable === firstLab.room.energyCapacityAvailable &&
         labManager.filter((lm) => lm.ticksToLive && lm.ticksToLive > bodies.length * CREEP_SPAWN_TIME).length === 0) {
-        const spawn = Object.values(Game.spawns).find((s) => !s.spawning);
+        const spawn = (_a = (0, utils_1.getSpawnsInRoom)(firstLab.pos.roomName)) === null || _a === void 0 ? void 0 : _a.find((s) => !s.spawning);
         if (spawn) {
             spawn.spawnCreep(bodies, `Lm_${firstLab.room.name}_${Game.time}`, {
                 memory: {

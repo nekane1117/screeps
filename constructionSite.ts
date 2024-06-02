@@ -14,7 +14,7 @@ export default function behavior(site: ConstructionSite) {
   ) {
     // 隣の部屋までの使えるspawnを探す
     const spawn = getSpawnsWithDistance(site)
-      .sort((a, b) => b.spawn.room.energyAvailable / (b.distance + 1) - a.spawn.room.energyAvailable / (a.distance + 1))
+      .sort((a, b) => b.spawn.room.energyAvailable / (b.distance + 1) ** 2 - a.spawn.room.energyAvailable / (a.distance + 1) ** 2)
       .find(
         ({
           spawn: {

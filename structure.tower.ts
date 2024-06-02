@@ -17,8 +17,8 @@ export default function behaviors(tower: Structure) {
   // repair
   const decayStructures = _(
     tower.room.find(FIND_STRUCTURES, {
-      filter: (s): s is StructureRampart | StructureRoad => {
-        if (s.structureType === STRUCTURE_RAMPART) {
+      filter: (s): s is StructureRampart | StructureRoad | StructureWall => {
+        if (s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL) {
           return s.hits < RAMPART_DECAY_AMOUNT * 10;
         } else if (s.structureType === STRUCTURE_ROAD) {
           switch (_.first(s.pos.lookFor(LOOK_TERRAIN))) {
@@ -41,7 +41,7 @@ export default function behaviors(tower: Structure) {
   if (decayStructures.size() > 0) {
     return tower.repair(
       decayStructures.min((s) => {
-        return s.hits * ROAD_DECAY_TIME + s.ticksToDecay;
+        return s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay : ROAD_DECAY_TIME);
       }),
     );
   }

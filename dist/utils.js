@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.calcMaxTransferAmount = exports.isHighway = exports.logUsage = exports.getSpawnsWithDistance = exports.getSpawnsOrderdByRange = exports.findMyStructures = exports.getCapacityRate = void 0;
+exports.readonly = exports.calcMaxTransferAmount = exports.isHighway = exports.logUsage = exports.getSpawnsWithDistance = exports.getSpawnsOrderdByRange = exports.getSitesInRoom = exports.getSpawnsInRoom = exports.findMyStructures = exports.getCapacityRate = void 0;
 function getCapacityRate(s, type = RESOURCE_ENERGY) {
     if ("store" in s) {
         return s.store.getUsedCapacity(type) / s.store.getCapacity(type);
@@ -53,6 +53,22 @@ const findMyStructures = (room) => {
     }
 };
 exports.findMyStructures = findMyStructures;
+function getSpawnsInRoom(r) {
+    const room = _.isString(r) ? Game.rooms[r] : r;
+    if (!room) {
+        return undefined;
+    }
+    return Object.values(Game.spawns).filter((s) => s.pos.roomName === room.name);
+}
+exports.getSpawnsInRoom = getSpawnsInRoom;
+function getSitesInRoom(r) {
+    const room = _.isString(r) ? Game.rooms[r] : r;
+    if (!room) {
+        return [];
+    }
+    return Object.values(Game.constructionSites).filter((s) => s.pos.roomName === room.name);
+}
+exports.getSitesInRoom = getSitesInRoom;
 function getSpawnsOrderdByRange(src, maxRooms) {
     const pos = "pos" in src ? src.pos : src;
     return _(Object.values(Game.spawns))
@@ -105,3 +121,7 @@ function calcMaxTransferAmount(order, terminal) {
     return Math.floor(terminal.store.energy / (1 - Math.exp(-Game.map.getRoomLinearDistance(terminal.room.name, order.roomName) / 30)));
 }
 exports.calcMaxTransferAmount = calcMaxTransferAmount;
+function readonly(a) {
+    return a;
+}
+exports.readonly = readonly;

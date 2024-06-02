@@ -36,14 +36,6 @@ function behaviors(terminal) {
                 return Game.market.deal(order.id, order.amount, terminal.room.name);
             }
         }
-        if (mineral && terminal.store.energy > room.energyCapacityAvailable && terminal.store[mineral.mineralType] > constants_1.TERMINAL_THRESHOLD) {
-            const order = _(Game.market.getAllOrders({ type: ORDER_BUY, resourceType: mineral.mineralType }))
-                .filter((o) => o.roomName)
-                .max((o) => o.price);
-            if (order) {
-                return Game.market.deal(order.id, Math.min(order.remainingAmount, (0, utils_1.calcMaxTransferAmount)(order, terminal), terminal.store[mineral.mineralType]), room.name);
-            }
-        }
         if (missingIngredient.length) {
             missingIngredient.forEach((ingredient) => {
                 var _a;

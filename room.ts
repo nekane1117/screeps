@@ -3,6 +3,8 @@ import { behavior } from "./room.source";
 import linkBehavior from "./structure.links";
 import { filterBodiesByCost, getCreepsInRoom, getMainSpawn } from "./util.creep";
 import { findMyStructures } from "./utils";
+import { RETURN_CODE_DECODER } from "./util.creep";
+import { getSpawnsInRoom } from "./utils";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
@@ -39,6 +41,8 @@ export function roomBehavior(room: Room) {
     carrier: carriers = [],
     harvester = [],
     repairer = [],
+    remoteHarvester = [],
+    reserver = [],
   } = Object.values(Game.creeps)
     .filter((c) => c.memory.baseRoom === room.name)
     .reduce(
@@ -115,6 +119,57 @@ export function roomBehavior(room: Room) {
       return OK;
     }
   }
+
+  room.memory.remote?.forEach((targetRoomName) => {
+    // エネルギー満タンの時以外無視する
+    if (room.energyAvailable < room.energyCapacityAvailable) {
+      return;
+    }
+    const targetRoom = Game.rooms[targetRoomName];
+
+    if (!targetRoom) {
+      return;
+    }
+
+    // コントローラが取れてないかつreserverがいないときは作る
+    if ((targetRoom.controller?.reservation?.ticksToEnd || 0) < 1000 && !(reserver as Reserver[]).find((c) => c.memory.targetRoomName === targetRoomName)) {
+      const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
+      if (spawn) {
+        const spawned = spawn.spawnCreep(filterBodiesByCost("reserver", room.energyAvailable).bodies, `V_${room.name}_${targetRoomName}`, {
+          memory: {
+            baseRoom: room.name,
+            role: "reserver",
+            targetRoomName,
+          } as ReserverMemory,
+        });
+        if (spawned !== OK) {
+          console.log(RETURN_CODE_DECODER[spawned.toString()]);
+        }
+      }
+    }
+    // harvesterがいないときは作る
+    const { bodies } = filterBodiesByCost("remoteHarvester", room.energyAvailable);
+    if (
+      (remoteHarvester as RemoteHarvester[]).filter(
+        (c) => c.memory.targetRoomName === targetRoomName && (c.ticksToLive || 0) > bodies.length * CREEP_SPAWN_TIME,
+      ).length < 2
+    ) {
+      const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
+      if (spawn) {
+        const spawned = spawn.spawnCreep(bodies, `Rh_${room.name}_${targetRoomName}_${Game.time}`, {
+          memory: {
+            baseRoom: room.name,
+            role: "remoteHarvester",
+            targetRoomName,
+            mode: "🌾",
+          } as RemoteHarvesterMemory,
+        });
+        if (spawned !== OK) {
+          console.log(RETURN_CODE_DECODER[spawned.toString()]);
+        }
+      }
+    }
+  });
 }
 
 /** 部屋ごとの色々を建てる */

@@ -19,14 +19,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       return console.log(`${creep.name} is not MineralCarrier`);
     }
     const newMode = ((c: MineralCarrier) => {
-      if (c.memory.mode === "💪" && creep.store.getUsedCapacity() === 0) {
+      if (c.memory.mode === "🚛" && creep.store.getUsedCapacity() === 0) {
         // 作業モードで空になったら収集モードにする
         return "🛒";
       }
 
       if (c.memory.mode === "🛒" && creep.store.getUsedCapacity() > CARRY_CAPACITY) {
         // 収集モードで50超えたら作業モードにする
-        return "💪";
+        return "🚛";
       }
 
       // そのまま
@@ -126,7 +126,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return ERR_NOT_FOUND;
   }
 
-  if (creep.memory.transferId && creep.memory.mode === "💪") {
+  if (creep.memory.transferId && creep.memory.mode === "🚛") {
     const transferTarget = Game.getObjectById(creep.memory.transferId);
     if (transferTarget) {
       if (!creep.pos.isNearTo(transferTarget)) {

@@ -1,5 +1,6 @@
 import { LAB_STRATEGY, REVERSE_REACTIONS } from "./constants";
 import { filterBodiesByCost, getCreepsInRoom } from "./util.creep";
+import { getSpawnsInRoom } from "./utils";
 
 export default function behavior(labs: StructureLab[], mineral: Mineral) {
   const strategy = LAB_STRATEGY[mineral.mineralType];
@@ -31,10 +32,12 @@ export default function behavior(labs: StructureLab[], mineral: Mineral) {
 
   // 管理者を作る
   if (
+    firstLab.room.terminal &&
+    firstLab.room.terminal.store.energy > firstLab.room.energyCapacityAvailable &&
     firstLab.room.energyAvailable === firstLab.room.energyCapacityAvailable &&
     labManager.filter((lm) => lm.ticksToLive && lm.ticksToLive > bodies.length * CREEP_SPAWN_TIME).length === 0
   ) {
-    const spawn = Object.values(Game.spawns).find((s) => !s.spawning);
+    const spawn = getSpawnsInRoom(firstLab.pos.roomName)?.find((s) => !s.spawning);
     if (spawn) {
       spawn.spawnCreep(bodies, `Lm_${firstLab.room.name}_${Game.time}`, {
         memory: {

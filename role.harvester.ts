@@ -1,6 +1,6 @@
 import { CreepBehavior } from "./roles";
 
-import { RETURN_CODE_DECODER, customMove, pickUpAll } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, moveRoom, pickUpAll } from "./util.creep";
 import { findMyStructures } from "./utils";
 
 /**
@@ -11,6 +11,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isHarvester(creep)) {
     console.log(`${creep.name} is not harvester`);
     return ERR_INVALID_TARGET;
+  }
+
+  // 違う部屋にいたらとりあえず目的の部屋に行く
+  if (creep.room.name !== creep.memory.baseRoom) {
+    return moveRoom(creep, creep.room.name, creep.memory.baseRoom);
   }
 
   // harvest

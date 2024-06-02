@@ -4,6 +4,7 @@ const constants_1 = require("./constants");
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 function behavior(extractor) {
+    var _a, _b;
     if (!isE(extractor)) {
         return console.log("type is invalid", JSON.stringify(extractor));
     }
@@ -21,7 +22,8 @@ function behavior(extractor) {
         (groups[c.memory.role] = groups[c.memory.role] || []).push(c);
         return groups;
     }, {});
-    if (!mineralHarvester.find((c) => c.memory.targetId === mineral.id)) {
+    if ((((_a = extractor.room.terminal) === null || _a === void 0 ? void 0 : _a.store.energy) || 0) > extractor.room.energyCapacityAvailable &&
+        !mineralHarvester.find((c) => c.memory.targetId === mineral.id)) {
         const spawn = (0, utils_1.getSpawnsOrderdByRange)(extractor, 1).first();
         if (!spawn) {
             console.log(`source ${extractor.id} can't find spawn`);
@@ -39,7 +41,7 @@ function behavior(extractor) {
             return spawned;
         }
     }
-    else if (mineralCarrier.length < 1) {
+    else if ((((_b = extractor.room.terminal) === null || _b === void 0 ? void 0 : _b.store.energy) || 0) > extractor.room.energyCapacityAvailable && mineralCarrier.length < 1) {
         const spawn = (0, utils_1.getSpawnsOrderdByRange)(extractor, 1).first();
         if (!spawn) {
             console.log(`source ${extractor.id} can't find spawn`);

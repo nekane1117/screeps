@@ -15,7 +15,9 @@ declare type ROLES =
   | "mineralHarvester"
   | "mineralCarrier"
   | "defender"
-  | "labManager";
+  | "labManager"
+  | "reserver"
+  | "remoteHarvester";
 declare interface CreepMemory {
   role: ROLES;
   baseRoom: string;
@@ -28,13 +30,31 @@ declare interface CreepMemory {
     room: string;
   };
   moved?: ReturnType<Creep["moveTo"]>;
-  harvestMoved?: ReturnType<Creep["moveTo"]>;
+  __avoidCreep?: boolean;
+
+  __moveRoom?: {
+    route?: ReturnType<(typeof Game)["map"]["findRoute"]>;
+    exit?: RoomPosition | null;
+  };
 }
 
 /** 全部のCreepの型 */
-declare type Creeps = Creep | Harvester | Upgrader | Builder | Carrier | Repairer | Claimer | MineralHarvester | MineralCarrier | Defender | LabManager;
+declare type Creeps =
+  | Creep
+  | Harvester
+  | Upgrader
+  | Builder
+  | Carrier
+  | Repairer
+  | Claimer
+  | MineralHarvester
+  | MineralCarrier
+  | Defender
+  | LabManager
+  | Reserver
+  | RemoteHarvester;
 
-declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink;
+declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink | StructureTerminal;
 
 declare type HasStore =
   | StructureExtension
@@ -56,10 +76,10 @@ declare interface Harvester extends Creep {
 declare interface HarvesterMemory extends CreepMemory {
   role: "harvester";
   /** 今何してるか
-   * 💪 : 資源を持ってきてるところ
+   * 🚛 : 資源を持ってきてるところ
    * 🌾 : 収集中
    */
-  mode: "💪" | "🌾";
+  mode: "🚛" | "🌾";
   harvestTargetId: Source["id"];
   storeId?: StoreTarget["id"] | null;
   harvested?: {
@@ -112,6 +132,9 @@ declare interface RoomMemory {
   };
 
   labs: Partial<Record<Id<StructureLab>, LabMemory>>;
+
+  /** room names for remote harvest */
+  remote?: string[];
 }
 
 declare type CreepsCache = Partial<{
@@ -125,6 +148,8 @@ declare type CreepsCache = Partial<{
   mineralCarrier: MineralCarrier[];
   defender: Defender[];
   labManager: LabManager[];
+  reserver: Reserver[];
+  remoteHarvester: RemoteHarvester[];
 }>;
 
 declare interface LabMemory {
@@ -155,10 +180,10 @@ declare interface Builder extends Creep {
 declare interface BuilderMemory extends CreepMemory {
   role: "builder";
   /** 今何してるか
-   * working    : 作業中
-   * collecting : 資源取得中
+   * 👷 : 作業中
+   * 🛒 : 資源取得中
    */
-  mode: "💪" | "🛒";
+  mode: "👷" | "🛒";
   /** 今建てたいもの */
   buildingId?: ConstructionSite["id"] | null;
   built?: ReturnType<Creeps["build"]>;
@@ -180,7 +205,7 @@ declare interface CarrierMemory extends CreepMemory {
    * collecting : 資源取得中
    * harvesting : 自力で収集中
    */
-  mode: "💪" | "🛒";
+  mode: "🚛" | "🛒";
   /** 担当倉庫 */
   storeId?: Id<StructureExtension | StructureSpawn | StructureLink | StructureStorage | StructureTerminal | StructureContainer>;
   /** 配送先 */
@@ -193,10 +218,10 @@ declare interface MineralCarrier extends Creep {
 declare interface MineralCarrierMemory extends CreepMemory {
   role: "mineralCarrier";
   /** 今何してるか
-   * 💪 : 輸送中
+   * 🚛 : 輸送中
    * 🛒 : 資源取得中
    */
-  mode: "💪" | "🛒";
+  mode: "🚛" | "🛒";
   /** 担当倉庫 */
   storeId?: Id<StructureStorage | StructureTerminal | StructureContainer>;
   /** 配送先 */
@@ -258,4 +283,34 @@ declare interface LabManagerMemory extends CreepMemory {
   mineralType?: MineralConstant | MineralCompoundConstant;
   /** 配送先 */
   transferId?: Id<Parameters<Creep["transfer"]>[0]>;
+}
+
+declare interface Reserver extends Creep {
+  memory: ReserverMemory;
+}
+
+declare interface ReserverMemory extends CreepMemory {
+  role: "reserver";
+  targetRoomName: string;
+  route?: ReturnType<(typeof Game)["map"]["findRoute"]>;
+  exit?: RoomPosition | null;
+}
+declare interface RemoteHarvester extends Creep {
+  memory: RemoteHarvesterMemory;
+}
+
+declare interface RemoteHarvesterMemory extends CreepMemory {
+  role: "remoteHarvester";
+  /** 今何してるか
+   * 🚛 : 資源を持ってきてるところ
+   * 🌾 : 収集中
+   * 👷 : 建築中
+   */
+  mode: "🚛" | "🌾" | "👷";
+  targetRoomName: string;
+  harvestTargetId?: Source["id"] | null;
+  siteId?: ConstructionSite["id"] | null;
+  exit?: RoomPosition | null;
+  route?: ReturnType<(typeof Game)["map"]["findRoute"]>;
+  storeId?: StoreTarget["id"] | null;
 }

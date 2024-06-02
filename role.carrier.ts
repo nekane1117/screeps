@@ -19,14 +19,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       return console.log(`${creep.name} is not Carrier`);
     }
     const newMode = ((c: Carrier) => {
-      if (c.memory.mode === "💪" && creep.store.getUsedCapacity() === 0) {
+      if (c.memory.mode === "🚛" && creep.store.getUsedCapacity() === 0) {
         // 作業モードで空になったら収集モードにする
         return "🛒";
       }
 
       if (c.memory.mode === "🛒" && getCapacityRate(creep) > 0.5) {
         // 収集モードで半分超えたら作業モードにする
-        return "💪";
+        return "🚛";
       }
 
       // そのまま
@@ -105,7 +105,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // それすらないときは作業モードになる
   if (!creep.memory.storeId) {
     creep.memory.transferId = undefined;
-    creep.memory.mode = "💪";
+    creep.memory.mode = "🚛";
   }
 
   // 取り出し処理###############################################################################################
@@ -173,16 +173,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       .first()?.id;
   }
 
-  // terminalにキャッシュ
-  if (!creep.memory.transferId && room.terminal && room.terminal.store.energy < room.energyCapacityAvailable) {
-    creep.memory.transferId = room.terminal.id;
-  }
-
-  // storageにキャッシュ
-  if (!creep.memory.transferId && room.storage && room.storage.store.energy < room.energyCapacityAvailable) {
-    creep.memory.transferId = room.storage.id;
-  }
-
   // タワーに入れて修理や防御
   if (!creep.memory.transferId) {
     creep.memory.transferId = creep.pos.findClosestByRange(tower, {
@@ -192,11 +182,21 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     })?.id;
   }
 
+  // storageにキャッシュ
+  if (!creep.memory.transferId && room.storage && room.storage.store.energy < room.energyCapacityAvailable) {
+    creep.memory.transferId = room.storage.id;
+  }
+
   if (!creep.memory.transferId) {
     creep.memory.transferId = _(labs)
       .filter((lab) => getCapacityRate(lab) < 0.8)
       .sort((l1, l2) => l1.store.energy - l2.store.energy)
       .first()?.id;
+  }
+
+  // terminalにキャッシュ
+  if (!creep.memory.transferId && room.terminal && room.terminal.store.energy < room.energyCapacityAvailable) {
+    creep.memory.transferId = room.terminal.id;
   }
 
   // コントローラー強化
@@ -223,7 +223,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return ERR_NOT_FOUND;
   }
 
-  if (creep.memory.transferId && creep.memory.mode === "💪") {
+  if (creep.memory.transferId && creep.memory.mode === "🚛") {
     const transferTarget = Game.getObjectById(creep.memory.transferId);
     if (transferTarget) {
       if (!creep.pos.isNearTo(transferTarget)) {

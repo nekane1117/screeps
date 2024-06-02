@@ -30,7 +30,10 @@ export default function behavior(extractor: Structure) {
     );
 
   // 最大匹数より少ないとき
-  if (!(mineralHarvester as MineralHarvester[]).find((c) => c.memory.targetId === mineral.id)) {
+  if (
+    (extractor.room.terminal?.store.energy || 0) > extractor.room.energyCapacityAvailable &&
+    !(mineralHarvester as MineralHarvester[]).find((c) => c.memory.targetId === mineral.id)
+  ) {
     const spawn = getSpawnsOrderdByRange(extractor, 1).first();
     if (!spawn) {
       console.log(`source ${extractor.id} can't find spawn`);
@@ -48,7 +51,7 @@ export default function behavior(extractor: Structure) {
       });
       return spawned;
     }
-  } else if ((mineralCarrier as MineralCarrier[]).length < 1) {
+  } else if ((extractor.room.terminal?.store.energy || 0) > extractor.room.energyCapacityAvailable && (mineralCarrier as MineralCarrier[]).length < 1) {
     const spawn = getSpawnsOrderdByRange(extractor, 1).first();
     if (!spawn) {
       console.log(`source ${extractor.id} can't find spawn`);

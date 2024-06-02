@@ -53,6 +53,26 @@ export const findMyStructures = (room: Room) => {
   }
 };
 
+export function getSpawnsInRoom(r: Room | string) {
+  const room = _.isString(r) ? Game.rooms[r] : r;
+
+  if (!room) {
+    return undefined;
+  }
+
+  return Object.values(Game.spawns).filter((s) => s.pos.roomName === room.name);
+}
+
+export function getSitesInRoom(r: Room | string) {
+  const room = _.isString(r) ? Game.rooms[r] : r;
+
+  if (!room) {
+    return [];
+  }
+
+  return Object.values(Game.constructionSites).filter((s) => s.pos.roomName === room.name);
+}
+
 export function getSpawnsOrderdByRange(src: RoomPosition | _HasRoomPosition, maxRooms?: number) {
   const pos = "pos" in src ? src.pos : src;
 
@@ -112,4 +132,9 @@ export function calcMaxTransferAmount(order: Order, terminal: StructureTerminal)
     return 0;
   }
   return Math.floor(terminal.store.energy / (1 - Math.exp(-Game.map.getRoomLinearDistance(terminal.room.name, order.roomName) / 30)));
+}
+
+/** ただのアノテーション */
+export function readonly<T>(a: T) {
+  return a as Readonly<T>;
 }

@@ -7,6 +7,9 @@ const behavior = (creep) => {
         console.log(`${creep.name} is not harvester`);
         return ERR_INVALID_TARGET;
     }
+    if (creep.room.name !== creep.memory.baseRoom) {
+        return (0, util_creep_1.moveRoom)(creep, creep.room.name, creep.memory.baseRoom);
+    }
     const source = Game.getObjectById(creep.memory.harvestTargetId);
     if (!source) {
         return creep.suicide();

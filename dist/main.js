@@ -73,6 +73,11 @@ module.exports.loop = function () {
                     color: (0, util_creep_1.toColor)(c),
                 });
                 (_a = roles_1.behaviors[c.memory.role]) === null || _a === void 0 ? void 0 : _a.call(roles_1.behaviors, c);
+                c.getActiveBodyparts(WORK) &&
+                    c.pos
+                        .lookFor(LOOK_STRUCTURES)
+                        .filter((s) => s.structureType === STRUCTURE_ROAD && s.hits < s.hitsMax)
+                        .forEach((s) => c.repair(s));
             });
         });
         Object.keys(Memory.rooms).forEach((name) => {

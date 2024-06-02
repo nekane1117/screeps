@@ -14,7 +14,7 @@ function behaviors(tower) {
     }
     const decayStructures = _(tower.room.find(FIND_STRUCTURES, {
         filter: (s) => {
-            if (s.structureType === STRUCTURE_RAMPART) {
+            if (s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL) {
                 return s.hits < RAMPART_DECAY_AMOUNT * 10;
             }
             else if (s.structureType === STRUCTURE_ROAD) {
@@ -36,7 +36,7 @@ function behaviors(tower) {
     }));
     if (decayStructures.size() > 0) {
         return tower.repair(decayStructures.min((s) => {
-            return s.hits * ROAD_DECAY_TIME + s.ticksToDecay;
+            return s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay : ROAD_DECAY_TIME);
         }));
     }
     _(tower.room.find(FIND_MY_CREEPS, { filter: (s) => s.hits < s.hitsMax }))

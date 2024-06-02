@@ -10,7 +10,7 @@ function behavior(site) {
         return c.memory.role === "builder" && c.memory.baseRoom === site.pos.roomName && (c.ticksToLive || 0) > CREEP_LIFE_TIME * 0.1;
     }).length < (upgradeContainer ? (0, utils_1.getCapacityRate)(upgradeContainer) / 0.9 : 1)) {
         const spawn = (_b = (0, utils_1.getSpawnsWithDistance)(site)
-            .sort((a, b) => b.spawn.room.energyAvailable / (b.distance + 1) - a.spawn.room.energyAvailable / (a.distance + 1))
+            .sort((a, b) => b.spawn.room.energyAvailable / Math.pow((b.distance + 1), 2) - a.spawn.room.energyAvailable / Math.pow((a.distance + 1), 2))
             .find(({ spawn: { room: { energyAvailable, energyCapacityAvailable }, }, }) => energyAvailable / energyCapacityAvailable > 0.9)) === null || _b === void 0 ? void 0 : _b.spawn;
         if (spawn) {
             spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("builder", spawn.room.energyAvailable).bodies, `B_${site.pos.roomName}_${Game.time}`, {

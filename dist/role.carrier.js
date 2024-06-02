@@ -14,11 +14,11 @@ const behavior = (creep) => {
             return console.log(`${creep.name} is not Carrier`);
         }
         const newMode = ((c) => {
-            if (c.memory.mode === "💪" && creep.store.getUsedCapacity() === 0) {
+            if (c.memory.mode === "🚛" && creep.store.getUsedCapacity() === 0) {
                 return "🛒";
             }
             if (c.memory.mode === "🛒" && (0, utils_1.getCapacityRate)(creep) > 0.5) {
-                return "💪";
+                return "🚛";
             }
             return c.memory.mode;
         })(creep);
@@ -76,7 +76,7 @@ const behavior = (creep) => {
     }
     if (!creep.memory.storeId) {
         creep.memory.transferId = undefined;
-        creep.memory.mode = "💪";
+        creep.memory.mode = "🚛";
     }
     if (creep.memory.storeId && creep.memory.mode === "🛒") {
         const store = Game.getObjectById(creep.memory.storeId);
@@ -126,12 +126,6 @@ const behavior = (creep) => {
             .sort((s1, s2) => s1.pos.y - s2.pos.y)
             .first()) === null || _g === void 0 ? void 0 : _g.id;
     }
-    if (!creep.memory.transferId && room.terminal && room.terminal.store.energy < room.energyCapacityAvailable) {
-        creep.memory.transferId = room.terminal.id;
-    }
-    if (!creep.memory.transferId && room.storage && room.storage.store.energy < room.energyCapacityAvailable) {
-        creep.memory.transferId = room.storage.id;
-    }
     if (!creep.memory.transferId) {
         creep.memory.transferId = (_h = creep.pos.findClosestByRange(tower, {
             filter: (t) => {
@@ -139,11 +133,17 @@ const behavior = (creep) => {
             },
         })) === null || _h === void 0 ? void 0 : _h.id;
     }
+    if (!creep.memory.transferId && room.storage && room.storage.store.energy < room.energyCapacityAvailable) {
+        creep.memory.transferId = room.storage.id;
+    }
     if (!creep.memory.transferId) {
         creep.memory.transferId = (_j = _(labs)
             .filter((lab) => (0, utils_1.getCapacityRate)(lab) < 0.8)
             .sort((l1, l2) => l1.store.energy - l2.store.energy)
             .first()) === null || _j === void 0 ? void 0 : _j.id;
+    }
+    if (!creep.memory.transferId && room.terminal && room.terminal.store.energy < room.energyCapacityAvailable) {
+        creep.memory.transferId = room.terminal.id;
     }
     if (!creep.memory.transferId) {
         creep.memory.transferId = (_k = (controllerContaeiner && (0, utils_1.getCapacityRate)(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined)) === null || _k === void 0 ? void 0 : _k.id;
@@ -161,7 +161,7 @@ const behavior = (creep) => {
     if (!creep.memory.transferId) {
         return ERR_NOT_FOUND;
     }
-    if (creep.memory.transferId && creep.memory.mode === "💪") {
+    if (creep.memory.transferId && creep.memory.mode === "🚛") {
         const transferTarget = Game.getObjectById(creep.memory.transferId);
         if (transferTarget) {
             if (!creep.pos.isNearTo(transferTarget)) {

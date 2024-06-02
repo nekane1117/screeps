@@ -74,6 +74,12 @@ module.exports.loop = function () {
             color: toColor(c),
           });
           behaviors[c.memory.role]?.(c);
+          // 通った場所はみんなで直す
+          c.getActiveBodyparts(WORK) &&
+            c.pos
+              .lookFor(LOOK_STRUCTURES)
+              .filter((s) => s.structureType === STRUCTURE_ROAD && s.hits < s.hitsMax)
+              .forEach((s) => c.repair(s));
         });
     });
 

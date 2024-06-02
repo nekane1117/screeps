@@ -45,24 +45,24 @@ export default function behaviors(terminal: Structure) {
         return Game.market.deal(order.id, order.amount, terminal.room.name);
       }
     }
-    // 自室のミネラルをため込んでるときはとにかく売る
-    if (mineral && terminal.store.energy > room.energyCapacityAvailable && terminal.store[mineral.mineralType] > TERMINAL_THRESHOLD) {
-      // 一番高く買ってくれるオーダー
-      const order = _(Game.market.getAllOrders({ type: ORDER_BUY, resourceType: mineral.mineralType }))
-        // 部屋名がないのはよくわからないので無視する
-        .filter((o) => o.roomName)
-        .max((o) => o.price);
+    // // 自室のミネラルをため込んでるときはとにかく売る
+    // if (mineral && terminal.store.energy > room.energyCapacityAvailable && terminal.store[mineral.mineralType] > TERMINAL_THRESHOLD) {
+    //   // 一番高く買ってくれるオーダー
+    //   const order = _(Game.market.getAllOrders({ type: ORDER_BUY, resourceType: mineral.mineralType }))
+    //     // 部屋名がないのはよくわからないので無視する
+    //     .filter((o) => o.roomName)
+    //     .max((o) => o.price);
 
-      // 今のエネルギーで支払える最大量
-      if (order) {
-        return Game.market.deal(
-          order.id,
-          // オーダーの残量、支払える上限、保有上限の中で一番少ない分売る
-          Math.min(order.remainingAmount, calcMaxTransferAmount(order, terminal), terminal.store[mineral.mineralType]),
-          room.name,
-        );
-      }
-    }
+    //   // 今のエネルギーで支払える最大量
+    //   if (order) {
+    //     return Game.market.deal(
+    //       order.id,
+    //       // オーダーの残量、支払える上限、保有上限の中で一番少ない分売る
+    //       Math.min(order.remainingAmount, calcMaxTransferAmount(order, terminal), terminal.store[mineral.mineralType]),
+    //       room.name,
+    //     );
+    //   }
+    // }
     // 不足してる原材料は買っておく
     if (missingIngredient.length) {
       // とにかく一番安いのを買う
