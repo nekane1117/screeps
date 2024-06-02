@@ -33,19 +33,38 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   };
   checkMode();
 
-  // harvest
-  harvest(creep);
+  // // inverderにとられたとき
+  // const controller = Game.rooms[memory.targetRoomName]?.controller;
+  // if (controller && controller?.reservation?.username !== "Nekane") {
+  //   const res =
+  //   if (creep.attackController(controller) === ERR_NOT_IN_RANGE) {
+  //     return customMove(creep, controller);
+  //   } else {
+  //     return console.lo
+  //   }
+  // }
 
-  // 現在地に道が無ければ作らせる
-  if (
-    !isHighway(creep.room) &&
-    ![...creep.pos.lookFor(LOOK_STRUCTURES), ...creep.pos.lookFor(LOOK_STRUCTURES)].find((s) => s.structureType === STRUCTURE_ROAD)
-  ) {
-    creep.pos.createConstructionSite(STRUCTURE_ROAD);
-  }
   // attack
   // ATTACKパーツは何もしなくても自動で反撃するのでそっちに任せる
   // 範囲攻撃されると手も足も出ない
+  const ic = creep.pos.findClosestByRange(FIND_HOSTILE_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_INVADER_CORE });
+  if (ic) {
+    if (creep.attack(ic) === ERR_NOT_IN_RANGE) {
+      return customMove(creep, ic);
+    } else {
+      return OK;
+    }
+  } else if (
+    !isHighway(creep.room) &&
+    ![...creep.pos.lookFor(LOOK_STRUCTURES), ...creep.pos.lookFor(LOOK_STRUCTURES)].find((s) => s.structureType === STRUCTURE_ROAD)
+  ) {
+    // 現在地に道が無ければ作らせる
+    creep.pos.createConstructionSite(STRUCTURE_ROAD);
+  }
+
+  // harvest
+  harvest(creep);
+
   // build
   build(creep);
   // repair

@@ -31,11 +31,20 @@ const behavior = (creep) => {
         }
     };
     checkMode();
-    harvest(creep);
-    if (!(0, utils_1.isHighway)(creep.room) &&
+    const ic = creep.pos.findClosestByRange(FIND_HOSTILE_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_INVADER_CORE });
+    if (ic) {
+        if (creep.attack(ic) === ERR_NOT_IN_RANGE) {
+            return (0, util_creep_1.customMove)(creep, ic);
+        }
+        else {
+            return OK;
+        }
+    }
+    else if (!(0, utils_1.isHighway)(creep.room) &&
         ![...creep.pos.lookFor(LOOK_STRUCTURES), ...creep.pos.lookFor(LOOK_STRUCTURES)].find((s) => s.structureType === STRUCTURE_ROAD)) {
         creep.pos.createConstructionSite(STRUCTURE_ROAD);
     }
+    harvest(creep);
     build(creep);
     const repariTarget = creep.pos.roomName !== memory.baseRoom && creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.hits < s.hitsMax);
     if (repariTarget) {
