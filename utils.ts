@@ -109,6 +109,9 @@ export function getSpawnsWithDistance(src: RoomPosition | _HasRoomPosition) {
 
 let indent = -1;
 export function logUsage<T = unknown>(title: string, func: () => T) {
+  if (indent > 10) {
+    indent = -1;
+  }
   indent++;
   const start = Game.cpu.getUsed();
   const value = func();

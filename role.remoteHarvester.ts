@@ -1,6 +1,6 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, getMainSpawn, pickUpAll } from "./util.creep";
-import { findMyStructures, getCapacityRate, getSitesInRoom, readonly } from "./utils";
+import { RETURN_CODE_DECODER, customMove, pickUpAll } from "./util.creep";
+import { findMyStructures, getCapacityRate, getSitesInRoom, isHighway, readonly } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isRemoteHarvester(creep)) {
@@ -10,7 +10,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   const checkMode = () => {
     const newMode: RemoteHarvesterMemory["mode"] = ((creep: RemoteHarvester) => {
-      if (creep.store.energy === 0) {
+      if (creep.memory.mode === "👷" && getSitesInRoom(creep.room).length === 0) {
+        return "🌾";
+      } else if (creep.store.energy === 0) {
         // 空になってたらとにかく収穫する
         return "🌾";
       } else if (memory.mode === "🌾" && getCapacityRate(creep) === 1) {
@@ -25,7 +27,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.say(newMode);
       creep.memory.mode = newMode;
       creep.memory.route = undefined;
-      creep.memory.harvestTargetId = undefined;
       creep.memory.siteId = undefined;
       creep.memory.storeId = undefined;
     }
@@ -34,6 +35,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // harvest
   harvest(creep);
+
+  // 現在地に道が無ければ作らせる
+  if (
+    !isHighway(creep.room) &&
+    ![...creep.pos.lookFor(LOOK_STRUCTURES), ...creep.pos.lookFor(LOOK_STRUCTURES)].find((s) => s.structureType === STRUCTURE_ROAD)
+  ) {
+    creep.pos.createConstructionSite(STRUCTURE_ROAD);
+  }
   // attack
   // ATTACKパーツは何もしなくても自動で反撃するのでそっちに任せる
   // 範囲攻撃されると手も足も出ない
@@ -141,108 +150,10 @@ function build(creep: RemoteHarvester) {
 
   const sitesInroom = getSitesInRoom(creep.pos.roomName);
 
-  // 自室じゃない
-  // 収穫対象が設定されている
-  // 建設現場が１つも無い
-  // 道じゃないところを歩いている
-  // のときsourceからの道を引く
-  if (
-    creep.pos.roomName !== memory.baseRoom &&
-    memory.harvestTargetId &&
-    Object.values(Game.constructionSites).length === 0 &&
-    !creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD) &&
-    !creep.pos.lookFor(LOOK_CONSTRUCTION_SITES).find((s) => s.structureType === STRUCTURE_ROAD)
-  ) {
-    const spawn = Game.rooms[memory.baseRoom] && getMainSpawn(Game.rooms[memory.baseRoom]);
-    const source = Game.getObjectById(memory.harvestTargetId);
-    if (spawn && source) {
-      // 通る部屋を計算する
-      const route = Game.map.findRoute(source.pos.roomName, spawn.pos.roomName, {
-        routeCallback(roomName) {
-          const parsed = /^[WE]([0-9]+)[NS]([0-9]+)$/.exec(roomName);
-          // 数値化した座標が10で割れるときはHighway
-          const isHighway = parsed && (Number(parsed[1]) % 10 === 0 || Number(parsed[2]) % 10 === 0);
-          // myが取れるときは自室
-          const isMyRoom = Game.rooms[roomName] && Game.rooms[roomName].controller && Game.rooms[roomName].controller?.my;
-          // 自室か高速道路を通る
-          if (isHighway || isMyRoom) {
-            return 1;
-          } else {
-            // それ以外は遠回り
-            return 2.5;
-          }
-        },
-      });
-      // パスが見つからないときはどうしようもないので終わる
-      if (!Array.isArray(route)) {
-        return console.log("no Construction route");
-      }
-
-      // 部屋名を確保
-      const allowedRoom = route.reduce(
-        (allowedRoom, { room }) => {
-          allowedRoom[room] = true;
-          return allowedRoom;
-        },
-        {
-          [creep.pos.roomName]: true,
-          [memory.baseRoom]: true,
-        } as Partial<Record<string, boolean>>,
-      );
-      console.log("try construction", JSON.stringify(allowedRoom));
-
-      PathFinder.search(source.pos, spawn.pos, {
-        // 道を敷くので全部無視する
-        plainCost: 1,
-        swampCost: 1,
-
-        roomCallback(roomName) {
-          // 許可した部屋だけを通る
-          if (allowedRoom[roomName] === undefined) {
-            return false;
-          } else {
-            const room = Game.rooms[roomName];
-            if (!room) return false;
-            const costs = new PathFinder.CostMatrix();
-            // 壁以外は全部2
-            _.range(50).forEach((x) => {
-              _.range(50).forEach((y) => {
-                if (room.lookForAt(LOOK_TERRAIN, x, y)?.[0] !== "wall") {
-                  costs.set(x, y, 2);
-                }
-              });
-            });
-
-            // 道と道になる予定のところは1
-            [...room.find(FIND_STRUCTURES), ...room.find(FIND_MY_CONSTRUCTION_SITES)].forEach((s) => {
-              if (s.structureType === STRUCTURE_ROAD) {
-                costs.set(s.pos.x, s.pos.y, 2);
-              }
-            });
-
-            // 通り抜けできないオブジェクトをよける
-            room
-              .find(FIND_STRUCTURES, {
-                filter: (s) => {
-                  return (OBSTACLE_OBJECT_TYPES as StructureConstant[]).includes(s.structureType);
-                },
-              })
-              .forEach(function (obstacle) {
-                costs.set(obstacle.pos.x, obstacle.pos.y, 0xff);
-              });
-
-            return costs;
-          }
-        },
-      }).path.map((p) => p.createConstructionSite(STRUCTURE_ROAD));
-    } else {
-      console.log("missing", JSON.stringify({ spawn, source }));
-    }
-  }
-
   // 運搬モードで自室以外で建設予定地があるときは建設モードに切り替える
-  if (memory.mode === "🚛" && creep.pos.roomName !== memory.baseRoom && sitesInroom.length > 0) {
+  if (memory.mode === "🚛" && sitesInroom.length > 0) {
     creep.memory.mode = "👷";
+    creep.memory.siteId = undefined;
     creep.say(creep.memory.mode);
   }
   // 最寄りの現場を探す
@@ -269,7 +180,6 @@ function build(creep: RemoteHarvester) {
     //エネルギーが足らなくなったら収穫モードに戻す
     creep.say("🌾");
     creep.memory.mode = "🌾";
-    creep.memory.harvestTargetId = undefined;
   }
 }
 
@@ -346,7 +256,7 @@ function transfer(creep: RemoteHarvester) {
     const store = memory.storeId && Game.getObjectById(memory.storeId);
     if (!store || store.pos.roomName !== memory.baseRoom) {
       // id,本体が見つからないときは初期化して終わる
-      creep.memory.harvestTargetId = undefined;
+      creep.memory.storeId = undefined;
       return ERR_NOT_FOUND;
     }
 

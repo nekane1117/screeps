@@ -16,6 +16,22 @@ function roomBehavior(room) {
     if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) === null || _a === void 0 ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
         (_b = room.controller) === null || _b === void 0 ? void 0 : _b.activateSafeMode();
     }
+    if (!room.memory.carrySize) {
+        room.memory.carrySize = {
+            builder: 100,
+            carrier: 100,
+            claimer: 100,
+            defender: 100,
+            harvester: 100,
+            labManager: 100,
+            mineralCarrier: 100,
+            mineralHarvester: 100,
+            remoteHarvester: 100,
+            repairer: 100,
+            reserver: 100,
+            upgrader: 100,
+        };
+    }
     const sources = room.find(FIND_SOURCES);
     sources.forEach((source) => (0, room_source_1.behavior)(source));
     const { tower, lab, link } = (0, utils_1.findMyStructures)(room);
@@ -37,7 +53,7 @@ function roomBehavior(room) {
         creeps[c.memory.role] = ((creeps === null || creeps === void 0 ? void 0 : creeps[c.memory.role]) || []).concat(c);
         return creeps;
     }, {});
-    const { bodies: carrierBodies } = (0, util_creep_1.filterBodiesByCost)("carrier", room.energyAvailable);
+    const carrierBodies = (0, util_creep_1.getCarrierBody)(room);
     if (harvester.length === 0) {
         return ERR_NOT_FOUND;
     }
@@ -121,7 +137,7 @@ function roomBehavior(room) {
             }
         }
         const { bodies } = (0, util_creep_1.filterBodiesByCost)("remoteHarvester", room.energyAvailable);
-        if (remoteHarvester.filter((c) => c.memory.targetRoomName === targetRoomName && (c.ticksToLive || 0) > bodies.length * CREEP_SPAWN_TIME).length < 2) {
+        if (remoteHarvester.filter((c) => c.memory.targetRoomName === targetRoomName && (c.ticksToLive || 0) > bodies.length * CREEP_SPAWN_TIME).length === 0) {
             const spawn = (_d = (0, utils_2.getSpawnsInRoom)(room)) === null || _d === void 0 ? void 0 : _d.find((s) => !s.spawning);
             if (spawn) {
                 const spawned = spawn.spawnCreep(bodies, `Rh_${room.name}_${targetRoomName}_${Game.time}`, {

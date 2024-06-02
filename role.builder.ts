@@ -1,7 +1,6 @@
 import { CreepBehavior } from "./roles";
-import { complexOrder } from "./util.array";
 import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll, withdrawBy } from "./util.creep";
-import { findMyStructures } from "./utils";
+import { findMyStructures, getSitesInRoom } from "./utils";
 // import { findMyStructures } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
@@ -76,25 +75,16 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // build
   if (
     creep.memory.buildingId ||
-    (creep.memory.buildingId = complexOrder(Object.values(Game.constructionSites), [
-      // 同じ部屋を優先
-      (s) => (s.pos.roomName === creep.memory.baseRoom ? 0 : 1),
-      // コンテナがあるときはコンテナ優先
-      (s) => {
-        switch (s.structureType) {
-          case STRUCTURE_TOWER:
-            return 0;
-          case STRUCTURE_CONTAINER:
-            return 1;
-          default:
-            return 2;
-        }
-      },
-      // 残り作業が一番少ないやつ
-      (s) => s.progressTotal - s.progress,
-      // 近いやつ
-      (s) => s.pos.getRangeTo(creep),
-    ]).first()?.id)
+    (creep.memory.buildingId = (() => {
+      // 自室のサイト
+      const sites = getSitesInRoom(Game.rooms[creep.memory.baseRoom]);
+      if (sites.length === 0) {
+        return undefined;
+      }
+
+      // トータルが少ない中で一番進んでるやつ
+      return _(sites).min((s) => s.progressTotal + (1 - s.progress / s.progressTotal));
+    })()?.id)
   ) {
     const site = Game.getObjectById(creep.memory.buildingId);
     if (site) {

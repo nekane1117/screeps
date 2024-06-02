@@ -1,7 +1,7 @@
 import labManager from "./room.labManager";
 import { behavior } from "./room.source";
 import linkBehavior from "./structure.links";
-import { filterBodiesByCost, getCreepsInRoom, getMainSpawn } from "./util.creep";
+import { filterBodiesByCost, getCarrierBody, getCreepsInRoom, getMainSpawn } from "./util.creep";
 import { findMyStructures } from "./utils";
 import { RETURN_CODE_DECODER } from "./util.creep";
 import { getSpawnsInRoom } from "./utils";
@@ -11,6 +11,24 @@ export function roomBehavior(room: Room) {
 
   if (room.find(FIND_HOSTILE_CREEPS).length && !room.controller?.safeMode && room.energyAvailable > SAFE_MODE_COST) {
     room.controller?.activateSafeMode();
+  }
+
+  // 初回用初期化処理
+  if (!room.memory.carrySize) {
+    room.memory.carrySize = {
+      builder: 100,
+      carrier: 100,
+      claimer: 100,
+      defender: 100,
+      harvester: 100,
+      labManager: 100,
+      mineralCarrier: 100,
+      mineralHarvester: 100,
+      remoteHarvester: 100,
+      repairer: 100,
+      reserver: 100,
+      upgrader: 100,
+    };
   }
 
   const sources = room.find(FIND_SOURCES);
@@ -53,7 +71,7 @@ export function roomBehavior(room: Room) {
       {} as Partial<Record<ROLES, Creep[]>>,
     );
 
-  const { bodies: carrierBodies } = filterBodiesByCost("carrier", room.energyAvailable);
+  const carrierBodies = getCarrierBody(room);
   if (harvester.length === 0) {
     return ERR_NOT_FOUND;
   }
@@ -152,7 +170,7 @@ export function roomBehavior(room: Room) {
     if (
       (remoteHarvester as RemoteHarvester[]).filter(
         (c) => c.memory.targetRoomName === targetRoomName && (c.ticksToLive || 0) > bodies.length * CREEP_SPAWN_TIME,
-      ).length < 2
+      ).length === 0
     ) {
       const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
       if (spawn) {

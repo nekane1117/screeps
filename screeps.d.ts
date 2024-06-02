@@ -135,6 +135,11 @@ declare interface RoomMemory {
 
   /** room names for remote harvest */
   remote?: string[];
+
+  /** Measure carry size */
+  carrySize: {
+    [r in ROLES]: number;
+  };
 }
 
 declare type CreepsCache = Partial<{

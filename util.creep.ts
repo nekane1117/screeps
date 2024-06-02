@@ -211,8 +211,11 @@ export const customMove: CustomMove = (creep, target, opt) => {
   creep.memory.__avoidCreep = undefined;
   if (creep.memory.moved === OK && Game.time % 3) {
     const { dy, dx } = creep.memory._move?.path?.[0] || {};
+    const isInRange = (n: number) => {
+      return 0 < n && n < 49;
+    };
 
-    if (dx !== undefined && dy !== undefined) {
+    if (dx !== undefined && dy !== undefined && isInRange(creep.pos.x + dx) && isInRange(creep.pos.y + dy)) {
       const blocker = creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + dx, creep.pos.y + dy)?.[0];
       if (blocker && blocker.memory.moved !== OK) {
         const pull = creep.pull(blocker);
@@ -342,4 +345,23 @@ export function moveRoom(creep: Creeps, fromRoom: string, toRoom: string) {
     creep.memory.__moveRoom.exit = undefined;
   }
   return moved;
+}
+
+export function getCarrierBody(room: Room): BodyPartConstant[] {
+  const safetyFactor = 2;
+
+  const bodyCycle: BodyPartConstant[] = [CARRY, MOVE];
+  let costTotal = 0;
+  const avgSize = room.memory.carrySize.carrier;
+  // 個数 (÷50の切り上げ)
+  // 安全係数
+  // の２倍(CARRY,MOVE)
+  return _.range(Math.ceil(avgSize / 50) * safetyFactor * 2)
+    .map((i) => {
+      const parts = bodyCycle[i % bodyCycle.length];
+      costTotal += BODYPART_COST[parts];
+      return { parts, costTotal };
+    })
+    .filter((p) => p.costTotal <= room.energyAvailable)
+    .map((p) => p.parts);
 }

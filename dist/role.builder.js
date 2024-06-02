@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const util_array_1 = require("./util.array");
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
@@ -54,21 +53,13 @@ const behavior = (creep) => {
         }
     }
     if (creep.memory.buildingId ||
-        (creep.memory.buildingId = (_b = (0, util_array_1.complexOrder)(Object.values(Game.constructionSites), [
-            (s) => (s.pos.roomName === creep.memory.baseRoom ? 0 : 1),
-            (s) => {
-                switch (s.structureType) {
-                    case STRUCTURE_TOWER:
-                        return 0;
-                    case STRUCTURE_CONTAINER:
-                        return 1;
-                    default:
-                        return 2;
-                }
-            },
-            (s) => s.progressTotal - s.progress,
-            (s) => s.pos.getRangeTo(creep),
-        ]).first()) === null || _b === void 0 ? void 0 : _b.id)) {
+        (creep.memory.buildingId = (_b = (() => {
+            const sites = (0, utils_1.getSitesInRoom)(Game.rooms[creep.memory.baseRoom]);
+            if (sites.length === 0) {
+                return undefined;
+            }
+            return _(sites).min((s) => s.progressTotal + (1 - s.progress / s.progressTotal));
+        })()) === null || _b === void 0 ? void 0 : _b.id)) {
         const site = Game.getObjectById(creep.memory.buildingId);
         if (site) {
             switch ((creep.memory.built = creep.build(site))) {

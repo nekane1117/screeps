@@ -65,10 +65,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // まずそもそも有るか無いか
   if (container) {
     // コンテナかどうか(progressを持ってればsite)
-    if (!("progress" in container) && creep.pos.isNearTo(container)) {
+    if (!("progress" in container)) {
       // 渡そうとしてみて遠い時近寄る
       if (creep.transfer(container, mineral.mineralType) === ERR_NOT_IN_RANGE) {
-        moveMeTo(container);
+        // 2マス範囲内にあるはずなので中間地点に行く
+        moveMeTo(new RoomPosition(Math.round((mineral.pos.x + container.pos.x) / 2), Math.round((mineral.pos.y + container.pos.y) / 2), creep.room.name));
       }
     }
   } else {

@@ -101,6 +101,9 @@ function getSpawnsWithDistance(src) {
 exports.getSpawnsWithDistance = getSpawnsWithDistance;
 let indent = -1;
 function logUsage(title, func) {
+    if (indent > 10) {
+        indent = -1;
+    }
     indent++;
     const start = Game.cpu.getUsed();
     const value = func();

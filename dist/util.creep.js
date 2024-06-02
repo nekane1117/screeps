@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.moveRoom = exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getMainSpawn = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.getCarrierBody = exports.moveRoom = exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getMainSpawn = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
 const util_array_1 = require("./util.array");
 const utils_1 = require("./utils");
 function isStoreTarget(x) {
@@ -170,7 +170,10 @@ const customMove = (creep, target, opt) => {
     creep.memory.__avoidCreep = undefined;
     if (creep.memory.moved === OK && Game.time % 3) {
         const { dy, dx } = ((_b = (_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b[0]) || {};
-        if (dx !== undefined && dy !== undefined) {
+        const isInRange = (n) => {
+            return 0 < n && n < 49;
+        };
+        if (dx !== undefined && dy !== undefined && isInRange(creep.pos.x + dx) && isInRange(creep.pos.y + dy)) {
             const blocker = (_c = creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + dx, creep.pos.y + dy)) === null || _c === void 0 ? void 0 : _c[0];
             if (blocker && blocker.memory.moved !== OK) {
                 const pull = creep.pull(blocker);
@@ -280,3 +283,18 @@ function moveRoom(creep, fromRoom, toRoom) {
     return moved;
 }
 exports.moveRoom = moveRoom;
+function getCarrierBody(room) {
+    const safetyFactor = 2;
+    const bodyCycle = [CARRY, MOVE];
+    let costTotal = 0;
+    const avgSize = room.memory.carrySize.carrier;
+    return _.range(Math.ceil(avgSize / 50) * safetyFactor * 2)
+        .map((i) => {
+        const parts = bodyCycle[i % bodyCycle.length];
+        costTotal += BODYPART_COST[parts];
+        return { parts, costTotal };
+    })
+        .filter((p) => p.costTotal <= room.energyAvailable)
+        .map((p) => p.parts);
+}
+exports.getCarrierBody = getCarrierBody;

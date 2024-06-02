@@ -40,9 +40,9 @@ const behavior = (creep) => {
         ...Object.values(Game.constructionSites).filter((s) => s.pos.roomName === creep.pos.roomName && s.structureType === STRUCTURE_CONTAINER),
     ], 2)).first();
     if (container) {
-        if (!("progress" in container) && creep.pos.isNearTo(container)) {
+        if (!("progress" in container)) {
             if (creep.transfer(container, mineral.mineralType) === ERR_NOT_IN_RANGE) {
-                moveMeTo(container);
+                moveMeTo(new RoomPosition(Math.round((mineral.pos.x + container.pos.x) / 2), Math.round((mineral.pos.y + container.pos.y) / 2), creep.room.name));
             }
         }
     }
