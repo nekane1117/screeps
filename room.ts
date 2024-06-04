@@ -143,14 +143,8 @@ export function roomBehavior(room: Room) {
     if (room.energyAvailable < room.energyCapacityAvailable) {
       return;
     }
-    const targetRoom = Game.rooms[targetRoomName];
-
-    if (!targetRoom) {
-      return;
-    }
-
-    // コントローラが取れてないかつreserverがいないときは作る
-    if ((targetRoom.controller?.reservation?.ticksToEnd || 0) < 1000 && !(reserver as Reserver[]).find((c) => c.memory.targetRoomName === targetRoomName)) {
+    // reserverがいないときは作る
+    if (!(reserver as Reserver[]).find((c) => c.memory.targetRoomName === targetRoomName)) {
       const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
       if (spawn) {
         const spawned = spawn.spawnCreep(filterBodiesByCost("reserver", room.energyAvailable).bodies, `V_${room.name}_${targetRoomName}`, {

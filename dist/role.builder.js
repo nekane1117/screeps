@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     if (!isBuilder(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
@@ -91,7 +91,8 @@ const behavior = (creep) => {
         return creep.suicide();
     }
     if (creep.memory.storeId ||
-        (creep.memory.storeId = (_c = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        (creep.memory.storeId = (_c = creep.room.storage) === null || _c === void 0 ? void 0 : _c.id) ||
+        (creep.memory.storeId = (_d = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (s) => {
                 return (s.structureType !== STRUCTURE_SPAWN &&
                     (0, util_creep_1.isStoreTarget)(s) &&
@@ -100,7 +101,7 @@ const behavior = (creep) => {
                     s.store.energy > CARRY_CAPACITY);
             },
             maxRooms: 2,
-        })) === null || _c === void 0 ? void 0 : _c.id)) {
+        })) === null || _d === void 0 ? void 0 : _d.id)) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
             creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY);

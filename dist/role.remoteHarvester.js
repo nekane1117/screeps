@@ -33,6 +33,22 @@ const behavior = (creep) => {
     checkMode();
     const ic = creep.pos.findClosestByRange(FIND_HOSTILE_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_INVADER_CORE });
     if (ic) {
+        const defenders = (0, util_creep_1.getCreepsInRoom)(creep.room).defender || [];
+        if (defenders.length === 0) {
+            const baseRoom = Game.rooms[memory.baseRoom];
+            if (baseRoom && baseRoom.energyAvailable === baseRoom.energyCapacityAvailable) {
+                const spawn = (0, utils_1.getSpawnsInRoom)(baseRoom).find((s) => !s.spawning);
+                if (spawn) {
+                    spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("defender", baseRoom.energyAvailable).bodies, `D_${creep.room.name}_${Game.time}`, {
+                        memory: {
+                            role: "defender",
+                            baseRoom: memory.targetRoomName,
+                            targetId: ic.id,
+                        },
+                    });
+                }
+            }
+        }
         if (creep.attack(ic) === ERR_NOT_IN_RANGE) {
             return (0, util_creep_1.customMove)(creep, ic);
         }
@@ -144,15 +160,13 @@ function build(creep) {
         creep.memory.siteId = undefined;
         return ERR_NOT_FOUND;
     }
+    if (memory.mode === "👷" && creep.pos.getRangeTo(site) > 0) {
+        return (0, util_creep_1.customMove)(creep, site, {
+            ignoreDestructibleStructures: !((_c = (_b = creep.room.controller) === null || _b === void 0 ? void 0 : _b.owner) === null || _c === void 0 ? void 0 : _c.username),
+        });
+    }
     if (creep.store.energy >= creep.getActiveBodyparts(WORK) * BUILD_POWER) {
-        if ((creep.memory.worked = creep.build(site)) === ERR_NOT_IN_RANGE && memory.mode === "👷") {
-            return (0, util_creep_1.customMove)(creep, site, {
-                ignoreDestructibleStructures: !((_c = (_b = creep.room.controller) === null || _b === void 0 ? void 0 : _b.owner) === null || _c === void 0 ? void 0 : _c.username),
-            });
-        }
-        else {
-            return creep.memory.worked;
-        }
+        return (creep.memory.worked = creep.build(site));
     }
     else {
         creep.say("🌾");

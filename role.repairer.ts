@@ -1,3 +1,4 @@
+import { ROAD_DECAY_AMOUNT_SWAMP, ROAD_DECAY_AMOUNT_WALL } from "./constants";
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll, withdrawBy } from "./util.creep";
 import { findMyStructures } from "./utils";
@@ -47,6 +48,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }) as StructureLab & { memory: LabMemory };
   });
 
+  const { road, rampart, container } = findMyStructures(creep.room);
+
   const parts = creep.body.filter((b) => b.type === WORK);
   if (!creep.body.filter((b) => b.type === WORK).find((e) => boosts.includes(e.boost as ResourceConstant))) {
     //
@@ -73,19 +76,70 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
+  const repairPower = _(creep.body)
+    .filter((b) => b.type === WORK)
+    .sum((b) => {
+      return (
+        REPAIR_POWER *
+        (() => {
+          const boost = b.boost;
+          const workBoosts: Partial<{ [boost: string]: Partial<{ [action: string]: number }> }> = BOOSTS.work;
+          if (typeof boost === "string") {
+            return workBoosts[boost]?.repair || 1;
+          } else {
+            return 1;
+          }
+        })()
+      );
+    });
+
   // repair
   if (
     creep.memory.targetId ||
+    // decayの10倍しかない壊れそうなやつ
+    (creep.memory.targetId = creep.pos.findClosestByRange([...road, ...rampart, ...container], {
+      filter: (s: StructureRampart | StructureContainer | StructureRoad) => {
+        return (
+          s.hits <=
+          (() => {
+            switch (s.structureType) {
+              case "container":
+                return CONTAINER_DECAY;
+              case "rampart":
+                return RAMPART_DECAY_AMOUNT;
+              case "road":
+                switch (_(s.pos.lookFor(LOOK_TERRAIN)).first()) {
+                  case "wall":
+                    return ROAD_DECAY_AMOUNT_WALL;
+                  case "swamp":
+                    return ROAD_DECAY_AMOUNT_SWAMP;
+                  case "plain":
+                  default:
+                    return ROAD_DECAY_AMOUNT;
+                }
+            }
+          })() *
+            10
+        );
+      },
+    })?.id) ||
+    // 修理力より多くダメージを受けてるやつ
     (creep.memory.targetId = _(
       creep.room.find(FIND_STRUCTURES, {
         // ダメージのある建物
-        filter: (s) => s.hits < s.hitsMax,
+        filter: (s) => {
+          // 閾値
+          return s.hits <= s.hitsMax - repairPower;
+        },
       }),
-    ).min((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME - 1))?.id)
+    ).min((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME))?.id)
   ) {
     // repair
     const target = Game.getObjectById(creep.memory.targetId);
     if (target) {
+      target.room.visual.text("x", target.pos, {
+        opacity: 1 - _.ceil(target.hits / target.hitsMax, 1),
+      });
       switch (creep.repair(target)) {
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "🔧") {
@@ -114,6 +168,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // withdraw
   if (
     creep.memory.storeId ||
+    // 機能不全に陥るのでstorageがあるときはsotrageからだけ取り出す
+    (creep.memory.storeId = creep.room.storage?.id) ||
     (creep.memory.storeId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
       filter: (s): s is StoreTarget => {
         return (

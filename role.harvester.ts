@@ -56,6 +56,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     creep.pos.findInRange(Object.values(Game.constructionSites), 3).map((site) => creep.build(site));
   }
 
+  // repair
+  _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => "ticksToDecay" in s && s.hits < s.hitsMax - creep.getActiveBodyparts(WORK) * REPAIR_POWER }))
+    .tap((damaged) => {
+      damaged.forEach((s) => creep.repair(s));
+    })
+    .run();
+
   // 周りのものを拾う
   pickUpAll(creep);
 

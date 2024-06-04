@@ -21,8 +21,35 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
 
     // reserveする
-    if (creep.room.controller && creep.reserveController(creep.room.controller) === ERR_NOT_IN_RANGE) {
-      moveMeTo(creep.room.controller);
+    if (creep.room.controller) {
+      if (creep.room.controller.reservation?.username !== "Nekane") {
+        _(creep.attackController(creep.room.controller))
+          .tap((reserve) => {
+            switch (reserve) {
+              case ERR_NOT_IN_RANGE:
+                return creep.room.controller && moveMeTo(creep.room.controller);
+              case OK:
+              case ERR_INVALID_TARGET:
+                return;
+              default:
+                return console.log("attackController", RETURN_CODE_DECODER[reserve.toString()]);
+            }
+          })
+          .run();
+      }
+      _(creep.reserveController(creep.room.controller))
+        .tap((reserve) => {
+          switch (reserve) {
+            case ERR_NOT_IN_RANGE:
+              return creep.room.controller && moveMeTo(creep.room.controller);
+
+            case OK:
+              return;
+            default:
+              return console.log("reserveController", RETURN_CODE_DECODER[reserve.toString()]);
+          }
+        })
+        .run();
     }
   } else {
     // まだ部屋にいないとき

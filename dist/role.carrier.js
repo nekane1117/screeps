@@ -14,7 +14,7 @@ const behavior = (creep) => {
             return console.log(`${creep.name} is not Carrier`);
         }
         const newMode = ((c) => {
-            if (c.memory.mode === "🚛" && creep.store.getUsedCapacity() === 0) {
+            if (c.memory.mode === "🚛" && creep.store.getUsedCapacity() < (c.room.controller ? EXTENSION_ENERGY_CAPACITY[c.room.controller.level] : CARRY_CAPACITY)) {
                 return "🛒";
             }
             if (c.memory.mode === "🛒" && (0, utils_1.getCapacityRate)(creep) > 0.5) {
@@ -124,10 +124,18 @@ const behavior = (creep) => {
         .compact()
         .every((g) => { var _a; return ((_a = g === null || g === void 0 ? void 0 : g.memory) === null || _a === void 0 ? void 0 : _a.transferId) !== id; });
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_g = _([...extension, ...spawns])
-            .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && exclusive(s))
-            .sort((s1, s2) => s1.pos.y - s2.pos.y)
-            .first()) === null || _g === void 0 ? void 0 : _g.id;
+        creep.memory.transferId = (_g = creep.pos.findClosestByPath((() => {
+            const strWithDist = _([...extension, ...spawns])
+                .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && exclusive(s))
+                .map((structure) => {
+                return { structure, dist: structure.pos.getRangeTo(spawn) };
+            });
+            const maxFar = strWithDist.max((s) => s.dist).dist;
+            return strWithDist
+                .filter((s) => s.dist === maxFar)
+                .map((s) => s.structure)
+                .value();
+        })())) === null || _g === void 0 ? void 0 : _g.id;
     }
     if (!creep.memory.transferId) {
         creep.memory.transferId = (_h = creep.pos.findClosestByRange(tower, {

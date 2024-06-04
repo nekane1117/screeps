@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
-    var _a, _b;
+    var _a, _b, _c;
     if (!isReserver(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
@@ -15,8 +15,34 @@ const behavior = (creep) => {
         if ((_a = creep.room.controller) === null || _a === void 0 ? void 0 : _a.my) {
             return creep.say("reserved");
         }
-        if (creep.room.controller && creep.reserveController(creep.room.controller) === ERR_NOT_IN_RANGE) {
-            moveMeTo(creep.room.controller);
+        if (creep.room.controller) {
+            if (((_b = creep.room.controller.reservation) === null || _b === void 0 ? void 0 : _b.username) !== "Nekane") {
+                _(creep.attackController(creep.room.controller))
+                    .tap((reserve) => {
+                    switch (reserve) {
+                        case ERR_NOT_IN_RANGE:
+                            return creep.room.controller && moveMeTo(creep.room.controller);
+                        case OK:
+                        case ERR_INVALID_TARGET:
+                            return;
+                        default:
+                            return console.log("attackController", util_creep_1.RETURN_CODE_DECODER[reserve.toString()]);
+                    }
+                })
+                    .run();
+            }
+            _(creep.reserveController(creep.room.controller))
+                .tap((reserve) => {
+                switch (reserve) {
+                    case ERR_NOT_IN_RANGE:
+                        return creep.room.controller && moveMeTo(creep.room.controller);
+                    case OK:
+                        return;
+                    default:
+                        return console.log("reserveController", util_creep_1.RETURN_CODE_DECODER[reserve.toString()]);
+                }
+            })
+                .run();
         }
     }
     else {
@@ -45,7 +71,7 @@ const behavior = (creep) => {
             creep.memory.route = undefined;
             return;
         }
-        if (((_b = memory.exit) === null || _b === void 0 ? void 0 : _b.roomName) !== creep.pos.roomName) {
+        if (((_c = memory.exit) === null || _c === void 0 ? void 0 : _c.roomName) !== creep.pos.roomName) {
             creep.memory.exit = creep.pos.findClosestByPath(current.exit);
         }
         const moved = creep.memory.exit && moveMeTo(new RoomPosition(creep.memory.exit.x, creep.memory.exit.y, creep.memory.exit.roomName));

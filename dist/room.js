@@ -113,16 +113,12 @@ function roomBehavior(room) {
         }
     }
     (_d = room.memory.remote) === null || _d === void 0 ? void 0 : _d.forEach((targetRoomName) => {
-        var _a, _b, _c, _d;
+        var _a, _b;
         if (room.energyAvailable < room.energyCapacityAvailable) {
             return;
         }
-        const targetRoom = Game.rooms[targetRoomName];
-        if (!targetRoom) {
-            return;
-        }
-        if ((((_b = (_a = targetRoom.controller) === null || _a === void 0 ? void 0 : _a.reservation) === null || _b === void 0 ? void 0 : _b.ticksToEnd) || 0) < 1000 && !reserver.find((c) => c.memory.targetRoomName === targetRoomName)) {
-            const spawn = (_c = (0, utils_2.getSpawnsInRoom)(room)) === null || _c === void 0 ? void 0 : _c.find((s) => !s.spawning);
+        if (!reserver.find((c) => c.memory.targetRoomName === targetRoomName)) {
+            const spawn = (_a = (0, utils_2.getSpawnsInRoom)(room)) === null || _a === void 0 ? void 0 : _a.find((s) => !s.spawning);
             if (spawn) {
                 const spawned = spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("reserver", room.energyAvailable).bodies, `V_${room.name}_${targetRoomName}`, {
                     memory: {
@@ -138,7 +134,7 @@ function roomBehavior(room) {
         }
         const { bodies } = (0, util_creep_1.filterBodiesByCost)("remoteHarvester", room.energyAvailable);
         if (remoteHarvester.filter((c) => c.memory.targetRoomName === targetRoomName && (c.ticksToLive || 0) > bodies.length * CREEP_SPAWN_TIME).length < 2) {
-            const spawn = (_d = (0, utils_2.getSpawnsInRoom)(room)) === null || _d === void 0 ? void 0 : _d.find((s) => !s.spawning);
+            const spawn = (_b = (0, utils_2.getSpawnsInRoom)(room)) === null || _b === void 0 ? void 0 : _b.find((s) => !s.spawning);
             if (spawn) {
                 const spawned = spawn.spawnCreep(bodies, `Rh_${room.name}_${targetRoomName}_${Game.time}`, {
                     memory: {

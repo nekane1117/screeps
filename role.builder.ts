@@ -127,6 +127,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // withdraw
   if (
     creep.memory.storeId ||
+    // 機能不全に陥るのでstorageがあるときはsotrageからだけ取り出す
+    (creep.memory.storeId = creep.room.storage?.id) ||
     (creep.memory.storeId = creep.pos.findClosestByPath(FIND_STRUCTURES, {
       filter: (s): s is StoreTarget => {
         return (

@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const constants_1 = require("./constants");
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d, _e, _f, _g;
     if (!isRepairer(creep)) {
         return console.log(`${creep.name} is not Repairer`);
     }
@@ -31,6 +32,7 @@ const behavior = (creep) => {
             memory: creep.room.memory.labs[lab.id],
         });
     });
+    const { road, rampart, container } = (0, utils_1.findMyStructures)(creep.room);
     const parts = creep.body.filter((b) => b.type === WORK);
     if (!creep.body.filter((b) => b.type === WORK).find((e) => boosts.includes(e.boost))) {
         const lab = (_a = boosts
@@ -52,12 +54,57 @@ const behavior = (creep) => {
             }
         }
     }
+    const repairPower = _(creep.body)
+        .filter((b) => b.type === WORK)
+        .sum((b) => {
+        return (REPAIR_POWER *
+            (() => {
+                var _a;
+                const boost = b.boost;
+                const workBoosts = BOOSTS.work;
+                if (typeof boost === "string") {
+                    return ((_a = workBoosts[boost]) === null || _a === void 0 ? void 0 : _a.repair) || 1;
+                }
+                else {
+                    return 1;
+                }
+            })());
+    });
     if (creep.memory.targetId ||
-        (creep.memory.targetId = (_b = _(creep.room.find(FIND_STRUCTURES, {
-            filter: (s) => s.hits < s.hitsMax,
-        })).min((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME - 1))) === null || _b === void 0 ? void 0 : _b.id)) {
+        (creep.memory.targetId = (_b = creep.pos.findClosestByRange([...road, ...rampart, ...container], {
+            filter: (s) => {
+                return (s.hits <=
+                    (() => {
+                        switch (s.structureType) {
+                            case "container":
+                                return CONTAINER_DECAY;
+                            case "rampart":
+                                return RAMPART_DECAY_AMOUNT;
+                            case "road":
+                                switch (_(s.pos.lookFor(LOOK_TERRAIN)).first()) {
+                                    case "wall":
+                                        return constants_1.ROAD_DECAY_AMOUNT_WALL;
+                                    case "swamp":
+                                        return constants_1.ROAD_DECAY_AMOUNT_SWAMP;
+                                    case "plain":
+                                    default:
+                                        return ROAD_DECAY_AMOUNT;
+                                }
+                        }
+                    })() *
+                        10);
+            },
+        })) === null || _b === void 0 ? void 0 : _b.id) ||
+        (creep.memory.targetId = (_c = _(creep.room.find(FIND_STRUCTURES, {
+            filter: (s) => {
+                return s.hits <= s.hitsMax - repairPower;
+            },
+        })).min((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME))) === null || _c === void 0 ? void 0 : _c.id)) {
         const target = Game.getObjectById(creep.memory.targetId);
         if (target) {
+            target.room.visual.text("x", target.pos, {
+                opacity: 1 - _.ceil(target.hits / target.hitsMax, 1),
+            });
             switch (creep.repair(target)) {
                 case ERR_NOT_IN_RANGE:
                     if (creep.memory.mode === "🔧") {
@@ -66,18 +113,19 @@ const behavior = (creep) => {
                     break;
                 case OK:
                     creep.move(creep.pos.getDirectionTo(target));
-                    creep.memory.targetId = (_c = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.structureType === target.structureType && s.hits < s.hitsMax })).min((s) => s.hits)) === null || _c === void 0 ? void 0 : _c.id;
+                    creep.memory.targetId = (_d = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.structureType === target.structureType && s.hits < s.hitsMax })).min((s) => s.hits)) === null || _d === void 0 ? void 0 : _d.id;
                     break;
                 default:
                     break;
             }
         }
     }
-    if (((_d = (creep.memory.storeId && Game.getObjectById(creep.memory.storeId))) === null || _d === void 0 ? void 0 : _d.store.getFreeCapacity(RESOURCE_ENERGY)) === 0) {
+    if (((_e = (creep.memory.storeId && Game.getObjectById(creep.memory.storeId))) === null || _e === void 0 ? void 0 : _e.store.getFreeCapacity(RESOURCE_ENERGY)) === 0) {
         creep.memory.storeId = undefined;
     }
     if (creep.memory.storeId ||
-        (creep.memory.storeId = (_e = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        (creep.memory.storeId = (_f = creep.room.storage) === null || _f === void 0 ? void 0 : _f.id) ||
+        (creep.memory.storeId = (_g = creep.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (s) => {
                 return (s.structureType !== STRUCTURE_SPAWN &&
                     (0, util_creep_1.isStoreTarget)(s) &&
@@ -85,7 +133,7 @@ const behavior = (creep) => {
                     (s.room.energyAvailable / s.room.energyCapacityAvailable > 0.9 ? true : s.structureType !== STRUCTURE_EXTENSION) &&
                     s.store.energy > CARRY_CAPACITY);
             },
-        })) === null || _e === void 0 ? void 0 : _e.id)) {
+        })) === null || _g === void 0 ? void 0 : _g.id)) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
             creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY);

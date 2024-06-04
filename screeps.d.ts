@@ -268,7 +268,7 @@ declare interface Defender extends Creep {
 }
 declare interface DefenderMemory extends CreepMemory {
   role: "defender";
-  targetId?: Id<AnyCreep>;
+  targetId?: Id<AnyCreep> | Id<Structure>;
 }
 
 declare interface LabManager extends Creep {

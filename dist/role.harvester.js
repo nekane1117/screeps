@@ -38,6 +38,11 @@ const behavior = (creep) => {
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5) {
         creep.pos.findInRange(Object.values(Game.constructionSites), 3).map((site) => creep.build(site));
     }
+    _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => "ticksToDecay" in s && s.hits < s.hitsMax - creep.getActiveBodyparts(WORK) * REPAIR_POWER }))
+        .tap((damaged) => {
+        damaged.forEach((s) => creep.repair(s));
+    })
+        .run();
     (0, util_creep_1.pickUpAll)(creep);
     const { container: containers, link: links } = (0, utils_1.findMyStructures)(creep.room);
     const link = source.pos.findClosestByRange(links, {

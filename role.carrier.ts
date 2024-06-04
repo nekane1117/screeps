@@ -19,7 +19,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       return console.log(`${creep.name} is not Carrier`);
     }
     const newMode = ((c: Carrier) => {
-      if (c.memory.mode === "🚛" && creep.store.getUsedCapacity() === 0) {
+      if (c.memory.mode === "🚛" && creep.store.getUsedCapacity() < (c.room.controller ? EXTENSION_ENERGY_CAPACITY[c.room.controller.level] : CARRY_CAPACITY)) {
         // 作業モードで空になったら収集モードにする
         return "🛒";
       }
@@ -172,10 +172,23 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   //spawnかextension
   if (!creep.memory.transferId) {
-    creep.memory.transferId = _([...extension, ...spawns])
-      .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && exclusive(s))
-      .sort((s1, s2) => s1.pos.y - s2.pos.y)
-      .first()?.id;
+    creep.memory.transferId = creep.pos.findClosestByPath(
+      (() => {
+        // 全部の距離を計算する
+        const strWithDist = _([...extension, ...spawns])
+          .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && exclusive(s))
+          .map((structure) => {
+            return { structure, dist: structure.pos.getRangeTo(spawn) };
+          });
+        // 一番遠い距離
+        const maxFar = strWithDist.max((s) => s.dist).dist;
+        // のやつ
+        return strWithDist
+          .filter((s) => s.dist === maxFar)
+          .map((s) => s.structure)
+          .value();
+      })(),
+    )?.id;
   }
 
   // タワーに入れて修理や防御

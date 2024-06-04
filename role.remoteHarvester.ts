@@ -1,6 +1,6 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, pickUpAll } from "./util.creep";
-import { findMyStructures, getCapacityRate, getSitesInRoom, isHighway, readonly } from "./utils";
+import { RETURN_CODE_DECODER, customMove, filterBodiesByCost, getCreepsInRoom, pickUpAll } from "./util.creep";
+import { findMyStructures, getCapacityRate, getSitesInRoom, getSpawnsInRoom, isHighway, readonly } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isRemoteHarvester(creep)) {
@@ -33,22 +33,27 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   };
   checkMode();
 
-  // // inverderにとられたとき
-  // const controller = Game.rooms[memory.targetRoomName]?.controller;
-  // if (controller && controller?.reservation?.username !== "Nekane") {
-  //   const res =
-  //   if (creep.attackController(controller) === ERR_NOT_IN_RANGE) {
-  //     return customMove(creep, controller);
-  //   } else {
-  //     return console.lo
-  //   }
-  // }
-
   // attack
   // ATTACKパーツは何もしなくても自動で反撃するのでそっちに任せる
   // 範囲攻撃されると手も足も出ない
   const ic = creep.pos.findClosestByRange(FIND_HOSTILE_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_INVADER_CORE });
   if (ic) {
+    const defenders = getCreepsInRoom(creep.room).defender || [];
+    if (defenders.length === 0) {
+      const baseRoom = Game.rooms[memory.baseRoom];
+      if (baseRoom && baseRoom.energyAvailable === baseRoom.energyCapacityAvailable) {
+        const spawn = getSpawnsInRoom(baseRoom).find((s) => !s.spawning);
+        if (spawn) {
+          spawn.spawnCreep(filterBodiesByCost("defender", baseRoom.energyAvailable).bodies, `D_${creep.room.name}_${Game.time}`, {
+            memory: {
+              role: "defender",
+              baseRoom: memory.targetRoomName,
+              targetId: ic.id,
+            } as DefenderMemory,
+          });
+        }
+      }
+    }
     if (creep.attack(ic) === ERR_NOT_IN_RANGE) {
       return customMove(creep, ic);
     } else {
@@ -192,15 +197,16 @@ function build(creep: RemoteHarvester) {
     creep.memory.siteId = undefined;
     return ERR_NOT_FOUND;
   }
+  // 上に乗るまで移動する
+  if (memory.mode === "👷" && creep.pos.getRangeTo(site) > 0) {
+    return customMove(creep, site, {
+      // 所有者が居ない部屋では壁とかも無視して突っ切る
+      ignoreDestructibleStructures: !creep.room.controller?.owner?.username,
+    });
+  }
+  //
   if (creep.store.energy >= creep.getActiveBodyparts(WORK) * BUILD_POWER) {
-    if ((creep.memory.worked = creep.build(site)) === ERR_NOT_IN_RANGE && memory.mode === "👷") {
-      return customMove(creep, site, {
-        // 所有者が居ない部屋では壁とかも無視して突っ切る
-        ignoreDestructibleStructures: !creep.room.controller?.owner?.username,
-      });
-    } else {
-      return creep.memory.worked;
-    }
+    return (creep.memory.worked = creep.build(site));
   } else {
     //エネルギーが足らなくなったら収穫モードに戻す
     creep.say("🌾");

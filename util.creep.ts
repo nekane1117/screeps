@@ -125,11 +125,10 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
     )
     .slice(0, 50),
   labManager: [MOVE, CARRY, CARRY],
-  defender: ([MOVE] as BodyPartConstant[])
-    .concat(..._.range(31).map(() => RANGED_ATTACK))
-    .concat(..._.range(5).map(() => HEAL))
-    .concat(..._.range(50).map(() => MOVE))
-    .slice(0, 50),
+  defender: _.range(50).map((i) => {
+    const b = [MOVE, RANGED_ATTACK, RANGED_ATTACK, MOVE, HEAL, HEAL, MOVE, TOUGH, ATTACK];
+    return b[i % b.length];
+  }),
   mineralCarrier: [
     ..._(
       _.range(25).map(() => {
@@ -198,7 +197,7 @@ export const customMove: CustomMove = (creep, target, opt) => {
   }
 
   creep.memory.moved = creep.moveTo(target, {
-    plainCost: 2,
+    plainCost: 4,
     ignoreCreeps: (() => {
       if ((creep.memory.__avoidCreep || 0) > 0) {
         creep.say("avoid " + creep.memory.__avoidCreep);

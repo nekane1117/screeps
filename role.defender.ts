@@ -17,39 +17,53 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return controller && moveMeTo(controller);
   }
 
-  if (creep.memory.targetId || (creep.memory.targetId = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS)?.id)) {
+  if (
+    creep.memory.targetId ||
+    (creep.memory.targetId = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS)?.id) ||
+    (creep.memory.targetId = creep.pos.findClosestByRange(FIND_HOSTILE_STRUCTURES)?.id)
+  ) {
     const target = Game.getObjectById(creep.memory.targetId);
     if (target) {
       // 目標に近寄る
 
-      // ターゲットの周囲にrampartがある場合
-      const rampartInRange = target.pos.findClosestByRange(FIND_STRUCTURES, {
-        filter: (s): s is StructureRampart => s.structureType === STRUCTURE_RAMPART && s.my && target.pos.inRangeTo(s, 3),
-      });
+      if ("structureType" in target || ("body" in target && target.body.filter((b) => b.type === ATTACK).length === 0)) {
+        // 隣接してもいいやつの時は隣接する
+        moveMeTo(target);
+      } else {
+        // 近接攻撃を持ってるやつの時
 
-      if (rampartInRange) {
-        moveMeTo(rampartInRange);
-      } else if (!creep.pos.inRangeTo(target, 3)) {
-        moveMeTo(target, { range: 3 });
+        // ターゲットの周囲にrampartがある場合
+        const rampartInRange = target.pos.findClosestByRange(FIND_STRUCTURES, {
+          filter: (s): s is StructureRampart => s.structureType === STRUCTURE_RAMPART && s.my && target.pos.inRangeTo(s, 3),
+        });
+
+        if (rampartInRange) {
+          moveMeTo(rampartInRange);
+        } else if (creep.pos.isNearTo(target)) {
+          // 近すぎるとき
+          const start = creep.pos.getDirectionTo(target) + 3;
+          creep.move(
+            _.range(start, start + 3).map((dir) => {
+              if (dir > 8) {
+                dir = dir - 8;
+              }
+              return dir as DirectionConstant;
+            })[_.random(2)],
+          );
+        } else {
+          moveMeTo(target, { range: 2 });
+        }
       }
 
       // 射程内の敵のあれこれ
-      _(creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3))
-        .tap((hostiles) => {
-          if (hostiles.length === 0) {
-            return;
-          } else if (hostiles.length === 1) {
-            const hostile = hostiles[0];
-            creep.rangedAttack(hostiles[0]);
-            if (creep.pos.isNearTo(hostile)) {
-              creep.attack(hostile);
-            }
-          } else {
-            creep.rangedMassAttack();
-          }
-        })
-        .run();
-      _(creep.pos.findInRange(FIND_MY_CREEPS, 3))
+      if (target) {
+        creep.rangedAttack(target);
+        if (creep.pos.isNearTo(target)) {
+          "structureType" in target && creep.dismantle(target);
+          creep.attack(target);
+        }
+      }
+      _(creep.pos.findInRange(FIND_MY_CREEPS, 3, { filter: (s) => s.hits < s.hitsMax - creep.getActiveBodyparts(HEAL) * HEAL_POWER }))
         .tap((creeps) => {
           const target = _(creeps).min((c) => c.hits);
 
