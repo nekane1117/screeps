@@ -121,7 +121,36 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // 原料待ちのやつでターミナルに原料があるやつ
   if (!creep.memory.storeId) {
     const target = _(requesting)
-      .filter((lab) => terminal.store[lab.memory.expectedType] > 0)
+      .filter((lab) => {
+        // 指定のミネラルが無いとき
+        if (terminal.store[lab.memory.expectedType] === 0) {
+          const SEND_UNIT = 1000;
+          const miningTerminal = _(
+            Object.values(Game.rooms)
+              .filter((r) => {
+                return (
+                  r.terminal &&
+                  r.terminal.store[lab.memory.expectedType] > SEND_UNIT &&
+                  r.terminal.store.energy > SEND_UNIT * TERMINAL_SEND_COST &&
+                  r.find(FIND_MINERALS).find((m) => m.mineralType === lab.memory.expectedType)
+                );
+              })
+              .map((r) => r.terminal),
+          )
+            .compact()
+            .first();
+
+          if (miningTerminal) {
+            miningTerminal.send(
+              lab.memory.expectedType,
+              SEND_UNIT,
+              terminal.room.name,
+              `send ${lab.memory.expectedType} ${miningTerminal.room.name} to ${terminal.room.name}`,
+            );
+          }
+        }
+        return terminal.store[lab.memory.expectedType] > 0;
+      })
       .first();
     if (target) {
       // ターミナルに指定の原料を取りに行く
