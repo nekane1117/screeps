@@ -27,6 +27,9 @@ const behavior = (creep) => {
                 creep.memory.mineralType = undefined;
             }
             creep.memory.transferId = undefined;
+            if (newMode === "🚛") {
+                creep.room.memory.carrySize.carrier = (creep.room.memory.carrySize.carrier * 100 + creep.store.energy) / 101;
+            }
         }
     }
     checkMode();

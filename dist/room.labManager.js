@@ -21,7 +21,7 @@ function behavior(labs, mineral) {
         }
     });
     const { labManager = [] } = (0, util_creep_1.getCreepsInRoom)(firstLab.room);
-    const bodies = (0, util_creep_1.filterBodiesByCost)("labManager", firstLab.room.energyAvailable).bodies;
+    const bodies = (0, util_creep_1.getCarrierBody)(firstLab.room, "labManager");
     if (firstLab.room.terminal &&
         firstLab.room.terminal.store.energy > firstLab.room.energyCapacityAvailable &&
         firstLab.room.energyAvailable === firstLab.room.energyCapacityAvailable &&
