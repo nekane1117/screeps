@@ -6,7 +6,7 @@ const behavior = (creep) => {
     if (!isM(creep)) {
         return console.log(`${creep.name} is not MineralHarvester`);
     }
-    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, 2) }, opt));
+    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({}, opt));
     const mineral = Game.getObjectById(creep.memory.targetId);
     if (!mineral) {
         return creep.suicide();
@@ -51,8 +51,8 @@ const behavior = (creep) => {
         if (spawn) {
             const pos = _(mineral.pos.findPathTo(spawn, {
                 ignoreCreeps: true,
-                swampCost: 1,
-                plainCost: 1,
+                swampCost: 2,
+                plainCost: 2,
             })).run()[1];
             if (pos) {
                 creep.room.createConstructionSite(pos.x, pos.y, STRUCTURE_CONTAINER);

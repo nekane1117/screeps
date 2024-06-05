@@ -6,10 +6,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isReserver(creep)) {
     return console.log(`${creep.name} is not Builder`);
   }
-  const moveMeTo = (target: RoomPosition | _HasRoomPosition) =>
-    customMove(creep, target, {
-      ignoreCreeps: !creep.pos.inRangeTo(target, 2),
-    });
+  const moveMeTo = (target: RoomPosition | _HasRoomPosition) => customMove(creep, target, {});
 
   const memory = readonly(creep.memory);
 

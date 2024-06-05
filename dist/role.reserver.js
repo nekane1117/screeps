@@ -7,9 +7,7 @@ const behavior = (creep) => {
     if (!isReserver(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
-    const moveMeTo = (target) => (0, util_creep_1.customMove)(creep, target, {
-        ignoreCreeps: !creep.pos.inRangeTo(target, 2),
-    });
+    const moveMeTo = (target) => (0, util_creep_1.customMove)(creep, target, {});
     const memory = (0, utils_1.readonly)(creep.memory);
     if (creep.pos.roomName === memory.targetRoomName) {
         if ((_a = creep.room.controller) === null || _a === void 0 ? void 0 : _a.my) {

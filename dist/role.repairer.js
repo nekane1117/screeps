@@ -8,7 +8,7 @@ const behavior = (creep) => {
     if (!isRepairer(creep)) {
         return console.log(`${creep.name} is not Repairer`);
     }
-    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, 2) }, opt));
+    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({}, opt));
     const checkMode = () => {
         const newMode = ((c) => {
             if (c.memory.mode === "🔧" && creep.store.getUsedCapacity() === 0) {
@@ -27,33 +27,7 @@ const behavior = (creep) => {
         }
     };
     checkMode();
-    const labs = (0, utils_1.findMyStructures)(creep.room).lab.map((lab) => {
-        return Object.assign(lab, {
-            memory: creep.room.memory.labs[lab.id],
-        });
-    });
     const { road, rampart, container } = (0, utils_1.findMyStructures)(creep.room);
-    const parts = creep.body.filter((b) => b.type === WORK);
-    if (!creep.body.filter((b) => b.type === WORK).find((e) => boosts.includes(e.boost))) {
-        const lab = (_a = boosts
-            .map((mineralType) => {
-            return {
-                mineralType,
-                lab: labs.find((l) => {
-                    return (l.mineralType === mineralType && l.store[mineralType] >= parts.length * LAB_BOOST_MINERAL && l.store.energy >= parts.length * LAB_BOOST_ENERGY);
-                }),
-            };
-        })
-            .find((o) => o.lab)) === null || _a === void 0 ? void 0 : _a.lab;
-        if (lab) {
-            if (creep.pos.isNearTo(lab)) {
-                return lab.boostCreep(creep);
-            }
-            else {
-                return moveMeTo(lab);
-            }
-        }
-    }
     const repairPower = _(creep.body)
         .filter((b) => b.type === WORK)
         .sum((b) => {
@@ -71,7 +45,7 @@ const behavior = (creep) => {
             })());
     });
     if (creep.memory.targetId ||
-        (creep.memory.targetId = (_b = creep.pos.findClosestByRange([...road, ...rampart, ...container], {
+        (creep.memory.targetId = (_a = creep.pos.findClosestByRange([...road, ...rampart, ...container], {
             filter: (s) => {
                 return (s.hits <=
                     (() => {
@@ -94,14 +68,40 @@ const behavior = (creep) => {
                     })() *
                         10);
             },
-        })) === null || _b === void 0 ? void 0 : _b.id) ||
-        (creep.memory.targetId = (_c = _(creep.room.find(FIND_STRUCTURES, {
+        })) === null || _a === void 0 ? void 0 : _a.id) ||
+        (creep.memory.targetId = (_b = _(creep.room.find(FIND_STRUCTURES, {
             filter: (s) => {
                 return s.hits <= s.hitsMax - repairPower;
             },
-        })).min((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME))) === null || _c === void 0 ? void 0 : _c.id)) {
+        })).min((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME))) === null || _b === void 0 ? void 0 : _b.id)) {
         const target = Game.getObjectById(creep.memory.targetId);
         if (target) {
+            const labs = (0, utils_1.findMyStructures)(creep.room).lab.map((lab) => {
+                return Object.assign(lab, {
+                    memory: creep.room.memory.labs[lab.id],
+                });
+            });
+            const parts = creep.body.filter((b) => b.type === WORK);
+            if (!creep.body.filter((b) => b.type === WORK).find((e) => boosts.includes(e.boost))) {
+                const lab = (_c = boosts
+                    .map((mineralType) => {
+                    return {
+                        mineralType,
+                        lab: labs.find((l) => {
+                            return (l.mineralType === mineralType && l.store[mineralType] >= parts.length * LAB_BOOST_MINERAL && l.store.energy >= parts.length * LAB_BOOST_ENERGY);
+                        }),
+                    };
+                })
+                    .find((o) => o.lab)) === null || _c === void 0 ? void 0 : _c.lab;
+                if (lab) {
+                    if (creep.pos.isNearTo(lab)) {
+                        return lab.boostCreep(creep);
+                    }
+                    else {
+                        return moveMeTo(lab);
+                    }
+                }
+            }
             target.room.visual.text("x", target.pos, {
                 opacity: 1 - _.ceil(target.hits / target.hitsMax, 1),
             });
@@ -118,6 +118,9 @@ const behavior = (creep) => {
                 default:
                     break;
             }
+        }
+        else {
+            creep.memory.targetId = undefined;
         }
     }
     if (((_e = (creep.memory.storeId && Game.getObjectById(creep.memory.storeId))) === null || _e === void 0 ? void 0 : _e.store.getFreeCapacity(RESOURCE_ENERGY)) === 0) {

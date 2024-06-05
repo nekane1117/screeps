@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.readonly = exports.calcMaxTransferAmount = exports.isHighway = exports.logUsage = exports.getSpawnsWithDistance = exports.getSpawnsOrderdByRange = exports.getSitesInRoom = exports.getSpawnsInRoom = exports.findMyStructures = exports.getCapacityRate = void 0;
+exports.getSecondsPerticks = exports.readonly = exports.calcMaxTransferAmount = exports.isHighway = exports.logUsage = exports.getSpawnsWithDistance = exports.getSpawnsOrderdByRange = exports.getSitesInRoom = exports.getSpawnsInRoom = exports.findMyStructures = exports.getCapacityRate = void 0;
 function getCapacityRate(s, type = RESOURCE_ENERGY) {
     if ("store" in s) {
         return s.store.getUsedCapacity(type) / s.store.getCapacity(type);
@@ -128,3 +128,9 @@ function readonly(a) {
     return a;
 }
 exports.readonly = readonly;
+function getSecondsPerticks() {
+    const head = _(Memory.realTImes).first();
+    const last = _(Memory.realTImes).last();
+    return head && last ? _.round((last.unixTime - head.unixTime) / Memory.realTImes.length / 1000, 2) : 0;
+}
+exports.getSecondsPerticks = getSecondsPerticks;

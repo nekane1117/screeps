@@ -1,15 +1,23 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, pickUpAll, withdrawBy } from "./util.creep";
-import { findMyStructures, getCapacityRate } from "./utils";
+import { findMyStructures, getCapacityRate, getSitesInRoom } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const { room } = creep;
-  const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
+  const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
+    // carrierが通る場所で道が無いときは敷く
+    if (getSitesInRoom(room).length === 0 && creep.pos.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType === STRUCTURE_ROAD).length === 0) {
+      creep.pos.createConstructionSite(STRUCTURE_ROAD);
+    }
+
     customMove(creep, target, {
-      ignoreCreeps: !creep.pos.inRangeTo(target, 2),
+      plainCost: 2,
+      swampCost: 2,
+      // 基本的にスタックしないし最強キャラなのでtrue
+      ignoreCreeps: true,
       ...opt,
     });
-
+  };
   if (!isCarrier(creep)) {
     return console.log(`${creep.name} is not Carrier`);
   }
@@ -280,7 +288,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             break;
         }
       } else {
-        _(extension.filter((e) => creep.pos.isNearTo(e) && e.store.getFreeCapacity(RESOURCE_ENERGY)))
+        _([...extension, ...spawns].filter((e) => creep.pos.isNearTo(e) && e.store.getFreeCapacity(RESOURCE_ENERGY)))
           .tap(([head]) => {
             if (head) {
               creep.transfer(head, RESOURCE_ENERGY);

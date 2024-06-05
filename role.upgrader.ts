@@ -4,7 +4,6 @@ import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll } from "./uti
 const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
     customMove(creep, target, {
-      ignoreCreeps: !creep.pos.inRangeTo(target, 4),
       ...opt,
     });
 

@@ -141,3 +141,9 @@ export function calcMaxTransferAmount(order: Order, terminal: StructureTerminal)
 export function readonly<T>(a: T) {
   return a as Readonly<T>;
 }
+
+export function getSecondsPerticks() {
+  const head = _(Memory.realTImes).first();
+  const last = _(Memory.realTImes).last();
+  return head && last ? _.round((last.unixTime - head.unixTime) / Memory.realTImes.length / 1000, 2) : 0;
+}

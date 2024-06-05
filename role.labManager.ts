@@ -15,7 +15,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
     customMove(creep, target, {
-      ignoreCreeps: !creep.pos.inRangeTo(target, 2),
       ...opt,
     });
 
@@ -77,7 +76,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           } else if (lab.mineralType.length >= 2) {
             // 化合物の時
 
-            if (lab.store[lab.mineralType] > MINERAL_KEEP_VALUE) {
+            if (lab.store[lab.mineralType] > MINERAL_KEEP_VALUE * 2) {
               // 完成
               mapping.completed.push(lab);
             } else {

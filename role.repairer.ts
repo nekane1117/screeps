@@ -10,7 +10,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
     customMove(creep, target, {
-      ignoreCreeps: !creep.pos.inRangeTo(target, 2),
       ...opt,
     });
 
@@ -41,41 +40,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // https://docs.screeps.com/simultaneous-actions.html
 
-  // boostされてない場合
-  const labs = findMyStructures(creep.room).lab.map((lab) => {
-    return Object.assign(lab, {
-      memory: creep.room.memory.labs[lab.id],
-    }) as StructureLab & { memory: LabMemory };
-  });
-
   const { road, rampart, container } = findMyStructures(creep.room);
-
-  const parts = creep.body.filter((b) => b.type === WORK);
-  if (!creep.body.filter((b) => b.type === WORK).find((e) => boosts.includes(e.boost as ResourceConstant))) {
-    //
-    const lab = boosts
-      .map((mineralType) => {
-        return {
-          mineralType,
-          lab: labs.find((l) => {
-            // 指定のミネラルでミネラル、エネルギーが足りるラボ
-            return (
-              l.mineralType === mineralType && l.store[mineralType] >= parts.length * LAB_BOOST_MINERAL && l.store.energy >= parts.length * LAB_BOOST_ENERGY
-            );
-          }),
-        };
-      })
-      .find((o) => o.lab)?.lab;
-
-    if (lab) {
-      if (creep.pos.isNearTo(lab)) {
-        return lab.boostCreep(creep);
-      } else {
-        return moveMeTo(lab);
-      }
-    }
-  }
-
   const repairPower = _(creep.body)
     .filter((b) => b.type === WORK)
     .sum((b) => {
@@ -137,6 +102,39 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // repair
     const target = Game.getObjectById(creep.memory.targetId);
     if (target) {
+      // boostされてない場合
+      const labs = findMyStructures(creep.room).lab.map((lab) => {
+        return Object.assign(lab, {
+          memory: creep.room.memory.labs[lab.id],
+        }) as StructureLab & { memory: LabMemory };
+      });
+
+      const parts = creep.body.filter((b) => b.type === WORK);
+      if (!creep.body.filter((b) => b.type === WORK).find((e) => boosts.includes(e.boost as ResourceConstant))) {
+        //
+        const lab = boosts
+          .map((mineralType) => {
+            return {
+              mineralType,
+              lab: labs.find((l) => {
+                // 指定のミネラルでミネラル、エネルギーが足りるラボ
+                return (
+                  l.mineralType === mineralType && l.store[mineralType] >= parts.length * LAB_BOOST_MINERAL && l.store.energy >= parts.length * LAB_BOOST_ENERGY
+                );
+              }),
+            };
+          })
+          .find((o) => o.lab)?.lab;
+
+        if (lab) {
+          if (creep.pos.isNearTo(lab)) {
+            return lab.boostCreep(creep);
+          } else {
+            return moveMeTo(lab);
+          }
+        }
+      }
+
       target.room.visual.text("x", target.pos, {
         opacity: 1 - _.ceil(target.hits / target.hitsMax, 1),
       });
@@ -157,6 +155,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         default:
           break;
       }
+    } else {
+      creep.memory.targetId = undefined;
     }
   }
 

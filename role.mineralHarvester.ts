@@ -8,7 +8,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
     customMove(creep, target, {
-      ignoreCreeps: !creep.pos.inRangeTo(target, 2),
       ...opt,
     });
 
@@ -79,8 +78,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       const pos = _(
         mineral.pos.findPathTo(spawn, {
           ignoreCreeps: true,
-          swampCost: 1,
-          plainCost: 1,
+          swampCost: 2,
+          plainCost: 2,
         }),
       ).run()[1];
       if (pos) {

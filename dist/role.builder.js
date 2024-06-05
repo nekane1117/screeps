@@ -7,7 +7,7 @@ const behavior = (creep) => {
     if (!isBuilder(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
-    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, 4) }, opt));
+    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({}, opt));
     const checkMode = () => {
         const newMode = ((c) => {
             if (c.memory.mode === "👷" && c.store.energy === 0) {

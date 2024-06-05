@@ -11,6 +11,14 @@ const structures_1 = __importDefault(require("./structures"));
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 module.exports.loop = function () {
+    (0, utils_1.logUsage)("measure tick time", () => {
+        Memory.realTImes = (Memory.realTImes || [])
+            .concat({
+            time: Game.time,
+            unixTime: new Date().valueOf(),
+        })
+            .slice(-100);
+    });
     (0, utils_1.logUsage)("all", () => {
         if (Game.cpu.bucket === 10000) {
             Game.cpu.generatePixel();
@@ -76,7 +84,7 @@ module.exports.loop = function () {
                 c.getActiveBodyparts(WORK) &&
                     c.pos
                         .lookFor(LOOK_STRUCTURES)
-                        .filter((s) => s.structureType === STRUCTURE_ROAD && s.hits < s.hitsMax)
+                        .filter((s) => "ticksToDecay" in s && s.hits < s.hitsMax)
                         .forEach((s) => c.repair(s));
                 c.memory.__avoidCreep = Math.max(0, (c.memory.__avoidCreep || 0) - 1);
             });

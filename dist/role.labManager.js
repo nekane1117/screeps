@@ -10,7 +10,7 @@ const behavior = (creep) => {
     if (!terminal) {
         return ERR_NOT_FOUND;
     }
-    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, 2) }, opt));
+    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({}, opt));
     if (!isLabManager(creep)) {
         return console.log(`${creep.name} is not LabManager`);
     }
@@ -55,7 +55,7 @@ const behavior = (creep) => {
                 mapping.wrong.push(lab);
             }
             else if (lab.mineralType.length >= 2) {
-                if (lab.store[lab.mineralType] > MINERAL_KEEP_VALUE) {
+                if (lab.store[lab.mineralType] > MINERAL_KEEP_VALUE * 2) {
                     mapping.completed.push(lab);
                 }
                 else {

@@ -6,10 +6,7 @@ const behavior: CreepBehavior = (claimer: Creeps) => {
   if (!isClaimer(claimer)) {
     return console.log(`${claimer.name} is not Builder`);
   }
-  const moveMeTo = (target: RoomPosition | _HasRoomPosition) =>
-    customMove(claimer, target, {
-      ignoreCreeps: !claimer.pos.inRangeTo(target, 2),
-    });
+  const moveMeTo = (target: RoomPosition | _HasRoomPosition) => customMove(claimer, target, {});
 
   const flag = Game.flags[claimer.memory.flagName];
   if (!flag) {

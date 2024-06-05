@@ -7,9 +7,7 @@ const behavior = (claimer) => {
     if (!isClaimer(claimer)) {
         return console.log(`${claimer.name} is not Builder`);
     }
-    const moveMeTo = (target) => (0, util_creep_1.customMove)(claimer, target, {
-        ignoreCreeps: !claimer.pos.inRangeTo(target, 2),
-    });
+    const moveMeTo = (target) => (0, util_creep_1.customMove)(claimer, target, {});
     const flag = Game.flags[claimer.memory.flagName];
     if (!flag) {
         claimer.suicide();

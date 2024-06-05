@@ -64,22 +64,10 @@ export function randomWalk(creep: Creep) {
 }
 
 export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
-  builder: [
-    // 最小構成
-    WORK,
-    CARRY,
-    MOVE,
-    // 偶数にする
-    WORK,
-    ..._(
-      _.range(23).map(() => {
-        // あとはMoveとCarryの繰り返し
-        return [MOVE, CARRY];
-      }),
-    )
-      .flatten<BodyPartConstant>()
-      .run(),
-  ],
+  builder: _.range(50).map((i) => {
+    const bodies = [MOVE, WORK, MOVE, CARRY];
+    return bodies[i % bodies.length];
+  }),
   repairer: [
     WORK,
     MOVE,
@@ -198,14 +186,6 @@ export const customMove: CustomMove = (creep, target, opt) => {
 
   creep.memory.moved = creep.moveTo(target, {
     plainCost: 4,
-    ignoreCreeps: (() => {
-      if ((creep.memory.__avoidCreep || 0) > 0) {
-        creep.say("avoid " + creep.memory.__avoidCreep);
-        return false;
-      } else {
-        return opt?.ignoreCreeps || !creep.pos.inRangeTo(target, 4);
-      }
-    })(),
     serializeMemory: false,
     ...opt,
     visualizePathStyle: {

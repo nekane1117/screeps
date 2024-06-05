@@ -10,7 +10,7 @@ const behavior = (creep) => {
     const checkMode = () => {
         const newMode = ((creep) => {
             if (creep.memory.mode === "👷" && (0, utils_1.getSitesInRoom)(creep.room).length === 0) {
-                return "🌾";
+                return "🚛";
             }
             else if (creep.store.energy === 0) {
                 return "🌾";
@@ -56,10 +56,6 @@ const behavior = (creep) => {
             return OK;
         }
     }
-    else if (!(0, utils_1.isHighway)(creep.room) &&
-        ![...creep.pos.lookFor(LOOK_STRUCTURES), ...creep.pos.lookFor(LOOK_STRUCTURES)].find((s) => s.structureType === STRUCTURE_ROAD)) {
-        creep.pos.createConstructionSite(STRUCTURE_ROAD);
-    }
     harvest(creep);
     build(creep);
     const repariTarget = creep.pos.roomName !== memory.baseRoom && creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.hits < s.hitsMax);
@@ -89,9 +85,16 @@ function isRemoteHarvester(creep) {
 function harvest(creep) {
     var _a, _b, _c, _d;
     const memory = (0, utils_1.readonly)(creep.memory);
-    if (creep.pos.roomName === memory.targetRoomName) {
+    const targetRoom = Game.rooms[memory.targetRoomName];
+    console.log(targetRoom);
+    if (targetRoom) {
+        if (memory.harvestTargetId) {
+            if (!Game.getObjectById(memory.harvestTargetId)) {
+                creep.memory.harvestTargetId = undefined;
+            }
+        }
         if (!memory.harvestTargetId) {
-            creep.memory.harvestTargetId = (_a = _(creep.room.find(FIND_SOURCES) || [])
+            creep.memory.harvestTargetId = (_a = _(targetRoom.find(FIND_SOURCES) || [])
                 .sort((s1, s2) => {
                 const getPriority = (s) => {
                     if (s.energy > 0) {
@@ -106,32 +109,40 @@ function harvest(creep) {
                 .first()) === null || _a === void 0 ? void 0 : _a.id;
         }
         const source = memory.harvestTargetId && Game.getObjectById(memory.harvestTargetId);
-        if (!source || source.energy === 0 || source.pos.roomName !== memory.targetRoomName) {
+        if (!source || source.pos.roomName !== memory.targetRoomName) {
             creep.memory.harvestTargetId = undefined;
             return ERR_NOT_FOUND;
         }
-        if ((creep.memory.worked = creep.harvest(source)) === ERR_NOT_IN_RANGE && memory.mode === "🌾") {
-            const moveing = _(((_b = memory._move) === null || _b === void 0 ? void 0 : _b.path) || []).first();
-            const isInRange = (n) => {
-                return 0 < n && n < 49;
-            };
-            const blocker = moveing &&
-                isInRange(creep.pos.x + moveing.dx) &&
-                isInRange(creep.pos.y + moveing.dy) &&
-                creep.room
-                    .lookForAt(LOOK_STRUCTURES, creep.pos.x + moveing.dx, creep.pos.y + moveing.dy)
-                    .find((s) => OBSTACLE_OBJECT_TYPES.includes(s.structureType));
-            if (blocker) {
-                if (creep.dismantle(blocker) !== OK) {
-                    creep.attack(blocker);
+        switch ((creep.memory.worked = creep.harvest(source))) {
+            case OK:
+                return OK;
+            case ERR_NOT_IN_RANGE:
+                if (memory.mode === "🌾") {
+                    const moveing = _(((_b = memory._move) === null || _b === void 0 ? void 0 : _b.path) || []).first();
+                    const isInRange = (n) => {
+                        return 0 < n && n < 49;
+                    };
+                    const blocker = moveing &&
+                        isInRange(creep.pos.x + moveing.dx) &&
+                        isInRange(creep.pos.y + moveing.dy) &&
+                        creep.room
+                            .lookForAt(LOOK_STRUCTURES, creep.pos.x + moveing.dx, creep.pos.y + moveing.dy)
+                            .find((s) => OBSTACLE_OBJECT_TYPES.includes(s.structureType));
+                    if (blocker) {
+                        if (creep.dismantle(blocker) !== OK) {
+                            creep.attack(blocker);
+                        }
+                    }
+                    return (0, util_creep_1.customMove)(creep, source, {
+                        ignoreDestructibleStructures: !((_d = (_c = creep.room.controller) === null || _c === void 0 ? void 0 : _c.owner) === null || _d === void 0 ? void 0 : _d.username),
+                    });
                 }
-            }
-            return (0, util_creep_1.customMove)(creep, source, {
-                ignoreDestructibleStructures: !((_d = (_c = creep.room.controller) === null || _c === void 0 ? void 0 : _c.owner) === null || _d === void 0 ? void 0 : _d.username),
-            });
-        }
-        else {
-            return creep.memory.worked;
+                else {
+                    return memory.worked;
+                }
+            default:
+                creep.memory.harvestTargetId = undefined;
+                return;
         }
     }
     else {
@@ -153,7 +164,7 @@ function build(creep) {
         creep.say(creep.memory.mode);
     }
     if (!memory.siteId) {
-        creep.memory.siteId = (_a = creep.pos.findClosestByPath(sitesInroom)) === null || _a === void 0 ? void 0 : _a.id;
+        creep.memory.siteId = (_a = creep.pos.findClosestByPath(sitesInroom, { maxRooms: 0 })) === null || _a === void 0 ? void 0 : _a.id;
     }
     const site = memory.siteId && Game.getObjectById(memory.siteId);
     if (!site) {
@@ -161,17 +172,11 @@ function build(creep) {
         return ERR_NOT_FOUND;
     }
     if (memory.mode === "👷" && creep.pos.getRangeTo(site) > 0) {
-        return (0, util_creep_1.customMove)(creep, site, {
+        (0, util_creep_1.customMove)(creep, site, {
             ignoreDestructibleStructures: !((_c = (_b = creep.room.controller) === null || _b === void 0 ? void 0 : _b.owner) === null || _c === void 0 ? void 0 : _c.username),
         });
     }
-    if (creep.store.energy >= creep.getActiveBodyparts(WORK) * BUILD_POWER) {
-        return (creep.memory.worked = creep.build(site));
-    }
-    else {
-        creep.say("🌾");
-        creep.memory.mode = "🌾";
-    }
+    return (creep.memory.worked = creep.build(site));
 }
 function moveRoom(creep, fromRoom, toRoom) {
     var _a;
@@ -231,7 +236,14 @@ function transfer(creep) {
         }
         Object.keys(creep.store).forEach((resourceType) => {
             if ((creep.memory.worked = creep.transfer(store, resourceType)) === ERR_NOT_IN_RANGE && memory.mode === "🚛") {
-                return (0, util_creep_1.customMove)(creep, store);
+                if ((0, util_creep_1.customMove)(creep, store, {
+                    swampCost: 2,
+                    plainCost: 2,
+                }) === OK) {
+                    if (!(0, utils_1.isHighway)(creep.room) && !creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD)) {
+                        creep.pos.createConstructionSite(STRUCTURE_ROAD);
+                    }
+                }
             }
             else {
                 return creep.memory.worked;

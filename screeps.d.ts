@@ -112,6 +112,12 @@ declare type MyStructureCache = {
   terminal: StructureTerminal[];
   tower: StructureTower[];
 };
+declare interface Memory {
+  realTImes: {
+    time: number;
+    unixTime: number;
+  }[];
+}
 
 declare interface RoomMemory {
   creeps?: CreepsCache;

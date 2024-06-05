@@ -13,6 +13,7 @@ const behavior = (controller) => {
         });
     };
     showSummary([
+        `seconds : ${(0, utils_1.getSecondsPerticks)()}s`,
         `energy  : ${controller.room.energyAvailable} / ${controller.room.energyCapacityAvailable}`,
         `bucket  : ${(_a = Game.cpu.bucket) === null || _a === void 0 ? void 0 : _a.toLocaleString()}`,
         `progress:${(controller.progressTotal - controller.progress).toLocaleString()}`,
