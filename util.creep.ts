@@ -64,45 +64,32 @@ export function randomWalk(creep: Creep) {
 }
 
 export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
-  builder: _.range(50).map((i) => {
-    const bodies = [MOVE, WORK, MOVE, CARRY];
-    return bodies[i % bodies.length];
-  }),
-  repairer: [
-    WORK,
-    MOVE,
-    ..._(
-      _.range(12).map(() => {
-        return [CARRY, MOVE, WORK, MOVE];
+  builder: ([WORK, CARRY, MOVE, WORK] as BodyPartConstant[])
+    .concat(
+      ..._.range(25).map((i) => {
+        const bodies = [CARRY, MOVE];
+        return bodies[i % bodies.length];
       }),
     )
-      .flatten<BodyPartConstant>()
-      .run(),
-  ],
+    .slice(0, 50),
+  repairer: ([WORK, MOVE] as BodyPartConstant[])
+    .concat(
+      ..._.range(25).map((i) => {
+        const bodies = [CARRY, MOVE];
+        return bodies[i % bodies.length];
+      }),
+    )
+    .slice(0, 50),
   claimer: [CLAIM, MOVE],
   reserver: _.range(4).map((i) => {
     const bodies = [CLAIM, MOVE];
     return bodies[i % bodies.length];
   }),
-  remoteHarvester: [
-    // 基本
-    MOVE,
-    WORK,
-    CARRY,
-    // ザコなら処理できる感じにして置く
-    MOVE,
-    ATTACK,
-    ATTACK,
-    MOVE,
-    HEAL,
-    HEAL,
-  ]
-    .concat(
-      ..._.range(50).map((i) => {
-        const b = [MOVE, WORK, CARRY];
-        return b[i % b.length];
-      }),
-    )
+  remoteHarvester: _.range(50)
+    .map((i) => {
+      const b = [WORK, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY];
+      return b[i % b.length];
+    })
     .slice(0, 50),
   carrier: ([] as BodyPartConstant[])
     .concat(
@@ -185,7 +172,6 @@ export const customMove: CustomMove = (creep, target, opt) => {
   }
 
   creep.memory.moved = creep.moveTo(target, {
-    plainCost: 4,
     serializeMemory: false,
     ...opt,
     visualizePathStyle: {
@@ -205,7 +191,6 @@ export const customMove: CustomMove = (creep, target, opt) => {
       if (blocker && blocker.memory.moved !== OK) {
         const pull = creep.pull(blocker);
         const move = blocker.move(creep);
-        blocker.memory.__avoidCreep = 5;
         blocker.memory._move = undefined;
         (pull || move) &&
           console.log(JSON.stringify({ name: creep.name, pull: RETURN_CODE_DECODER[pull.toString()], move: RETURN_CODE_DECODER[move.toString()] }));

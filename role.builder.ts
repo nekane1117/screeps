@@ -1,5 +1,6 @@
+import { ROAD_DECAY_AMOUNT_SWAMP, ROAD_DECAY_AMOUNT_WALL } from "./constants";
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll, withdrawBy } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll, toColor, withdrawBy } from "./util.creep";
 import { findMyStructures, getSitesInRoom } from "./utils";
 // import { findMyStructures } from "./utils";
 
@@ -37,41 +38,90 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   checkMode();
 
   // https://docs.screeps.com/simultaneous-actions.html
+  const repairPower = _(creep.body)
+    .filter((b) => b.type === WORK)
+    .sum((b) => {
+      return (
+        REPAIR_POWER *
+        (() => {
+          const boost = b.boost;
+          const workBoosts: Partial<{ [boost: string]: Partial<{ [action: string]: number }> }> = BOOSTS.work;
+          if (typeof boost === "string") {
+            return workBoosts[boost]?.repair || 1;
+          } else {
+            return 1;
+          }
+        })()
+      );
+    });
 
-  // boostされてない場合
-  const labs = findMyStructures(creep.room).lab.map((lab) => {
-    return Object.assign(lab, {
-      memory: creep.room.memory.labs[lab.id],
-    }) as StructureLab & { memory: LabMemory };
-  });
+  // 不正な対象の時は初期化する
+  if (creep.memory.firstAidId) {
+    const target = Game.getObjectById(creep.memory.firstAidId);
+    // 取れない or 満タンの時は初期化する
+    if (!target || target.hits === target.hitsMax) {
+      creep.memory.firstAidId = undefined;
+    }
+  }
+  const { road, rampart, container } = findMyStructures(creep.room);
 
-  const parts = creep.body.filter((b) => b.type === WORK);
-  if (!creep.body.filter((b) => b.type === WORK).find((e) => boosts.includes(e.boost as ResourceConstant))) {
-    //
-    const lab = boosts
-      .map((mineralType) => {
-        return {
-          mineralType,
-          lab: labs.find((l) => {
-            // 指定のミネラルでミネラル、エネルギーが足りるラボ
-            return (
-              l.mineralType === mineralType && l.store[mineralType] >= parts.length * LAB_BOOST_MINERAL && l.store.energy >= parts.length * LAB_BOOST_ENERGY
-            );
-          }),
-        };
-      })
-      .find((o) => o.lab)?.lab;
+  // 応急修理が要るものを探す
+  if (!creep.memory.firstAidId) {
+    creep.memory.firstAidId = creep.pos.findClosestByRange([...road, ...rampart, ...container], {
+      filter: (s: StructureRampart | StructureContainer | StructureRoad) => {
+        return (
+          s.hits <=
+          (() => {
+            switch (s.structureType) {
+              case "container":
+                return CONTAINER_DECAY;
+              case "rampart":
+                return RAMPART_DECAY_AMOUNT;
+              case "road":
+                switch (_(s.pos.lookFor(LOOK_TERRAIN)).first()) {
+                  case "wall":
+                    return ROAD_DECAY_AMOUNT_WALL;
+                  case "swamp":
+                    return ROAD_DECAY_AMOUNT_SWAMP;
+                  case "plain":
+                  default:
+                    return ROAD_DECAY_AMOUNT;
+                }
+            }
+          })() *
+            10
+        );
+      },
+    })?.id;
+  }
 
-    if (lab) {
-      if (creep.pos.isNearTo(lab)) {
-        return lab.boostCreep(creep);
-      } else {
-        return moveMeTo(lab);
-      }
+  // 応急修理する
+  if (creep.memory.firstAidId) {
+    // boostされてない場合
+    if (!isBoosted(creep)) {
+      return boost(creep);
+    }
+
+    const target = Game.getObjectById(creep.memory.firstAidId);
+    if (target) {
+      target.room.visual.text("x", target.pos, {
+        opacity: 1 - target.hits / target.hitsMax,
+        color: toColor(creep),
+      });
+      return _(creep.repair(target))
+        .tap((code) => {
+          if (code === ERR_NOT_IN_RANGE) {
+            // 作業モードの時は近寄る
+            if (creep.memory.mode === "👷") {
+              moveMeTo(target);
+            }
+          }
+        })
+        .run();
     }
   }
 
-  // build
+  // 建設する
   if (
     creep.memory.buildingId ||
     (creep.memory.buildingId = (() => {
@@ -81,46 +131,120 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         return undefined;
       }
 
-      // トータルが少ない中で一番進んでるやつ
-      return _(sites).min((s) => s.progressTotal + (1 - s.progress / s.progressTotal));
+      // 残作業が一番少ない一番近いやつ
+      const minRemaning = _(sites)
+        .map((s) => s.progressTotal - s.progress)
+        .min();
+      return creep.pos.findClosestByRange(
+        _(sites)
+          .filter((s) => minRemaning === s.progressTotal - s.progress)
+          .run(),
+      );
     })()?.id)
   ) {
+    // boostされてない場合
+    if (!isBoosted(creep)) {
+      return boost(creep);
+    }
+
     const site = Game.getObjectById(creep.memory.buildingId);
     if (site) {
-      switch ((creep.memory.built = creep.build(site))) {
-        // 対象が変な時はクリアする
-        case ERR_INVALID_TARGET:
-          creep.memory.buildingId = undefined;
-          break;
-        // 建築モードで離れてるときは近寄る
-        case ERR_NOT_IN_RANGE:
-          if (creep.memory.mode === "👷") {
-            moveMeTo(site);
+      return _((creep.memory.built = creep.build(site)))
+        .tap((built) => {
+          switch (built) {
+            // 対象が変な時はクリアする
+            case ERR_INVALID_TARGET:
+              creep.memory.buildingId = undefined;
+              break;
+            // 建築モードで離れてるときは近寄る
+            case ERR_NOT_IN_RANGE:
+              if (creep.memory.mode === "👷") {
+                moveMeTo(site);
+              }
+              break;
+
+            // 有りえない系
+            case ERR_NOT_OWNER: // 自creepじゃない
+            case ERR_NO_BODYPART:
+              console.log(`${creep.name} build returns ${RETURN_CODE_DECODER[built.toString()]}`);
+              creep.say(RETURN_CODE_DECODER[built.toString()]);
+              break;
+
+            // 問題ない系
+            case OK:
+            case ERR_BUSY:
+            case ERR_NOT_ENOUGH_RESOURCES:
+            default:
+              break;
           }
-          break;
-
-        // 有りえない系
-        case ERR_NOT_OWNER: // 自creepじゃない
-        case ERR_NO_BODYPART:
-          console.log(`${creep.name} build returns ${RETURN_CODE_DECODER[creep.memory.built.toString()]}`);
-          creep.say(RETURN_CODE_DECODER[creep.memory.built.toString()]);
-          break;
-
-        // 問題ない系
-        case OK:
-        case ERR_BUSY:
-        case ERR_NOT_ENOUGH_RESOURCES:
-        default:
-          break;
-      }
+        })
+        .run();
     } else {
       // 指定されていたソースが見つからないとき
       // 対象をクリア
       creep.memory.buildingId = undefined;
     }
-  } else {
-    // 本当に何もなければ死ぬ
-    return creep.suicide();
+  }
+
+  // 建設がなければ修理する
+
+  // 不正なものを初期化する
+  if (creep.memory.repairId) {
+    const target = creep.memory.repairId && Game.getObjectById(creep.memory.repairId);
+    if (!target || target.hits === target.hitsMax) {
+      creep.memory.repairId = undefined;
+    }
+  }
+
+  // 対象を探す
+  if (
+    creep.memory.repairId ||
+    (creep.memory.repairId = _(
+      creep.room.find(FIND_STRUCTURES, {
+        // ダメージのある建物
+        filter: (s) => {
+          // 閾値
+          return s.hits <= s.hitsMax - repairPower;
+        },
+      }),
+    ).min((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME))?.id)
+  ) {
+    const target = creep.memory.repairId && Game.getObjectById(creep.memory.repairId);
+    if (target) {
+      // boostされてない場合
+      if (!isBoosted(creep)) {
+        return boost(creep);
+      }
+
+      target.room.visual.text("x", target.pos, {
+        opacity: 1 - _.ceil(target.hits / target.hitsMax, 1),
+      });
+      return _(creep.repair(target))
+        .tap((repaired) => {
+          switch (repaired) {
+            case ERR_NOT_IN_RANGE:
+              // 作業モードの時は近寄る
+              if (creep.memory.mode === "👷") {
+                moveMeTo(target);
+              }
+              return;
+            case OK:
+              // 作業モードの時は近寄る
+              if (creep.memory.mode === "👷") {
+                // 成功しても近寄る
+                moveMeTo(target);
+              }
+              // 成功したら同じ種類で近くの一番壊れてるやつにリタゲする
+              creep.memory.repairId = _(
+                creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.structureType === target.structureType && s.hits < s.hitsMax }),
+              ).min((s) => s.hits)?.id;
+              return;
+            default:
+              return;
+          }
+        })
+        .run();
+    }
   }
 
   // withdraw
@@ -198,3 +322,47 @@ function isBuilder(creep: Creep): creep is Builder {
 }
 
 const boosts: ResourceConstant[] = [RESOURCE_CATALYZED_LEMERGIUM_ACID, RESOURCE_LEMERGIUM_ACID, RESOURCE_LEMERGIUM_HYDRIDE];
+
+function isBoosted(creep: Builder) {
+  // いずれかがboots無しでない
+  return !creep.body.some((b) => b.type === WORK && b.boost === undefined);
+}
+
+function boost(creep: Builder) {
+  const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
+    customMove(creep, target, {
+      ...opt,
+    });
+
+  const labs = findMyStructures(creep.room).lab.map((lab) => {
+    return Object.assign(lab, {
+      memory: creep.room.memory.labs[lab.id],
+    }) as StructureLab & { memory: LabMemory };
+  });
+
+  const parts = creep.body.filter((b) => b.type === WORK);
+  if (!creep.body.filter((b) => b.type === WORK).find((e) => boosts.includes(e.boost as ResourceConstant))) {
+    //
+    const lab = boosts
+      .map((mineralType) => {
+        return {
+          mineralType,
+          lab: labs.find((l) => {
+            // 指定のミネラルでミネラル、エネルギーが足りるラボ
+            return (
+              l.mineralType === mineralType && l.store[mineralType] >= parts.length * LAB_BOOST_MINERAL && l.store.energy >= parts.length * LAB_BOOST_ENERGY
+            );
+          }),
+        };
+      })
+      .find((o) => o.lab)?.lab;
+
+    if (lab) {
+      if (creep.pos.isNearTo(lab)) {
+        return lab.boostCreep(creep);
+      } else {
+        return moveMeTo(lab);
+      }
+    }
+  }
+}

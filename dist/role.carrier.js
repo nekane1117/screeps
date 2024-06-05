@@ -19,10 +19,10 @@ const behavior = (creep) => {
             return console.log(`${creep.name} is not Carrier`);
         }
         const newMode = ((c) => {
-            if (c.memory.mode === "🚛" && creep.store.getUsedCapacity() < (c.room.controller ? EXTENSION_ENERGY_CAPACITY[c.room.controller.level] : CARRY_CAPACITY)) {
+            if (c.memory.mode === "🚛" && creep.store.energy === 0) {
                 return "🛒";
             }
-            if (c.memory.mode === "🛒" && (0, utils_1.getCapacityRate)(creep) > 0.5) {
+            if (c.memory.mode === "🛒" && creep.store.energy > 0) {
                 return "🚛";
             }
             return c.memory.mode;
@@ -61,7 +61,7 @@ const behavior = (creep) => {
     if (!creep.memory.storeId && room.energyAvailable < room.energyCapacityAvailable) {
         creep.memory.storeId = (_b = creep.pos.findClosestByRange(_.compact([room.storage, ...containers]), {
             filter: (s) => {
-                return (containers.length < 2 || (controllerContaeiner === null || controllerContaeiner === void 0 ? void 0 : controllerContaeiner.id) !== s.id) && s.store.energy >= CARRY_CAPACITY;
+                return (containers.length < 2 || (controllerContaeiner === null || controllerContaeiner === void 0 ? void 0 : controllerContaeiner.id) !== s.id) && s.store.energy > 0;
             },
         })) === null || _b === void 0 ? void 0 : _b.id;
     }

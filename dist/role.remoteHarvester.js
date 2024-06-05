@@ -57,6 +57,11 @@ const behavior = (creep) => {
         }
     }
     harvest(creep);
+    if ((0, utils_1.getSitesInRoom)(creep.room).length === 0) {
+        if (!(0, utils_1.isHighway)(creep.room) && !creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD)) {
+            creep.pos.createConstructionSite(STRUCTURE_ROAD);
+        }
+    }
     build(creep);
     const repariTarget = creep.pos.roomName !== memory.baseRoom && creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.hits < s.hitsMax);
     if (repariTarget) {
@@ -86,7 +91,6 @@ function harvest(creep) {
     var _a, _b, _c, _d;
     const memory = (0, utils_1.readonly)(creep.memory);
     const targetRoom = Game.rooms[memory.targetRoomName];
-    console.log(targetRoom);
     if (targetRoom) {
         if (memory.harvestTargetId) {
             if (!Game.getObjectById(memory.harvestTargetId)) {
@@ -236,14 +240,7 @@ function transfer(creep) {
         }
         Object.keys(creep.store).forEach((resourceType) => {
             if ((creep.memory.worked = creep.transfer(store, resourceType)) === ERR_NOT_IN_RANGE && memory.mode === "🚛") {
-                if ((0, util_creep_1.customMove)(creep, store, {
-                    swampCost: 2,
-                    plainCost: 2,
-                }) === OK) {
-                    if (!(0, utils_1.isHighway)(creep.room) && !creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD)) {
-                        creep.pos.createConstructionSite(STRUCTURE_ROAD);
-                    }
-                }
+                return (0, util_creep_1.customMove)(creep, store);
             }
             else {
                 return creep.memory.worked;

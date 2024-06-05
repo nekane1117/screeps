@@ -7,15 +7,10 @@ import { toColor } from "./util.creep";
 import { findMyStructures, isHighway, logUsage } from "./utils";
 
 module.exports.loop = function () {
-  logUsage("measure tick time", () => {
-    Memory.realTImes = (Memory.realTImes || [])
-      .concat({
-        time: Game.time,
-        unixTime: new Date().valueOf(),
-      })
-      .slice(-100);
-  });
   logUsage("all", () => {
+    logUsage("measure tick time", () => {
+      Memory.realTImes = (Memory.realTImes || []).concat(new Date().valueOf()).slice(-100);
+    });
     if (Game.cpu.bucket === 10000) {
       Game.cpu.generatePixel();
     }
@@ -86,9 +81,8 @@ module.exports.loop = function () {
           c.getActiveBodyparts(WORK) &&
             c.pos
               .lookFor(LOOK_STRUCTURES)
-              .filter((s) => "ticksToDecay" in s && s.hits < s.hitsMax)
+              .filter((s) => ([STRUCTURE_CONTAINER, STRUCTURE_ROAD] as StructureConstant[]).includes(s.structureType) && s.hits < s.hitsMax)
               .forEach((s) => c.repair(s));
-          c.memory.__avoidCreep = Math.max(0, (c.memory.__avoidCreep || 0) - 1);
         });
     });
 

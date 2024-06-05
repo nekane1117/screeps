@@ -131,6 +131,8 @@ exports.readonly = readonly;
 function getSecondsPerticks() {
     const head = _(Memory.realTImes).first();
     const last = _(Memory.realTImes).last();
-    return head && last ? _.round((last.unixTime - head.unixTime) / Memory.realTImes.length / 1000, 2) : 0;
+    return head && last
+        ? _.round(((_.isNumber(last) ? last : last.unixTime) - (_.isNumber(head) ? head : head.unixTime)) / Memory.realTImes.length / 1000, 2)
+        : 0;
 }
 exports.getSecondsPerticks = getSecondsPerticks;

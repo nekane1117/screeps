@@ -64,6 +64,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // harvest
   harvest(creep);
 
+  // 建設がなく道じゃないところを歩いてるときは道を敷く
+  if (getSitesInRoom(creep.room).length === 0) {
+    if (!isHighway(creep.room) && !creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD)) {
+      // 現在地に道が無ければ作らせる
+      creep.pos.createConstructionSite(STRUCTURE_ROAD);
+    }
+  }
   // build
   build(creep);
   // repair
@@ -101,7 +108,6 @@ function isRemoteHarvester(creep: Creep): creep is RemoteHarvester {
 function harvest(creep: RemoteHarvester) {
   const memory = readonly(creep.memory);
   const targetRoom = Game.rooms[memory.targetRoomName] as Room | undefined;
-  console.log(targetRoom);
   // 部屋が取れるか
   if (targetRoom) {
     if (memory.harvestTargetId) {
@@ -299,17 +305,8 @@ function transfer(creep: RemoteHarvester) {
 
     (Object.keys(creep.store) as ResourceConstant[]).forEach((resourceType) => {
       if ((creep.memory.worked = creep.transfer(store, resourceType)) === ERR_NOT_IN_RANGE && memory.mode === "🚛") {
-        if (
-          customMove(creep, store, {
-            swampCost: 2,
-            plainCost: 2,
-          }) === OK
-        ) {
-          if (!isHighway(creep.room) && !creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD)) {
-            // 現在地に道が無ければ作らせる
-            creep.pos.createConstructionSite(STRUCTURE_ROAD);
-          }
-        }
+        // 範囲内でなくて収穫モードの時は近寄る
+        return customMove(creep, store);
       } else {
         return creep.memory.worked;
       }

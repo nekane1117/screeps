@@ -30,7 +30,6 @@ declare interface CreepMemory {
     room: string;
   };
   moved?: ReturnType<Creep["moveTo"]>;
-  __avoidCreep?: number;
 
   __moveRoom?: {
     route?: ReturnType<(typeof Game)["map"]["findRoute"]>;
@@ -113,10 +112,13 @@ declare type MyStructureCache = {
   tower: StructureTower[];
 };
 declare interface Memory {
-  realTImes: {
-    time: number;
-    unixTime: number;
-  }[];
+  realTImes: (
+    | {
+        time: number;
+        unixTime: number;
+      }
+    | number
+  )[];
 }
 
 declare interface RoomMemory {
@@ -198,8 +200,10 @@ declare interface BuilderMemory extends CreepMemory {
   /** 今建てたいもの */
   buildingId?: ConstructionSite["id"] | null;
   built?: ReturnType<Creeps["build"]>;
-  /** 今建てたいもの */
+  /** 修理するもの */
   repairId?: Id<Parameters<Creep["repair"]>[0]>;
+  /** 応急手当が要るもの */
+  firstAidId?: Id<Parameters<Creep["repair"]>[0]>;
   built?: ReturnType<Creeps["build"]>;
   /** 資源をもらいに行く先 */
   storeId?: StoreTarget["id"] | null;

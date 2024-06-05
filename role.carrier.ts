@@ -27,12 +27,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       return console.log(`${creep.name} is not Carrier`);
     }
     const newMode = ((c: Carrier) => {
-      if (c.memory.mode === "🚛" && creep.store.getUsedCapacity() < (c.room.controller ? EXTENSION_ENERGY_CAPACITY[c.room.controller.level] : CARRY_CAPACITY)) {
+      if (c.memory.mode === "🚛" && creep.store.energy === 0) {
         // 作業モードで空になったら収集モードにする
         return "🛒";
       }
 
-      if (c.memory.mode === "🛒" && getCapacityRate(creep) > 0.5) {
+      if (c.memory.mode === "🛒" && creep.store.energy > 0) {
         // 収集モードで半分超えたら作業モードにする
         return "🚛";
       }
@@ -87,7 +87,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!creep.memory.storeId && room.energyAvailable < room.energyCapacityAvailable) {
     creep.memory.storeId = creep.pos.findClosestByRange(_.compact([room.storage, ...containers]), {
       filter: (s: StructureContainer) => {
-        return (containers.length < 2 || controllerContaeiner?.id !== s.id) && s.store.energy >= CARRY_CAPACITY;
+        return (containers.length < 2 || controllerContaeiner?.id !== s.id) && s.store.energy > 0;
       },
     })?.id;
   }

@@ -38,33 +38,35 @@ const behavior = (creep) => {
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5) {
         creep.pos.findInRange(Object.values(Game.constructionSites), 3).map((site) => creep.build(site));
     }
-    _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => "ticksToDecay" in s && s.hits < s.hitsMax - creep.getActiveBodyparts(WORK) * REPAIR_POWER }))
-        .tap((damaged) => {
-        damaged.forEach((s) => creep.repair(s));
+    const repaired = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => "ticksToDecay" in s && s.hits < s.hitsMax - creep.getActiveBodyparts(WORK) * REPAIR_POWER }))
+        .map((damaged) => {
+        return creep.repair(damaged);
     })
         .run();
     (0, util_creep_1.pickUpAll)(creep);
-    const { container: containers, link: links } = (0, utils_1.findMyStructures)(creep.room);
-    const link = source.pos.findClosestByRange(links, {
-        filter: (s) => s.pos.inRangeTo(source, 2),
-    });
-    if (link) {
-        creep.pos.findInRange(containers, 2).forEach((c) => {
-            if (creep.withdraw(c, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE && creep.store.energy > 10) {
-                (0, util_creep_1.customMove)(creep, c);
-            }
-        });
-        if (creep.transfer(link, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE && creep.store.energy > 10) {
-            (0, util_creep_1.customMove)(creep, link);
-        }
-    }
-    else {
-        const container = source.pos.findClosestByRange(containers, {
+    if (repaired.length === 0) {
+        const { container: containers, link: links } = (0, utils_1.findMyStructures)(creep.room);
+        const link = source.pos.findClosestByRange(links, {
             filter: (s) => s.pos.inRangeTo(source, 2),
         });
-        if (container) {
-            if (creep.transfer(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                (0, util_creep_1.customMove)(creep, container);
+        if (link) {
+            creep.pos.findInRange(containers, 2).forEach((c) => {
+                if (creep.withdraw(c, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE && creep.store.energy > 10) {
+                    (0, util_creep_1.customMove)(creep, c);
+                }
+            });
+            if (creep.transfer(link, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE && creep.store.energy > 10) {
+                (0, util_creep_1.customMove)(creep, link);
+            }
+        }
+        else {
+            const container = source.pos.findClosestByRange(containers, {
+                filter: (s) => s.pos.inRangeTo(source, 2),
+            });
+            if (container) {
+                if (creep.transfer(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                    (0, util_creep_1.customMove)(creep, container);
+                }
             }
         }
     }

@@ -60,39 +60,28 @@ function randomWalk(creep) {
 }
 exports.randomWalk = randomWalk;
 exports.IDEAL_BODY = Object.freeze({
-    builder: _.range(50).map((i) => {
-        const bodies = [MOVE, WORK, MOVE, CARRY];
+    builder: [WORK, CARRY, MOVE, WORK]
+        .concat(..._.range(25).map((i) => {
+        const bodies = [CARRY, MOVE];
         return bodies[i % bodies.length];
-    }),
-    repairer: [
-        WORK,
-        MOVE,
-        ..._(_.range(12).map(() => {
-            return [CARRY, MOVE, WORK, MOVE];
-        }))
-            .flatten()
-            .run(),
-    ],
+    }))
+        .slice(0, 50),
+    repairer: [WORK, MOVE]
+        .concat(..._.range(25).map((i) => {
+        const bodies = [CARRY, MOVE];
+        return bodies[i % bodies.length];
+    }))
+        .slice(0, 50),
     claimer: [CLAIM, MOVE],
     reserver: _.range(4).map((i) => {
         const bodies = [CLAIM, MOVE];
         return bodies[i % bodies.length];
     }),
-    remoteHarvester: [
-        MOVE,
-        WORK,
-        CARRY,
-        MOVE,
-        ATTACK,
-        ATTACK,
-        MOVE,
-        HEAL,
-        HEAL,
-    ]
-        .concat(..._.range(50).map((i) => {
-        const b = [MOVE, WORK, CARRY];
+    remoteHarvester: _.range(50)
+        .map((i) => {
+        const b = [WORK, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY];
         return b[i % b.length];
-    }))
+    })
         .slice(0, 50),
     carrier: []
         .concat(..._.range(12).map((i) => {
@@ -158,7 +147,7 @@ const customMove = (creep, target, opt) => {
     if (creep.fatigue) {
         return OK;
     }
-    creep.memory.moved = creep.moveTo(target, Object.assign(Object.assign({ plainCost: 4, serializeMemory: false }, opt), { visualizePathStyle: Object.assign({ opacity: 0.55, stroke: toColor(creep) }, opt === null || opt === void 0 ? void 0 : opt.visualizePathStyle) }));
+    creep.memory.moved = creep.moveTo(target, Object.assign(Object.assign({ serializeMemory: false }, opt), { visualizePathStyle: Object.assign({ opacity: 0.55, stroke: toColor(creep) }, opt === null || opt === void 0 ? void 0 : opt.visualizePathStyle) }));
     if (creep.memory.moved === OK && Game.time % 3) {
         const { dy, dx } = ((_b = (_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b[0]) || {};
         const isInRange = (n) => {
@@ -169,7 +158,6 @@ const customMove = (creep, target, opt) => {
             if (blocker && blocker.memory.moved !== OK) {
                 const pull = creep.pull(blocker);
                 const move = blocker.move(creep);
-                blocker.memory.__avoidCreep = 5;
                 blocker.memory._move = undefined;
                 (pull || move) &&
                     console.log(JSON.stringify({ name: creep.name, pull: exports.RETURN_CODE_DECODER[pull.toString()], move: exports.RETURN_CODE_DECODER[move.toString()] }));
