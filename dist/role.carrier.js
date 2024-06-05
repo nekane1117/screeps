@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
     const { room } = creep;
     const moveMeTo = (target, opt) => {
         if ((0, utils_1.getSitesInRoom)(room).length === 0 && creep.pos.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType === STRUCTURE_ROAD).length === 0) {
@@ -22,7 +22,7 @@ const behavior = (creep) => {
             if (c.memory.mode === "🚛" && creep.store.energy === 0) {
                 return "🛒";
             }
-            if (c.memory.mode === "🛒" && creep.store.energy > 0) {
+            if (c.memory.mode === "🛒" && creep.store.energy >= (creep.room.controller ? EXTENSION_ENERGY_CAPACITY[creep.room.controller.level] : CARRY_CAPACITY)) {
                 return "🚛";
             }
             return c.memory.mode;
@@ -165,14 +165,11 @@ const behavior = (creep) => {
         creep.memory.transferId = (_k = (controllerContaeiner && (0, utils_1.getCapacityRate)(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined)) === null || _k === void 0 ? void 0 : _k.id;
     }
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_l = creep.pos.findClosestByRange(Object.values(Game.creeps).filter((c) => c.memory.role === "builder" && c.store.getFreeCapacity(RESOURCE_ENERGY) && exclusive(c)))) === null || _l === void 0 ? void 0 : _l.id;
-    }
-    if (!creep.memory.transferId) {
-        creep.memory.transferId = (_m = spawn.pos.findClosestByRange(_.compact([...link, room.storage, room.terminal]), {
+        creep.memory.transferId = (_l = spawn.pos.findClosestByRange(_.compact([...link, room.storage, room.terminal]), {
             filter: (s) => {
                 return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
             },
-        })) === null || _m === void 0 ? void 0 : _m.id;
+        })) === null || _l === void 0 ? void 0 : _l.id;
     }
     if (!creep.memory.transferId) {
         return ERR_NOT_FOUND;

@@ -3,7 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const constructionSite_1 = __importDefault(require("./constructionSite"));
 const flags_1 = __importDefault(require("./flags"));
 const roles_1 = require("./roles");
 const room_1 = require("./room");
@@ -30,18 +29,6 @@ module.exports.loop = function () {
         });
         (0, utils_1.logUsage)("flags", () => {
             Object.values(Game.flags).forEach((flag) => { var _a; return (_a = flags_1.default[flag.color]) === null || _a === void 0 ? void 0 : _a.call(flags_1.default, flag); });
-        });
-        (0, utils_1.logUsage)("sites", () => {
-            const executedRoom = {};
-            Object.values(Game.constructionSites).forEach((s) => {
-                if (executedRoom[s.pos.roomName]) {
-                    return;
-                }
-                else {
-                    (0, constructionSite_1.default)(s);
-                    executedRoom[s.pos.roomName] = true;
-                }
-            });
         });
         (0, utils_1.logUsage)("rooms", () => {
             Object.values(Game.rooms)

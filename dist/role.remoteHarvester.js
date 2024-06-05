@@ -88,7 +88,7 @@ function isRemoteHarvester(creep) {
     return creep.memory.role === "remoteHarvester";
 }
 function harvest(creep) {
-    var _a, _b, _c, _d;
+    var _a, _b, _c;
     const memory = (0, utils_1.readonly)(creep.memory);
     const targetRoom = Game.rooms[memory.targetRoomName];
     if (targetRoom) {
@@ -122,23 +122,8 @@ function harvest(creep) {
                 return OK;
             case ERR_NOT_IN_RANGE:
                 if (memory.mode === "🌾") {
-                    const moveing = _(((_b = memory._move) === null || _b === void 0 ? void 0 : _b.path) || []).first();
-                    const isInRange = (n) => {
-                        return 0 < n && n < 49;
-                    };
-                    const blocker = moveing &&
-                        isInRange(creep.pos.x + moveing.dx) &&
-                        isInRange(creep.pos.y + moveing.dy) &&
-                        creep.room
-                            .lookForAt(LOOK_STRUCTURES, creep.pos.x + moveing.dx, creep.pos.y + moveing.dy)
-                            .find((s) => OBSTACLE_OBJECT_TYPES.includes(s.structureType));
-                    if (blocker) {
-                        if (creep.dismantle(blocker) !== OK) {
-                            creep.attack(blocker);
-                        }
-                    }
                     return (0, util_creep_1.customMove)(creep, source, {
-                        ignoreDestructibleStructures: !((_d = (_c = creep.room.controller) === null || _c === void 0 ? void 0 : _c.owner) === null || _d === void 0 ? void 0 : _d.username),
+                        ignoreDestructibleStructures: !((_c = (_b = creep.room.controller) === null || _b === void 0 ? void 0 : _b.owner) === null || _c === void 0 ? void 0 : _c.username),
                     });
                 }
                 else {

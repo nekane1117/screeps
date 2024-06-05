@@ -4,6 +4,7 @@ import { findMyStructures, getCapacityRate, getSitesInRoom } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const { room } = creep;
+
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
     // carrierが通る場所で道が無いときは敷く
     if (getSitesInRoom(room).length === 0 && creep.pos.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType === STRUCTURE_ROAD).length === 0) {
@@ -32,7 +33,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         return "🛒";
       }
 
-      if (c.memory.mode === "🛒" && creep.store.energy > 0) {
+      if (c.memory.mode === "🛒" && creep.store.energy >= (creep.room.controller ? EXTENSION_ENERGY_CAPACITY[creep.room.controller.level] : CARRY_CAPACITY)) {
         // 収集モードで半分超えたら作業モードにする
         return "🚛";
       }
@@ -230,12 +231,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     creep.memory.transferId = (controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined)?.id;
   }
 
-  if (!creep.memory.transferId) {
-    // 最寄りのbuilderに向かう
-    creep.memory.transferId = creep.pos.findClosestByRange(
-      Object.values(Game.creeps).filter((c) => c.memory.role === "builder" && c.store.getFreeCapacity(RESOURCE_ENERGY) && exclusive(c)),
-    )?.id;
-  }
   // 貯蓄
   if (!creep.memory.transferId) {
     creep.memory.transferId = spawn.pos.findClosestByRange(_.compact([...link, room.storage, room.terminal]), {

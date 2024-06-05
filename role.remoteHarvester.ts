@@ -151,23 +151,23 @@ function harvest(creep: RemoteHarvester) {
       case ERR_NOT_IN_RANGE:
         if (memory.mode === "🌾") {
           // 範囲内でなくて収穫モードの時は近寄る
-          const moveing = _(memory._move?.path || []).first();
-          const isInRange = (n: number) => {
-            return 0 < n && n < 49;
-          };
+          // const moveing = _(memory._move?.path || []).first();
+          // const isInRange = (n: number) => {
+          //   return 0 < n && n < 49;
+          // };
 
-          const blocker =
-            moveing &&
-            isInRange(creep.pos.x + moveing.dx) &&
-            isInRange(creep.pos.y + moveing.dy) &&
-            creep.room
-              .lookForAt(LOOK_STRUCTURES, creep.pos.x + moveing.dx, creep.pos.y + moveing.dy)
-              .find((s) => (OBSTACLE_OBJECT_TYPES as StructureConstant[]).includes(s.structureType));
-          if (blocker) {
-            if (creep.dismantle(blocker) !== OK) {
-              creep.attack(blocker);
-            }
-          }
+          // const blocker =
+          //   moveing &&
+          //   isInRange(creep.pos.x + moveing.dx) &&
+          //   isInRange(creep.pos.y + moveing.dy) &&
+          //   creep.room
+          //     .lookForAt(LOOK_STRUCTURES, creep.pos.x + moveing.dx, creep.pos.y + moveing.dy)
+          //     .find((s) => (OBSTACLE_OBJECT_TYPES as StructureConstant[]).includes(s.structureType));
+          // if (blocker) {
+          //   if (creep.dismantle(blocker) !== OK) {
+          //     creep.attack(blocker);
+          //   }
+          // }
 
           return customMove(creep, source, {
             // 所有者が居ない部屋では壁とかも無視して突っ切る

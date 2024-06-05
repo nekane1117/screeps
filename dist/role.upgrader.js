@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const behavior = (creep) => {
     var _a, _b, _c, _d, _e;
-    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({}, opt));
+    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({ plainCost: 1, swampCost: 1 }, opt));
     if (!isUpgrader(creep)) {
         return console.log(`${creep.name} is not Upgrader`);
     }

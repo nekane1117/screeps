@@ -117,7 +117,7 @@ export function logUsage<T = unknown>(title: string, func: () => T) {
   const value = func();
 
   console.log(`${" ".repeat(indent * 2)}${_.floor(Game.cpu.getUsed() - start, 2)} ${title}`);
-  indent--;
+  indent = Math.max(indent - 1, 0);
   return value;
 }
 

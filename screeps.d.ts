@@ -206,7 +206,7 @@ declare interface BuilderMemory extends CreepMemory {
   firstAidId?: Id<Parameters<Creep["repair"]>[0]>;
   built?: ReturnType<Creeps["build"]>;
   /** 資源をもらいに行く先 */
-  storeId?: StoreTarget["id"] | null;
+  storeId?: Id<Parameters<Creep["withdraw"]>[0]>;
 }
 
 declare interface Carrier extends Creep {

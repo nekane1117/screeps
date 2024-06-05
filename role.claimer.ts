@@ -36,7 +36,7 @@ const behavior: CreepBehavior = (claimer: Creeps) => {
       case OK:
         break;
       default:
-        console.log(RETURN_CODE_DECODER[claimed.toString()]);
+        console.log("claimer", RETURN_CODE_DECODER[claimed.toString()]);
         break;
     }
   } else {

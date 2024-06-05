@@ -2,7 +2,7 @@ import labManager from "./room.labManager";
 import { behavior } from "./room.source";
 import linkBehavior from "./structure.links";
 import { filterBodiesByCost, getCarrierBody, getCreepsInRoom, getMainSpawn } from "./util.creep";
-import { findMyStructures } from "./utils";
+import { findMyStructures, getSitesInRoom } from "./utils";
 import { RETURN_CODE_DECODER } from "./util.creep";
 import { getSpawnsInRoom } from "./utils";
 
@@ -56,9 +56,9 @@ export function roomBehavior(room: Room) {
 
   //spawn
   const {
+    builder = [],
     carrier: carriers = [],
     harvester = [],
-    repairer = [],
     remoteHarvester = [],
     reserver = [],
   } = Object.values(Game.creeps)
@@ -76,13 +76,16 @@ export function roomBehavior(room: Room) {
     return ERR_NOT_FOUND;
   }
   if (
+    harvester.length &&
     carriers.filter((g) => {
       return carrierBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
     }).length < (link.length >= sources.length + 1 ? 1 : 2)
   ) {
     const name = `C_${room.name}_${Game.time}`;
 
-    const spawn = getMainSpawn(room);
+    const spawn = _(getSpawnsInRoom(room))
+      .filter((s) => !s.spawning)
+      .first();
     if (spawn && !spawn.spawning && room.energyAvailable > 200) {
       spawn.spawnCreep(carrierBodies, name, {
         memory: {
@@ -99,8 +102,7 @@ export function roomBehavior(room: Room) {
     room.energyAvailable >= room.energyCapacityAvailable * 0.9 &&
     (getCreepsInRoom(room).defender?.length || 0) === 0
   ) {
-    const spawn = _(Object.values(Game.spawns))
-      .filter((s) => s.pos.roomName === room.name)
+    const spawn = _(getSpawnsInRoom(room))
       .filter((s) => !s.spawning)
       .first();
     if (spawn) {
@@ -114,27 +116,36 @@ export function roomBehavior(room: Room) {
       console.log("can't find spawn for defender");
     }
   }
-  const { bodies: repairerBodies } = filterBodiesByCost("repairer", Math.max(room.energyAvailable, 300));
+  const { bodies: builderBodies } = filterBodiesByCost("builder", room.energyCapacityAvailable);
 
   if (
-    room.energyAvailable >= room.energyCapacityAvailable &&
-    repairer.filter((g) => {
-      return repairerBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
+    // ビルダーが居ない
+    builder.filter((g) => {
+      return builderBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
     }).length < 1 &&
-    room.find(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax }).length > 0
+    // 壊れかけ建物
+    (room.find(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax }).length > 0 ||
+      // 建設現場
+      getSitesInRoom(room).length > 0)
   ) {
-    const spawn = Object.values(Game.spawns)
-      .filter((s) => s.pos.roomName === room.name)
-      .find((s) => !s.spawning);
-    if (spawn && !spawn.spawning) {
-      spawn.spawnCreep(repairerBodies, `R_${room.name}_${Game.time}`, {
+    const spawn = (() => {
+      const spawns = getSpawnsInRoom(room);
+      if (spawns.length > 0) {
+        // 自室の時は使えるやつを返す
+        return spawns.find((s) => !s.spawning && s.room.energyAvailable === s.room.energyCapacityAvailable);
+      } else {
+        // 他の部屋も含むときはとにかく一番近いやつを返す
+        return room.controller?.pos.findClosestByPath(Object.values(Game.spawns));
+      }
+    })();
+    if (spawn && spawn.room.energyAvailable === spawn.room.energyCapacityAvailable) {
+      spawn.spawnCreep(filterBodiesByCost("builder", spawn.room.energyCapacityAvailable).bodies, `B_${room.name}_${Game.time}`, {
         memory: {
           mode: "🛒",
           baseRoom: spawn.room.name,
-          role: "repairer",
-        } as RepairerMemory,
+          role: "builder",
+        } as BuilderMemory,
       });
-      return OK;
     }
   }
 
@@ -155,7 +166,7 @@ export function roomBehavior(room: Room) {
           } as ReserverMemory,
         });
         if (spawned !== OK) {
-          console.log(RETURN_CODE_DECODER[spawned.toString()]);
+          console.log("crete reserver", RETURN_CODE_DECODER[spawned.toString()]);
         }
       }
     }
@@ -177,7 +188,7 @@ export function roomBehavior(room: Room) {
           } as RemoteHarvesterMemory,
         });
         if (spawned !== OK) {
-          console.log(RETURN_CODE_DECODER[spawned.toString()]);
+          console.log("create remotehaervester", RETURN_CODE_DECODER[spawned.toString()]);
         }
       }
     }

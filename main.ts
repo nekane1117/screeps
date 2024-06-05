@@ -1,4 +1,3 @@
-import constructionSite from "./constructionSite";
 import flags from "./flags";
 import { behaviors } from "./roles";
 import { roomBehavior } from "./room";
@@ -31,18 +30,6 @@ module.exports.loop = function () {
       Object.values(Game.flags).forEach((flag) => flags[flag.color]?.(flag));
     });
 
-    logUsage("sites", () => {
-      // 今のところ１部屋１回走ればいい処理なので処理した部屋を覚える
-      const executedRoom: Partial<Record<string, boolean>> = {};
-      Object.values(Game.constructionSites).forEach((s) => {
-        if (executedRoom[s.pos.roomName]) {
-          return;
-        } else {
-          constructionSite(s);
-          executedRoom[s.pos.roomName] = true;
-        }
-      });
-    });
     logUsage("rooms", () => {
       Object.values(Game.rooms)
         .filter((room) => !isHighway(room) && room.controller?.my)
