@@ -53,9 +53,10 @@ export default function behaviors(terminal: Structure) {
 
       // 最終生産物がいっぱいあるとき
       if (finalProduct && terminal.store[finalProduct] > TRADE_THRESHOLD * 2 && terminal.store.energy >= TRADE_THRESHOLD * TERMINAL_SEND_COST) {
+        // 足らないterminaに送る
         const sendTarget = _(Object.values(Game.rooms).map((r) => r.terminal))
           .compact()
-          .find((t) => t.store[finalProduct] < TRADE_THRESHOLD);
+          .find((t) => t.store[finalProduct] < TRADE_THRESHOLD * 2);
         if (sendTarget) {
           terminal.send(
             finalProduct,

@@ -39,7 +39,7 @@ function behaviors(terminal) {
             if (finalProduct && terminal.store[finalProduct] > TRADE_THRESHOLD * 2 && terminal.store.energy >= TRADE_THRESHOLD * TERMINAL_SEND_COST) {
                 const sendTarget = _(Object.values(Game.rooms).map((r) => r.terminal))
                     .compact()
-                    .find((t) => t.store[finalProduct] < TRADE_THRESHOLD);
+                    .find((t) => t.store[finalProduct] < TRADE_THRESHOLD * 2);
                 if (sendTarget) {
                     terminal.send(finalProduct, TRADE_THRESHOLD - sendTarget.store[finalProduct], sendTarget.room.name, `send ${finalProduct} to ${sendTarget.room.name} from ${terminal.room.name}`);
                 }
