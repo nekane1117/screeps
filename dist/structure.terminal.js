@@ -29,6 +29,7 @@ function behaviors(terminal) {
             });
             const labs = (0, utils_1.getLabs)(terminal.room);
             const finalProduct = _(constants_1.LAB_STRATEGY[mineral.mineralType] || [])
+                .clone()
                 .reverse()
                 .find((type) => {
                 return labs.find((lab) => {

@@ -33,9 +33,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   };
   checkMode();
 
-  // attack
-  // ATTACKパーツは何もしなくても自動で反撃するのでそっちに任せる
-  // 範囲攻撃されると手も足も出ない
+  // 防衛
   const ic = creep.pos.findClosestByRange(FIND_HOSTILE_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_INVADER_CORE });
   if (ic) {
     const defenders = getCreepsInRoom(creep.room).defender || [];
@@ -53,11 +51,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           });
         }
       }
-    }
-    if (creep.attack(ic) === ERR_NOT_IN_RANGE) {
-      return customMove(creep, ic);
-    } else {
-      return OK;
     }
   }
 

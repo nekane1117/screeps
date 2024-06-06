@@ -42,6 +42,7 @@ export default function behaviors(terminal: Structure) {
       const labs = getLabs(terminal.room);
       // 現在の最終生産物を取得する
       const finalProduct = _(LAB_STRATEGY[mineral.mineralType] || [])
+        .clone()
         .reverse()
         .find((type) => {
           return labs.find((lab) => {
