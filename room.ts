@@ -31,19 +31,20 @@ export function roomBehavior(room: Room) {
     };
   }
 
+  // ロードマップを初期化する
+  room.memory.roadMap = room.memory.roadMap || _.range(2500).map(() => Game.time);
   const sources = room.find(FIND_SOURCES);
   sources.forEach((source) => behavior(source));
 
-  const { tower, lab, link } = findMyStructures(room);
+  const {
+    // tower,
+    lab,
+    link,
+  } = findMyStructures(room);
 
   const mineral = _(room.find(FIND_MINERALS)).first();
   if (mineral) {
     labManager(lab, mineral);
-  }
-  // 道を敷く
-  if ((tower.length > 0 && !room.memory.roadLayed) || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
-    console.log("roadLayer in " + Game.time);
-    roadLayer(room);
   }
 
   // 部屋ごとの色々を建てる
@@ -263,7 +264,8 @@ function creteStructures(room: Room) {
               if (
                 Math.abs(dx) + Math.abs(dy) === dist &&
                 terrain.get(spawn.pos.x + dx, spawn.pos.y + dy) !== TERRAIN_MASK_WALL &&
-                room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, generateCross(dx, dy) ? target : STRUCTURE_ROAD) === OK
+                generateCross(dx, dy) &&
+                room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, target) === OK
               ) {
                 return;
               }
@@ -286,64 +288,6 @@ const generateCross = (dx: number, dy: number): boolean => {
     return dy % 2 === 0;
   }
 };
-
-// 全てのspawnからsourceまでの道を引く
-function roadLayer(room: Room) {
-  _(Object.values(Game.spawns).filter((s) => s.room.name === room.name))
-    .forEach((spawn) => {
-      const findCustomPath = (s: _HasRoomPosition) =>
-        spawn.pos.findPathTo(s, {
-          ignoreCreeps: true,
-          plainCost: 0.5, // 道よりいくらか低い
-          swampCost: 0.5, // これから道を引くのでplainと同じ
-        });
-
-      return (
-        _([
-          ...room.find(FIND_SOURCES),
-          ...room.find(FIND_MY_STRUCTURES, {
-            filter: (s): s is StructureSpawn | StructureExtractor => {
-              return s.structureType === STRUCTURE_CONTROLLER || s.structureType === STRUCTURE_EXTRACTOR || s.structureType === STRUCTURE_TOWER;
-            },
-          }),
-        ])
-          // 近い順にする
-          .sortBy((s) => findCustomPath(s).length)
-          .map((s) => {
-            return findCustomPath(s).map((path) => {
-              const pos = room.getPositionAt(path.x, path.y);
-              // 壁でないかつ通り抜けられないオブジェクトがない
-              if (
-                pos &&
-                pos.lookFor(LOOK_TERRAIN)?.[0] !== "wall" &&
-                !pos.lookFor(LOOK_STRUCTURES).find((s) => (OBSTACLE_OBJECT_TYPES as StructureConstant[]).includes(s.structureType))
-              ) {
-                room.createConstructionSite(path.x, path.y, STRUCTURE_ROAD);
-              }
-            });
-          })
-          .run()
-      );
-    })
-    .run();
-  room.memory.roadLayed = Game.time;
-  // メンテコストがかかるので通り抜けられない建物の下にある道を削除する
-  [
-    ...Object.values(Game.constructionSites).filter((s) => {
-      return OBSTACLE_OBJECT_TYPES.some((t) => t === s.structureType);
-    }),
-    ...room.find(FIND_STRUCTURES, {
-      filter: (s) => {
-        return OBSTACLE_OBJECT_TYPES.some((t) => t === s.structureType);
-      },
-    }),
-  ].map((s) => {
-    room
-      .lookForAt(LOOK_STRUCTURES, s.pos)
-      .filter((s) => s.structureType === STRUCTURE_ROAD)
-      .map((r) => r.destroy());
-  });
-}
 
 // 上下左右4近傍
 const fourNeighbors = [

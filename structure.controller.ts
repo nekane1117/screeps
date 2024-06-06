@@ -1,6 +1,6 @@
 import { StructureBehavior } from "./structures";
-import { filterBodiesByCost } from "./util.creep";
-import { getCapacityRate, getSecondsPerticks, getSpawnsOrderdByRange } from "./utils";
+import { getCreepsInRoom } from "./util.creep";
+import { getSecondsPerticks, getSpawnsInRoom } from "./utils";
 
 const behavior: StructureBehavior = (controller: Structure) => {
   if (!isC(controller)) {
@@ -20,22 +20,13 @@ const behavior: StructureBehavior = (controller: Structure) => {
     `progress:${(controller.progressTotal - controller.progress).toLocaleString()}`,
   ]);
 
-  const upgrader = Object.values(Game.creeps).filter((c): c is Upgrader => {
-    return c.memory.role === "upgrader" && c.memory.baseRoom === controller.pos.roomName;
-  });
-
-  const upgradeContainer = _(
-    controller.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s): s is StructureContainer => s.structureType === STRUCTURE_CONTAINER }),
-  ).first();
-
-  if (upgrader.length < (upgradeContainer ? getCapacityRate(upgradeContainer) / 0.9 : 1)) {
-    const spawn = getSpawnsOrderdByRange(controller, 1).first();
-    if (!spawn) {
-      console.log(controller.room.name, "controller can't find spawn");
-    } else if (spawn.room.energyAvailable < 300) {
-      console.log(controller.room.name, "Not enough spawn energy");
-    } else {
-      spawn.spawnCreep(filterBodiesByCost("upgrader", spawn.room.energyAvailable).bodies, `U_${controller.room.name}_${Game.time}`, {
+  const { harvester = [], upgrader = [], carrier = [] } = getCreepsInRoom(controller.room);
+  if (harvester.length > 0 && carrier.length > 0 && upgrader.length === 0 && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
+    const spawn = _(getSpawnsInRoom(controller.room))
+      .filter((s) => !s.spawning)
+      .first();
+    if (spawn) {
+      spawn.spawnCreep(getUpgraderBody(controller), `U_${controller.room.name}_${Game.time}`, {
         memory: {
           baseRoom: controller.room.name,
           mode: "🛒",
@@ -49,4 +40,23 @@ const behavior: StructureBehavior = (controller: Structure) => {
 export default behavior;
 function isC(s: Structure): s is StructureController {
   return s.structureType === STRUCTURE_CONTROLLER;
+}
+
+function getUpgraderBody(c: StructureController): BodyPartConstant[] {
+  let total = 0;
+  // 基本近くに建てるかつ
+  // 稼働し始めたら動かないのでMOVEもCARRYも1個でいい
+  return ([MOVE, CARRY] as BodyPartConstant[])
+    .concat(..._.range(50).map(() => WORK))
+    .map((parts) => {
+      total += BODYPART_COST[parts];
+      return {
+        parts,
+        total,
+      };
+    })
+    .filter((i) => {
+      return i.total <= c.room.energyAvailable;
+    })
+    .map((i) => i.parts);
 }

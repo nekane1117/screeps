@@ -32,16 +32,13 @@ function roomBehavior(room) {
             upgrader: 100,
         };
     }
+    room.memory.roadMap = room.memory.roadMap || _.range(2500).map(() => Game.time);
     const sources = room.find(FIND_SOURCES);
     sources.forEach((source) => (0, room_source_1.behavior)(source));
-    const { tower, lab, link } = (0, utils_1.findMyStructures)(room);
+    const { lab, link, } = (0, utils_1.findMyStructures)(room);
     const mineral = _(room.find(FIND_MINERALS)).first();
     if (mineral) {
         (0, room_labManager_1.default)(lab, mineral);
-    }
-    if ((tower.length > 0 && !room.memory.roadLayed) || Math.abs(Game.time - room.memory.roadLayed) > 5000) {
-        console.log("roadLayer in " + Game.time);
-        roadLayer(room);
     }
     if (Game.time % 100 === 0) {
         creteStructures(room);
@@ -208,7 +205,8 @@ function creteStructures(room) {
                         for (const dx of _.range(-dist, dist + 1)) {
                             if (Math.abs(dx) + Math.abs(dy) === dist &&
                                 terrain.get(spawn.pos.x + dx, spawn.pos.y + dy) !== TERRAIN_MASK_WALL &&
-                                room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, generateCross(dx, dy) ? target : STRUCTURE_ROAD) === OK) {
+                                generateCross(dx, dy) &&
+                                room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, target) === OK) {
                                 return;
                             }
                         }
@@ -226,54 +224,6 @@ const generateCross = (dx, dy) => {
         return dy % 2 === 0;
     }
 };
-function roadLayer(room) {
-    _(Object.values(Game.spawns).filter((s) => s.room.name === room.name))
-        .forEach((spawn) => {
-        const findCustomPath = (s) => spawn.pos.findPathTo(s, {
-            ignoreCreeps: true,
-            plainCost: 0.5,
-            swampCost: 0.5,
-        });
-        return (_([
-            ...room.find(FIND_SOURCES),
-            ...room.find(FIND_MY_STRUCTURES, {
-                filter: (s) => {
-                    return s.structureType === STRUCTURE_CONTROLLER || s.structureType === STRUCTURE_EXTRACTOR || s.structureType === STRUCTURE_TOWER;
-                },
-            }),
-        ])
-            .sortBy((s) => findCustomPath(s).length)
-            .map((s) => {
-            return findCustomPath(s).map((path) => {
-                var _a;
-                const pos = room.getPositionAt(path.x, path.y);
-                if (pos &&
-                    ((_a = pos.lookFor(LOOK_TERRAIN)) === null || _a === void 0 ? void 0 : _a[0]) !== "wall" &&
-                    !pos.lookFor(LOOK_STRUCTURES).find((s) => OBSTACLE_OBJECT_TYPES.includes(s.structureType))) {
-                    room.createConstructionSite(path.x, path.y, STRUCTURE_ROAD);
-                }
-            });
-        })
-            .run());
-    })
-        .run();
-    room.memory.roadLayed = Game.time;
-    [
-        ...Object.values(Game.constructionSites).filter((s) => {
-            return OBSTACLE_OBJECT_TYPES.some((t) => t === s.structureType);
-        }),
-        ...room.find(FIND_STRUCTURES, {
-            filter: (s) => {
-                return OBSTACLE_OBJECT_TYPES.some((t) => t === s.structureType);
-            },
-        }),
-    ].map((s) => {
-        room
-            .lookForAt(LOOK_STRUCTURES, s.pos)
-            .filter((s) => s.structureType === STRUCTURE_ROAD)
-            .map((r) => r.destroy());
-    });
-}
 const fourNeighbors = [
     [0, -1],
     [-1, 0],

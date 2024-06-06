@@ -4,7 +4,7 @@ import { findMyStructures, getCapacityRate, getSitesInRoom, getSpawnsInRoom, isH
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isRemoteHarvester(creep)) {
-    return console.log(`${creep.name} is not Builder`);
+    return console.log(`${creep.name} is not RemoteHarvester`);
   }
   const memory = readonly(creep.memory);
 
@@ -279,7 +279,7 @@ function transfer(creep: RemoteHarvester) {
   if (baseRoom) {
     // 指定の倉庫が満タンの場合は消す
     if (memory.storeId && Game.getObjectById(memory.storeId)?.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-      creep.memory.siteId = undefined;
+      creep.memory.storeId = undefined;
     }
 
     // 自室の倉庫を取得する
@@ -324,7 +324,6 @@ function transfer(creep: RemoteHarvester) {
       }
     });
   } else {
-    console.log("aこっち？");
     // 自室にいないとき
     if (memory.mode === "🚛") {
       // 収穫モードの時は向かう

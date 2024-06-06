@@ -112,14 +112,15 @@ function getLabs(room) {
 }
 exports.getLabs = getLabs;
 let indent = -1;
-function logUsage(title, func) {
+function logUsage(title, func, threthold = 0) {
     if (indent > 10) {
         indent = -1;
     }
     indent++;
     const start = Game.cpu.getUsed();
     const value = func();
-    console.log(`${" ".repeat(indent * 2)}${_.floor(Game.cpu.getUsed() - start, 2)} ${title}`);
+    const used = _.floor(Game.cpu.getUsed() - start, 2);
+    used >= threthold && console.log(`${" ".repeat(indent * 2)}${used} ${title}`);
     indent = Math.max(indent - 1, 0);
     return value;
 }

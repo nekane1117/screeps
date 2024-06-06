@@ -4,7 +4,7 @@ const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
     if (!isRemoteHarvester(creep)) {
-        return console.log(`${creep.name} is not Builder`);
+        return console.log(`${creep.name} is not RemoteHarvester`);
     }
     const memory = (0, utils_1.readonly)(creep.memory);
     const checkMode = () => {
@@ -222,7 +222,7 @@ function transfer(creep) {
     const baseRoom = Game.rooms[memory.baseRoom];
     if (baseRoom) {
         if (memory.storeId && ((_a = Game.getObjectById(memory.storeId)) === null || _a === void 0 ? void 0 : _a.store.getFreeCapacity(RESOURCE_ENERGY)) === 0) {
-            creep.memory.siteId = undefined;
+            creep.memory.storeId = undefined;
         }
         const { container, spawn, extension, storage, link, terminal } = (0, utils_1.findMyStructures)(baseRoom);
         const filtedContainers = container.filter((s) => s.pos.findInRange(FIND_MINERALS, 3).length === 0);
@@ -258,7 +258,6 @@ function transfer(creep) {
         });
     }
     else {
-        console.log("aこっち？");
         if (memory.mode === "🚛") {
             return moveRoom(creep, creep.pos.roomName, memory.baseRoom);
         }

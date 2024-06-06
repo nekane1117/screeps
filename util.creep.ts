@@ -143,7 +143,7 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       .flatten<BodyPartConstant>()
       .run(),
   ],
-  upgrader: [CARRY, MOVE, ..._.range(10).map(() => WORK), ..._.range(10).map(() => MOVE)],
+  upgrader: [],
 });
 
 export const RETURN_CODE_DECODER = Object.freeze({

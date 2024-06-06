@@ -123,7 +123,7 @@ exports.IDEAL_BODY = Object.freeze({
             .flatten()
             .run(),
     ],
-    upgrader: [CARRY, MOVE, ..._.range(10).map(() => WORK), ..._.range(10).map(() => MOVE)],
+    upgrader: [],
 });
 exports.RETURN_CODE_DECODER = Object.freeze({
     [OK.toString()]: "OK",

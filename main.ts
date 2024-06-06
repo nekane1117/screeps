@@ -70,6 +70,8 @@ module.exports.loop = function () {
               .lookFor(LOOK_STRUCTURES)
               .filter((s) => ([STRUCTURE_CONTAINER, STRUCTURE_ROAD] as StructureConstant[]).includes(s.structureType) && s.hits < s.hitsMax)
               .forEach((s) => c.repair(s));
+          // 現在地の履歴を更新する
+          c.room.memory.roadMap && (c.room.memory.roadMap[c.pos.y * 50 + c.pos.x] = Game.time);
         });
     });
 

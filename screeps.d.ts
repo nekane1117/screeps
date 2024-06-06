@@ -148,6 +148,7 @@ declare interface RoomMemory {
   carrySize: {
     [r in ROLES]: number;
   };
+  roadMap: number[];
 }
 
 declare type CreepsCache = Partial<{

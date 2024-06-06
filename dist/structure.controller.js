@@ -18,20 +18,13 @@ const behavior = (controller) => {
         `bucket  : ${(_a = Game.cpu.bucket) === null || _a === void 0 ? void 0 : _a.toLocaleString()}`,
         `progress:${(controller.progressTotal - controller.progress).toLocaleString()}`,
     ]);
-    const upgrader = Object.values(Game.creeps).filter((c) => {
-        return c.memory.role === "upgrader" && c.memory.baseRoom === controller.pos.roomName;
-    });
-    const upgradeContainer = _(controller.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.structureType === STRUCTURE_CONTAINER })).first();
-    if (upgrader.length < (upgradeContainer ? (0, utils_1.getCapacityRate)(upgradeContainer) / 0.9 : 1)) {
-        const spawn = (0, utils_1.getSpawnsOrderdByRange)(controller, 1).first();
-        if (!spawn) {
-            console.log(controller.room.name, "controller can't find spawn");
-        }
-        else if (spawn.room.energyAvailable < 300) {
-            console.log(controller.room.name, "Not enough spawn energy");
-        }
-        else {
-            spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("upgrader", spawn.room.energyAvailable).bodies, `U_${controller.room.name}_${Game.time}`, {
+    const { harvester = [], upgrader = [], carrier = [] } = (0, util_creep_1.getCreepsInRoom)(controller.room);
+    if (harvester.length > 0 && carrier.length > 0 && upgrader.length === 0 && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
+        const spawn = _((0, utils_1.getSpawnsInRoom)(controller.room))
+            .filter((s) => !s.spawning)
+            .first();
+        if (spawn) {
+            spawn.spawnCreep(getUpgraderBody(controller), `U_${controller.room.name}_${Game.time}`, {
                 memory: {
                     baseRoom: controller.room.name,
                     mode: "🛒",
@@ -44,4 +37,20 @@ const behavior = (controller) => {
 exports.default = behavior;
 function isC(s) {
     return s.structureType === STRUCTURE_CONTROLLER;
+}
+function getUpgraderBody(c) {
+    let total = 0;
+    return [MOVE, CARRY]
+        .concat(..._.range(50).map(() => WORK))
+        .map((parts) => {
+        total += BODYPART_COST[parts];
+        return {
+            parts,
+            total,
+        };
+    })
+        .filter((i) => {
+        return i.total <= c.room.energyAvailable;
+    })
+        .map((i) => i.parts);
 }
