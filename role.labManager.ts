@@ -189,7 +189,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             // LABの時
             if (store.mineralType) {
               // 取り出す
-              return creep.withdraw(store, store.mineralType, store.store[store.mineralType] - MINERAL_KEEP_VALUE);
+              return creep.withdraw(
+                store,
+                store.mineralType,
+                Math.min(creep.store.getCapacity(store.mineralType), store.store[store.mineralType] - MINERAL_KEEP_VALUE),
+              );
             } else {
               // 無いときはおかしいので初期化してエラーを返す
               creep.memory.storeId = undefined;
@@ -213,7 +217,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           case ERR_NOT_OWNER:
           case ERR_INVALID_TARGET:
           case ERR_INVALID_ARGS:
-            console.log(`${creep.name} transfer returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
+            console.log(`${creep.name} withdraw returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
             creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
             break;
 

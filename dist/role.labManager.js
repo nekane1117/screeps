@@ -139,7 +139,7 @@ const behavior = (creep) => {
                     }
                     else {
                         if (store.mineralType) {
-                            return creep.withdraw(store, store.mineralType, store.store[store.mineralType] - MINERAL_KEEP_VALUE);
+                            return creep.withdraw(store, store.mineralType, Math.min(creep.store.getCapacity(store.mineralType), store.store[store.mineralType] - MINERAL_KEEP_VALUE));
                         }
                         else {
                             creep.memory.storeId = undefined;
@@ -160,7 +160,7 @@ const behavior = (creep) => {
                     case ERR_NOT_OWNER:
                     case ERR_INVALID_TARGET:
                     case ERR_INVALID_ARGS:
-                        console.log(`${creep.name} transfer returns ${util_creep_1.RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
+                        console.log(`${creep.name} withdraw returns ${util_creep_1.RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
                         creep.say(util_creep_1.RETURN_CODE_DECODER[creep.memory.worked.toString()]);
                         break;
                     case OK:
