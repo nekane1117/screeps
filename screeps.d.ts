@@ -238,7 +238,7 @@ declare interface MineralCarrierMemory extends CreepMemory {
    */
   mode: "🚛" | "🛒";
   /** 担当倉庫 */
-  storeId?: Id<StructureStorage | StructureTerminal | StructureContainer>;
+  storeId?: Id<Parameters<Creeps["withdraw"]>[0] | Creep>;
   /** 配送先 */
   transferId?: Id<StructureContainer | StructureLab | StructureTerminal>;
 }

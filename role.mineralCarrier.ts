@@ -1,6 +1,6 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, pickUpAll, withdrawBy } from "./util.creep";
-import { getCapacityRate } from "./utils";
+import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, pickUpAll, withdrawBy } from "./util.creep";
+import { findMyStructures, getCapacityRate } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
@@ -60,11 +60,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.memory.storeId = undefined;
     }
   }
-
+  const { container } = findMyStructures(creep.room);
+  const mineralHarvester = getCreepsInRoom(creep.room).mineralHarvester || [];
   if (!creep.memory.storeId) {
-    creep.memory.storeId = mineral.pos.findClosestByRange(FIND_STRUCTURES, {
-      filter: (s): s is StructureContainer => {
-        return s.structureType === STRUCTURE_CONTAINER && s.store[mineral.mineralType] > CARRY_CAPACITY;
+    creep.memory.storeId = mineral.pos.findClosestByRange([...container, ...mineralHarvester], {
+      filter: (s: Creep | StructureContainer | Tombstone | Ruin): s is StructureContainer => {
+        return s.store[mineral.mineralType] > CARRY_CAPACITY;
       },
     })?.id;
   }
@@ -77,7 +78,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       }
 
       if (creep.pos.isNearTo(store)) {
-        creep.memory.worked = creep.withdraw(store, mineral.mineralType);
+        creep.memory.worked = "name" in store ? store.transfer(creep, mineral.mineralType) : creep.withdraw(store, mineral.mineralType);
         switch (creep.memory.worked) {
           // 空の時
           case ERR_NOT_ENOUGH_RESOURCES:

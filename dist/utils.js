@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSecondsPerticks = exports.readonly = exports.calcMaxTransferAmount = exports.isHighway = exports.logUsage = exports.getSpawnsWithDistance = exports.getSpawnsOrderdByRange = exports.getSitesInRoom = exports.getSpawnsInRoom = exports.findMyStructures = exports.getCapacityRate = void 0;
+exports.getSecondsPerticks = exports.readonly = exports.calcMaxTransferAmount = exports.isHighway = exports.logUsage = exports.getLabs = exports.isCompound = exports.getSpawnsWithDistance = exports.getSpawnsOrderdByRange = exports.getSitesInRoom = exports.getSpawnsInRoom = exports.findMyStructures = exports.getCapacityRate = void 0;
 function getCapacityRate(s, type = RESOURCE_ENERGY) {
     if ("store" in s) {
         return s.store.getUsedCapacity(type) / s.store.getCapacity(type);
@@ -99,6 +99,18 @@ function getSpawnsWithDistance(src) {
     });
 }
 exports.getSpawnsWithDistance = getSpawnsWithDistance;
+function isCompound(resource) {
+    return resource.length >= 2 && /^[A-Z]/.exec(resource);
+}
+exports.isCompound = isCompound;
+function getLabs(room) {
+    return (0, exports.findMyStructures)(room).lab.map((lab) => {
+        return Object.assign(lab, {
+            memory: room.memory.labs[lab.id],
+        });
+    });
+}
+exports.getLabs = getLabs;
 let indent = -1;
 function logUsage(title, func) {
     if (indent > 10) {

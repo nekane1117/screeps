@@ -1,6 +1,6 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, filterBodiesByCost, getCreepsInRoom, pickUpAll } from "./util.creep";
-import { findMyStructures, getCapacityRate, getSitesInRoom, getSpawnsInRoom, isHighway, readonly } from "./utils";
+import { findMyStructures, getCapacityRate, getSitesInRoom, getSpawnsInRoom, isHighway, logUsage, readonly } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isRemoteHarvester(creep)) {
@@ -151,24 +151,25 @@ function harvest(creep: RemoteHarvester) {
       case ERR_NOT_IN_RANGE:
         if (memory.mode === "🌾") {
           // 範囲内でなくて収穫モードの時は近寄る
-          // const moveing = _(memory._move?.path || []).first();
-          // const isInRange = (n: number) => {
-          //   return 0 < n && n < 49;
-          // };
 
-          // const blocker =
-          //   moveing &&
-          //   isInRange(creep.pos.x + moveing.dx) &&
-          //   isInRange(creep.pos.y + moveing.dy) &&
-          //   creep.room
-          //     .lookForAt(LOOK_STRUCTURES, creep.pos.x + moveing.dx, creep.pos.y + moveing.dy)
-          //     .find((s) => (OBSTACLE_OBJECT_TYPES as StructureConstant[]).includes(s.structureType));
-          // if (blocker) {
-          //   if (creep.dismantle(blocker) !== OK) {
-          //     creep.attack(blocker);
-          //   }
-          // }
+          // 自室以外の時は障害物を壊す
+          if (creep.room.name !== creep.memory.baseRoom) {
+            const moveing = _(memory._move?.path || []).first();
+            const isInRange = (n: number) => {
+              return 0 < n && n < 49;
+            };
 
+            const blocker =
+              moveing &&
+              isInRange(creep.pos.x + moveing.dx) &&
+              isInRange(creep.pos.y + moveing.dy) &&
+              creep.room
+                .lookForAt(LOOK_STRUCTURES, creep.pos.x + moveing.dx, creep.pos.y + moveing.dy)
+                .find((s) => (OBSTACLE_OBJECT_TYPES as StructureConstant[]).includes(s.structureType));
+            if (blocker) {
+              creep.dismantle(blocker);
+            }
+          }
           return customMove(creep, source, {
             // 所有者が居ない部屋では壁とかも無視して突っ切る
             ignoreDestructibleStructures: !creep.room.controller?.owner?.username,
@@ -281,18 +282,36 @@ function moveRoom(creep: RemoteHarvester, fromRoom: string, toRoom: string) {
 function transfer(creep: RemoteHarvester) {
   const memory = readonly(creep.memory);
 
-  if (creep.pos.roomName === memory.baseRoom) {
-    const { container, spawn, extension, storage, link, terminal } = findMyStructures(creep.room);
-    // 倉庫が満タンの場合は消す
+  const baseRoom = Game.rooms[memory.baseRoom];
+  if (baseRoom) {
+    // 指定の倉庫が満タンの場合は消す
     if (memory.storeId && Game.getObjectById(memory.storeId)?.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
       creep.memory.siteId = undefined;
     }
 
-    if (!memory.storeId) {
+    // 自室の倉庫を取得する
+    const { container, spawn, extension, storage, link, terminal } = findMyStructures(baseRoom);
+
+    // ミネラル用のコンテナには入れたくないので除外しておく
+    const filtedContainers = container.filter((s) => s.pos.findInRange(FIND_MINERALS, 3).length === 0);
+    if (!memory.storeId && Game.cpu.bucket > 100) {
       // イイ感じの倉庫を取得する
-      creep.memory.storeId = creep.pos.findClosestByPath(
-        [...container, ...spawn, ...extension, ...storage, ...link, ...terminal].filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0),
-      )?.id;
+      creep.memory.storeId = logUsage(
+        "search remote container",
+        () =>
+          _([...filtedContainers, ...spawn, ...extension, ...storage, ...link, ...terminal])
+            .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
+            .map((s) => {
+              return {
+                structure: s,
+                path: PathFinder.search(creep.pos, s.pos, {
+                  plainCost: 2,
+                  swampCost: 2,
+                }),
+              };
+            })
+            .min((s) => s.path.cost)?.structure?.id,
+      );
       // それでもないときは無いはずだけど終わる
     }
 
@@ -312,6 +331,7 @@ function transfer(creep: RemoteHarvester) {
       }
     });
   } else {
+    console.log("aこっち？");
     // 自室にいないとき
     if (memory.mode === "🚛") {
       // 収穫モードの時は向かう

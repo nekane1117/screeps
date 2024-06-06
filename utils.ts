@@ -107,6 +107,19 @@ export function getSpawnsWithDistance(src: RoomPosition | _HasRoomPosition) {
   });
 }
 
+export function isCompound(resource: ResourceConstant) {
+  // 2文字以上で大文字で始まるやつ
+  return resource.length >= 2 && /^[A-Z]/.exec(resource);
+}
+
+export function getLabs(room: Room) {
+  return findMyStructures(room).lab.map((lab) => {
+    return Object.assign(lab, {
+      memory: room.memory.labs[lab.id],
+    }) as StructureLab & { memory: LabMemory };
+  });
+}
+
 let indent = -1;
 export function logUsage<T = unknown>(title: string, func: () => T) {
   if (indent > 10) {

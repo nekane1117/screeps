@@ -88,7 +88,7 @@ function isRemoteHarvester(creep) {
     return creep.memory.role === "remoteHarvester";
 }
 function harvest(creep) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     const memory = (0, utils_1.readonly)(creep.memory);
     const targetRoom = Game.rooms[memory.targetRoomName];
     if (targetRoom) {
@@ -122,8 +122,23 @@ function harvest(creep) {
                 return OK;
             case ERR_NOT_IN_RANGE:
                 if (memory.mode === "🌾") {
+                    if (creep.room.name !== creep.memory.baseRoom) {
+                        const moveing = _(((_b = memory._move) === null || _b === void 0 ? void 0 : _b.path) || []).first();
+                        const isInRange = (n) => {
+                            return 0 < n && n < 49;
+                        };
+                        const blocker = moveing &&
+                            isInRange(creep.pos.x + moveing.dx) &&
+                            isInRange(creep.pos.y + moveing.dy) &&
+                            creep.room
+                                .lookForAt(LOOK_STRUCTURES, creep.pos.x + moveing.dx, creep.pos.y + moveing.dy)
+                                .find((s) => OBSTACLE_OBJECT_TYPES.includes(s.structureType));
+                        if (blocker) {
+                            creep.dismantle(blocker);
+                        }
+                    }
                     return (0, util_creep_1.customMove)(creep, source, {
-                        ignoreDestructibleStructures: !((_c = (_b = creep.room.controller) === null || _b === void 0 ? void 0 : _b.owner) === null || _c === void 0 ? void 0 : _c.username),
+                        ignoreDestructibleStructures: !((_d = (_c = creep.room.controller) === null || _c === void 0 ? void 0 : _c.owner) === null || _d === void 0 ? void 0 : _d.username),
                     });
                 }
                 else {
@@ -208,15 +223,31 @@ function moveRoom(creep, fromRoom, toRoom) {
     return moved;
 }
 function transfer(creep) {
-    var _a, _b;
+    var _a;
     const memory = (0, utils_1.readonly)(creep.memory);
-    if (creep.pos.roomName === memory.baseRoom) {
-        const { container, spawn, extension, storage, link, terminal } = (0, utils_1.findMyStructures)(creep.room);
+    const baseRoom = Game.rooms[memory.baseRoom];
+    if (baseRoom) {
         if (memory.storeId && ((_a = Game.getObjectById(memory.storeId)) === null || _a === void 0 ? void 0 : _a.store.getFreeCapacity(RESOURCE_ENERGY)) === 0) {
             creep.memory.siteId = undefined;
         }
-        if (!memory.storeId) {
-            creep.memory.storeId = (_b = creep.pos.findClosestByPath([...container, ...spawn, ...extension, ...storage, ...link, ...terminal].filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0))) === null || _b === void 0 ? void 0 : _b.id;
+        const { container, spawn, extension, storage, link, terminal } = (0, utils_1.findMyStructures)(baseRoom);
+        const filtedContainers = container.filter((s) => s.pos.findInRange(FIND_MINERALS, 3).length === 0);
+        if (!memory.storeId && Game.cpu.bucket > 100) {
+            creep.memory.storeId = (0, utils_1.logUsage)("search remote container", () => {
+                var _a, _b;
+                return (_b = (_a = _([...filtedContainers, ...spawn, ...extension, ...storage, ...link, ...terminal])
+                    .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
+                    .map((s) => {
+                    return {
+                        structure: s,
+                        path: PathFinder.search(creep.pos, s.pos, {
+                            plainCost: 2,
+                            swampCost: 2,
+                        }),
+                    };
+                })
+                    .min((s) => s.path.cost)) === null || _a === void 0 ? void 0 : _a.structure) === null || _b === void 0 ? void 0 : _b.id;
+            });
         }
         const store = memory.storeId && Game.getObjectById(memory.storeId);
         if (!store || store.pos.roomName !== memory.baseRoom) {
@@ -233,6 +264,7 @@ function transfer(creep) {
         });
     }
     else {
+        console.log("aこっち？");
         if (memory.mode === "🚛") {
             return moveRoom(creep, creep.pos.roomName, memory.baseRoom);
         }

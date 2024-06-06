@@ -1,6 +1,8 @@
-import { TERMINAL_THRESHOLD } from "./constants";
+import { LAB_STRATEGY, TERMINAL_THRESHOLD } from "./constants";
 import { RETURN_CODE_DECODER } from "./util.creep";
-import { calcMaxTransferAmount, logUsage } from "./utils";
+import { calcMaxTransferAmount, getLabs, isCompound, logUsage } from "./utils";
+
+const TRADE_THRESHOLD = 1000;
 
 export default function behaviors(terminal: Structure) {
   logUsage(`terminal:${terminal.room.name}`, () => {
@@ -27,7 +29,7 @@ export default function behaviors(terminal: Structure) {
 
     const mineral = _(room.find(FIND_MINERALS)).first();
 
-    mineral &&
+    if (mineral) {
       room.visual.text(
         `${mineral.mineralType}:${getUsedCapacity(mineral.mineralType)}(${getRemainingTotal(mineral.mineralType)})`,
         terminal.pos.x,
@@ -36,6 +38,33 @@ export default function behaviors(terminal: Structure) {
           align: "left",
         },
       );
+
+      const labs = getLabs(terminal.room);
+      // 現在の最終生産物を取得する
+      const finalProduct = _(LAB_STRATEGY[mineral.mineralType] || [])
+        .reverse()
+        .find((type) => {
+          return labs.find((lab) => {
+            // 化合物でlabで作っている
+            return isCompound(lab.memory.expectedType) && lab.memory.expectedType === type;
+          });
+        });
+
+      // 最終生産物がいっぱいあるとき
+      if (finalProduct && terminal.store[finalProduct] > TRADE_THRESHOLD * 2 && terminal.store.energy >= TRADE_THRESHOLD * TERMINAL_SEND_COST) {
+        const sendTarget = _(Object.values(Game.rooms).map((r) => r.terminal))
+          .compact()
+          .find((t) => t.store[finalProduct] < TRADE_THRESHOLD);
+        if (sendTarget) {
+          terminal.send(
+            finalProduct,
+            TRADE_THRESHOLD - sendTarget.store[finalProduct],
+            sendTarget.room.name,
+            `send ${finalProduct} to ${sendTarget.room.name} from ${terminal.room.name}`,
+          );
+        }
+      }
+    }
 
     // ここから購入処理なのでcooldown有るときは終わる
     if (terminal.cooldown) {
@@ -90,7 +119,7 @@ export default function behaviors(terminal: Structure) {
           if (minSellOrder) {
             const price = minSellOrder.price - 0.01;
             const totalAmount = Math.min(getUsedCapacity(mineral.mineralType) - TERMINAL_THRESHOLD, Math.floor(Game.market.credits / price / 0.05));
-            if (totalAmount > 1000) {
+            if (totalAmount > TRADE_THRESHOLD) {
               return Game.market.createOrder({
                 type: ORDER_SELL,
                 resourceType: mineral.mineralType,
@@ -109,7 +138,7 @@ export default function behaviors(terminal: Structure) {
 
     for (const resourceType of (Object.keys(terminal.store) as (MineralConstant | MineralCompoundConstant)[]).filter((resourceType) => {
       // とりあえず1000以上ある化合物
-      return resourceType[0] === resourceType[0].toUpperCase() && resourceType.length >= 2 && getUsedCapacity(resourceType) > 1000;
+      return resourceType[0] === resourceType[0].toUpperCase() && resourceType.length >= 2 && getUsedCapacity(resourceType) > TRADE_THRESHOLD;
     })) {
       // const ingredients = REVERSE_REACTIONS[resourceType];
       // if (!ingredients) {
@@ -134,7 +163,7 @@ export default function behaviors(terminal: Structure) {
         .filter((o) => o.price >= avg)
         .max((o) => o.price);
       if (order) {
-        const result = Game.market.deal(order.id, Math.min(order.amount, getUsedCapacity(resourceType) - 1000), terminal.room.name);
+        const result = Game.market.deal(order.id, Math.min(order.amount, getUsedCapacity(resourceType) - TRADE_THRESHOLD), terminal.room.name);
         if (result === OK) {
           return;
         }

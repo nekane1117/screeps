@@ -44,10 +44,12 @@ const behavior = (creep) => {
             creep.memory.storeId = undefined;
         }
     }
+    const { container } = (0, utils_1.findMyStructures)(creep.room);
+    const mineralHarvester = (0, util_creep_1.getCreepsInRoom)(creep.room).mineralHarvester || [];
     if (!creep.memory.storeId) {
-        creep.memory.storeId = (_a = mineral.pos.findClosestByRange(FIND_STRUCTURES, {
+        creep.memory.storeId = (_a = mineral.pos.findClosestByRange([...container, ...mineralHarvester], {
             filter: (s) => {
-                return s.structureType === STRUCTURE_CONTAINER && s.store[mineral.mineralType] > CARRY_CAPACITY;
+                return s.store[mineral.mineralType] > CARRY_CAPACITY;
             },
         })) === null || _a === void 0 ? void 0 : _a.id;
     }
@@ -58,7 +60,7 @@ const behavior = (creep) => {
                 moveMeTo(store);
             }
             if (creep.pos.isNearTo(store)) {
-                creep.memory.worked = creep.withdraw(store, mineral.mineralType);
+                creep.memory.worked = "name" in store ? store.transfer(creep, mineral.mineralType) : creep.withdraw(store, mineral.mineralType);
                 switch (creep.memory.worked) {
                     case ERR_NOT_ENOUGH_RESOURCES:
                         creep.memory.storeId = undefined;
