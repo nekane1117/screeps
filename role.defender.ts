@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { customMove, getMainSpawn } from "./util.creep";
+import { customMove } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
@@ -62,33 +62,24 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           creep.attack(target);
         }
       }
-      _(creep.pos.findInRange(FIND_MY_CREEPS, 3, { filter: (s) => s.hits < s.hitsMax - creep.getActiveBodyparts(HEAL) * HEAL_POWER }))
-        .tap((creeps) => {
-          const target = _(creeps).min((c) => c.hits);
-
-          if (target) {
-            if (creep.pos.isNearTo(target)) {
-              creep.heal(target);
-            } else {
-              creep.rangedHeal(target);
-            }
-          }
-        })
-        .run();
     } else {
       creep.memory.targetId = undefined;
       return ERR_NOT_FOUND;
     }
-  } else {
-    const spawn = getMainSpawn(creep.room);
-    if (spawn) {
-      if (spawn.recycleCreep(creep) === ERR_NOT_IN_RANGE) {
-        moveMeTo(spawn);
-      }
-    } else {
-      creep.suicide();
-    }
   }
+  _(creep.pos.findInRange(FIND_MY_CREEPS, 3, { filter: (s) => s.hits < s.hitsMax - creep.getActiveBodyparts(HEAL) * HEAL_POWER }))
+    .tap((creeps) => {
+      const target = _(creeps).min((c) => c.hits);
+
+      if (target) {
+        if (creep.pos.isNearTo(target)) {
+          creep.heal(target);
+        } else {
+          creep.rangedHeal(target);
+        }
+      }
+    })
+    .run().length;
 };
 
 export default behavior;

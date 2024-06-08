@@ -39,21 +39,7 @@ module.exports.loop = function () {
             });
         });
         (0, utils_1.logUsage)("creep", () => {
-            Object.values(Game.creeps)
-                .sort((c1, c2) => {
-                const getPriority = (creep) => {
-                    switch (creep.memory.role) {
-                        case "harvester":
-                            return 0;
-                        case "carrier":
-                            return 1;
-                        default:
-                            return 2;
-                    }
-                };
-                return getPriority(c1) - getPriority(c2);
-            })
-                .forEach((c) => {
+            Object.values(Game.creeps).forEach((c) => {
                 var _a;
                 if (c.spawning) {
                     return;

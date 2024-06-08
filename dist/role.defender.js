@@ -46,36 +46,25 @@ const behavior = (creep) => {
                     creep.attack(target);
                 }
             }
-            _(creep.pos.findInRange(FIND_MY_CREEPS, 3, { filter: (s) => s.hits < s.hitsMax - creep.getActiveBodyparts(HEAL) * HEAL_POWER }))
-                .tap((creeps) => {
-                const target = _(creeps).min((c) => c.hits);
-                if (target) {
-                    if (creep.pos.isNearTo(target)) {
-                        creep.heal(target);
-                    }
-                    else {
-                        creep.rangedHeal(target);
-                    }
-                }
-            })
-                .run();
         }
         else {
             creep.memory.targetId = undefined;
             return ERR_NOT_FOUND;
         }
     }
-    else {
-        const spawn = (0, util_creep_1.getMainSpawn)(creep.room);
-        if (spawn) {
-            if (spawn.recycleCreep(creep) === ERR_NOT_IN_RANGE) {
-                moveMeTo(spawn);
+    _(creep.pos.findInRange(FIND_MY_CREEPS, 3, { filter: (s) => s.hits < s.hitsMax - creep.getActiveBodyparts(HEAL) * HEAL_POWER }))
+        .tap((creeps) => {
+        const target = _(creeps).min((c) => c.hits);
+        if (target) {
+            if (creep.pos.isNearTo(target)) {
+                creep.heal(target);
+            }
+            else {
+                creep.rangedHeal(target);
             }
         }
-        else {
-            creep.suicide();
-        }
-    }
+    })
+        .run().length;
 };
 exports.default = behavior;
 function isD(creep) {

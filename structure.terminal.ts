@@ -1,5 +1,4 @@
-import { LAB_STRATEGY, TERMINAL_THRESHOLD } from "./constants";
-import { RETURN_CODE_DECODER } from "./util.creep";
+import { LAB_STRATEGY } from "./constants";
 import { calcMaxTransferAmount, getAvailableAmount, getLabs, getOrderRemainingTotal, getTerminals, isCompound, logUsage } from "./utils";
 
 /** terminal間輸送閾値 */
@@ -46,9 +45,7 @@ export default function behaviors(terminal: Structure) {
         // 最終生産物がいっぱいあるとき
         if (terminal.store[finalProduct] > TRANSFER_THRESHOLD * 2 && terminal.store.energy >= TRANSFER_THRESHOLD * TERMINAL_SEND_COST) {
           // 足らないterminaに送る
-          const sendTarget = _(getTerminals())
-            .compact()
-            .find((t) => t.store[finalProduct] < TRANSFER_THRESHOLD * 2);
+          const sendTarget = _(getTerminals()).find((t) => getAvailableAmount(t, finalProduct) < TRANSFER_THRESHOLD);
           if (sendTarget) {
             terminal.send(finalProduct, TRANSFER_THRESHOLD, sendTarget.room.name, `send ${finalProduct} to ${sendTarget.room.name} from ${terminal.room.name}`);
           }
@@ -58,19 +55,30 @@ export default function behaviors(terminal: Structure) {
         const missingIngredient = strategy.find((s) => s.length === 1 && terminal.store[s] < TRANSFER_THRESHOLD / 2);
         // 不足してる素材があるとき
         if (missingIngredient) {
-          // 最終生産物の一番高い買い注文
-
-          // 足らない素材の一番安い売り注文
-          const lowestSell = _(Game.market.getAllOrders({ resourceType: missingIngredient, type: ORDER_SELL }))
-            .filter((o) => o.price <= _(Game.market.getHistory(finalProduct)).last().avgPrice)
-            .sortBy((o) => o.price)
-            .first();
-          if (lowestSell) {
-            Game.market.deal(
-              lowestSell.id,
-              Math.min(lowestSell.remainingAmount, Game.market.credits / lowestSell.price, calcMaxTransferAmount(lowestSell, terminal)),
-              terminal.room.name,
+          const redundantTerminal = _(getTerminals())
+            .sortBy((t) => getAvailableAmount(t, missingIngredient) > TRANSFER_THRESHOLD * 2)
+            .last();
+          if (redundantTerminal) {
+            redundantTerminal.send(
+              missingIngredient,
+              TRANSFER_THRESHOLD,
+              `${missingIngredient} を ${redundantTerminal.pos.roomName} から ${terminal.room.name} に補充`,
             );
+          } else {
+            // 最終生産物の一番高い買い注文
+
+            // 足らない素材の一番安い売り注文
+            const lowestSell = _(Game.market.getAllOrders({ resourceType: missingIngredient, type: ORDER_SELL }))
+              .filter((o) => o.price <= _(Game.market.getHistory(finalProduct)).last().avgPrice)
+              .sortBy((o) => o.price)
+              .first();
+            if (lowestSell) {
+              Game.market.deal(
+                lowestSell.id,
+                Math.min(lowestSell.remainingAmount, Game.market.credits / lowestSell.price, calcMaxTransferAmount(lowestSell, terminal)),
+                terminal.room.name,
+              );
+            }
           }
         }
       }
@@ -81,68 +89,68 @@ export default function behaviors(terminal: Structure) {
       return ERR_TIRED;
     }
 
-    // 自室のミネラルをため込んでるときはとにかく売る
-    if (
-      mineral &&
-      getAvailableAmount(terminal, RESOURCE_ENERGY) > room.energyCapacityAvailable &&
-      getAvailableAmount(terminal, mineral.mineralType) > TERMINAL_THRESHOLD * 2
-    ) {
-      // 一番高く買ってくれるオーダー
-      const history = _(Game.market.getHistory(mineral.mineralType)).last();
-      if (history) {
-        // 平均より高い額の買い注文があるか
-        const buyOrder = _(Game.market.getAllOrders({ type: ORDER_BUY, resourceType: mineral.mineralType }))
-          // 部屋名がないのはよくわからないので無視する
-          .filter((o) => o.roomName && o.price >= history.avgPrice)
-          .max((o) => o.price) as unknown as Order | number;
+    // // 自室のミネラルをため込んでるときはとにかく売る
+    // if (
+    //   mineral &&
+    //   getAvailableAmount(terminal, RESOURCE_ENERGY) > room.energyCapacityAvailable &&
+    //   getAvailableAmount(terminal, mineral.mineralType) > TERMINAL_THRESHOLD * 2
+    // ) {
+    //   // 一番高く買ってくれるオーダー
+    //   const history = _(Game.market.getHistory(mineral.mineralType)).last();
+    //   if (history) {
+    //     // 平均より高い額の買い注文があるか
+    //     const buyOrder = _(Game.market.getAllOrders({ type: ORDER_BUY, resourceType: mineral.mineralType }))
+    //       // 部屋名がないのはよくわからないので無視する
+    //       .filter((o) => o.roomName && o.price >= history.avgPrice)
+    //       .max((o) => o.price) as unknown as Order | number;
 
-        // 有る場合は今のエネルギーで支払える最大量売る
-        if (!_.isNumber(buyOrder)) {
-          return console.log(
-            "deal",
-            RETURN_CODE_DECODER[
-              Game.market
-                .deal(
-                  buyOrder.id,
-                  // オーダーの残量、支払える上限、保有上限の中で一番少ない分売る
-                  Math.min(buyOrder.remainingAmount, calcMaxTransferAmount(buyOrder, terminal), getAvailableAmount(terminal, mineral.mineralType)),
-                  room.name,
-                )
-                .toString()
-            ],
-            JSON.stringify(buyOrder),
-          );
-        } else {
-          // 買い注文が無いとき
+    //     // 有る場合は今のエネルギーで支払える最大量売る
+    //     if (!_.isNumber(buyOrder)) {
+    //       return console.log(
+    //         "deal",
+    //         RETURN_CODE_DECODER[
+    //           Game.market
+    //             .deal(
+    //               buyOrder.id,
+    //               // オーダーの残量、支払える上限、保有上限の中で一番少ない分売る
+    //               Math.min(buyOrder.remainingAmount, calcMaxTransferAmount(buyOrder, terminal), getAvailableAmount(terminal, mineral.mineralType)),
+    //               room.name,
+    //             )
+    //             .toString()
+    //         ],
+    //         JSON.stringify(buyOrder),
+    //       );
+    //     } else {
+    //       // 買い注文が無いとき
 
-          // 平均値より高い中で一番安い注文を探す
-          const minSellOrder = _(Game.market.getAllOrders({ type: ORDER_SELL, resourceType: mineral.mineralType }))
-            // 部屋名がないのはよくわからないので無視する
-            .filter((o) => o.roomName && o.price >= history.avgPrice)
-            .min((o) => o.price);
+    //       // 平均値より高い中で一番安い注文を探す
+    //       const minSellOrder = _(Game.market.getAllOrders({ type: ORDER_SELL, resourceType: mineral.mineralType }))
+    //         // 部屋名がないのはよくわからないので無視する
+    //         .filter((o) => o.roomName && o.price >= history.avgPrice)
+    //         .min((o) => o.price);
 
-          if (minSellOrder) {
-            const price = minSellOrder.price - 0.01;
-            const totalAmount = Math.min(
-              getAvailableAmount(terminal, mineral.mineralType) - TERMINAL_THRESHOLD,
-              Math.floor(Game.market.credits / price / 0.05),
-            );
-            if (totalAmount > TRANSFER_THRESHOLD) {
-              return Game.market.createOrder({
-                type: ORDER_SELL,
-                resourceType: mineral.mineralType,
-                price,
-                // 保有量か支払手数料で払える額の少ないほう
-                totalAmount: totalAmount,
-                roomName: terminal.room.name,
-              });
-            }
-          }
-        }
-      } else {
-        console.log("no history");
-      }
-    }
+    //       if (minSellOrder) {
+    //         const price = minSellOrder.price - 0.01;
+    //         const totalAmount = Math.min(
+    //           getAvailableAmount(terminal, mineral.mineralType) - TERMINAL_THRESHOLD,
+    //           Math.floor(Game.market.credits / price / 0.05),
+    //         );
+    //         if (totalAmount > TRANSFER_THRESHOLD) {
+    //           return Game.market.createOrder({
+    //             type: ORDER_SELL,
+    //             resourceType: mineral.mineralType,
+    //             price,
+    //             // 保有量か支払手数料で払える額の少ないほう
+    //             totalAmount: totalAmount,
+    //             roomName: terminal.room.name,
+    //           });
+    //         }
+    //       }
+    //     }
+    //   } else {
+    //     console.log("no history");
+    //   }
+    // }
 
     for (const resourceType of (Object.keys(terminal.store) as (MineralConstant | MineralCompoundConstant)[]).filter((resourceType) => {
       // とりあえず1000以上ある化合物

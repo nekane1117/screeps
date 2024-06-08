@@ -34,8 +34,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   checkMode();
 
   // 防衛
-  const ic = creep.pos.findClosestByRange(FIND_HOSTILE_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_INVADER_CORE });
-  if (ic) {
+  const hostiles = creep.room.find(FIND_HOSTILE_CREEPS);
+  const inverderCodre = creep.room.find(FIND_HOSTILE_STRUCTURES, { filter: (s): s is StructureInvaderCore => s.structureType === STRUCTURE_INVADER_CORE });
+  const enemy = creep.pos.findClosestByRange(_.compact([...hostiles, ...inverderCodre]));
+  if (enemy) {
     const defenders = getCreepsInRoom(creep.room).defender || [];
     if (defenders.length === 0) {
       const baseRoom = Game.rooms[memory.baseRoom];
@@ -46,7 +48,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             memory: {
               role: "defender",
               baseRoom: memory.targetRoomName,
-              targetId: ic.id,
+              targetId: enemy.id,
             } as DefenderMemory,
           });
         }
@@ -103,78 +105,108 @@ function harvest(creep: RemoteHarvester) {
   const targetRoom = Game.rooms[memory.targetRoomName] as Room | undefined;
   // 部屋が取れるか
   if (targetRoom) {
-    if (memory.harvestTargetId) {
-      // 上手く取れないときだけ初期化する
-      if (!Game.getObjectById(memory.harvestTargetId)) {
-        creep.memory.harvestTargetId = undefined;
+    // FIND_HOSTILE_XXXをぜんぶやる
+    const hostiles = [...targetRoom.find(FIND_HOSTILE_CREEPS), ...targetRoom.find(FIND_HOSTILE_SPAWNS), ...targetRoom.find(FIND_HOSTILE_STRUCTURES)];
+    if (hostiles.length > 0 && creep.getActiveBodyparts(ATTACK)) {
+      // #region 敵がいる場合#################################################################
+      const target = creep.pos.findClosestByPath(hostiles) || _(hostiles).first();
+      if (target) {
+        customMove(creep, target, {
+          range: !("body" in target) || target.getActiveBodyparts(ATTACK) === 0 ? 0 : 3,
+        });
+        creep.rangedAttack(target);
+        creep.attack(target);
       }
-    }
-    if (!memory.harvestTargetId) {
-      // イイ感じのSourceを取得する
-      creep.memory.harvestTargetId = _(targetRoom.find(FIND_SOURCES) || [])
-        .sort((s1, s2) => {
-          const getPriority = (s: Source) => {
-            if (s.energy > 0) {
-              // エネルギーがあるやつは近い順
-              return s.pos.getRangeTo(creep);
-            } else {
-              // 再生までの時間順
-              // (最大容量を固定で足して,エネルギーがあるやつより後ろに行くようにする)
-              return SOURCE_ENERGY_CAPACITY + s.ticksToRegeneration;
-            }
-          };
-          return getPriority(s1) - getPriority(s2);
-        })
-        .first()?.id;
-      // それでもないときは無いはずだけど終わる
-    }
-    const source = memory.harvestTargetId && Game.getObjectById(memory.harvestTargetId);
-    if (!source || source.pos.roomName !== memory.targetRoomName) {
-      // id,本体が見つからないときは初期化して終わる
-      creep.memory.harvestTargetId = undefined;
-      return ERR_NOT_FOUND;
-    }
-
-    // モードが何であれ収穫は叩く
-    switch ((creep.memory.worked = creep.harvest(source))) {
-      // OKはいい
-      case OK:
-        return OK;
-      // 範囲内に無いときは収穫モードの時だけ近寄る
-      case ERR_NOT_IN_RANGE:
-        if (memory.mode === "🌾") {
-          // 範囲内でなくて収穫モードの時は近寄る
-
-          // 自室以外の時は障害物を壊す
-          if (creep.room.name !== creep.memory.baseRoom) {
-            const moveing = _(memory._move?.path || []).first();
-            const isInRange = (n: number) => {
-              return 0 < n && n < 49;
-            };
-
-            const blocker =
-              moveing &&
-              isInRange(creep.pos.x + moveing.dx) &&
-              isInRange(creep.pos.y + moveing.dy) &&
-              creep.room
-                .lookForAt(LOOK_STRUCTURES, creep.pos.x + moveing.dx, creep.pos.y + moveing.dy)
-                .find((s) => (OBSTACLE_OBJECT_TYPES as StructureConstant[]).includes(s.structureType));
-            if (blocker) {
-              creep.dismantle(blocker);
-            }
-          }
-          return customMove(creep, source, {
-            // 所有者が居ない部屋では壁とかも無視して突っ切る
-            ignoreDestructibleStructures: !creep.room.controller?.owner?.username,
-          });
-        } else {
-          return memory.worked;
+      // #endregion
+    } else {
+      // #region 敵がいないとき#################################################################
+      if (memory.harvestTargetId) {
+        // 上手く取れないときだけ初期化する
+        if (!Game.getObjectById(memory.harvestTargetId)) {
+          creep.memory.harvestTargetId = undefined;
         }
-
-      // それ以外の時は対象を初期化して終わる
-      default:
+      }
+      if (!memory.harvestTargetId) {
+        // イイ感じのSourceを取得する
+        creep.memory.harvestTargetId = _(targetRoom.find(FIND_SOURCES) || [])
+          .sort((s1, s2) => {
+            const getPriority = (s: Source) => {
+              if (s.energy > 0) {
+                // エネルギーがあるやつは近い順
+                return s.pos.getRangeTo(creep);
+              } else {
+                // 再生までの時間順
+                // (最大容量を固定で足して,エネルギーがあるやつより後ろに行くようにする)
+                return SOURCE_ENERGY_CAPACITY + s.ticksToRegeneration;
+              }
+            };
+            return getPriority(s1) - getPriority(s2);
+          })
+          .first()?.id;
+        // それでもないときは無いはずだけど終わる
+      }
+      const source = memory.harvestTargetId && Game.getObjectById(memory.harvestTargetId);
+      if (!source || source.pos.roomName !== memory.targetRoomName) {
+        // id,本体が見つからないときは初期化して終わる
         creep.memory.harvestTargetId = undefined;
-        return;
+        return ERR_NOT_FOUND;
+      }
+
+      // モードが何であれ収穫は叩く
+      switch ((creep.memory.worked = creep.harvest(source))) {
+        // OKはいい
+        case OK:
+          _(
+            creep.pos.findInRange(FIND_MY_CREEPS, 1, {
+              filter: (c) => {
+                return c.memory.role === "remoteHarvester" && (c.pos.x < creep.pos.x || c.pos.y < creep.pos.y);
+              },
+            }),
+          ).tap((neighbors) => {
+            const c = _(neighbors).first();
+            if (c) {
+              creep.transfer(c, RESOURCE_ENERGY);
+            }
+          });
+
+          return OK;
+        // 範囲内に無いときは収穫モードの時だけ近寄る
+        case ERR_NOT_IN_RANGE:
+          if (memory.mode === "🌾") {
+            // 範囲内でなくて収穫モードの時は近寄る
+
+            // 自室以外の時は障害物を壊す
+            if (creep.room.name !== creep.memory.baseRoom) {
+              const moveing = _(memory._move?.path || []).first();
+              const isInRange = (n: number) => {
+                return 0 < n && n < 49;
+              };
+
+              const blocker =
+                moveing &&
+                isInRange(creep.pos.x + moveing.dx) &&
+                isInRange(creep.pos.y + moveing.dy) &&
+                creep.room
+                  .lookForAt(LOOK_STRUCTURES, creep.pos.x + moveing.dx, creep.pos.y + moveing.dy)
+                  .find((s) => (OBSTACLE_OBJECT_TYPES as StructureConstant[]).includes(s.structureType));
+              if (blocker) {
+                creep.dismantle(blocker);
+              }
+            }
+            return customMove(creep, source, {
+              // 所有者が居ない部屋では壁とかも無視して突っ切る
+              ignoreDestructibleStructures: !creep.room.controller?.owner?.username,
+            });
+          } else {
+            return memory.worked;
+          }
+
+        // それ以外の時は対象を初期化して終わる
+        default:
+          creep.memory.harvestTargetId = undefined;
+          return;
+      }
+      // #endregion
     }
   } else {
     // 部屋が取れないとき
@@ -287,7 +319,7 @@ function transfer(creep: RemoteHarvester) {
 
     // ミネラル用のコンテナには入れたくないので除外しておく
     const filtedContainers = container.filter((s) => s.pos.findInRange(FIND_MINERALS, 3).length === 0);
-    if (!memory.storeId && Game.cpu.bucket > 100) {
+    if (!memory.storeId) {
       // イイ感じの倉庫を取得する
       creep.memory.storeId = logUsage(
         "search remote container",

@@ -3,44 +3,35 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
-    var _a, _b, _c;
+    var _a, _b;
     if (!isReserver(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
-    const moveMeTo = (target) => (0, util_creep_1.customMove)(creep, target, {});
+    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, opt);
     const memory = (0, utils_1.readonly)(creep.memory);
-    if (creep.pos.roomName === memory.targetRoomName) {
-        if ((_a = creep.room.controller) === null || _a === void 0 ? void 0 : _a.my) {
-            return creep.say("reserved");
-        }
-        if (creep.room.controller) {
-            if (((_b = creep.room.controller.reservation) === null || _b === void 0 ? void 0 : _b.username) !== "Nekane") {
-                _(creep.attackController(creep.room.controller))
-                    .tap((reserve) => {
-                    switch (reserve) {
-                        case ERR_NOT_IN_RANGE:
-                            return creep.room.controller && moveMeTo(creep.room.controller);
-                        case OK:
-                        case ERR_INVALID_TARGET:
-                            return;
-                        default:
-                            return console.log("attackController", util_creep_1.RETURN_CODE_DECODER[reserve.toString()]);
-                    }
-                })
-                    .run();
+    const targetRoom = Game.rooms[memory.targetRoomName];
+    if (targetRoom) {
+        const hostiles = [...targetRoom.find(FIND_HOSTILE_CREEPS), ...targetRoom.find(FIND_HOSTILE_SPAWNS), ...targetRoom.find(FIND_HOSTILE_STRUCTURES)];
+        if (hostiles.length > 0 && creep.getActiveBodyparts(ATTACK)) {
+            const target = creep.pos.findClosestByRange(hostiles);
+            if (target) {
+                moveMeTo(target, {
+                    range: !("body" in target) || target.getActiveBodyparts(ATTACK) === 0 ? 0 : 3,
+                });
+                creep.rangedAttack(target);
+                creep.attack(target);
             }
-            _(creep.reserveController(creep.room.controller))
-                .tap((reserve) => {
-                switch (reserve) {
-                    case ERR_NOT_IN_RANGE:
-                        return creep.room.controller && moveMeTo(creep.room.controller);
-                    case OK:
-                        return;
-                    default:
-                        return console.log("reserveController", util_creep_1.RETURN_CODE_DECODER[reserve.toString()]);
+        }
+        else {
+            if (targetRoom.controller) {
+                if (!creep.pos.isNearTo(targetRoom.controller)) {
+                    moveMeTo(targetRoom.controller);
                 }
-            })
-                .run();
+                if (((_a = targetRoom.controller.reservation) === null || _a === void 0 ? void 0 : _a.username) !== "Nekane") {
+                    creep.attackController(targetRoom.controller);
+                }
+                creep.reserveController(targetRoom.controller);
+            }
         }
     }
     else {
@@ -50,7 +41,8 @@ const behavior = (creep) => {
                     var _a;
                     const parsed = /^[WE]([0-9]+)[NS]([0-9]+)$/.exec(roomName);
                     const isHighway = parsed && (Number(parsed[1]) % 10 === 0 || Number(parsed[2]) % 10 === 0);
-                    const isMyRoom = Game.rooms[roomName] && Game.rooms[roomName].controller && ((_a = Game.rooms[roomName].controller) === null || _a === void 0 ? void 0 : _a.my);
+                    const room = Game.rooms[roomName];
+                    const isMyRoom = (_a = room === null || room === void 0 ? void 0 : room.controller) === null || _a === void 0 ? void 0 : _a.my;
                     if (isHighway || isMyRoom) {
                         return 1;
                     }
@@ -69,7 +61,7 @@ const behavior = (creep) => {
             creep.memory.route = undefined;
             return;
         }
-        if (((_c = memory.exit) === null || _c === void 0 ? void 0 : _c.roomName) !== creep.pos.roomName) {
+        if (((_b = memory.exit) === null || _b === void 0 ? void 0 : _b.roomName) !== creep.pos.roomName) {
             creep.memory.exit = creep.pos.findClosestByPath(current.exit);
         }
         const moved = creep.memory.exit && moveMeTo(new RoomPosition(creep.memory.exit.x, creep.memory.exit.y, creep.memory.exit.roomName));

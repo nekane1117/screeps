@@ -31,8 +31,10 @@ const behavior = (creep) => {
         }
     };
     checkMode();
-    const ic = creep.pos.findClosestByRange(FIND_HOSTILE_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_INVADER_CORE });
-    if (ic) {
+    const hostiles = creep.room.find(FIND_HOSTILE_CREEPS);
+    const inverderCodre = creep.room.find(FIND_HOSTILE_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_INVADER_CORE });
+    const enemy = creep.pos.findClosestByRange(_.compact([...hostiles, ...inverderCodre]));
+    if (enemy) {
         const defenders = (0, util_creep_1.getCreepsInRoom)(creep.room).defender || [];
         if (defenders.length === 0) {
             const baseRoom = Game.rooms[memory.baseRoom];
@@ -43,7 +45,7 @@ const behavior = (creep) => {
                         memory: {
                             role: "defender",
                             baseRoom: memory.targetRoomName,
-                            targetId: ic.id,
+                            targetId: enemy.id,
                         },
                     });
                 }
@@ -86,61 +88,84 @@ function harvest(creep) {
     const memory = (0, utils_1.readonly)(creep.memory);
     const targetRoom = Game.rooms[memory.targetRoomName];
     if (targetRoom) {
-        if (memory.harvestTargetId) {
-            if (!Game.getObjectById(memory.harvestTargetId)) {
-                creep.memory.harvestTargetId = undefined;
+        const hostiles = [...targetRoom.find(FIND_HOSTILE_CREEPS), ...targetRoom.find(FIND_HOSTILE_SPAWNS), ...targetRoom.find(FIND_HOSTILE_STRUCTURES)];
+        if (hostiles.length > 0 && creep.getActiveBodyparts(ATTACK)) {
+            const target = creep.pos.findClosestByPath(hostiles) || _(hostiles).first();
+            if (target) {
+                (0, util_creep_1.customMove)(creep, target, {
+                    range: !("body" in target) || target.getActiveBodyparts(ATTACK) === 0 ? 0 : 3,
+                });
+                creep.rangedAttack(target);
+                creep.attack(target);
             }
         }
-        if (!memory.harvestTargetId) {
-            creep.memory.harvestTargetId = (_a = _(targetRoom.find(FIND_SOURCES) || [])
-                .sort((s1, s2) => {
-                const getPriority = (s) => {
-                    if (s.energy > 0) {
-                        return s.pos.getRangeTo(creep);
+        else {
+            if (memory.harvestTargetId) {
+                if (!Game.getObjectById(memory.harvestTargetId)) {
+                    creep.memory.harvestTargetId = undefined;
+                }
+            }
+            if (!memory.harvestTargetId) {
+                creep.memory.harvestTargetId = (_a = _(targetRoom.find(FIND_SOURCES) || [])
+                    .sort((s1, s2) => {
+                    const getPriority = (s) => {
+                        if (s.energy > 0) {
+                            return s.pos.getRangeTo(creep);
+                        }
+                        else {
+                            return SOURCE_ENERGY_CAPACITY + s.ticksToRegeneration;
+                        }
+                    };
+                    return getPriority(s1) - getPriority(s2);
+                })
+                    .first()) === null || _a === void 0 ? void 0 : _a.id;
+            }
+            const source = memory.harvestTargetId && Game.getObjectById(memory.harvestTargetId);
+            if (!source || source.pos.roomName !== memory.targetRoomName) {
+                creep.memory.harvestTargetId = undefined;
+                return ERR_NOT_FOUND;
+            }
+            switch ((creep.memory.worked = creep.harvest(source))) {
+                case OK:
+                    _(creep.pos.findInRange(FIND_MY_CREEPS, 1, {
+                        filter: (c) => {
+                            return c.memory.role === "remoteHarvester" && (c.pos.x < creep.pos.x || c.pos.y < creep.pos.y);
+                        },
+                    })).tap((neighbors) => {
+                        const c = _(neighbors).first();
+                        if (c) {
+                            creep.transfer(c, RESOURCE_ENERGY);
+                        }
+                    });
+                    return OK;
+                case ERR_NOT_IN_RANGE:
+                    if (memory.mode === "🌾") {
+                        if (creep.room.name !== creep.memory.baseRoom) {
+                            const moveing = _(((_b = memory._move) === null || _b === void 0 ? void 0 : _b.path) || []).first();
+                            const isInRange = (n) => {
+                                return 0 < n && n < 49;
+                            };
+                            const blocker = moveing &&
+                                isInRange(creep.pos.x + moveing.dx) &&
+                                isInRange(creep.pos.y + moveing.dy) &&
+                                creep.room
+                                    .lookForAt(LOOK_STRUCTURES, creep.pos.x + moveing.dx, creep.pos.y + moveing.dy)
+                                    .find((s) => OBSTACLE_OBJECT_TYPES.includes(s.structureType));
+                            if (blocker) {
+                                creep.dismantle(blocker);
+                            }
+                        }
+                        return (0, util_creep_1.customMove)(creep, source, {
+                            ignoreDestructibleStructures: !((_d = (_c = creep.room.controller) === null || _c === void 0 ? void 0 : _c.owner) === null || _d === void 0 ? void 0 : _d.username),
+                        });
                     }
                     else {
-                        return SOURCE_ENERGY_CAPACITY + s.ticksToRegeneration;
+                        return memory.worked;
                     }
-                };
-                return getPriority(s1) - getPriority(s2);
-            })
-                .first()) === null || _a === void 0 ? void 0 : _a.id;
-        }
-        const source = memory.harvestTargetId && Game.getObjectById(memory.harvestTargetId);
-        if (!source || source.pos.roomName !== memory.targetRoomName) {
-            creep.memory.harvestTargetId = undefined;
-            return ERR_NOT_FOUND;
-        }
-        switch ((creep.memory.worked = creep.harvest(source))) {
-            case OK:
-                return OK;
-            case ERR_NOT_IN_RANGE:
-                if (memory.mode === "🌾") {
-                    if (creep.room.name !== creep.memory.baseRoom) {
-                        const moveing = _(((_b = memory._move) === null || _b === void 0 ? void 0 : _b.path) || []).first();
-                        const isInRange = (n) => {
-                            return 0 < n && n < 49;
-                        };
-                        const blocker = moveing &&
-                            isInRange(creep.pos.x + moveing.dx) &&
-                            isInRange(creep.pos.y + moveing.dy) &&
-                            creep.room
-                                .lookForAt(LOOK_STRUCTURES, creep.pos.x + moveing.dx, creep.pos.y + moveing.dy)
-                                .find((s) => OBSTACLE_OBJECT_TYPES.includes(s.structureType));
-                        if (blocker) {
-                            creep.dismantle(blocker);
-                        }
-                    }
-                    return (0, util_creep_1.customMove)(creep, source, {
-                        ignoreDestructibleStructures: !((_d = (_c = creep.room.controller) === null || _c === void 0 ? void 0 : _c.owner) === null || _d === void 0 ? void 0 : _d.username),
-                    });
-                }
-                else {
-                    return memory.worked;
-                }
-            default:
-                creep.memory.harvestTargetId = undefined;
-                return;
+                default:
+                    creep.memory.harvestTargetId = undefined;
+                    return;
+            }
         }
     }
     else {
@@ -226,7 +251,7 @@ function transfer(creep) {
         }
         const { container, spawn, extension, storage, link, terminal } = (0, utils_1.findMyStructures)(baseRoom);
         const filtedContainers = container.filter((s) => s.pos.findInRange(FIND_MINERALS, 3).length === 0);
-        if (!memory.storeId && Game.cpu.bucket > 100) {
+        if (!memory.storeId) {
             creep.memory.storeId = (0, utils_1.logUsage)("search remote container", () => {
                 var _a, _b;
                 return (_b = (_a = _([...filtedContainers, ...spawn, ...extension, ...storage, ...link, ...terminal])

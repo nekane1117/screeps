@@ -81,16 +81,42 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
     )
     .slice(0, 50),
   claimer: [CLAIM, MOVE],
-  reserver: _.range(4).map((i) => {
-    const bodies = [CLAIM, MOVE];
+  reserver: _.range(50).map((i) => {
+    const bodies = (() => {
+      if (i < 4) {
+        return [CLAIM, MOVE];
+      } else {
+        return [RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, HEAL, MOVE];
+      }
+    })();
     return bodies[i % bodies.length];
   }),
-  remoteHarvester: _.range(50)
-    .map((i) => {
-      const b = [WORK, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY];
+  remoteHarvester: [
+    // 最低構成
+    WORK,
+    MOVE,
+    CARRY,
+    MOVE,
+    // 最低武装
+    RANGED_ATTACK,
+    MOVE,
+    ATTACK,
+    // 効率上げる
+    MOVE,
+    WORK,
+    MOVE,
+    WORK,
+    MOVE,
+    WORK,
+    MOVE,
+    WORK,
+    MOVE,
+    // 適当に突っ込む
+    ..._.range(50).map((i) => {
+      const b = [MOVE, CARRY, RANGED_ATTACK, MOVE, ATTACK, MOVE];
       return b[i % b.length];
-    })
-    .slice(0, 50),
+    }),
+  ].slice(0, 50),
   carrier: ([] as BodyPartConstant[])
     .concat(
       ..._.range(12).map((i) => {

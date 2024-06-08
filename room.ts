@@ -145,7 +145,7 @@ export function roomBehavior(room: Room) {
     if (!(reserver as Reserver[]).find((c) => c?.memory?.targetRoomName === targetRoomName)) {
       const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
       if (spawn) {
-        const spawned = spawn.spawnCreep(filterBodiesByCost("reserver", room.energyAvailable).bodies, `V_${room.name}_${targetRoomName}`, {
+        const spawned = spawn.spawnCreep(filterBodiesByCost("reserver", room.energyAvailable).bodies, `V_${room.name}_${targetRoomName}_${Game.time}`, {
           memory: {
             baseRoom: room.name,
             role: "reserver",

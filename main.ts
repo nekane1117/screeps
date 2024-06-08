@@ -41,38 +41,24 @@ module.exports.loop = function () {
     });
     // Creepの動き
     logUsage("creep", () => {
-      Object.values(Game.creeps)
-        .sort((c1, c2) => {
-          const getPriority = (creep: Creeps) => {
-            switch (creep.memory.role) {
-              case "harvester":
-                return 0;
-              case "carrier":
-                return 1;
-              default:
-                return 2;
-            }
-          };
-          return getPriority(c1) - getPriority(c2);
-        })
-        .forEach((c) => {
-          if (c.spawning) {
-            return;
-          }
-          c.memory.moved = undefined;
-          c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
-            color: toColor(c),
-          });
-          behaviors[c.memory.role]?.(c);
-          // 通った場所はみんなで直す
-          c.getActiveBodyparts(WORK) &&
-            c.pos
-              .lookFor(LOOK_STRUCTURES)
-              .filter((s) => ([STRUCTURE_CONTAINER, STRUCTURE_ROAD] as StructureConstant[]).includes(s.structureType) && s.hits < s.hitsMax)
-              .forEach((s) => c.repair(s));
-          // 現在地の履歴を更新する
-          c.room.memory.roadMap && (c.room.memory.roadMap[c.pos.y * 50 + c.pos.x] = Game.time);
+      Object.values(Game.creeps).forEach((c) => {
+        if (c.spawning) {
+          return;
+        }
+        c.memory.moved = undefined;
+        c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
+          color: toColor(c),
         });
+        behaviors[c.memory.role]?.(c);
+        // 通った場所はみんなで直す
+        c.getActiveBodyparts(WORK) &&
+          c.pos
+            .lookFor(LOOK_STRUCTURES)
+            .filter((s) => ([STRUCTURE_CONTAINER, STRUCTURE_ROAD] as StructureConstant[]).includes(s.structureType) && s.hits < s.hitsMax)
+            .forEach((s) => c.repair(s));
+        // 現在地の履歴を更新する
+        c.room.memory.roadMap && (c.room.memory.roadMap[c.pos.y * 50 + c.pos.x] = Game.time);
+      });
     });
 
     Object.keys(Memory.rooms).forEach((name) => {

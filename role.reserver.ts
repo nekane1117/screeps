@@ -6,47 +6,41 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isReserver(creep)) {
     return console.log(`${creep.name} is not Builder`);
   }
-  const moveMeTo = (target: RoomPosition | _HasRoomPosition) => customMove(creep, target, {});
+  const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => customMove(creep, target, opt);
 
   const memory = readonly(creep.memory);
 
-  // 到達済みか
-  if (creep.pos.roomName === memory.targetRoomName) {
-    // 既にreserve済みか
-    if (creep.room.controller?.my) {
-      return creep.say("reserved");
-    }
+  const targetRoom = Game.rooms[memory.targetRoomName] as Room | undefined;
 
-    // reserveする
-    if (creep.room.controller) {
-      if (creep.room.controller.reservation?.username !== "Nekane") {
-        _(creep.attackController(creep.room.controller))
-          .tap((reserve) => {
-            switch (reserve) {
-              case ERR_NOT_IN_RANGE:
-                return creep.room.controller && moveMeTo(creep.room.controller);
-              case OK:
-              case ERR_INVALID_TARGET:
-                return;
-              default:
-                return console.log("attackController", RETURN_CODE_DECODER[reserve.toString()]);
-            }
-          })
-          .run();
+  if (targetRoom) {
+    // FIND_HOSTILE_XXXをぜんぶやる
+    const hostiles = [...targetRoom.find(FIND_HOSTILE_CREEPS), ...targetRoom.find(FIND_HOSTILE_SPAWNS), ...targetRoom.find(FIND_HOSTILE_STRUCTURES)];
+    if (hostiles.length > 0 && creep.getActiveBodyparts(ATTACK)) {
+      // #region 敵がいる場合#################################################################
+      const target = creep.pos.findClosestByRange(hostiles);
+      if (target) {
+        moveMeTo(target, {
+          range: !("body" in target) || target.getActiveBodyparts(ATTACK) === 0 ? 0 : 3,
+        });
+        creep.rangedAttack(target);
+        creep.attack(target);
       }
-      _(creep.reserveController(creep.room.controller))
-        .tap((reserve) => {
-          switch (reserve) {
-            case ERR_NOT_IN_RANGE:
-              return creep.room.controller && moveMeTo(creep.room.controller);
-
-            case OK:
-              return;
-            default:
-              return console.log("reserveController", RETURN_CODE_DECODER[reserve.toString()]);
-          }
-        })
-        .run();
+      // #endregion
+    } else {
+      // #region 敵がいないとき#################################################################
+      if (targetRoom.controller) {
+        // 射程内にいないときは近寄る
+        if (!creep.pos.isNearTo(targetRoom.controller)) {
+          moveMeTo(targetRoom.controller);
+        }
+        // 取られてるときは削る
+        if (targetRoom.controller.reservation?.username !== "Nekane") {
+          creep.attackController(targetRoom.controller);
+        }
+        // reserveする
+        creep.reserveController(targetRoom.controller);
+      }
+      // #endregion
     }
   } else {
     // まだ部屋にいないとき
@@ -57,8 +51,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           const parsed = /^[WE]([0-9]+)[NS]([0-9]+)$/.exec(roomName);
           // 数値化した座標が10で割れるときはHighway
           const isHighway = parsed && (Number(parsed[1]) % 10 === 0 || Number(parsed[2]) % 10 === 0);
+          const room = Game.rooms[roomName] as Room | undefined;
           // myが取れるときは自室
-          const isMyRoom = Game.rooms[roomName] && Game.rooms[roomName].controller && Game.rooms[roomName].controller?.my;
+          const isMyRoom = room?.controller?.my;
           // 自室か高速道路を通る
           if (isHighway || isMyRoom) {
             return 1;
