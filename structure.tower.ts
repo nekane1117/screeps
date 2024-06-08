@@ -18,6 +18,10 @@ export default function behaviors(tower: Structure) {
   const decayStructures = _(
     tower.room.find(FIND_STRUCTURES, {
       filter: (s): s is StructureRampart | StructureRoad | StructureWall => {
+        // 解体予定のものは含めない
+        if (tower.room.memory.dismantle?.find((d) => d === s.id)) {
+          return false;
+        }
         if (s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL) {
           return s.hits < RAMPART_DECAY_AMOUNT * 10;
         } else if (s.structureType === STRUCTURE_ROAD) {

@@ -1,7 +1,6 @@
-import { ROAD_DECAY_AMOUNT_SWAMP, ROAD_DECAY_AMOUNT_WALL } from "./constants";
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, pickUpAll, toColor, withdrawBy } from "./util.creep";
-import { findMyStructures, getSitesInRoom } from "./utils";
+import { findMyStructures, getDecayAmount, getSitesInRoom } from "./utils";
 // import { findMyStructures } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
@@ -52,7 +51,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     if (creep.memory.firstAidId) {
       const target = Game.getObjectById(creep.memory.firstAidId);
       // 取れない or 満タンの時は初期化する
-      if (!target || target.hits === target.hitsMax) {
+      if (!target || target.hits > getDecayAmount(target) * 10) {
         creep.memory.firstAidId = undefined;
       }
     }
@@ -61,29 +60,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // 応急修理が要るものを探す
     if (!creep.memory.firstAidId) {
       creep.memory.firstAidId = creep.pos.findClosestByRange([...road, ...rampart, ...container], {
-        filter: (s: StructureRampart | StructureContainer | StructureRoad) => {
-          return (
-            s.hits <=
-            (() => {
-              switch (s.structureType) {
-                case "container":
-                  return CONTAINER_DECAY;
-                case "rampart":
-                  return RAMPART_DECAY_AMOUNT;
-                case "road":
-                  switch (_(s.pos.lookFor(LOOK_TERRAIN)).first()) {
-                    case "wall":
-                      return ROAD_DECAY_AMOUNT_WALL;
-                    case "swamp":
-                      return ROAD_DECAY_AMOUNT_SWAMP;
-                    case "plain":
-                    default:
-                      return ROAD_DECAY_AMOUNT;
-                  }
-              }
-            })() *
-              10
-          );
+        filter: (s: Structure) => {
+          return s.hits <= getDecayAmount(s) * 10;
         },
       })?.id;
     }
@@ -91,7 +69,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // 応急修理する
     if (creep.memory.firstAidId) {
       // boostされてない場合
-      if (!isBoosted(creep) && boost(creep)) {
+      if (!isBoosted(creep) && boost(creep) !== null) {
         return;
       }
 
@@ -110,6 +88,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       }
     }
     // #endregion
+
     // #region 建設 ###########################################################################################
     // 不正な対象の時は初期化する
     if (creep.memory.buildingId) {
@@ -126,7 +105,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       (creep.memory.buildingId = findBuildTarget(creep))
     ) {
       // boostされてない場合
-      if (!isBoosted(creep) && boost(creep)) {
+      if (!isBoosted(creep) && boost(creep) !== null) {
         return;
       }
 
@@ -180,7 +159,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       const target = creep.memory.repairId && Game.getObjectById(creep.memory.repairId);
       if (target) {
         // boostされてない場合
-        if (!isBoosted(creep) && boost(creep)) {
+        if (!isBoosted(creep) && boost(creep) !== null) {
           return;
         }
 
@@ -210,6 +189,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   } else {
     // 収集モードの時
 
+    // #region エネルギー回収###########################################################################################
     // 空のやつ初期化
     creep.memory.storeId = (() => {
       const store = creep.memory.storeId && Game.getObjectById(creep.memory.storeId);
@@ -284,6 +264,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         moveMeTo(harvester);
       }
     }
+    // #endregion
 
     // withdraw
     withdrawBy(creep, ["harvester", "upgrader", "remoteHarvester"]);

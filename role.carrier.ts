@@ -181,23 +181,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   //spawnかextension
   if (!creep.memory.transferId) {
-    creep.memory.transferId = creep.pos.findClosestByPath(
-      (() => {
-        // 全部の距離を計算する
-        const strWithDist = _([...extension, ...spawns])
-          .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && exclusive(s))
-          .map((structure) => {
-            return { structure, dist: structure.pos.getRangeTo(spawn) };
-          });
-        // 一番遠い距離
-        const maxFar = strWithDist.max((s) => s.dist).dist;
-        // のやつ
-        return strWithDist
-          .filter((s) => s.dist === maxFar)
-          .map((s) => s.structure)
-          .value();
-      })(),
-    )?.id;
+    // 上から順番に詰める
+    creep.memory.transferId = _([...extension, ...spawns])
+      .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY))
+      .sortBy((s) => s.pos.y)
+      .first()?.id;
   }
 
   // タワーに入れて修理や防御

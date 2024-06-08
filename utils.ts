@@ -1,3 +1,5 @@
+import { ROAD_DECAY_AMOUNT_SWAMP, ROAD_DECAY_AMOUNT_WALL } from "./constants";
+
 export function getCapacityRate(s: AnyCreep | Structure, type: ResourceConstant = RESOURCE_ENERGY) {
   if ("store" in s) {
     return s.store.getUsedCapacity(type) / s.store.getCapacity(type);
@@ -113,11 +115,20 @@ export function isCompound(resource: ResourceConstant) {
 }
 
 export function getLabs(room: Room) {
-  return findMyStructures(room).lab.map((lab) => {
+  const lab = findMyStructures(room).lab;
+  // 自分の周囲にあるラボの数が少ない順
+  return _(lab).map((lab) => {
     return Object.assign(lab, {
       memory: room.memory.labs[lab.id],
     }) as StructureLab & { memory: LabMemory };
   });
+}
+
+export function getTerminals() {
+  return _(Object.values(Game.rooms))
+    .map((r) => r.terminal)
+    .compact()
+    .run();
 }
 
 let indent = -1;
@@ -162,4 +173,35 @@ export function getSecondsPerticks() {
   return head && last
     ? _.round(((_.isNumber(last) ? last : last.unixTime) - (_.isNumber(head) ? head : head.unixTime)) / Memory.realTImes.length / 1000, 2)
     : 0;
+}
+
+export function getDecayAmount(s: Structure) {
+  switch (s.structureType) {
+    case STRUCTURE_RAMPART:
+      return RAMPART_DECAY_AMOUNT;
+    case STRUCTURE_CONTAINER:
+      return CONTAINER_DECAY;
+    case STRUCTURE_ROAD:
+      switch (s.room.getTerrain().get(s.pos.x, s.pos.y)) {
+        case TERRAIN_MASK_SWAMP:
+          return ROAD_DECAY_AMOUNT_SWAMP;
+        case TERRAIN_MASK_WALL:
+          return ROAD_DECAY_AMOUNT_WALL;
+        default:
+          return ROAD_DECAY_AMOUNT;
+      }
+    default:
+      return 0;
+  }
+}
+
+export function getOrderRemainingTotal(terminal: StructureTerminal, resourceType: ResourceConstant) {
+  return _(Object.values(Game.market.orders))
+    .filter((o) => o.type === ORDER_SELL && o.resourceType === resourceType && o.roomName === terminal.room.name)
+    .sum((o) => o.remainingAmount);
+}
+
+export function getAvailableAmount(terminal: StructureTerminal, resourceType: ResourceConstant) {
+  // 実際持ってる量に売り注文の合計を引いたものを返す
+  return terminal.store[resourceType] - getOrderRemainingTotal(terminal, resourceType);
 }

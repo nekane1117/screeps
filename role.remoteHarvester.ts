@@ -317,8 +317,12 @@ function transfer(creep: RemoteHarvester) {
 
     (Object.keys(creep.store) as ResourceConstant[]).forEach((resourceType) => {
       if ((creep.memory.worked = creep.transfer(store, resourceType)) === ERR_NOT_IN_RANGE && memory.mode === "🚛") {
-        // 範囲内でなくて収穫モードの時は近寄る
-        return customMove(creep, store);
+        // 範囲内でなくて収集モードの時は近寄る
+        return customMove(creep, store, {
+          plainCost: 2,
+          swampCost: 2,
+          ignoreCreeps: !creep.pos.inRangeTo(store, 2),
+        });
       } else {
         return creep.memory.worked;
       }

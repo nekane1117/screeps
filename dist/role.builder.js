@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const constants_1 = require("./constants");
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
@@ -38,7 +37,7 @@ const behavior = (creep) => {
     if (creep.memory.mode === "👷") {
         if (creep.memory.firstAidId) {
             const target = Game.getObjectById(creep.memory.firstAidId);
-            if (!target || target.hits === target.hitsMax) {
+            if (!target || target.hits > (0, utils_1.getDecayAmount)(target) * 10) {
                 creep.memory.firstAidId = undefined;
             }
         }
@@ -46,31 +45,12 @@ const behavior = (creep) => {
         if (!creep.memory.firstAidId) {
             creep.memory.firstAidId = (_a = creep.pos.findClosestByRange([...road, ...rampart, ...container], {
                 filter: (s) => {
-                    return (s.hits <=
-                        (() => {
-                            switch (s.structureType) {
-                                case "container":
-                                    return CONTAINER_DECAY;
-                                case "rampart":
-                                    return RAMPART_DECAY_AMOUNT;
-                                case "road":
-                                    switch (_(s.pos.lookFor(LOOK_TERRAIN)).first()) {
-                                        case "wall":
-                                            return constants_1.ROAD_DECAY_AMOUNT_WALL;
-                                        case "swamp":
-                                            return constants_1.ROAD_DECAY_AMOUNT_SWAMP;
-                                        case "plain":
-                                        default:
-                                            return ROAD_DECAY_AMOUNT;
-                                    }
-                            }
-                        })() *
-                            10);
+                    return s.hits <= (0, utils_1.getDecayAmount)(s) * 10;
                 },
             })) === null || _a === void 0 ? void 0 : _a.id;
         }
         if (creep.memory.firstAidId) {
-            if (!isBoosted(creep) && boost(creep)) {
+            if (!isBoosted(creep) && boost(creep) !== null) {
                 return;
             }
             const target = Game.getObjectById(creep.memory.firstAidId);
@@ -94,7 +74,7 @@ const behavior = (creep) => {
         }
         if (creep.memory.buildingId ||
             (creep.memory.buildingId = findBuildTarget(creep))) {
-            if (!isBoosted(creep) && boost(creep)) {
+            if (!isBoosted(creep) && boost(creep) !== null) {
                 return;
             }
             const site = Game.getObjectById(creep.memory.buildingId);
@@ -132,7 +112,7 @@ const behavior = (creep) => {
         if (creep.memory.repairId || (creep.memory.repairId = findRepairTarget(creep))) {
             const target = creep.memory.repairId && Game.getObjectById(creep.memory.repairId);
             if (target) {
-                if (!isBoosted(creep) && boost(creep)) {
+                if (!isBoosted(creep) && boost(creep) !== null) {
                     return;
                 }
                 target.room.visual.text("x", target.pos, {

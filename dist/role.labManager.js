@@ -33,19 +33,14 @@ const behavior = (creep) => {
         }
     }
     checkMode();
-    const { lab } = (0, utils_1.findMyStructures)(room);
+    const labs = (0, utils_1.getLabs)(room);
     if (creep.memory.storeId) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store && "store" in store && store.store.energy < CARRY_CAPACITY) {
             creep.memory.storeId = undefined;
         }
     }
-    const { wrong, requesting, completed } = lab
-        .map((lab) => {
-        return Object.assign(lab, {
-            memory: creep.room.memory.labs[lab.id],
-        });
-    })
+    const { wrong, requesting, completed } = labs
         .sort((l1, l2) => {
         return l2.memory.expectedType.length - l1.memory.expectedType.length;
     })
@@ -90,27 +85,24 @@ const behavior = (creep) => {
         creep.memory.storeId = (_a = _(wrong).first()) === null || _a === void 0 ? void 0 : _a.id;
     }
     if (!creep.memory.storeId) {
-        const target = _(requesting)
-            .filter((lab) => {
-            if (terminal.store[lab.memory.expectedType] === 0) {
+        const target = _(requesting).find((lab) => {
+            const getRemainingTotal = (t, resourceType) => {
+                return _(Object.values(Game.market.orders))
+                    .filter((o) => o.type === ORDER_SELL && o.resourceType === resourceType && o.roomName === t.room.name)
+                    .sum((o) => o.remainingAmount);
+            };
+            const getRemainingCapacity = (t, resourceType) => {
+                return terminal.store[resourceType] - getRemainingTotal(t, resourceType);
+            };
+            if (getRemainingCapacity(terminal, lab.memory.expectedType) === 0) {
                 const SEND_UNIT = 1000;
-                const miningTerminal = _(Object.values(Game.rooms)
-                    .filter((r) => {
-                    return (r.terminal &&
-                        r.terminal.store[lab.memory.expectedType] > SEND_UNIT &&
-                        r.terminal.store.energy > SEND_UNIT * TERMINAL_SEND_COST &&
-                        r.find(FIND_MINERALS).find((m) => m.mineralType === lab.memory.expectedType));
-                })
-                    .map((r) => r.terminal))
-                    .compact()
-                    .first();
-                if (miningTerminal) {
-                    miningTerminal.send(lab.memory.expectedType, SEND_UNIT, terminal.room.name, `send ${lab.memory.expectedType} ${miningTerminal.room.name} to ${terminal.room.name}`);
+                const redundantTerminal = (0, utils_1.getTerminals)().find((t) => getRemainingCapacity(t, lab.memory.expectedType) > SEND_UNIT * 2);
+                if (redundantTerminal) {
+                    redundantTerminal.send(lab.memory.expectedType, SEND_UNIT, terminal.room.name, `send ${lab.memory.expectedType} ${redundantTerminal.room.name} to ${terminal.room.name}`);
                 }
             }
-            return terminal.store[lab.memory.expectedType] > 0;
-        })
-            .first();
+            return getRemainingCapacity(terminal, lab.memory.expectedType) > 0;
+        });
         if (target) {
             creep.memory.storeId = terminal.id;
             creep.memory.mineralType = target.memory.expectedType;

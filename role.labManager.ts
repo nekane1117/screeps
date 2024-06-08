@@ -1,6 +1,6 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, pickUpAll } from "./util.creep";
-import { findMyStructures } from "./utils";
+import { getLabs, getTerminals } from "./utils";
 
 const MINERAL_KEEP_VALUE = 500;
 
@@ -45,7 +45,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   checkMode();
   // https://docs.screeps.com/simultaneous-actions.html
 
-  const { lab } = findMyStructures(room);
+  const labs = getLabs(room);
 
   // 取得元設定処理###############################################################################################
 
@@ -58,12 +58,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // ラボの情報を整理する
-  const { wrong, requesting, completed } = lab
-    .map((lab) => {
-      return Object.assign(lab, {
-        memory: creep.room.memory.labs[lab.id],
-      }) as StructureLab & { memory: LabMemory };
-    })
+  const { wrong, requesting, completed } = labs
     .sort((l1, l2) => {
       return l2.memory.expectedType.length - l1.memory.expectedType.length;
     })
@@ -119,38 +114,34 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // 原料待ちのやつでターミナルに原料があるやつ
   if (!creep.memory.storeId) {
-    const target = _(requesting)
-      .filter((lab) => {
-        // 指定のミネラルが無いとき
-        if (terminal.store[lab.memory.expectedType] === 0) {
-          const SEND_UNIT = 1000;
-          const miningTerminal = _(
-            Object.values(Game.rooms)
-              .filter((r) => {
-                return (
-                  r.terminal &&
-                  r.terminal.store[lab.memory.expectedType] > SEND_UNIT &&
-                  r.terminal.store.energy > SEND_UNIT * TERMINAL_SEND_COST &&
-                  r.find(FIND_MINERALS).find((m) => m.mineralType === lab.memory.expectedType)
-                );
-              })
-              .map((r) => r.terminal),
-          )
-            .compact()
-            .first();
+    const target = _(requesting).find((lab) => {
+      const getRemainingTotal = (t: StructureTerminal, resourceType: ResourceConstant) => {
+        return _(Object.values(Game.market.orders))
+          .filter((o) => o.type === ORDER_SELL && o.resourceType === resourceType && o.roomName === t.room.name)
+          .sum((o) => o.remainingAmount);
+      };
 
-          if (miningTerminal) {
-            miningTerminal.send(
-              lab.memory.expectedType,
-              SEND_UNIT,
-              terminal.room.name,
-              `send ${lab.memory.expectedType} ${miningTerminal.room.name} to ${terminal.room.name}`,
-            );
-          }
+      const getRemainingCapacity = (t: StructureTerminal, resourceType: ResourceConstant) => {
+        // 実際持ってる量に売り注文の合計を引いたものを返す
+        return terminal.store[resourceType] - getRemainingTotal(t, resourceType);
+      };
+
+      // 指定のミネラルが無いとき
+      if (getRemainingCapacity(terminal, lab.memory.expectedType) === 0) {
+        const SEND_UNIT = 1000;
+        // 基準値の倍以上あるターミナル
+        const redundantTerminal = getTerminals().find((t) => getRemainingCapacity(t, lab.memory.expectedType) > SEND_UNIT * 2);
+        if (redundantTerminal) {
+          redundantTerminal.send(
+            lab.memory.expectedType,
+            SEND_UNIT,
+            terminal.room.name,
+            `send ${lab.memory.expectedType} ${redundantTerminal.room.name} to ${terminal.room.name}`,
+          );
         }
-        return terminal.store[lab.memory.expectedType] > 0;
-      })
-      .first();
+      }
+      return getRemainingCapacity(terminal, lab.memory.expectedType) > 0;
+    });
     if (target) {
       // ターミナルに指定の原料を取りに行く
       creep.memory.storeId = terminal.id;

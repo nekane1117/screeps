@@ -43,11 +43,16 @@ function isC(s: Structure): s is StructureController {
 }
 
 function getUpgraderBody(c: StructureController): BodyPartConstant[] {
+  const b: BodyPartConstant[] = [WORK, WORK, WORK, MOVE];
   let total = 0;
   // 基本近くに建てるかつ
   // 稼働し始めたら動かないのでMOVEもCARRYも1個でいい
-  return ([MOVE, CARRY] as BodyPartConstant[])
-    .concat(..._.range(50).map(() => WORK))
+  return ([WORK, MOVE, CARRY, WORK] as BodyPartConstant[])
+    .concat(
+      ..._.range(50).map((i) => {
+        return b[i % b.length];
+      }),
+    )
     .map((parts) => {
       total += BODYPART_COST[parts];
       return {

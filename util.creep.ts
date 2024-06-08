@@ -172,6 +172,7 @@ export const customMove: CustomMove = (creep, target, opt) => {
   }
 
   creep.memory.moved = creep.moveTo(target, {
+    plainCost: 2,
     serializeMemory: false,
     ...opt,
     visualizePathStyle: {

@@ -250,7 +250,11 @@ function transfer(creep) {
         }
         Object.keys(creep.store).forEach((resourceType) => {
             if ((creep.memory.worked = creep.transfer(store, resourceType)) === ERR_NOT_IN_RANGE && memory.mode === "🚛") {
-                return (0, util_creep_1.customMove)(creep, store);
+                return (0, util_creep_1.customMove)(creep, store, {
+                    plainCost: 2,
+                    swampCost: 2,
+                    ignoreCreeps: !creep.pos.inRangeTo(store, 2),
+                });
             }
             else {
                 return creep.memory.worked;

@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSecondsPerticks = exports.readonly = exports.calcMaxTransferAmount = exports.isHighway = exports.logUsage = exports.getLabs = exports.isCompound = exports.getSpawnsWithDistance = exports.getSpawnsOrderdByRange = exports.getSitesInRoom = exports.getSpawnsInRoom = exports.findMyStructures = exports.getCapacityRate = void 0;
+exports.getAvailableAmount = exports.getOrderRemainingTotal = exports.getDecayAmount = exports.getSecondsPerticks = exports.readonly = exports.calcMaxTransferAmount = exports.isHighway = exports.logUsage = exports.getTerminals = exports.getLabs = exports.isCompound = exports.getSpawnsWithDistance = exports.getSpawnsOrderdByRange = exports.getSitesInRoom = exports.getSpawnsInRoom = exports.findMyStructures = exports.getCapacityRate = void 0;
+const constants_1 = require("./constants");
 function getCapacityRate(s, type = RESOURCE_ENERGY) {
     if ("store" in s) {
         return s.store.getUsedCapacity(type) / s.store.getCapacity(type);
@@ -104,13 +105,21 @@ function isCompound(resource) {
 }
 exports.isCompound = isCompound;
 function getLabs(room) {
-    return (0, exports.findMyStructures)(room).lab.map((lab) => {
+    const lab = (0, exports.findMyStructures)(room).lab;
+    return _(lab).map((lab) => {
         return Object.assign(lab, {
             memory: room.memory.labs[lab.id],
         });
     });
 }
 exports.getLabs = getLabs;
+function getTerminals() {
+    return _(Object.values(Game.rooms))
+        .map((r) => r.terminal)
+        .compact()
+        .run();
+}
+exports.getTerminals = getTerminals;
 let indent = -1;
 function logUsage(title, func, threthold = 0) {
     if (indent > 10) {
@@ -149,3 +158,33 @@ function getSecondsPerticks() {
         : 0;
 }
 exports.getSecondsPerticks = getSecondsPerticks;
+function getDecayAmount(s) {
+    switch (s.structureType) {
+        case STRUCTURE_RAMPART:
+            return RAMPART_DECAY_AMOUNT;
+        case STRUCTURE_CONTAINER:
+            return CONTAINER_DECAY;
+        case STRUCTURE_ROAD:
+            switch (s.room.getTerrain().get(s.pos.x, s.pos.y)) {
+                case TERRAIN_MASK_SWAMP:
+                    return constants_1.ROAD_DECAY_AMOUNT_SWAMP;
+                case TERRAIN_MASK_WALL:
+                    return constants_1.ROAD_DECAY_AMOUNT_WALL;
+                default:
+                    return ROAD_DECAY_AMOUNT;
+            }
+        default:
+            return 0;
+    }
+}
+exports.getDecayAmount = getDecayAmount;
+function getOrderRemainingTotal(terminal, resourceType) {
+    return _(Object.values(Game.market.orders))
+        .filter((o) => o.type === ORDER_SELL && o.resourceType === resourceType && o.roomName === terminal.room.name)
+        .sum((o) => o.remainingAmount);
+}
+exports.getOrderRemainingTotal = getOrderRemainingTotal;
+function getAvailableAmount(terminal, resourceType) {
+    return terminal.store[resourceType] - getOrderRemainingTotal(terminal, resourceType);
+}
+exports.getAvailableAmount = getAvailableAmount;

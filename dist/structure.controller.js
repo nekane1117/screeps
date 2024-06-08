@@ -39,9 +39,12 @@ function isC(s) {
     return s.structureType === STRUCTURE_CONTROLLER;
 }
 function getUpgraderBody(c) {
+    const b = [WORK, WORK, WORK, MOVE];
     let total = 0;
-    return [MOVE, CARRY]
-        .concat(..._.range(50).map(() => WORK))
+    return [WORK, MOVE, CARRY, WORK]
+        .concat(..._.range(50).map((i) => {
+        return b[i % b.length];
+    }))
         .map((parts) => {
         total += BODYPART_COST[parts];
         return {

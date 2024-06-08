@@ -4,8 +4,6 @@ import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll } from "./uti
 const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
     customMove(creep, target, {
-      plainCost: 1,
-      swampCost: 1,
       ...opt,
     });
 
@@ -49,7 +47,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       break;
     case ERR_NOT_IN_RANGE:
       if (creep.memory.mode === "💪") {
-        moveMeTo(controller);
+        moveMeTo(controller, { range: 3 });
       }
       break;
     // 有りえない系
@@ -78,6 +76,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   ) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
+      if (creep.memory.mode === "🛒") {
+        const moved = moveMeTo(store);
+        if (moved !== OK) {
+          console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`);
+          creep.say(RETURN_CODE_DECODER[moved.toString()]);
+        }
+      }
       creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);
       switch (creep.memory.collected) {
         case ERR_INVALID_TARGET: // 対象が変
@@ -89,13 +94,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           changeMode(creep, "💪");
           break;
         case ERR_NOT_IN_RANGE:
-          if (creep.memory.mode === "🛒") {
-            const moved = moveMeTo(store);
-            if (moved !== OK) {
-              console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`);
-              creep.say(RETURN_CODE_DECODER[moved.toString()]);
-            }
-          }
           break;
         // 有りえない系
         case ERR_NOT_OWNER:

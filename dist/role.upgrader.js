@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const behavior = (creep) => {
     var _a, _b, _c, _d, _e;
-    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({ plainCost: 1, swampCost: 1 }, opt));
+    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({}, opt));
     if (!isUpgrader(creep)) {
         return console.log(`${creep.name} is not Upgrader`);
     }
@@ -36,7 +36,7 @@ const behavior = (creep) => {
             break;
         case ERR_NOT_IN_RANGE:
             if (creep.memory.mode === "💪") {
-                moveMeTo(controller);
+                moveMeTo(controller, { range: 3 });
             }
             break;
         case ERR_NOT_OWNER:
@@ -58,6 +58,13 @@ const behavior = (creep) => {
         })) === null || _c === void 0 ? void 0 : _c.id)) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
+            if (creep.memory.mode === "🛒") {
+                const moved = moveMeTo(store);
+                if (moved !== OK) {
+                    console.log(`${creep.name} ${util_creep_1.RETURN_CODE_DECODER[moved.toString()]}`);
+                    creep.say(util_creep_1.RETURN_CODE_DECODER[moved.toString()]);
+                }
+            }
             creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);
             switch (creep.memory.collected) {
                 case ERR_INVALID_TARGET:
@@ -67,13 +74,6 @@ const behavior = (creep) => {
                     changeMode(creep, "💪");
                     break;
                 case ERR_NOT_IN_RANGE:
-                    if (creep.memory.mode === "🛒") {
-                        const moved = moveMeTo(store);
-                        if (moved !== OK) {
-                            console.log(`${creep.name} ${util_creep_1.RETURN_CODE_DECODER[moved.toString()]}`);
-                            creep.say(util_creep_1.RETURN_CODE_DECODER[moved.toString()]);
-                        }
-                    }
                     break;
                 case ERR_NOT_OWNER:
                 case ERR_INVALID_ARGS:

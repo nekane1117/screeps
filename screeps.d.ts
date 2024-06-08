@@ -149,6 +149,7 @@ declare interface RoomMemory {
     [r in ROLES]: number;
   };
   roadMap: number[];
+  dismantle?: Id<Structure>[];
 }
 
 declare type CreepsCache = Partial<{
