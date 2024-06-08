@@ -32,6 +32,7 @@ function roomBehavior(room) {
             upgrader: 100,
         };
     }
+    const { builder = [], carrier: carriers = [], harvester = [], remoteHarvester = [], reserver = [] } = (0, util_creep_1.getCreepsInRoom)(room);
     room.memory.roadMap = room.memory.roadMap || _.range(2500).map(() => Game.time);
     const sources = room.find(FIND_SOURCES);
     sources.forEach((source) => (0, room_source_1.behavior)(source));
@@ -44,12 +45,6 @@ function roomBehavior(room) {
         creteStructures(room);
     }
     (0, structure_links_1.default)((0, utils_1.findMyStructures)(room).link);
-    const { builder = [], carrier: carriers = [], harvester = [], remoteHarvester = [], reserver = [], } = Object.values(Game.creeps)
-        .filter((c) => c.memory.baseRoom === room.name)
-        .reduce((creeps, c) => {
-        creeps[c.memory.role] = ((creeps === null || creeps === void 0 ? void 0 : creeps[c.memory.role]) || []).concat(c);
-        return creeps;
-    }, {});
     const carrierBodies = (0, util_creep_1.getCarrierBody)(room, "carrier");
     if (harvester.length === 0) {
         return ERR_NOT_FOUND;
