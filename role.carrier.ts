@@ -7,7 +7,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
     // carrierが通る場所で道が無いときは敷く
-    if (getSitesInRoom(room).length === 0 && creep.pos.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType === STRUCTURE_ROAD).length === 0) {
+    if (
+      getSitesInRoom(room).filter((s) => s.structureType === STRUCTURE_ROAD).length === 0 &&
+      creep.pos.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType === STRUCTURE_ROAD).length === 0
+    ) {
       creep.pos.createConstructionSite(STRUCTURE_ROAD);
     }
 

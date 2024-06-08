@@ -249,18 +249,11 @@ function boost(creep) {
 }
 function findBuildTarget(creep) {
     var _a;
-    return (_a = (() => {
-        const sites = (0, utils_1.getSitesInRoom)(Game.rooms[creep.memory.baseRoom]);
-        if (sites.length === 0) {
-            return undefined;
-        }
-        const minRemaning = _(sites)
-            .map((s) => s.progressTotal - s.progress)
-            .min();
-        return creep.pos.findClosestByRange(_(sites)
-            .filter((s) => minRemaning === s.progressTotal - s.progress)
-            .run());
-    })()) === null || _a === void 0 ? void 0 : _a.id;
+    return (_a = _((0, utils_1.getSitesInRoom)(Game.rooms[creep.memory.baseRoom]))
+        .sortBy((s) => {
+        return (s.progressTotal - s.progress) * (s.pos.getRangeTo(creep) + 1);
+    })
+        .first()) === null || _a === void 0 ? void 0 : _a.id;
 }
 function findRepairTarget(creep) {
     var _a;

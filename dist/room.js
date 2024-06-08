@@ -117,7 +117,7 @@ function roomBehavior(room) {
         if (room.energyAvailable < room.energyCapacityAvailable) {
             return;
         }
-        if (!reserver.find((c) => c.memory.targetRoomName === targetRoomName)) {
+        if (!reserver.find((c) => { var _a; return ((_a = c === null || c === void 0 ? void 0 : c.memory) === null || _a === void 0 ? void 0 : _a.targetRoomName) === targetRoomName; })) {
             const spawn = (_a = (0, utils_2.getSpawnsInRoom)(room)) === null || _a === void 0 ? void 0 : _a.find((s) => !s.spawning);
             if (spawn) {
                 const spawned = spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("reserver", room.energyAvailable).bodies, `V_${room.name}_${targetRoomName}`, {

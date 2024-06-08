@@ -142,7 +142,7 @@ export function roomBehavior(room: Room) {
       return;
     }
     // reserverがいないときは作る
-    if (!(reserver as Reserver[]).find((c) => c.memory.targetRoomName === targetRoomName)) {
+    if (!(reserver as Reserver[]).find((c) => c?.memory?.targetRoomName === targetRoomName)) {
       const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
       if (spawn) {
         const spawned = spawn.spawnCreep(filterBodiesByCost("reserver", room.energyAvailable).bodies, `V_${room.name}_${targetRoomName}`, {

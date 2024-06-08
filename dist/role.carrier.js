@@ -6,7 +6,8 @@ const behavior = (creep) => {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
     const { room } = creep;
     const moveMeTo = (target, opt) => {
-        if ((0, utils_1.getSitesInRoom)(room).length === 0 && creep.pos.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType === STRUCTURE_ROAD).length === 0) {
+        if ((0, utils_1.getSitesInRoom)(room).filter((s) => s.structureType === STRUCTURE_ROAD).length === 0 &&
+            creep.pos.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType === STRUCTURE_ROAD).length === 0) {
             creep.pos.createConstructionSite(STRUCTURE_ROAD);
         }
         (0, util_creep_1.customMove)(creep, target, Object.assign({ plainCost: 2, swampCost: 2, ignoreCreeps: true }, opt));

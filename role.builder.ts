@@ -331,23 +331,12 @@ function boost(creep: Builder) {
 }
 
 function findBuildTarget(creep: Builder) {
-  return (() => {
-    // 自室のサイト
-    const sites = getSitesInRoom(Game.rooms[creep.memory.baseRoom]);
-    if (sites.length === 0) {
-      return undefined;
-    }
-
-    // 残作業が一番少ない一番近いやつ
-    const minRemaning = _(sites)
-      .map((s) => s.progressTotal - s.progress)
-      .min();
-    return creep.pos.findClosestByRange(
-      _(sites)
-        .filter((s) => minRemaning === s.progressTotal - s.progress)
-        .run(),
-    );
-  })()?.id;
+  return _(getSitesInRoom(Game.rooms[creep.memory.baseRoom]))
+    .sortBy((s) => {
+      // 残作業量に(距離+1)をかけたやつを優先
+      return (s.progressTotal - s.progress) * (s.pos.getRangeTo(creep) + 1);
+    })
+    .first()?.id;
 }
 
 function findRepairTarget(creep: Builder) {
