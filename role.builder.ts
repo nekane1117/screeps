@@ -172,10 +172,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
               case ERR_NOT_IN_RANGE:
                 return moveMeTo(target);
               case OK:
-                creep.move(creep.pos.getDirectionTo(target));
                 // 成功したら同じ種類で近くの一番壊れてるやつにリタゲする
                 creep.memory.repairId = _(
-                  creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.structureType === target.structureType && s.hits < s.hitsMax }),
+                  creep.pos.findInRange(FIND_STRUCTURES, 4, { filter: (s) => s.structureType === target.structureType && s.hits < s.hitsMax }),
                 ).min((s) => s.hits)?.id;
                 return;
               default:
@@ -206,22 +205,20 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // withdraw
     if (
       creep.memory.storeId ||
-      (creep.memory.storeId = creep.pos.findClosestByPath(
-        [...creep.room.find(FIND_TOMBSTONES), ...creep.room.find(FIND_RUINS), ...findMyStructures(creep.room).all],
-        {
-          filter: (s) => {
-            if ("destroyTime" in s || "deathTime" in s) {
-              return s.store.energy > 0;
-            }
-            // いっぱいあるやつからだけ出す
-            return (
-              "store" in s &&
-              s.store.energy >= creep.store.getCapacity(RESOURCE_ENERGY) &&
-              !([STRUCTURE_TOWER, STRUCTURE_LINK, STRUCTURE_TERMINAL, STRUCTURE_EXTENSION, STRUCTURE_SPAWN] as StructureConstant[]).includes(s.structureType)
-            );
-          },
+      (creep.memory.storeId = creep.pos.findClosestByPath([...creep.room.find(FIND_TOMBSTONES), ...creep.room.find(FIND_RUINS)], {
+        filter: (s) => s.store.energy > 0,
+      })?.id) ||
+      (creep.memory.storeId = creep.room.storage?.id) ||
+      (creep.memory.storeId = creep.pos.findClosestByPath([...findMyStructures(creep.room).all], {
+        filter: (s) => {
+          // いっぱいあるやつからだけ出す
+          return (
+            "store" in s &&
+            s.store.energy >= creep.store.getCapacity(RESOURCE_ENERGY) &&
+            !([STRUCTURE_TOWER, STRUCTURE_LINK, STRUCTURE_TERMINAL, STRUCTURE_EXTENSION, STRUCTURE_SPAWN] as StructureConstant[]).includes(s.structureType)
+          );
         },
-      )?.id)
+      })?.id)
     ) {
       const store = Game.getObjectById(creep.memory.storeId);
       if (store && "store" in store) {

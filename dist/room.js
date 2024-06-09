@@ -233,18 +233,20 @@ function updateRoadMap(room) {
         const value = Math.min(10, Math.max(-10, usage - 10 / 2000));
         const x = i % 50;
         const y = Math.floor(i / 50);
-        if (room.name === "sim" || Game.cpu.bucket > 100) {
-            if (value > 0) {
-                room.visual.text(_.ceil(value, 0).toString(), x, y, {
-                    opacity: 0.55,
-                });
-            }
+        if (value > 0) {
+            room.visual.text(_.ceil(value, 0).toString(), x, y, {
+                opacity: 0.55,
+                font: 0.25,
+            });
         }
         const pos = room.getPositionAt(x, y);
         if (pos && Game.time % 600 === 0) {
-            const road = pos === null || pos === void 0 ? void 0 : pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD);
+            const road = _([pos === null || pos === void 0 ? void 0 : pos.lookFor(LOOK_STRUCTURES), pos === null || pos === void 0 ? void 0 : pos.lookFor(LOOK_CONSTRUCTION_SITES)])
+                .flatten()
+                .compact()
+                .find((s) => s.structureType === STRUCTURE_ROAD);
             if (road && value < 0) {
-                road.destroy();
+                "remove" in road ? road.remove() : road.destroy();
             }
             else if (!road && Math.ceil(value) >= 10) {
                 pos.createConstructionSite(STRUCTURE_ROAD);

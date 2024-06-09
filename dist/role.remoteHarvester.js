@@ -131,12 +131,14 @@ function harvest(creep) {
                         filter: (c) => {
                             return c.memory.role === "remoteHarvester" && (c.pos.x < creep.pos.x || c.pos.y < creep.pos.y);
                         },
-                    })).tap((neighbors) => {
+                    }))
+                        .tap((neighbors) => {
                         const c = _(neighbors).first();
                         if (c) {
                             creep.transfer(c, RESOURCE_ENERGY);
                         }
-                    });
+                    })
+                        .run();
                     return OK;
                 case ERR_NOT_IN_RANGE:
                     if (memory.mode === "🌾") {

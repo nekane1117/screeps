@@ -162,12 +162,14 @@ function harvest(creep: RemoteHarvester) {
                 return c.memory.role === "remoteHarvester" && (c.pos.x < creep.pos.x || c.pos.y < creep.pos.y);
               },
             }),
-          ).tap((neighbors) => {
-            const c = _(neighbors).first();
-            if (c) {
-              creep.transfer(c, RESOURCE_ENERGY);
-            }
-          });
+          )
+            .tap((neighbors) => {
+              const c = _(neighbors).first();
+              if (c) {
+                creep.transfer(c, RESOURCE_ENERGY);
+              }
+            })
+            .run();
 
           return OK;
         // 範囲内に無いときは収穫モードの時だけ近寄る

@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
-    var _a, _b;
+    var _a, _b, _c, _d;
     if (!isBuilder(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
@@ -125,8 +125,7 @@ const behavior = (creep) => {
                         case ERR_NOT_IN_RANGE:
                             return moveMeTo(target);
                         case OK:
-                            creep.move(creep.pos.getDirectionTo(target));
-                            creep.memory.repairId = (_a = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => s.structureType === target.structureType && s.hits < s.hitsMax })).min((s) => s.hits)) === null || _a === void 0 ? void 0 : _a.id;
+                            creep.memory.repairId = (_a = _(creep.pos.findInRange(FIND_STRUCTURES, 4, { filter: (s) => s.structureType === target.structureType && s.hits < s.hitsMax })).min((s) => s.hits)) === null || _a === void 0 ? void 0 : _a.id;
                             return;
                         default:
                             return;
@@ -150,16 +149,17 @@ const behavior = (creep) => {
             }
         })();
         if (creep.memory.storeId ||
-            (creep.memory.storeId = (_b = creep.pos.findClosestByPath([...creep.room.find(FIND_TOMBSTONES), ...creep.room.find(FIND_RUINS), ...(0, utils_1.findMyStructures)(creep.room).all], {
+            (creep.memory.storeId = (_b = creep.pos.findClosestByPath([...creep.room.find(FIND_TOMBSTONES), ...creep.room.find(FIND_RUINS)], {
+                filter: (s) => s.store.energy > 0,
+            })) === null || _b === void 0 ? void 0 : _b.id) ||
+            (creep.memory.storeId = (_c = creep.room.storage) === null || _c === void 0 ? void 0 : _c.id) ||
+            (creep.memory.storeId = (_d = creep.pos.findClosestByPath([...(0, utils_1.findMyStructures)(creep.room).all], {
                 filter: (s) => {
-                    if ("destroyTime" in s || "deathTime" in s) {
-                        return s.store.energy > 0;
-                    }
                     return ("store" in s &&
                         s.store.energy >= creep.store.getCapacity(RESOURCE_ENERGY) &&
                         ![STRUCTURE_TOWER, STRUCTURE_LINK, STRUCTURE_TERMINAL, STRUCTURE_EXTENSION, STRUCTURE_SPAWN].includes(s.structureType));
                 },
-            })) === null || _b === void 0 ? void 0 : _b.id)) {
+            })) === null || _d === void 0 ? void 0 : _d.id)) {
             const store = Game.getObjectById(creep.memory.storeId);
             if (store && "store" in store) {
                 creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY);
