@@ -13,7 +13,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       color: toColor(creep),
     });
     return customMove(creep, target, {
-      ignoreCreeps: !creep.pos.inRangeTo(target, 6),
       ...opt,
     });
   };

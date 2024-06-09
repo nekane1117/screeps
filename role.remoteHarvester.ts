@@ -196,7 +196,6 @@ function harvest(creep: RemoteHarvester) {
               }
             }
             return customMove(creep, source, {
-              ignoreCreeps: !creep.pos.inRangeTo(source, 2),
               // 所有者が居ない部屋では壁とかも無視して突っ切る
               ignoreDestructibleStructures: !creep.room.controller?.owner?.username,
             });
@@ -247,7 +246,6 @@ function build(creep: RemoteHarvester) {
   // 上に乗るまで移動する
   if (memory.mode === "👷" && creep.pos.getRangeTo(site) > 0) {
     customMove(creep, site, {
-      ignoreCreeps: !creep.pos.inRangeTo(site, 6),
       // 所有者が居ない部屋では壁とかも無視して突っ切る
       ignoreDestructibleStructures: !creep.room.controller?.owner?.username,
     });
@@ -364,7 +362,6 @@ function transfer(creep: RemoteHarvester) {
         return customMove(creep, store, {
           plainCost: 2,
           swampCost: 2,
-          ignoreCreeps: !creep.pos.inRangeTo(store, 2),
         });
       } else {
         return creep.memory.worked;

@@ -158,7 +158,6 @@ function harvest(creep) {
                             }
                         }
                         return (0, util_creep_1.customMove)(creep, source, {
-                            ignoreCreeps: !creep.pos.inRangeTo(source, 2),
                             ignoreDestructibleStructures: !((_d = (_c = creep.room.controller) === null || _c === void 0 ? void 0 : _c.owner) === null || _d === void 0 ? void 0 : _d.username),
                         });
                     }
@@ -199,7 +198,6 @@ function build(creep) {
     }
     if (memory.mode === "👷" && creep.pos.getRangeTo(site) > 0) {
         (0, util_creep_1.customMove)(creep, site, {
-            ignoreCreeps: !creep.pos.inRangeTo(site, 6),
             ignoreDestructibleStructures: !((_c = (_b = creep.room.controller) === null || _b === void 0 ? void 0 : _b.owner) === null || _c === void 0 ? void 0 : _c.username),
         });
     }
@@ -281,7 +279,6 @@ function transfer(creep) {
                 return (0, util_creep_1.customMove)(creep, store, {
                     plainCost: 2,
                     swampCost: 2,
-                    ignoreCreeps: !creep.pos.inRangeTo(store, 2),
                 });
             }
             else {

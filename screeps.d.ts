@@ -9,7 +9,6 @@ declare type ROLES =
   | "harvester"
   | "carrier"
   | "builder"
-  | "repairer"
   | "upgrader"
   | "claimer"
   | "mineralHarvester"
@@ -44,7 +43,6 @@ declare type Creeps =
   | Upgrader
   | Builder
   | Carrier
-  | Repairer
   | Claimer
   | MineralHarvester
   | MineralCarrier
@@ -146,7 +144,6 @@ declare type CreepsCache = Partial<{
   harvester: Harvester[];
   carrier: Carrier[];
   builder: Builder[];
-  repairer: Repairer[];
   upgrader: Upgrader[];
   claimer: Claimer[];
   mineralHarvester: MineralHarvester[];
@@ -233,17 +230,6 @@ declare interface MineralCarrierMemory extends CreepMemory {
   storeId?: Id<Parameters<Creeps["withdraw"]>[0] | Creep>;
   /** 配送先 */
   transferId?: Id<StructureContainer | StructureLab | StructureTerminal>;
-}
-
-declare interface Repairer extends Creep {
-  memory: RepairerMemory;
-}
-declare interface RepairerMemory extends CreepMemory {
-  role: "repairer";
-  mode: "🔧" | "🛒";
-  targetId?: Id<Structure>;
-  storeId?: StoreTarget["id"] | null;
-  towerId?: Id<StructureTower> | null;
 }
 
 declare interface Claimer extends Creep {

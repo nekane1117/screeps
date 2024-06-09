@@ -23,7 +23,6 @@ export function roomBehavior(room: Room) {
       mineralCarrier: 100,
       mineralHarvester: 100,
       remoteHarvester: 100,
-      repairer: 100,
       reserver: 100,
       upgrader: 100,
     };

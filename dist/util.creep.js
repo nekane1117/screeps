@@ -66,12 +66,6 @@ exports.IDEAL_BODY = Object.freeze({
         return bodies[i % bodies.length];
     }))
         .slice(0, 50),
-    repairer: [WORK, MOVE]
-        .concat(..._.range(25).map((i) => {
-        const bodies = [CARRY, MOVE];
-        return bodies[i % bodies.length];
-    }))
-        .slice(0, 50),
     claimer: [CLAIM, MOVE],
     reserver: _.range(50).map((i) => {
         const bodies = (() => {
@@ -170,7 +164,7 @@ const customMove = (creep, target, opt) => {
     if (creep.fatigue) {
         return OK;
     }
-    creep.memory.moved = creep.moveTo(target, Object.assign(Object.assign({ plainCost: 2, serializeMemory: false }, opt), { visualizePathStyle: Object.assign({ opacity: 0.55, stroke: toColor(creep) }, opt === null || opt === void 0 ? void 0 : opt.visualizePathStyle) }));
+    creep.memory.moved = creep.moveTo(target, Object.assign(Object.assign({ plainCost: 2, serializeMemory: false, ignoreCreeps: !creep.pos.inRangeTo(target, DEFAULT_CREEP_RANGE[creep.memory.role] + 2) }, opt), { visualizePathStyle: Object.assign({ opacity: 0.55, stroke: toColor(creep) }, opt === null || opt === void 0 ? void 0 : opt.visualizePathStyle) }));
     if (creep.memory.moved === OK && Game.time % 3) {
         const { dy, dx } = ((_b = (_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b[0]) || {};
         const isInRange = (n) => {
@@ -301,3 +295,16 @@ function getCarrierBody(room, role) {
         .map((p) => p.parts);
 }
 exports.getCarrierBody = getCarrierBody;
+const DEFAULT_CREEP_RANGE = {
+    builder: 3,
+    carrier: 1,
+    claimer: 1,
+    defender: 3,
+    harvester: 1,
+    labManager: 1,
+    mineralCarrier: 1,
+    mineralHarvester: 1,
+    remoteHarvester: 1,
+    reserver: 1,
+    upgrader: 1,
+};

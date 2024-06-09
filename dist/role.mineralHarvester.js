@@ -50,7 +50,6 @@ const behavior = (creep) => {
         const spawn = (0, util_creep_1.getMainSpawn)(creep.room);
         if (spawn) {
             const pos = _(mineral.pos.findPathTo(spawn, {
-                ignoreCreeps: true,
                 swampCost: 2,
                 plainCost: 2,
             })).run()[1];

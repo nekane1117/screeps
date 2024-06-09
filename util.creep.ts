@@ -72,14 +72,6 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       }),
     )
     .slice(0, 50),
-  repairer: ([WORK, MOVE] as BodyPartConstant[])
-    .concat(
-      ..._.range(25).map((i) => {
-        const bodies = [CARRY, MOVE];
-        return bodies[i % bodies.length];
-      }),
-    )
-    .slice(0, 50),
   claimer: [CLAIM, MOVE],
   reserver: _.range(50).map((i) => {
     const bodies = (() => {
@@ -200,6 +192,7 @@ export const customMove: CustomMove = (creep, target, opt) => {
   creep.memory.moved = creep.moveTo(target, {
     plainCost: 2,
     serializeMemory: false,
+    ignoreCreeps: !creep.pos.inRangeTo(target, DEFAULT_CREEP_RANGE[creep.memory.role] + 2),
     ...opt,
     visualizePathStyle: {
       opacity: 0.55,
@@ -363,3 +356,18 @@ export function getCarrierBody(room: Room, role: ROLES): BodyPartConstant[] {
     .filter((p) => p.costTotal <= room.energyAvailable)
     .map((p) => p.parts);
 }
+
+/** 各ロールごとの基本の射程距離 */
+const DEFAULT_CREEP_RANGE: Record<ROLES, number> = {
+  builder: 3,
+  carrier: 1,
+  claimer: 1,
+  defender: 3,
+  harvester: 1,
+  labManager: 1,
+  mineralCarrier: 1,
+  mineralHarvester: 1,
+  remoteHarvester: 1,
+  reserver: 1,
+  upgrader: 1,
+};

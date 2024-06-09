@@ -13,7 +13,7 @@ const behavior = (creep) => {
         (_a = Game.rooms[pos.roomName]) === null || _a === void 0 ? void 0 : _a.visual.text("x", pos, {
             color: (0, util_creep_1.toColor)(creep),
         });
-        return (0, util_creep_1.customMove)(creep, target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, 6) }, opt));
+        return (0, util_creep_1.customMove)(creep, target, Object.assign({}, opt));
     };
     const checkMode = () => {
         const newMode = ((c) => {
