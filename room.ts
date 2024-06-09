@@ -1,10 +1,8 @@
 import labManager from "./room.labManager";
 import { behavior } from "./room.source";
 import linkBehavior from "./structure.links";
-import { filterBodiesByCost, getCarrierBody, getCreepsInRoom, getMainSpawn } from "./util.creep";
-import { findMyStructures, getSitesInRoom } from "./utils";
-import { RETURN_CODE_DECODER } from "./util.creep";
-import { getSpawnsInRoom } from "./utils";
+import { RETURN_CODE_DECODER, filterBodiesByCost, getCarrierBody, getCreepsInRoom, getMainSpawn } from "./util.creep";
+import { findMyStructures, getSitesInRoom, getSpawnsInRoom } from "./utils";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
@@ -33,8 +31,9 @@ export function roomBehavior(room: Room) {
 
   const { builder = [], carrier: carriers = [], harvester = [], remoteHarvester = [], reserver = [] } = getCreepsInRoom(room);
 
-  // ロードマップを初期化する
-  room.memory.roadMap = room.memory.roadMap || _.range(2500).map(() => Game.time);
+  // ロードマップを更新する
+  updateRoadMap(room);
+
   const sources = room.find(FIND_SOURCES);
   sources.forEach((source) => behavior(source));
 
@@ -85,9 +84,9 @@ export function roomBehavior(room: Room) {
     }
   }
   if (
-    room.find(FIND_HOSTILE_CREEPS).length > 0 &&
     room.energyAvailable >= room.energyCapacityAvailable * 0.9 &&
-    (getCreepsInRoom(room).defender?.length || 0) === 0
+    (getCreepsInRoom(room).defender?.length || 0) === 0 &&
+    room.find(FIND_HOSTILE_CREEPS).length > 0
   ) {
     const spawn = _(getSpawnsInRoom(room))
       .filter((s) => !s.spawning)
@@ -284,3 +283,33 @@ const fourNeighbors = [
 ];
 
 const staticStructures = [STRUCTURE_STORAGE, STRUCTURE_LINK, STRUCTURE_TERMINAL];
+
+function updateRoadMap(room: Room) {
+  room.memory.roadMap = (room.memory.roadMap || _.range(2500).map(() => 0)).map((usage, i) => {
+    const value = Math.min(10, Math.max(-10, usage - 10 / 2000));
+    const x = i % 50;
+    const y = Math.floor(i / 50);
+    if (room.name === "sim" || Game.cpu.bucket > 100) {
+      if (value > 0) {
+        room.visual.text(_.ceil(value, 0).toString(), x, y, {
+          opacity: 0.55,
+        });
+      }
+    }
+
+    const pos = room.getPositionAt(x, y);
+    // 適当な間隔を開ける
+    if (pos && Game.time % 600 === 0) {
+      const road = pos?.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD);
+      if (road && value < 0) {
+        // 道が使われてないとき
+        road.destroy();
+      } else if (!road && Math.ceil(value) >= 10) {
+        // 通るのに道がない時
+        pos.createConstructionSite(STRUCTURE_ROAD);
+      }
+    }
+
+    return value;
+  });
+}

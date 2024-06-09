@@ -194,6 +194,7 @@ function harvest(creep: RemoteHarvester) {
               }
             }
             return customMove(creep, source, {
+              ignoreCreeps: !creep.pos.inRangeTo(source, 2),
               // 所有者が居ない部屋では壁とかも無視して突っ切る
               ignoreDestructibleStructures: !creep.room.controller?.owner?.username,
             });
@@ -244,6 +245,7 @@ function build(creep: RemoteHarvester) {
   // 上に乗るまで移動する
   if (memory.mode === "👷" && creep.pos.getRangeTo(site) > 0) {
     customMove(creep, site, {
+      ignoreCreeps: !creep.pos.inRangeTo(site, 6),
       // 所有者が居ない部屋では壁とかも無視して突っ切る
       ignoreDestructibleStructures: !creep.room.controller?.owner?.username,
     });
@@ -321,22 +323,29 @@ function transfer(creep: RemoteHarvester) {
     const filtedContainers = container.filter((s) => s.pos.findInRange(FIND_MINERALS, 3).length === 0);
     if (!memory.storeId) {
       // イイ感じの倉庫を取得する
-      creep.memory.storeId = logUsage(
-        "search remote container",
-        () =>
-          _([...filtedContainers, ...spawn, ...extension, ...storage, ...link, ...terminal])
-            .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
-            .map((s) => {
-              return {
-                structure: s,
-                path: PathFinder.search(creep.pos, s.pos, {
-                  plainCost: 2,
-                  swampCost: 2,
-                }),
-              };
-            })
-            .min((s) => s.path.cost)?.structure?.id,
-      );
+      creep.memory.storeId = logUsage("search remote container", () => {
+        const targets = [...filtedContainers, ...spawn, ...extension, ...storage, ...link, ...terminal].filter(
+          (s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
+        );
+
+        const result = PathFinder.search(
+          creep.pos,
+          targets.map((p) => p.pos),
+          {
+            plainCost: 2,
+            swampCost: 2,
+          },
+        );
+        // 失敗時は失敗を返す
+        if (result.incomplete) {
+          return undefined;
+        }
+
+        const goal = _(result.path).last();
+        return targets.find((t) => {
+          return t.pos.x === goal.x && t.pos.y === goal.y && t.pos.roomName === goal.roomName;
+        });
+      })?.id;
       // それでもないときは無いはずだけど終わる
     }
 

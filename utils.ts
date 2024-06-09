@@ -167,14 +167,6 @@ export function readonly<T>(a: T) {
   return a as Readonly<T>;
 }
 
-export function getSecondsPerticks() {
-  const head = _(Memory.realTImes).first();
-  const last = _(Memory.realTImes).last();
-  return head && last
-    ? _.round(((_.isNumber(last) ? last : last.unixTime) - (_.isNumber(head) ? head : head.unixTime)) / Memory.realTImes.length / 1000, 2)
-    : 0;
-}
-
 export function getDecayAmount(s: Structure) {
   switch (s.structureType) {
     case STRUCTURE_RAMPART:

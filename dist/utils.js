@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAvailableAmount = exports.getOrderRemainingTotal = exports.getDecayAmount = exports.getSecondsPerticks = exports.readonly = exports.calcMaxTransferAmount = exports.isHighway = exports.logUsage = exports.getTerminals = exports.getLabs = exports.isCompound = exports.getSpawnsWithDistance = exports.getSpawnsOrderdByRange = exports.getSitesInRoom = exports.getSpawnsInRoom = exports.findMyStructures = exports.getCapacityRate = void 0;
+exports.getAvailableAmount = exports.getOrderRemainingTotal = exports.getDecayAmount = exports.readonly = exports.calcMaxTransferAmount = exports.isHighway = exports.logUsage = exports.getTerminals = exports.getLabs = exports.isCompound = exports.getSpawnsWithDistance = exports.getSpawnsOrderdByRange = exports.getSitesInRoom = exports.getSpawnsInRoom = exports.findMyStructures = exports.getCapacityRate = void 0;
 const constants_1 = require("./constants");
 function getCapacityRate(s, type = RESOURCE_ENERGY) {
     if ("store" in s) {
@@ -150,14 +150,6 @@ function readonly(a) {
     return a;
 }
 exports.readonly = readonly;
-function getSecondsPerticks() {
-    const head = _(Memory.realTImes).first();
-    const last = _(Memory.realTImes).last();
-    return head && last
-        ? _.round(((_.isNumber(last) ? last : last.unixTime) - (_.isNumber(head) ? head : head.unixTime)) / Memory.realTImes.length / 1000, 2)
-        : 0;
-}
-exports.getSecondsPerticks = getSecondsPerticks;
 function getDecayAmount(s) {
     switch (s.structureType) {
         case STRUCTURE_RAMPART:

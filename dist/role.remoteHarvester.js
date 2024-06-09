@@ -156,6 +156,7 @@ function harvest(creep) {
                             }
                         }
                         return (0, util_creep_1.customMove)(creep, source, {
+                            ignoreCreeps: !creep.pos.inRangeTo(source, 2),
                             ignoreDestructibleStructures: !((_d = (_c = creep.room.controller) === null || _c === void 0 ? void 0 : _c.owner) === null || _d === void 0 ? void 0 : _d.username),
                         });
                     }
@@ -196,6 +197,7 @@ function build(creep) {
     }
     if (memory.mode === "👷" && creep.pos.getRangeTo(site) > 0) {
         (0, util_creep_1.customMove)(creep, site, {
+            ignoreCreeps: !creep.pos.inRangeTo(site, 6),
             ignoreDestructibleStructures: !((_c = (_b = creep.room.controller) === null || _b === void 0 ? void 0 : _b.owner) === null || _c === void 0 ? void 0 : _c.username),
         });
     }
@@ -242,7 +244,7 @@ function moveRoom(creep, fromRoom, toRoom) {
     return moved;
 }
 function transfer(creep) {
-    var _a;
+    var _a, _b;
     const memory = (0, utils_1.readonly)(creep.memory);
     const baseRoom = Game.rooms[memory.baseRoom];
     if (baseRoom) {
@@ -252,21 +254,20 @@ function transfer(creep) {
         const { container, spawn, extension, storage, link, terminal } = (0, utils_1.findMyStructures)(baseRoom);
         const filtedContainers = container.filter((s) => s.pos.findInRange(FIND_MINERALS, 3).length === 0);
         if (!memory.storeId) {
-            creep.memory.storeId = (0, utils_1.logUsage)("search remote container", () => {
-                var _a, _b;
-                return (_b = (_a = _([...filtedContainers, ...spawn, ...extension, ...storage, ...link, ...terminal])
-                    .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
-                    .map((s) => {
-                    return {
-                        structure: s,
-                        path: PathFinder.search(creep.pos, s.pos, {
-                            plainCost: 2,
-                            swampCost: 2,
-                        }),
-                    };
-                })
-                    .min((s) => s.path.cost)) === null || _a === void 0 ? void 0 : _a.structure) === null || _b === void 0 ? void 0 : _b.id;
-            });
+            creep.memory.storeId = (_b = (0, utils_1.logUsage)("search remote container", () => {
+                const targets = [...filtedContainers, ...spawn, ...extension, ...storage, ...link, ...terminal].filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
+                const result = PathFinder.search(creep.pos, targets.map((p) => p.pos), {
+                    plainCost: 2,
+                    swampCost: 2,
+                });
+                if (result.incomplete) {
+                    return undefined;
+                }
+                const goal = _(result.path).last();
+                return targets.find((t) => {
+                    return t.pos.x === goal.x && t.pos.y === goal.y && t.pos.roomName === goal.roomName;
+                });
+            })) === null || _b === void 0 ? void 0 : _b.id;
         }
         const store = memory.storeId && Game.getObjectById(memory.storeId);
         if (!store || store.pos.roomName !== memory.baseRoom) {

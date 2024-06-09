@@ -188,6 +188,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // #endregion
   } else {
     // 収集モードの時
+    if (creep.room.energyAvailable < 300) {
+      return;
+    }
 
     // #region エネルギー回収###########################################################################################
     // 空のやつ初期化

@@ -111,16 +111,6 @@ declare type MyStructureCache = {
   terminal: StructureTerminal[];
   tower: StructureTower[];
 };
-declare interface Memory {
-  realTImes: (
-    | {
-        time: number;
-        unixTime: number;
-      }
-    | number
-  )[];
-}
-
 declare interface RoomMemory {
   creeps?: CreepsCache;
 
@@ -149,7 +139,6 @@ declare interface RoomMemory {
     [r in ROLES]: number;
   };
   roadMap: number[];
-  dismantle?: Id<Structure>[];
 }
 
 declare type CreepsCache = Partial<{

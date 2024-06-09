@@ -11,9 +11,6 @@ const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 module.exports.loop = function () {
     (0, utils_1.logUsage)("all", () => {
-        (0, utils_1.logUsage)("measure tick time", () => {
-            Memory.realTImes = (Memory.realTImes || []).concat(new Date().valueOf()).slice(-100);
-        });
         if (Game.cpu.bucket === 10000) {
             Game.cpu.generatePixel();
         }
@@ -54,7 +51,7 @@ module.exports.loop = function () {
                         .lookFor(LOOK_STRUCTURES)
                         .filter((s) => [STRUCTURE_CONTAINER, STRUCTURE_ROAD].includes(s.structureType) && s.hits < s.hitsMax)
                         .forEach((s) => c.repair(s));
-                c.room.memory.roadMap && (c.room.memory.roadMap[c.pos.y * 50 + c.pos.x] = Game.time);
+                c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
             });
         });
         Object.keys(Memory.rooms).forEach((name) => {

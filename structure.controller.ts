@@ -1,6 +1,6 @@
 import { StructureBehavior } from "./structures";
 import { getCreepsInRoom } from "./util.creep";
-import { getSecondsPerticks, getSpawnsInRoom } from "./utils";
+import { getSpawnsInRoom } from "./utils";
 
 const behavior: StructureBehavior = (controller: Structure) => {
   if (!isC(controller)) {
@@ -14,7 +14,6 @@ const behavior: StructureBehavior = (controller: Structure) => {
   };
 
   showSummary([
-    `seconds : ${getSecondsPerticks()}s`,
     `energy  : ${controller.room.energyAvailable} / ${controller.room.energyCapacityAvailable}`,
     `bucket  : ${Game.cpu.bucket?.toLocaleString()}`,
     `progress:${(controller.progressTotal - controller.progress).toLocaleString()}`,

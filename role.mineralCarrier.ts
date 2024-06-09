@@ -1,14 +1,10 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, pickUpAll, withdrawBy } from "./util.creep";
-import { findMyStructures, getCapacityRate, getSitesInRoom } from "./utils";
+import { findMyStructures, getCapacityRate } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
-    // carrierが通る場所で道が無いときは敷く
-    if (getSitesInRoom(creep.room).length === 0 && creep.pos.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType === STRUCTURE_ROAD).length === 0) {
-      creep.pos.createConstructionSite(STRUCTURE_ROAD);
-    }
-    customMove(creep, target, {
+    return customMove(creep, target, {
       ...opt,
     });
   };

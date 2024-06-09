@@ -137,6 +137,9 @@ const behavior = (creep) => {
         }
     }
     else {
+        if (creep.room.energyAvailable < 300) {
+            return;
+        }
         creep.memory.storeId = (() => {
             const store = creep.memory.storeId && Game.getObjectById(creep.memory.storeId);
             if (!store || !("store" in store) || store.store.energy === 0) {

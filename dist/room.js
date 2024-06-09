@@ -9,8 +9,6 @@ const room_source_1 = require("./room.source");
 const structure_links_1 = __importDefault(require("./structure.links"));
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
-const util_creep_2 = require("./util.creep");
-const utils_2 = require("./utils");
 function roomBehavior(room) {
     var _a, _b, _c, _d;
     if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) === null || _a === void 0 ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
@@ -33,7 +31,7 @@ function roomBehavior(room) {
         };
     }
     const { builder = [], carrier: carriers = [], harvester = [], remoteHarvester = [], reserver = [] } = (0, util_creep_1.getCreepsInRoom)(room);
-    room.memory.roadMap = room.memory.roadMap || _.range(2500).map(() => Game.time);
+    updateRoadMap(room);
     const sources = room.find(FIND_SOURCES);
     sources.forEach((source) => (0, room_source_1.behavior)(source));
     const { lab, link, } = (0, utils_1.findMyStructures)(room);
@@ -54,7 +52,7 @@ function roomBehavior(room) {
             return carrierBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
         }).length < (link.length >= sources.length + 1 ? 1 : 2)) {
         const name = `C_${room.name}_${Game.time}`;
-        const spawn = _((0, utils_2.getSpawnsInRoom)(room))
+        const spawn = _((0, utils_1.getSpawnsInRoom)(room))
             .filter((s) => !s.spawning)
             .first();
         if (spawn && !spawn.spawning && room.energyAvailable > 200) {
@@ -68,10 +66,10 @@ function roomBehavior(room) {
             return OK;
         }
     }
-    if (room.find(FIND_HOSTILE_CREEPS).length > 0 &&
-        room.energyAvailable >= room.energyCapacityAvailable * 0.9 &&
-        (((_c = (0, util_creep_1.getCreepsInRoom)(room).defender) === null || _c === void 0 ? void 0 : _c.length) || 0) === 0) {
-        const spawn = _((0, utils_2.getSpawnsInRoom)(room))
+    if (room.energyAvailable >= room.energyCapacityAvailable * 0.9 &&
+        (((_c = (0, util_creep_1.getCreepsInRoom)(room).defender) === null || _c === void 0 ? void 0 : _c.length) || 0) === 0 &&
+        room.find(FIND_HOSTILE_CREEPS).length > 0) {
+        const spawn = _((0, utils_1.getSpawnsInRoom)(room))
             .filter((s) => !s.spawning)
             .first();
         if (spawn) {
@@ -94,7 +92,7 @@ function roomBehavior(room) {
             (0, utils_1.getSitesInRoom)(room).length > 0)) {
         const spawn = (() => {
             var _a;
-            const spawns = (0, utils_2.getSpawnsInRoom)(room);
+            const spawns = (0, utils_1.getSpawnsInRoom)(room);
             if (spawns.length > 0) {
                 return spawns.find((s) => !s.spawning && s.room.energyAvailable === s.room.energyCapacityAvailable);
             }
@@ -118,7 +116,7 @@ function roomBehavior(room) {
             return;
         }
         if (!reserver.find((c) => { var _a; return ((_a = c === null || c === void 0 ? void 0 : c.memory) === null || _a === void 0 ? void 0 : _a.targetRoomName) === targetRoomName; })) {
-            const spawn = (_a = (0, utils_2.getSpawnsInRoom)(room)) === null || _a === void 0 ? void 0 : _a.find((s) => !s.spawning);
+            const spawn = (_a = (0, utils_1.getSpawnsInRoom)(room)) === null || _a === void 0 ? void 0 : _a.find((s) => !s.spawning);
             if (spawn) {
                 const spawned = spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("reserver", room.energyAvailable).bodies, `V_${room.name}_${targetRoomName}_${Game.time}`, {
                     memory: {
@@ -128,13 +126,13 @@ function roomBehavior(room) {
                     },
                 });
                 if (spawned !== OK) {
-                    console.log("crete reserver", util_creep_2.RETURN_CODE_DECODER[spawned.toString()]);
+                    console.log("crete reserver", util_creep_1.RETURN_CODE_DECODER[spawned.toString()]);
                 }
             }
         }
         const { bodies } = (0, util_creep_1.filterBodiesByCost)("remoteHarvester", room.energyAvailable);
         if (remoteHarvester.filter((c) => c.memory.targetRoomName === targetRoomName && (c.ticksToLive || 0) > bodies.length * CREEP_SPAWN_TIME).length < 2) {
-            const spawn = (_b = (0, utils_2.getSpawnsInRoom)(room)) === null || _b === void 0 ? void 0 : _b.find((s) => !s.spawning);
+            const spawn = (_b = (0, utils_1.getSpawnsInRoom)(room)) === null || _b === void 0 ? void 0 : _b.find((s) => !s.spawning);
             if (spawn) {
                 const spawned = spawn.spawnCreep(bodies, `Rh_${room.name}_${targetRoomName}_${Game.time}`, {
                     memory: {
@@ -145,7 +143,7 @@ function roomBehavior(room) {
                     },
                 });
                 if (spawned !== OK) {
-                    console.log("create remotehaervester", util_creep_2.RETURN_CODE_DECODER[spawned.toString()]);
+                    console.log("create remotehaervester", util_creep_1.RETURN_CODE_DECODER[spawned.toString()]);
                 }
             }
         }
@@ -226,3 +224,28 @@ const fourNeighbors = [
     [0, 1],
 ];
 const staticStructures = [STRUCTURE_STORAGE, STRUCTURE_LINK, STRUCTURE_TERMINAL];
+function updateRoadMap(room) {
+    room.memory.roadMap = (room.memory.roadMap || _.range(2500).map(() => 0)).map((usage, i) => {
+        const value = Math.min(10, Math.max(-10, usage - 10 / 2000));
+        const x = i % 50;
+        const y = Math.floor(i / 50);
+        if (room.name === "sim" || Game.cpu.bucket > 100) {
+            if (value > 0) {
+                room.visual.text(_.ceil(value, 0).toString(), x, y, {
+                    opacity: 0.55,
+                });
+            }
+        }
+        const pos = room.getPositionAt(x, y);
+        if (pos && Game.time % 600 === 0) {
+            const road = pos === null || pos === void 0 ? void 0 : pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD);
+            if (road && value < 0) {
+                road.destroy();
+            }
+            else if (!road && Math.ceil(value) >= 10) {
+                pos.createConstructionSite(STRUCTURE_ROAD);
+            }
+        }
+        return value;
+    });
+}

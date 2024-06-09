@@ -1,19 +1,11 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, pickUpAll, withdrawBy } from "./util.creep";
-import { findMyStructures, getCapacityRate, getSitesInRoom } from "./utils";
+import { findMyStructures, getCapacityRate } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const { room } = creep;
 
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
-    // carrierが通る場所で道が無いときは敷く
-    if (
-      getSitesInRoom(room).filter((s) => s.structureType === STRUCTURE_ROAD).length === 0 &&
-      creep.pos.lookFor(LOOK_STRUCTURES).filter((s) => s.structureType === STRUCTURE_ROAD).length === 0
-    ) {
-      creep.pos.createConstructionSite(STRUCTURE_ROAD);
-    }
-
     customMove(creep, target, {
       plainCost: 2,
       swampCost: 2,
@@ -119,10 +111,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     })?.id;
   }
 
-  // それすらないときは作業モードになる
+  // それすらないときはharvesterに寄っておく
   if (!creep.memory.storeId) {
-    creep.memory.transferId = undefined;
-    creep.memory.mode = "🚛";
+    const harvester = creep.pos.findClosestByRange(getCreepsInRoom(creep.room).harvester || [], { filter: (c: Harvester) => c.store.energy > 0 });
+    if (harvester) {
+      moveMeTo(harvester, { range: 1 });
+    }
   }
 
   // 取り出し処理###############################################################################################

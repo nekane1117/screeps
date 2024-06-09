@@ -14,10 +14,6 @@ function behaviors(tower) {
     }
     const decayStructures = _(tower.room.find(FIND_STRUCTURES, {
         filter: (s) => {
-            var _a;
-            if ((_a = tower.room.memory.dismantle) === null || _a === void 0 ? void 0 : _a.find((d) => d === s.id)) {
-                return false;
-            }
             if (s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL) {
                 return s.hits < RAMPART_DECAY_AMOUNT * 10;
             }
