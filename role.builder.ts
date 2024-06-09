@@ -13,6 +13,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       color: toColor(creep),
     });
     return customMove(creep, target, {
+      ignoreCreeps: !creep.pos.inRangeTo(target, 6),
       ...opt,
     });
   };
@@ -345,27 +346,10 @@ function findRepairTarget(creep: Builder) {
       // ダメージのある建物
       filter: (s) => {
         // 閾値
-        return (
-          s.hits <=
-          s.hitsMax -
-            _(creep.body)
-              .filter((b) => b.type === WORK)
-              .sum((b) => {
-                return (
-                  REPAIR_POWER *
-                  (() => {
-                    const boost = b.boost;
-                    const workBoosts: Partial<{ [boost: string]: Partial<{ [action: string]: number }> }> = BOOSTS.work;
-                    if (typeof boost === "string") {
-                      return workBoosts[boost]?.repair || 1;
-                    } else {
-                      return 1;
-                    }
-                  })()
-                );
-              })
-        );
+        return s.hits < s.hitsMax;
       },
     }),
-  ).min((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME))?.id;
+  )
+    .sortBy((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME))
+    .first()?.id;
 }

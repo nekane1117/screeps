@@ -1,14 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
+const utils_1 = require("./utils");
 const behavior = (creep) => {
     var _a, _b, _c, _d;
     const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({}, opt));
     if (!isUpgrader(creep)) {
         return console.log(`${creep.name} is not Upgrader`);
-    }
-    if (creep.name.startsWith("B") && Object.values(Game.constructionSites).length) {
-        return Object.assign(creep.memory, { role: "builder", mode: "🛒" });
     }
     const controller = (_a = Game.rooms[creep.memory.baseRoom]) === null || _a === void 0 ? void 0 : _a.controller;
     if (!controller) {
@@ -20,6 +18,7 @@ const behavior = (creep) => {
     else if (creep.store.energy === 0) {
         changeMode(creep, "🛒");
     }
+    const { link, container } = (0, utils_1.findMyStructures)(creep.room);
     if (((_b = controller.sign) === null || _b === void 0 ? void 0 : _b.username) !== "Nekane") {
         const signed = creep.signController(controller, "Please teach me screeps");
         if (signed === ERR_NOT_IN_RANGE) {
@@ -54,11 +53,7 @@ const behavior = (creep) => {
         creep.memory.storeId = undefined;
     }
     if (creep.memory.storeId ||
-        (creep.memory.storeId = (_d = controller.pos.findClosestByRange(FIND_STRUCTURES, {
-            filter: (s) => {
-                return (0, util_creep_1.isStoreTarget)(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType);
-            },
-        })) === null || _d === void 0 ? void 0 : _d.id)) {
+        (creep.memory.storeId = (_d = controller.pos.findClosestByRange(_.compact([...link, ...container, creep.room.storage, creep.room.terminal]))) === null || _d === void 0 ? void 0 : _d.id)) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
             if (creep.memory.mode === "🛒") {

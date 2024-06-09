@@ -34,14 +34,13 @@ export function roomBehavior(room: Room) {
   // ロードマップを更新する
   updateRoadMap(room);
 
-  const sources = room.find(FIND_SOURCES);
-  sources.forEach((source) => behavior(source));
-
   const {
     // tower,
     lab,
     link,
+    source,
   } = findMyStructures(room);
+  source.forEach((s) => behavior(s));
 
   const mineral = _(room.find(FIND_MINERALS)).first();
   if (mineral) {
@@ -62,10 +61,9 @@ export function roomBehavior(room: Room) {
     return ERR_NOT_FOUND;
   }
   if (
-    harvester.length &&
     carriers.filter((g) => {
       return carrierBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
-    }).length < (link.length >= sources.length + 1 ? 1 : 2)
+    }).length < (link.length >= source.length + 1 ? 1 : 2)
   ) {
     const name = `C_${room.name}_${Game.time}`;
 
@@ -83,6 +81,8 @@ export function roomBehavior(room: Room) {
       return OK;
     }
   }
+
+  // defender
   if (
     room.energyAvailable >= room.energyCapacityAvailable * 0.9 &&
     (getCreepsInRoom(room).defender?.length || 0) === 0 &&
@@ -290,6 +290,8 @@ const fourNeighbors = [
 const staticStructures = [STRUCTURE_STORAGE, STRUCTURE_LINK, STRUCTURE_TERMINAL];
 
 function updateRoadMap(room: Room) {
+  const { road: roads, spawn } = findMyStructures(room);
+
   room.memory.roadMap = (room.memory.roadMap || _.range(2500).map(() => 0)).map((usage, i) => {
     const value = Math.min(10, Math.max(-10, usage - 10 / 2000));
     const x = i % 50;
@@ -301,22 +303,23 @@ function updateRoadMap(room: Room) {
       });
     }
 
-    const pos = room.getPositionAt(x, y);
     // 適当な間隔を開ける
-    if (pos && Game.time % 600 === 0) {
-      const road = _([pos?.lookFor(LOOK_STRUCTURES), pos?.lookFor(LOOK_CONSTRUCTION_SITES)])
-        .flatten<Structure | ConstructionSite>()
-        .compact()
-        .find((s) => s.structureType === STRUCTURE_ROAD);
-      if (road && value < 0) {
-        // 道が使われてないとき
-        "remove" in road ? road.remove() : road.destroy();
-      } else if (!road && Math.ceil(value) >= 10) {
-        // 通るのに道がない時
-        pos.createConstructionSite(STRUCTURE_ROAD);
+    if (Game.time % 600 === 0) {
+      const pos = room.getPositionAt(x, y);
+      if (pos) {
+        const road = _([pos?.lookFor(LOOK_STRUCTURES), pos?.lookFor(LOOK_CONSTRUCTION_SITES)])
+          .flatten<Structure | ConstructionSite>()
+          .compact()
+          .find((s) => s.structureType === STRUCTURE_ROAD);
+        if (road && value < 0) {
+          // 道が使われてないとき
+          "remove" in road ? road.remove() : road.destroy();
+        } else if (!road && Math.ceil(value) >= 10 && pos.findInRange([...roads, ...spawn], 3).length > 0) {
+          // 通るのに道がなくて、道かspawnにつながってるとき
+          pos.createConstructionSite(STRUCTURE_ROAD);
+        }
       }
     }
-
     return value;
   });
 }

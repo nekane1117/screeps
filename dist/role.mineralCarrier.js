@@ -5,7 +5,7 @@ const utils_1 = require("./utils");
 const behavior = (creep) => {
     var _a, _b;
     const moveMeTo = (target, opt) => {
-        return (0, util_creep_1.customMove)(creep, target, Object.assign({}, opt));
+        return (0, util_creep_1.customMove)(creep, target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, 2) }, opt));
     };
     if (!isMc(creep)) {
         return console.log(`${creep.name} is not MineralCarrier`);

@@ -1,5 +1,6 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, isStoreTarget, pickUpAll } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, pickUpAll } from "./util.creep";
+import { findMyStructures } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
@@ -9,9 +10,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   if (!isUpgrader(creep)) {
     return console.log(`${creep.name} is not Upgrader`);
-  }
-  if (creep.name.startsWith("B") && Object.values(Game.constructionSites).length) {
-    return Object.assign(creep.memory, { role: "builder", mode: "🛒" } as BuilderMemory);
   }
 
   const controller = Game.rooms[creep.memory.baseRoom]?.controller;
@@ -24,6 +22,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   } else if (creep.store.energy === 0) {
     changeMode(creep, "🛒");
   }
+
+  const { link, container } = findMyStructures(creep.room);
 
   // https://docs.screeps.com/simultaneous-actions.html
 
@@ -71,12 +71,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // withdraw
   if (
     creep.memory.storeId ||
-    (creep.memory.storeId = controller.pos.findClosestByRange(FIND_STRUCTURES, {
-      // コントローラーから3マス以内の一番近い倉庫に行く
-      filter: (s: Structure): s is StoreTarget => {
-        return isStoreTarget(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType);
-      },
-    })?.id)
+    (creep.memory.storeId = controller.pos.findClosestByRange(_.compact([...link, ...container, creep.room.storage, creep.room.terminal]))?.id)
   ) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {

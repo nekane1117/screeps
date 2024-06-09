@@ -1,6 +1,6 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, pickUpAll } from "./util.creep";
-import { getLabs, getTerminals } from "./utils";
+import { getAvailableAmount, getLabs, getTerminals } from "./utils";
 
 const MINERAL_KEEP_VALUE = 500;
 
@@ -71,7 +71,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           } else if (lab.mineralType.length >= 2) {
             // 化合物の時
 
-            if (lab.store[lab.mineralType] > MINERAL_KEEP_VALUE * 2) {
+            if (lab.store[lab.mineralType] > MINERAL_KEEP_VALUE * 4) {
               // 完成
               mapping.completed.push(lab);
             } else {
@@ -108,29 +108,18 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     );
 
   // 正しくないやつは整理する
-  if (!creep.memory.storeId) {
+  if (!creep.memory.storeId && wrong.length > 0) {
     creep.memory.storeId = _(wrong).first()?.id;
   }
 
   // 原料待ちのやつでターミナルに原料があるやつ
-  if (!creep.memory.storeId) {
+  if (!creep.memory.storeId && requesting.length > 0) {
     const target = _(requesting).find((lab) => {
-      const getRemainingTotal = (t: StructureTerminal, resourceType: ResourceConstant) => {
-        return _(Object.values(Game.market.orders))
-          .filter((o) => o.type === ORDER_SELL && o.resourceType === resourceType && o.roomName === t.room.name)
-          .sum((o) => o.remainingAmount);
-      };
-
-      const getRemainingCapacity = (t: StructureTerminal, resourceType: ResourceConstant) => {
-        // 実際持ってる量に売り注文の合計を引いたものを返す
-        return terminal.store[resourceType] - getRemainingTotal(t, resourceType);
-      };
-
       // 指定のミネラルが無いとき
-      if (getRemainingCapacity(terminal, lab.memory.expectedType) === 0) {
+      if (getAvailableAmount(terminal, lab.memory.expectedType) === 0) {
         const SEND_UNIT = 1000;
         // 基準値の倍以上あるターミナル
-        const redundantTerminal = getTerminals().find((t) => getRemainingCapacity(t, lab.memory.expectedType) > SEND_UNIT * 2);
+        const redundantTerminal = getTerminals().find((t) => getAvailableAmount(t, lab.memory.expectedType) > SEND_UNIT * 2);
         if (redundantTerminal) {
           redundantTerminal.send(
             lab.memory.expectedType,
@@ -140,7 +129,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           );
         }
       }
-      return getRemainingCapacity(terminal, lab.memory.expectedType) > 0;
+      return getAvailableAmount(terminal, lab.memory.expectedType) > 0;
     });
     if (target) {
       // ターミナルに指定の原料を取りに行く

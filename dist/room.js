@@ -32,9 +32,8 @@ function roomBehavior(room) {
     }
     const { builder = [], carrier: carriers = [], harvester = [], remoteHarvester = [], reserver = [] } = (0, util_creep_1.getCreepsInRoom)(room);
     updateRoadMap(room);
-    const sources = room.find(FIND_SOURCES);
-    sources.forEach((source) => (0, room_source_1.behavior)(source));
-    const { lab, link, } = (0, utils_1.findMyStructures)(room);
+    const { lab, link, source, } = (0, utils_1.findMyStructures)(room);
+    source.forEach((s) => (0, room_source_1.behavior)(s));
     const mineral = _(room.find(FIND_MINERALS)).first();
     if (mineral) {
         (0, room_labManager_1.default)(lab, mineral);
@@ -47,10 +46,9 @@ function roomBehavior(room) {
     if (harvester.length === 0) {
         return ERR_NOT_FOUND;
     }
-    if (harvester.length &&
-        carriers.filter((g) => {
-            return carrierBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
-        }).length < (link.length >= sources.length + 1 ? 1 : 2)) {
+    if (carriers.filter((g) => {
+        return carrierBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || 0);
+    }).length < (link.length >= source.length + 1 ? 1 : 2)) {
         const name = `C_${room.name}_${Game.time}`;
         const spawn = _((0, utils_1.getSpawnsInRoom)(room))
             .filter((s) => !s.spawning)
@@ -229,6 +227,7 @@ const fourNeighbors = [
 ];
 const staticStructures = [STRUCTURE_STORAGE, STRUCTURE_LINK, STRUCTURE_TERMINAL];
 function updateRoadMap(room) {
+    const { road: roads, spawn } = (0, utils_1.findMyStructures)(room);
     room.memory.roadMap = (room.memory.roadMap || _.range(2500).map(() => 0)).map((usage, i) => {
         const value = Math.min(10, Math.max(-10, usage - 10 / 2000));
         const x = i % 50;
@@ -239,17 +238,19 @@ function updateRoadMap(room) {
                 font: 0.25,
             });
         }
-        const pos = room.getPositionAt(x, y);
-        if (pos && Game.time % 600 === 0) {
-            const road = _([pos === null || pos === void 0 ? void 0 : pos.lookFor(LOOK_STRUCTURES), pos === null || pos === void 0 ? void 0 : pos.lookFor(LOOK_CONSTRUCTION_SITES)])
-                .flatten()
-                .compact()
-                .find((s) => s.structureType === STRUCTURE_ROAD);
-            if (road && value < 0) {
-                "remove" in road ? road.remove() : road.destroy();
-            }
-            else if (!road && Math.ceil(value) >= 10) {
-                pos.createConstructionSite(STRUCTURE_ROAD);
+        if (Game.time % 600 === 0) {
+            const pos = room.getPositionAt(x, y);
+            if (pos) {
+                const road = _([pos === null || pos === void 0 ? void 0 : pos.lookFor(LOOK_STRUCTURES), pos === null || pos === void 0 ? void 0 : pos.lookFor(LOOK_CONSTRUCTION_SITES)])
+                    .flatten()
+                    .compact()
+                    .find((s) => s.structureType === STRUCTURE_ROAD);
+                if (road && value < 0) {
+                    "remove" in road ? road.remove() : road.destroy();
+                }
+                else if (!road && Math.ceil(value) >= 10 && pos.findInRange([...roads, ...spawn], 3).length > 0) {
+                    pos.createConstructionSite(STRUCTURE_ROAD);
+                }
             }
         }
         return value;

@@ -50,7 +50,7 @@ const behavior = (creep) => {
                 mapping.wrong.push(lab);
             }
             else if (lab.mineralType.length >= 2) {
-                if (lab.store[lab.mineralType] > MINERAL_KEEP_VALUE * 2) {
+                if (lab.store[lab.mineralType] > MINERAL_KEEP_VALUE * 4) {
                     mapping.completed.push(lab);
                 }
                 else {
@@ -81,27 +81,19 @@ const behavior = (creep) => {
         requesting: [],
         wrong: [],
     });
-    if (!creep.memory.storeId) {
+    if (!creep.memory.storeId && wrong.length > 0) {
         creep.memory.storeId = (_a = _(wrong).first()) === null || _a === void 0 ? void 0 : _a.id;
     }
-    if (!creep.memory.storeId) {
+    if (!creep.memory.storeId && requesting.length > 0) {
         const target = _(requesting).find((lab) => {
-            const getRemainingTotal = (t, resourceType) => {
-                return _(Object.values(Game.market.orders))
-                    .filter((o) => o.type === ORDER_SELL && o.resourceType === resourceType && o.roomName === t.room.name)
-                    .sum((o) => o.remainingAmount);
-            };
-            const getRemainingCapacity = (t, resourceType) => {
-                return terminal.store[resourceType] - getRemainingTotal(t, resourceType);
-            };
-            if (getRemainingCapacity(terminal, lab.memory.expectedType) === 0) {
+            if ((0, utils_1.getAvailableAmount)(terminal, lab.memory.expectedType) === 0) {
                 const SEND_UNIT = 1000;
-                const redundantTerminal = (0, utils_1.getTerminals)().find((t) => getRemainingCapacity(t, lab.memory.expectedType) > SEND_UNIT * 2);
+                const redundantTerminal = (0, utils_1.getTerminals)().find((t) => (0, utils_1.getAvailableAmount)(t, lab.memory.expectedType) > SEND_UNIT * 2);
                 if (redundantTerminal) {
                     redundantTerminal.send(lab.memory.expectedType, SEND_UNIT, terminal.room.name, `send ${lab.memory.expectedType} ${redundantTerminal.room.name} to ${terminal.room.name}`);
                 }
             }
-            return getRemainingCapacity(terminal, lab.memory.expectedType) > 0;
+            return (0, utils_1.getAvailableAmount)(terminal, lab.memory.expectedType) > 0;
         });
         if (target) {
             creep.memory.storeId = terminal.id;

@@ -13,7 +13,7 @@ const behavior = (creep) => {
         (_a = Game.rooms[pos.roomName]) === null || _a === void 0 ? void 0 : _a.visual.text("x", pos, {
             color: (0, util_creep_1.toColor)(creep),
         });
-        return (0, util_creep_1.customMove)(creep, target, Object.assign({}, opt));
+        return (0, util_creep_1.customMove)(creep, target, Object.assign({ ignoreCreeps: !creep.pos.inRangeTo(target, 6) }, opt));
     };
     const checkMode = () => {
         const newMode = ((c) => {
@@ -262,24 +262,9 @@ function findRepairTarget(creep) {
     var _a;
     return (_a = _(creep.room.find(FIND_STRUCTURES, {
         filter: (s) => {
-            return (s.hits <=
-                s.hitsMax -
-                    _(creep.body)
-                        .filter((b) => b.type === WORK)
-                        .sum((b) => {
-                        return (REPAIR_POWER *
-                            (() => {
-                                var _a;
-                                const boost = b.boost;
-                                const workBoosts = BOOSTS.work;
-                                if (typeof boost === "string") {
-                                    return ((_a = workBoosts[boost]) === null || _a === void 0 ? void 0 : _a.repair) || 1;
-                                }
-                                else {
-                                    return 1;
-                                }
-                            })());
-                    }));
+            return s.hits < s.hitsMax;
         },
-    })).min((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME))) === null || _a === void 0 ? void 0 : _a.id;
+    }))
+        .sortBy((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME))
+        .first()) === null || _a === void 0 ? void 0 : _a.id;
 }
