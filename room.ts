@@ -246,13 +246,18 @@ function creteStructures(room: Room) {
         for (const dist of _.range(1, 25)) {
           for (const dy of _.range(-dist, dist + 1)) {
             for (const dx of _.range(-dist, dist + 1)) {
+              const pos = new RoomPosition(spawn.pos.x + dx, spawn.pos.y + dy, room.name);
               if (
                 Math.abs(dx) + Math.abs(dy) === dist &&
+                pos &&
                 terrain.get(spawn.pos.x + dx, spawn.pos.y + dy) !== TERRAIN_MASK_WALL &&
-                generateCross(dx, dy) &&
-                room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, target) === OK
+                generateCross(dx, dy)
               ) {
-                return;
+                // 建設予定地にすでに何か建ててるときはキャンセルする
+                pos.lookFor(LOOK_CONSTRUCTION_SITES).forEach((s) => s.remove());
+                if (room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, target) === OK) {
+                  return;
+                }
               }
             }
           }

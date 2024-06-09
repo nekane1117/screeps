@@ -18,18 +18,35 @@ const behavior = (controller) => {
         `progress:${(controller.progressTotal - controller.progress).toLocaleString()}`,
     ]);
     const { harvester = [], upgrader = [], carrier = [] } = (0, util_creep_1.getCreepsInRoom)(controller.room);
-    if (harvester.length > 0 && carrier.length > 0 && upgrader.length === 0 && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
-        const spawn = _((0, utils_1.getSpawnsInRoom)(controller.room))
-            .filter((s) => !s.spawning)
-            .first();
-        if (spawn) {
-            spawn.spawnCreep(getUpgraderBody(controller), `U_${controller.room.name}_${Game.time}`, {
-                memory: {
-                    baseRoom: controller.room.name,
-                    mode: "🛒",
-                    role: "upgrader",
-                },
-            });
+    const { container } = (0, utils_1.findMyStructures)(controller.room);
+    const containerSite = (0, utils_1.getSitesInRoom)(controller.room).filter((s) => s.structureType === STRUCTURE_CONTAINER);
+    const mainSpawn = (0, util_creep_1.getMainSpawn)(controller.room);
+    if (mainSpawn) {
+        const myContainer = controller.pos.findClosestByRange([...container, ...containerSite], {
+            filter: (s) => controller.pos.inRangeTo(s, 3),
+        });
+        if (myContainer) {
+            if (harvester.length > 0 && carrier.length > 0 && upgrader.length === 0 && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
+                const spawn = _((0, utils_1.getSpawnsInRoom)(controller.room))
+                    .filter((s) => !s.spawning)
+                    .first();
+                if (spawn) {
+                    spawn.spawnCreep(getUpgraderBody(controller), `U_${controller.room.name}_${Game.time}`, {
+                        memory: {
+                            baseRoom: controller.room.name,
+                            mode: "🛒",
+                            role: "upgrader",
+                        },
+                    });
+                }
+            }
+        }
+        else {
+            const terrain = controller.room.getTerrain();
+            const firstStep = controller.pos.findPathTo(mainSpawn).find((p) => terrain.get(p.x, p.y) !== TERRAIN_MASK_WALL);
+            if (firstStep) {
+                new RoomPosition(firstStep.x, firstStep.y, controller.room.name).createConstructionSite(STRUCTURE_CONTAINER);
+            }
         }
     }
 };

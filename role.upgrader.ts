@@ -64,13 +64,17 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       break;
   }
 
+  if (creep.memory.storeId && (Game.getObjectById(creep.memory.storeId)?.store.energy || 0) <= 0) {
+    creep.memory.storeId = undefined;
+  }
+
   // withdraw
   if (
     creep.memory.storeId ||
     (creep.memory.storeId = controller.pos.findClosestByRange(FIND_STRUCTURES, {
       // コントローラーから3マス以内の一番近い倉庫に行く
       filter: (s: Structure): s is StoreTarget => {
-        return isStoreTarget(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) && !!controller?.pos.inRangeTo(s, 3);
+        return isStoreTarget(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType);
       },
     })?.id)
   ) {
@@ -108,43 +112,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         default:
           break;
       }
-    }
-  } else {
-    // 建設予定を含む射程3以内のコンテナが無いとき
-    if (
-      controller.pos.findInRange(
-        [
-          // コンテナ
-          ...creep.room.find(FIND_STRUCTURES, { filter: (s): s is StructureContainer => s.structureType === STRUCTURE_CONTAINER }),
-          // 建設予定のコンテナ
-          ...Object.values(Game.constructionSites).filter((s): s is ConstructionSite<STRUCTURE_CONTAINER> => s.structureType === STRUCTURE_CONTAINER),
-        ],
-        3,
-      ).length === 0
-    ) {
-      // コントローラから最も近いCreep
-      // に最も近いコントローラから3 * 3マス以内の場所
-      // にコンテナを立てる
-      return controller.pos
-        .findClosestByPath(Object.values(Game.spawns), { ignoreCreeps: true })
-        ?.pos.findClosestByPath(
-          // -3 ~ 3の範囲
-          _(
-            _.range(-3, 4).map((dx) => {
-              return _.range(-3, 4).map((dy) => {
-                return creep.room.getPositionAt(controller.pos.x + dx, controller.pos.y + dy);
-              });
-            }),
-          )
-            .flatten<RoomPosition | null>(false)
-            .compact()
-            .run(),
-          {
-            ignoreCreeps: true,
-            swampCost: 1,
-          },
-        )
-        ?.createConstructionSite(STRUCTURE_CONTAINER);
     }
   }
 

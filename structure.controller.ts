@@ -1,6 +1,6 @@
 import { StructureBehavior } from "./structures";
-import { getCreepsInRoom } from "./util.creep";
-import { getSpawnsInRoom } from "./utils";
+import { getCreepsInRoom, getMainSpawn } from "./util.creep";
+import { findMyStructures, getSitesInRoom, getSpawnsInRoom } from "./utils";
 
 const behavior: StructureBehavior = (controller: Structure) => {
   if (!isC(controller)) {
@@ -20,18 +20,38 @@ const behavior: StructureBehavior = (controller: Structure) => {
   ]);
 
   const { harvester = [], upgrader = [], carrier = [] } = getCreepsInRoom(controller.room);
-  if (harvester.length > 0 && carrier.length > 0 && upgrader.length === 0 && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
-    const spawn = _(getSpawnsInRoom(controller.room))
-      .filter((s) => !s.spawning)
-      .first();
-    if (spawn) {
-      spawn.spawnCreep(getUpgraderBody(controller), `U_${controller.room.name}_${Game.time}`, {
-        memory: {
-          baseRoom: controller.room.name,
-          mode: "🛒",
-          role: "upgrader",
-        } as UpgraderMemory,
-      });
+  const { container } = findMyStructures(controller.room);
+  const containerSite = getSitesInRoom(controller.room).filter((s) => s.structureType === STRUCTURE_CONTAINER);
+  // 中心地がある
+  const mainSpawn = getMainSpawn(controller.room);
+  if (mainSpawn) {
+    // コントローラ用コンテナ(建設中含む)
+    const myContainer = controller.pos.findClosestByRange([...container, ...containerSite], {
+      filter: (s: StructureContainer | ConstructionSite) => controller.pos.inRangeTo(s, 3),
+    });
+    if (myContainer) {
+      // 建設済みかつあれこれ足りてる時だけ作る
+      if (harvester.length > 0 && carrier.length > 0 && upgrader.length === 0 && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
+        const spawn = _(getSpawnsInRoom(controller.room))
+          .filter((s) => !s.spawning)
+          .first();
+        if (spawn) {
+          spawn.spawnCreep(getUpgraderBody(controller), `U_${controller.room.name}_${Game.time}`, {
+            memory: {
+              baseRoom: controller.room.name,
+              mode: "🛒",
+              role: "upgrader",
+            } as UpgraderMemory,
+          });
+        }
+      }
+    } else {
+      // コンテナがなければ建てる
+      const terrain = controller.room.getTerrain();
+      const firstStep = controller.pos.findPathTo(mainSpawn).find((p) => terrain.get(p.x, p.y) !== TERRAIN_MASK_WALL);
+      if (firstStep) {
+        new RoomPosition(firstStep.x, firstStep.y, controller.room.name).createConstructionSite(STRUCTURE_CONTAINER);
+      }
     }
   }
 };
@@ -44,8 +64,7 @@ function isC(s: Structure): s is StructureController {
 function getUpgraderBody(c: StructureController): BodyPartConstant[] {
   const b: BodyPartConstant[] = [WORK, WORK, WORK, MOVE];
   let total = 0;
-  // 基本近くに建てるかつ
-  // 稼働し始めたら動かないのでMOVEもCARRYも1個でいい
+  // 移動効率は低めで作業効率高く
   return ([WORK, MOVE, CARRY, WORK] as BodyPartConstant[])
     .concat(
       ..._.range(50).map((i) => {

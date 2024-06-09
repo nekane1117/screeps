@@ -110,6 +110,7 @@ declare type MyStructureCache = {
   storage: StructureStorage[];
   terminal: StructureTerminal[];
   tower: StructureTower[];
+  source: Source[];
 };
 declare interface RoomMemory {
   creeps?: CreepsCache;

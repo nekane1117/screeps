@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const behavior = (creep) => {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d;
     const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({}, opt));
     if (!isUpgrader(creep)) {
         return console.log(`${creep.name} is not Upgrader`);
@@ -50,12 +50,15 @@ const behavior = (creep) => {
         default:
             break;
     }
+    if (creep.memory.storeId && (((_c = Game.getObjectById(creep.memory.storeId)) === null || _c === void 0 ? void 0 : _c.store.energy) || 0) <= 0) {
+        creep.memory.storeId = undefined;
+    }
     if (creep.memory.storeId ||
-        (creep.memory.storeId = (_c = controller.pos.findClosestByRange(FIND_STRUCTURES, {
+        (creep.memory.storeId = (_d = controller.pos.findClosestByRange(FIND_STRUCTURES, {
             filter: (s) => {
-                return (0, util_creep_1.isStoreTarget)(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType) && !!(controller === null || controller === void 0 ? void 0 : controller.pos.inRangeTo(s, 3));
+                return (0, util_creep_1.isStoreTarget)(s) && ![STRUCTURE_SPAWN, STRUCTURE_EXTENSION].some((t) => t === s.structureType);
             },
-        })) === null || _c === void 0 ? void 0 : _c.id)) {
+        })) === null || _d === void 0 ? void 0 : _d.id)) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
             if (creep.memory.mode === "🛒") {
@@ -86,25 +89,6 @@ const behavior = (creep) => {
                 default:
                     break;
             }
-        }
-    }
-    else {
-        if (controller.pos.findInRange([
-            ...creep.room.find(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_CONTAINER }),
-            ...Object.values(Game.constructionSites).filter((s) => s.structureType === STRUCTURE_CONTAINER),
-        ], 3).length === 0) {
-            return (_e = (_d = controller.pos
-                .findClosestByPath(Object.values(Game.spawns), { ignoreCreeps: true })) === null || _d === void 0 ? void 0 : _d.pos.findClosestByPath(_(_.range(-3, 4).map((dx) => {
-                return _.range(-3, 4).map((dy) => {
-                    return creep.room.getPositionAt(controller.pos.x + dx, controller.pos.y + dy);
-                });
-            }))
-                .flatten(false)
-                .compact()
-                .run(), {
-                ignoreCreeps: true,
-                swampCost: 1,
-            })) === null || _e === void 0 ? void 0 : _e.createConstructionSite(STRUCTURE_CONTAINER);
         }
     }
     (0, util_creep_1.pickUpAll)(creep);

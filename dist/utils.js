@@ -49,6 +49,7 @@ const findMyStructures = (room) => {
                 storage: [],
                 terminal: [],
                 tower: [],
+                source: room.find(FIND_SOURCES),
             }),
         }).data;
     }

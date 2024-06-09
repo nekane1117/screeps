@@ -49,6 +49,7 @@ export const findMyStructures = (room: Room) => {
           storage: [],
           terminal: [],
           tower: [],
+          source: room.find(FIND_SOURCES),
         } as MyStructureCache,
       ),
     }).data;
