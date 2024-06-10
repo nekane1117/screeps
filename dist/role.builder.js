@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
-    var _a, _b, _c, _d;
+    var _a, _b, _c;
     if (!isBuilder(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
@@ -136,30 +136,19 @@ const behavior = (creep) => {
         }
     }
     else {
-        if (creep.room.energyAvailable < 300) {
+        if (creep.room.storage ? creep.room.storage.store.energy <= creep.room.energyCapacityAvailable : creep.room.energyAvailable < 300) {
             return;
         }
-        creep.memory.storeId = (() => {
-            const store = creep.memory.storeId && Game.getObjectById(creep.memory.storeId);
-            if (!store || !("store" in store) || store.store.energy === 0) {
-                return undefined;
-            }
-            else {
-                return creep.memory.storeId;
-            }
-        })();
+        if (creep.memory.storeId && ((_b = Game.getObjectById(creep.memory.storeId)) === null || _b === void 0 ? void 0 : _b.store.energy) === 0) {
+            creep.memory.storeId = undefined;
+        }
+        const { container } = (0, utils_1.findMyStructures)(creep.room);
         if (creep.memory.storeId ||
-            (creep.memory.storeId = (_b = creep.pos.findClosestByPath([...creep.room.find(FIND_TOMBSTONES), ...creep.room.find(FIND_RUINS)], {
-                filter: (s) => s.store.energy > 0,
-            })) === null || _b === void 0 ? void 0 : _b.id) ||
-            (creep.memory.storeId = (_c = creep.room.storage) === null || _c === void 0 ? void 0 : _c.id) ||
-            (creep.memory.storeId = (_d = creep.pos.findClosestByPath([...(0, utils_1.findMyStructures)(creep.room).all], {
+            (creep.memory.storeId = (_c = creep.pos.findClosestByPath(_.compact([...container, ...[creep.room.terminal, creep.room.storage].filter((s) => ((s === null || s === void 0 ? void 0 : s.store.energy) || 0) >= creep.room.energyCapacityAvailable)]), {
                 filter: (s) => {
-                    return ("store" in s &&
-                        s.store.energy >= creep.store.getCapacity(RESOURCE_ENERGY) &&
-                        ![STRUCTURE_TOWER, STRUCTURE_LINK, STRUCTURE_TERMINAL, STRUCTURE_EXTENSION, STRUCTURE_SPAWN].includes(s.structureType));
+                    return s.store.energy >= creep.store.getCapacity(RESOURCE_ENERGY);
                 },
-            })) === null || _d === void 0 ? void 0 : _d.id)) {
+            })) === null || _c === void 0 ? void 0 : _c.id)) {
             const store = Game.getObjectById(creep.memory.storeId);
             if (store && "store" in store) {
                 creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY);
@@ -192,14 +181,6 @@ const behavior = (creep) => {
                         }
                         break;
                 }
-            }
-        }
-        else {
-            const harvester = creep.pos.findClosestByRange(Object.values(Game.creeps), {
-                filter: (c) => c.memory.role === "harvester" || c.memory.role === "remoteHarvester",
-            });
-            if (harvester && !creep.pos.isNearTo(harvester)) {
-                moveMeTo(harvester);
             }
         }
         (0, util_creep_1.withdrawBy)(creep, ["harvester", "upgrader", "remoteHarvester"]);

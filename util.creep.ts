@@ -105,7 +105,7 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
     MOVE,
     // 適当に突っ込む
     ..._.range(50).map((i) => {
-      const b = [MOVE, CARRY, RANGED_ATTACK, MOVE, ATTACK, MOVE];
+      const b = [MOVE, CARRY];
       return b[i % b.length];
     }),
   ].slice(0, 50),
@@ -191,6 +191,7 @@ export const customMove: CustomMove = (creep, target, opt) => {
 
   creep.memory.moved = creep.moveTo(target, {
     plainCost: 2,
+    swampCost: 10,
     serializeMemory: false,
     ignoreCreeps: !creep.pos.inRangeTo(target, DEFAULT_CREEP_RANGE[creep.memory.role] + 2),
     ...opt,
@@ -211,6 +212,7 @@ export const customMove: CustomMove = (creep, target, opt) => {
       if (blocker && blocker.memory.moved !== OK) {
         const pull = creep.pull(blocker);
         const move = blocker.move(creep);
+        creep.memory._move = undefined;
         blocker.memory._move = undefined;
         (pull || move) &&
           console.log(JSON.stringify({ name: creep.name, pull: RETURN_CODE_DECODER[pull.toString()], move: RETURN_CODE_DECODER[move.toString()] }));
@@ -343,11 +345,12 @@ export function getCarrierBody(room: Room, role: ROLES): BodyPartConstant[] {
 
   const bodyCycle: BodyPartConstant[] = [MOVE, CARRY, CARRY];
   let costTotal = 0;
-  const avgSize = room.memory.carrySize[role];
+  const avgSize = room.memory.carrySize?.[role] || 100;
   // 個数 (÷50の切り上げ)
   // 安全係数
   // の２倍(CARRY,MOVE)
   return _.range(Math.ceil(avgSize / 50) * safetyFactor * 1.5)
+    .slice(0, 50)
     .map((i) => {
       const parts = bodyCycle[i % bodyCycle.length];
       costTotal += BODYPART_COST[parts];

@@ -187,38 +187,29 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // #endregion
   } else {
     // 収集モードの時
-    if (creep.room.energyAvailable < 300) {
+    if (creep.room.storage ? creep.room.storage.store.energy <= creep.room.energyCapacityAvailable : creep.room.energyAvailable < 300) {
       return;
     }
 
     // #region エネルギー回収###########################################################################################
     // 空のやつ初期化
-    creep.memory.storeId = (() => {
-      const store = creep.memory.storeId && Game.getObjectById(creep.memory.storeId);
-      if (!store || !("store" in store) || store.store.energy === 0) {
-        return undefined;
-      } else {
-        return creep.memory.storeId;
-      }
-    })();
+    if (creep.memory.storeId && Game.getObjectById(creep.memory.storeId)?.store.energy === 0) {
+      creep.memory.storeId = undefined;
+    }
 
+    const { container } = findMyStructures(creep.room);
     // withdraw
     if (
       creep.memory.storeId ||
-      (creep.memory.storeId = creep.pos.findClosestByPath([...creep.room.find(FIND_TOMBSTONES), ...creep.room.find(FIND_RUINS)], {
-        filter: (s) => s.store.energy > 0,
-      })?.id) ||
-      (creep.memory.storeId = creep.room.storage?.id) ||
-      (creep.memory.storeId = creep.pos.findClosestByPath([...findMyStructures(creep.room).all], {
-        filter: (s) => {
-          // いっぱいあるやつからだけ出す
-          return (
-            "store" in s &&
-            s.store.energy >= creep.store.getCapacity(RESOURCE_ENERGY) &&
-            !([STRUCTURE_TOWER, STRUCTURE_LINK, STRUCTURE_TERMINAL, STRUCTURE_EXTENSION, STRUCTURE_SPAWN] as StructureConstant[]).includes(s.structureType)
-          );
+      (creep.memory.storeId = creep.pos.findClosestByPath(
+        _.compact([...container, ...[creep.room.terminal, creep.room.storage].filter((s) => (s?.store.energy || 0) >= creep.room.energyCapacityAvailable)]),
+        {
+          filter: (s) => {
+            // いっぱいあるやつからだけ出す
+            return s.store.energy >= creep.store.getCapacity(RESOURCE_ENERGY);
+          },
         },
-      })?.id)
+      )?.id)
     ) {
       const store = Game.getObjectById(creep.memory.storeId);
       if (store && "store" in store) {
@@ -254,14 +245,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             }
             break;
         }
-      }
-    } else {
-      // 対象が無いときは最寄りのharvesterにもらいに行く
-      const harvester = creep.pos.findClosestByRange(Object.values(Game.creeps), {
-        filter: (c: Creeps) => c.memory.role === "harvester" || c.memory.role === "remoteHarvester",
-      });
-      if (harvester && !creep.pos.isNearTo(harvester)) {
-        moveMeTo(harvester);
       }
     }
     // #endregion

@@ -9,8 +9,8 @@ const behavior = (creep) => {
     const memory = (0, utils_1.readonly)(creep.memory);
     const checkMode = () => {
         const newMode = ((creep) => {
-            if (creep.memory.mode === "👷" && (0, utils_1.getSitesInRoom)(creep.room).length === 0) {
-                return "🚛";
+            if (creep.memory.mode === "👷" && ((0, utils_1.getSitesInRoom)(creep.room).length === 0 || creep.store.energy < creep.getActiveBodyparts(WORK) * BUILD_POWER)) {
+                return "🌾";
             }
             else if (creep.store.energy === 0) {
                 return "🌾";
@@ -53,10 +53,12 @@ const behavior = (creep) => {
         }
     }
     harvest(creep);
-    if ((0, utils_1.getSitesInRoom)(creep.room).length === 0) {
-        if (!(0, utils_1.isHighway)(creep.room) && !creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD)) {
-            creep.pos.createConstructionSite(STRUCTURE_ROAD);
-        }
+    if (creep.memory.mode === "🚛" &&
+        creep.pos.roomName !== creep.memory.baseRoom &&
+        (0, utils_1.getSitesInRoom)(creep.room).length === 0 &&
+        !(0, utils_1.isHighway)(creep.room) &&
+        !creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD)) {
+        creep.pos.createConstructionSite(STRUCTURE_ROAD);
     }
     build(creep);
     const repariTarget = creep.pos.roomName !== memory.baseRoom && creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.hits < s.hitsMax);
@@ -87,6 +89,7 @@ function harvest(creep) {
     var _a, _b, _c, _d;
     const memory = (0, utils_1.readonly)(creep.memory);
     const targetRoom = Game.rooms[memory.targetRoomName];
+    const { remoteHarvester = [] } = (0, util_creep_1.getCreepsInRoom)(creep.room);
     if (targetRoom) {
         const hostiles = [...targetRoom.find(FIND_HOSTILE_CREEPS), ...targetRoom.find(FIND_HOSTILE_SPAWNS), ...targetRoom.find(FIND_HOSTILE_STRUCTURES)];
         if (hostiles.length > 0 && creep.getActiveBodyparts(ATTACK)) {
@@ -106,7 +109,17 @@ function harvest(creep) {
                 }
             }
             if (!memory.harvestTargetId) {
-                creep.memory.harvestTargetId = (_a = _(targetRoom.find(FIND_SOURCES) || [])
+                creep.memory.harvestTargetId = (_a = _(targetRoom.find(FIND_SOURCES, {
+                    filter: (s) => {
+                        return (util_creep_1.squareDiff.filter(([dx, dy]) => {
+                            const pos = s.room.getPositionAt(s.pos.x + dx, s.pos.y + dy);
+                            if (!pos) {
+                                return false;
+                            }
+                            return s.room.getTerrain().get(pos.x, pos.y) !== TERRAIN_MASK_WALL;
+                        }).length > remoteHarvester.filter((c) => c.memory.harvestTargetId === s.id).length);
+                    },
+                }) || [])
                     .sort((s1, s2) => {
                     const getPriority = (s) => {
                         if (s.energy > 0) {
@@ -182,11 +195,23 @@ function harvest(creep) {
 function build(creep) {
     var _a, _b, _c;
     const memory = (0, utils_1.readonly)(creep.memory);
+    if (creep.pos.roomName === creep.memory.baseRoom) {
+        if (creep.memory.mode === "👷") {
+            creep.memory.mode = "🌾";
+            creep.memory.route = undefined;
+            creep.memory.siteId = undefined;
+            creep.memory.storeId = undefined;
+        }
+        return OK;
+    }
     const sitesInroom = (0, utils_1.getSitesInRoom)(creep.pos.roomName);
     if (memory.mode === "🚛" && sitesInroom.length > 0) {
         creep.memory.mode = "👷";
         creep.memory.siteId = undefined;
         creep.say(creep.memory.mode);
+    }
+    if (creep.store.energy < creep.getActiveBodyparts(WORK) * BUILD_POWER) {
+        return ERR_NOT_ENOUGH_ENERGY;
     }
     if (!memory.siteId) {
         creep.memory.siteId = (_a = creep.pos.findClosestByPath(sitesInroom, { maxRooms: 0 })) === null || _a === void 0 ? void 0 : _a.id;
@@ -258,7 +283,7 @@ function transfer(creep) {
                 const targets = [...filtedContainers, ...spawn, ...extension, ...storage, ...link, ...terminal].filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
                 const result = PathFinder.search(creep.pos, targets.map((p) => p.pos), {
                     plainCost: 2,
-                    swampCost: 2,
+                    swampCost: 10,
                 });
                 if (result.incomplete) {
                     return undefined;
@@ -276,10 +301,7 @@ function transfer(creep) {
         }
         Object.keys(creep.store).forEach((resourceType) => {
             if ((creep.memory.worked = creep.transfer(store, resourceType)) === ERR_NOT_IN_RANGE && memory.mode === "🚛") {
-                return (0, util_creep_1.customMove)(creep, store, {
-                    plainCost: 2,
-                    swampCost: 2,
-                });
+                return (0, util_creep_1.customMove)(creep, store);
             }
             else {
                 return creep.memory.worked;

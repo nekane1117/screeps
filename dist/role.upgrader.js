@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e;
     const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({}, opt));
     if (!isUpgrader(creep)) {
         return console.log(`${creep.name} is not Upgrader`);
@@ -19,6 +19,10 @@ const behavior = (creep) => {
         changeMode(creep, "🛒");
     }
     const { link, container } = (0, utils_1.findMyStructures)(creep.room);
+    const links = link.filter((l) => {
+        const s = (0, util_creep_1.getMainSpawn)(creep.room);
+        return !(s && l.pos.inRangeTo(s, 1));
+    });
     if (((_b = controller.sign) === null || _b === void 0 ? void 0 : _b.username) !== "Nekane") {
         const signed = creep.signController(controller, "Please teach me screeps");
         if (signed === ERR_NOT_IN_RANGE) {
@@ -35,7 +39,7 @@ const behavior = (creep) => {
             break;
         case ERR_NOT_IN_RANGE:
             if (creep.memory.mode === "💪") {
-                moveMeTo(controller, { range: 3 });
+                moveMeTo(controller);
             }
             break;
         case ERR_NOT_OWNER:
@@ -53,16 +57,30 @@ const behavior = (creep) => {
         creep.memory.storeId = undefined;
     }
     if (creep.memory.storeId ||
-        (creep.memory.storeId = (_d = controller.pos.findClosestByRange(_.compact([...link, ...container, creep.room.storage, creep.room.terminal]))) === null || _d === void 0 ? void 0 : _d.id)) {
+        (creep.memory.storeId = (_d = controller.pos.findClosestByRange(_.compact([...links, ...container]), {
+            filter: (s) => s.pos.inRangeTo(controller, 3),
+        })) === null || _d === void 0 ? void 0 : _d.id) ||
+        (creep.memory.storeId = (_e = (() => {
+            if (creep.room.energyAvailable < creep.room.energyCapacityAvailable) {
+                return undefined;
+            }
+            else {
+                return controller.pos.findClosestByRange(_.compact([
+                    ...links,
+                    ...container,
+                    ..._([creep.room.storage, creep.room.terminal])
+                        .compact()
+                        .filter((s) => (s === null || s === void 0 ? void 0 : s.store.energy) > creep.room.energyCapacityAvailable)
+                        .value(),
+                ]), {
+                    filter: (s) => {
+                        return s.store.energy > 0;
+                    },
+                });
+            }
+        })()) === null || _e === void 0 ? void 0 : _e.id)) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
-            if (creep.memory.mode === "🛒") {
-                const moved = moveMeTo(store);
-                if (moved !== OK) {
-                    console.log(`${creep.name} ${util_creep_1.RETURN_CODE_DECODER[moved.toString()]}`);
-                    creep.say(util_creep_1.RETURN_CODE_DECODER[moved.toString()]);
-                }
-            }
             creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);
             switch (creep.memory.collected) {
                 case ERR_INVALID_TARGET:
@@ -72,6 +90,13 @@ const behavior = (creep) => {
                     changeMode(creep, "💪");
                     break;
                 case ERR_NOT_IN_RANGE:
+                    if (creep.memory.mode === "🛒") {
+                        const moved = moveMeTo(store);
+                        if (moved !== OK) {
+                            console.log(`${creep.name} ${util_creep_1.RETURN_CODE_DECODER[moved.toString()]}`);
+                            creep.say(util_creep_1.RETURN_CODE_DECODER[moved.toString()]);
+                        }
+                    }
                     break;
                 case ERR_NOT_OWNER:
                 case ERR_INVALID_ARGS:

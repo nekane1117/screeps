@@ -31,10 +31,15 @@ const behavior: StructureBehavior = (controller: Structure) => {
     });
     if (myContainer) {
       // 建設済みかつあれこれ足りてる時だけ作る
-      if (harvester.length > 0 && carrier.length > 0 && upgrader.length === 0 && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
-        const spawn = _(getSpawnsInRoom(controller.room))
-          .filter((s) => !s.spawning)
-          .first();
+      if (
+        !("progress" in myContainer) &&
+        harvester.length > 0 &&
+        carrier.length > 0 &&
+        upgrader.length === 0 &&
+        controller.room.energyAvailable === controller.room.energyCapacityAvailable
+      ) {
+        console.log("create upgrader");
+        const spawn = _(getSpawnsInRoom(controller.room)).find((s) => !s.spawning);
         if (spawn) {
           spawn.spawnCreep(getUpgraderBody(controller), `U_${controller.room.name}_${Game.time}`, {
             memory: {
@@ -71,6 +76,7 @@ function getUpgraderBody(c: StructureController): BodyPartConstant[] {
         return b[i % b.length];
       }),
     )
+    .slice(0, 50)
     .map((parts) => {
       total += BODYPART_COST[parts];
       return {

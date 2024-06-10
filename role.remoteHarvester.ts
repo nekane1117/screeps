@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, filterBodiesByCost, getCreepsInRoom, pickUpAll } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, filterBodiesByCost, getCreepsInRoom, pickUpAll, squareDiff } from "./util.creep";
 import { findMyStructures, getCapacityRate, getSitesInRoom, getSpawnsInRoom, isHighway, logUsage, readonly } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
@@ -10,8 +10,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   const checkMode = () => {
     const newMode: RemoteHarvesterMemory["mode"] = ((creep: RemoteHarvester) => {
-      if (creep.memory.mode === "👷" && getSitesInRoom(creep.room).length === 0) {
-        return "🚛";
+      if (creep.memory.mode === "👷" && (getSitesInRoom(creep.room).length === 0 || creep.store.energy < creep.getActiveBodyparts(WORK) * BUILD_POWER)) {
+        return "🌾";
       } else if (creep.store.energy === 0) {
         // 空になってたらとにかく収穫する
         return "🌾";
@@ -60,11 +60,15 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   harvest(creep);
 
   // 建設がなく道じゃないところを歩いてるときは道を敷く
-  if (getSitesInRoom(creep.room).length === 0) {
-    if (!isHighway(creep.room) && !creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD)) {
-      // 現在地に道が無ければ作らせる
-      creep.pos.createConstructionSite(STRUCTURE_ROAD);
-    }
+  if (
+    creep.memory.mode === "🚛" &&
+    creep.pos.roomName !== creep.memory.baseRoom &&
+    getSitesInRoom(creep.room).length === 0 &&
+    !isHighway(creep.room) &&
+    !creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD)
+  ) {
+    // 現在地に道が無ければ作らせる
+    creep.pos.createConstructionSite(STRUCTURE_ROAD);
   }
   // build
   build(creep);
@@ -103,6 +107,7 @@ function isRemoteHarvester(creep: Creep): creep is RemoteHarvester {
 function harvest(creep: RemoteHarvester) {
   const memory = readonly(creep.memory);
   const targetRoom = Game.rooms[memory.targetRoomName] as Room | undefined;
+  const { remoteHarvester = [] } = getCreepsInRoom(creep.room);
   // 部屋が取れるか
   if (targetRoom) {
     // FIND_HOSTILE_XXXをぜんぶやる
@@ -128,7 +133,23 @@ function harvest(creep: RemoteHarvester) {
       }
       if (!memory.harvestTargetId) {
         // イイ感じのSourceを取得する
-        creep.memory.harvestTargetId = _(targetRoom.find(FIND_SOURCES) || [])
+        creep.memory.harvestTargetId = _(
+          targetRoom.find(FIND_SOURCES, {
+            filter: (s) => {
+              // ８近傍で壁じゃないマス > このsourceを指定してるcreep
+              return (
+                squareDiff.filter(([dx, dy]) => {
+                  const pos = s.room.getPositionAt(s.pos.x + dx, s.pos.y + dy);
+                  if (!pos) {
+                    return false;
+                  }
+                  // 壁でなくてcreepが居ない場所
+                  return s.room.getTerrain().get(pos.x, pos.y) !== TERRAIN_MASK_WALL;
+                }).length > remoteHarvester.filter((c) => c.memory.harvestTargetId === s.id).length
+              );
+            },
+          }) || [],
+        )
           .sort((s1, s2) => {
             const getPriority = (s: Source) => {
               if (s.energy > 0) {
@@ -225,6 +246,15 @@ function harvest(creep: RemoteHarvester) {
 function build(creep: RemoteHarvester) {
   const memory = readonly(creep.memory);
 
+  if (creep.pos.roomName === creep.memory.baseRoom) {
+    if (creep.memory.mode === "👷") {
+      creep.memory.mode = "🌾";
+      creep.memory.route = undefined;
+      creep.memory.siteId = undefined;
+      creep.memory.storeId = undefined;
+    }
+    return OK;
+  }
   const sitesInroom = getSitesInRoom(creep.pos.roomName);
 
   // 運搬モードで建設予定地があるときは建設モードに切り替える
@@ -233,6 +263,10 @@ function build(creep: RemoteHarvester) {
     creep.memory.siteId = undefined;
     creep.say(creep.memory.mode);
   }
+  if (creep.store.energy < creep.getActiveBodyparts(WORK) * BUILD_POWER) {
+    return ERR_NOT_ENOUGH_ENERGY;
+  }
+
   // 最寄りの現場を探す
   if (!memory.siteId) {
     creep.memory.siteId = creep.pos.findClosestByPath(sitesInroom, { maxRooms: 0 })?.id;
@@ -333,7 +367,7 @@ function transfer(creep: RemoteHarvester) {
           targets.map((p) => p.pos),
           {
             plainCost: 2,
-            swampCost: 2,
+            swampCost: 10,
           },
         );
         // 失敗時は失敗を返す
@@ -359,10 +393,7 @@ function transfer(creep: RemoteHarvester) {
     (Object.keys(creep.store) as ResourceConstant[]).forEach((resourceType) => {
       if ((creep.memory.worked = creep.transfer(store, resourceType)) === ERR_NOT_IN_RANGE && memory.mode === "🚛") {
         // 範囲内でなくて収集モードの時は近寄る
-        return customMove(creep, store, {
-          plainCost: 2,
-          swampCost: 2,
-        });
+        return customMove(creep, store);
       } else {
         return creep.memory.worked;
       }

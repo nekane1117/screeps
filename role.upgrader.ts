@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, pickUpAll } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, getMainSpawn, pickUpAll } from "./util.creep";
 import { findMyStructures } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
@@ -25,6 +25,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   const { link, container } = findMyStructures(creep.room);
 
+  const links = link.filter((l) => {
+    const s = getMainSpawn(creep.room);
+    return !(s && l.pos.inRangeTo(s, 1));
+  });
   // https://docs.screeps.com/simultaneous-actions.html
 
   // signController
@@ -47,7 +51,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       break;
     case ERR_NOT_IN_RANGE:
       if (creep.memory.mode === "💪") {
-        moveMeTo(controller, { range: 3 });
+        moveMeTo(controller);
       }
       break;
     // 有りえない系
@@ -71,17 +75,33 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // withdraw
   if (
     creep.memory.storeId ||
-    (creep.memory.storeId = controller.pos.findClosestByRange(_.compact([...link, ...container, creep.room.storage, creep.room.terminal]))?.id)
+    (creep.memory.storeId = controller.pos.findClosestByRange(_.compact([...links, ...container]), {
+      filter: (s: Structure) => s.pos.inRangeTo(controller, 3),
+    })?.id) ||
+    (creep.memory.storeId = (() => {
+      if (creep.room.energyAvailable < creep.room.energyCapacityAvailable) {
+        return undefined;
+      } else {
+        return controller.pos.findClosestByRange(
+          _.compact([
+            ...links,
+            ...container,
+            ..._([creep.room.storage, creep.room.terminal])
+              .compact()
+              .filter((s) => s?.store.energy > creep.room.energyCapacityAvailable)
+              .value(),
+          ]),
+          {
+            filter: (s: StructureLink | StructureContainer | StructureStorage | StructureTerminal) => {
+              return s.store.energy > 0;
+            },
+          },
+        );
+      }
+    })()?.id)
   ) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
-      if (creep.memory.mode === "🛒") {
-        const moved = moveMeTo(store);
-        if (moved !== OK) {
-          console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`);
-          creep.say(RETURN_CODE_DECODER[moved.toString()]);
-        }
-      }
       creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);
       switch (creep.memory.collected) {
         case ERR_INVALID_TARGET: // 対象が変
@@ -93,6 +113,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           changeMode(creep, "💪");
           break;
         case ERR_NOT_IN_RANGE:
+          if (creep.memory.mode === "🛒") {
+            const moved = moveMeTo(store);
+            if (moved !== OK) {
+              console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`);
+              creep.say(RETURN_CODE_DECODER[moved.toString()]);
+            }
+          }
           break;
         // 有りえない系
         case ERR_NOT_OWNER:

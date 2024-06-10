@@ -15,6 +15,7 @@ const behavior = (creep) => {
         return console.log(`${creep.name} is not LabManager`);
     }
     function checkMode() {
+        var _a;
         if (!isLabManager(creep)) {
             return console.log(`${creep.name} is not LabManager`);
         }
@@ -28,7 +29,8 @@ const behavior = (creep) => {
             }
             creep.memory.transferId = undefined;
             if (newMode === "🚛") {
-                creep.room.memory.carrySize.carrier = (creep.room.memory.carrySize.carrier * 100 + creep.store.energy) / 101;
+                (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).labManager =
+                    ((((_a = creep.room.memory.carrySize) === null || _a === void 0 ? void 0 : _a.labManager) || 100) * 100 + creep.store.energy) / 101;
             }
         }
     }
@@ -86,8 +88,8 @@ const behavior = (creep) => {
     }
     if (!creep.memory.storeId && requesting.length > 0) {
         const target = _(requesting).find((lab) => {
-            if ((0, utils_1.getAvailableAmount)(terminal, lab.memory.expectedType) === 0) {
-                const SEND_UNIT = 1000;
+            const SEND_UNIT = 1000;
+            if ((0, utils_1.getAvailableAmount)(terminal, lab.memory.expectedType) < SEND_UNIT) {
                 const redundantTerminal = (0, utils_1.getTerminals)().find((t) => (0, utils_1.getAvailableAmount)(t, lab.memory.expectedType) > SEND_UNIT * 2);
                 if (redundantTerminal) {
                     redundantTerminal.send(lab.memory.expectedType, SEND_UNIT, terminal.room.name, `send ${lab.memory.expectedType} ${redundantTerminal.room.name} to ${terminal.room.name}`);

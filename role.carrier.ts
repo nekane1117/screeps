@@ -8,9 +8,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
     customMove(creep, target, {
       plainCost: 2,
-      swampCost: 2,
-      // 基本的にスタックしないし最強キャラなのでtrue
-      ignoreCreeps: true,
       ...opt,
     });
   };
@@ -47,7 +44,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
       // 運搬モードに切り替えたときの容量を記憶する
       if (newMode === "🚛") {
-        creep.room.memory.carrySize.carrier = (creep.room.memory.carrySize.carrier * 100 + creep.store.energy) / 101;
+        (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).carrier =
+          ((creep.room.memory.carrySize?.carrier || 100) * 100 + creep.store.energy) / 101;
       }
     }
   }
@@ -113,9 +111,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // それすらないときはharvesterに寄っておく
   if (!creep.memory.storeId) {
-    const harvester = creep.pos.findClosestByRange(getCreepsInRoom(creep.room).harvester || [], { filter: (c: Harvester) => c.store.energy > 0 });
-    if (harvester) {
-      moveMeTo(harvester, { range: 1 });
+    const storageOrHarvester =
+      creep.room.storage || creep.pos.findClosestByRange(getCreepsInRoom(creep.room).harvester || [], { filter: (c: Harvester) => c.store.energy > 0 });
+    if (storageOrHarvester && !creep.pos.isNearTo(storageOrHarvester)) {
+      moveMeTo(storageOrHarvester, { range: 1 });
     }
   }
 
@@ -160,7 +159,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
-  // 輸送先設定処理###############################################################################################
+  // #region 輸送先設定処理###############################################################################################
 
   // 輸送先が満タンになってたら消す
   if (creep.memory.transferId) {
@@ -218,16 +217,17 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // 貯蓄
   if (!creep.memory.transferId) {
-    creep.memory.transferId = spawn.pos.findClosestByRange(_.compact([...link, room.storage, room.terminal]), {
-      filter: (s: StructureSpawn | StructureExtension) => {
-        return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
-      },
-    })?.id;
+    creep.memory.transferId = _([room.storage, room.terminal])
+      .compact()
+      .sortBy((s) => s.store.energy)
+      .first()?.id;
   }
   // それでも見つからないとき
   if (!creep.memory.transferId) {
     return ERR_NOT_FOUND;
   }
+
+  //#endregion 輸送先設定処理################################################
 
   if (creep.memory.transferId && creep.memory.mode === "🚛") {
     const transferTarget = Game.getObjectById(creep.memory.transferId);

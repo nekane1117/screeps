@@ -96,7 +96,7 @@ exports.IDEAL_BODY = Object.freeze({
         WORK,
         MOVE,
         ..._.range(50).map((i) => {
-            const b = [MOVE, CARRY, RANGED_ATTACK, MOVE, ATTACK, MOVE];
+            const b = [MOVE, CARRY];
             return b[i % b.length];
         }),
     ].slice(0, 50),
@@ -164,7 +164,7 @@ const customMove = (creep, target, opt) => {
     if (creep.fatigue) {
         return OK;
     }
-    creep.memory.moved = creep.moveTo(target, Object.assign(Object.assign({ plainCost: 2, serializeMemory: false, ignoreCreeps: !creep.pos.inRangeTo(target, DEFAULT_CREEP_RANGE[creep.memory.role] + 2) }, opt), { visualizePathStyle: Object.assign({ opacity: 0.55, stroke: toColor(creep) }, opt === null || opt === void 0 ? void 0 : opt.visualizePathStyle) }));
+    creep.memory.moved = creep.moveTo(target, Object.assign(Object.assign({ plainCost: 2, swampCost: 10, serializeMemory: false, ignoreCreeps: !creep.pos.inRangeTo(target, DEFAULT_CREEP_RANGE[creep.memory.role] + 2) }, opt), { visualizePathStyle: Object.assign({ opacity: 0.55, stroke: toColor(creep) }, opt === null || opt === void 0 ? void 0 : opt.visualizePathStyle) }));
     if (creep.memory.moved === OK && Game.time % 3) {
         const { dy, dx } = ((_b = (_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b[0]) || {};
         const isInRange = (n) => {
@@ -175,6 +175,7 @@ const customMove = (creep, target, opt) => {
             if (blocker && blocker.memory.moved !== OK) {
                 const pull = creep.pull(blocker);
                 const move = blocker.move(creep);
+                creep.memory._move = undefined;
                 blocker.memory._move = undefined;
                 (pull || move) &&
                     console.log(JSON.stringify({ name: creep.name, pull: exports.RETURN_CODE_DECODER[pull.toString()], move: exports.RETURN_CODE_DECODER[move.toString()] }));
@@ -281,11 +282,13 @@ function moveRoom(creep, fromRoom, toRoom) {
 }
 exports.moveRoom = moveRoom;
 function getCarrierBody(room, role) {
+    var _a;
     const safetyFactor = 2;
     const bodyCycle = [MOVE, CARRY, CARRY];
     let costTotal = 0;
-    const avgSize = room.memory.carrySize[role];
+    const avgSize = ((_a = room.memory.carrySize) === null || _a === void 0 ? void 0 : _a[role]) || 100;
     return _.range(Math.ceil(avgSize / 50) * safetyFactor * 1.5)
+        .slice(0, 50)
         .map((i) => {
         const parts = bodyCycle[i % bodyCycle.length];
         costTotal += BODYPART_COST[parts];

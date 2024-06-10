@@ -134,9 +134,9 @@ declare interface RoomMemory {
   remote?: string[];
 
   /** Measure carry size */
-  carrySize: {
+  carrySize?: Partial<{
     [r in ROLES]: number;
-  };
+  }>;
   roadMap: number[];
 }
 
@@ -195,7 +195,7 @@ declare interface BuilderMemory extends CreepMemory {
   firstAidId?: Id<Parameters<Creep["repair"]>[0]>;
   built?: ReturnType<Creeps["build"]>;
   /** 資源をもらいに行く先 */
-  storeId?: Id<Parameters<Creep["withdraw"]>[0]>;
+  storeId?: Id<StructureContainer | StructureStorage | StructureTerminal>;
 }
 
 declare interface Carrier extends Creep {

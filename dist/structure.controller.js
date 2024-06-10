@@ -26,10 +26,13 @@ const behavior = (controller) => {
             filter: (s) => controller.pos.inRangeTo(s, 3),
         });
         if (myContainer) {
-            if (harvester.length > 0 && carrier.length > 0 && upgrader.length === 0 && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
-                const spawn = _((0, utils_1.getSpawnsInRoom)(controller.room))
-                    .filter((s) => !s.spawning)
-                    .first();
+            if (!("progress" in myContainer) &&
+                harvester.length > 0 &&
+                carrier.length > 0 &&
+                upgrader.length === 0 &&
+                controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
+                console.log("create upgrader");
+                const spawn = _((0, utils_1.getSpawnsInRoom)(controller.room)).find((s) => !s.spawning);
                 if (spawn) {
                     spawn.spawnCreep(getUpgraderBody(controller), `U_${controller.room.name}_${Game.time}`, {
                         memory: {
@@ -61,6 +64,7 @@ function getUpgraderBody(c) {
         .concat(..._.range(50).map((i) => {
         return b[i % b.length];
     }))
+        .slice(0, 50)
         .map((parts) => {
         total += BODYPART_COST[parts];
         return {

@@ -17,7 +17,7 @@ const behavior = (creep) => {
     creep.memory.worked = creep.harvest(source);
     switch (creep.memory.worked) {
         case ERR_NOT_IN_RANGE:
-            (0, util_creep_1.customMove)(creep, source);
+            (0, util_creep_1.customMove)(creep, source, { ignoreCreeps: true });
             break;
         case ERR_INVALID_TARGET:
         case ERR_NOT_OWNER:

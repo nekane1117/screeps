@@ -6,12 +6,13 @@ const behavior = (creep) => {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
     const { room } = creep;
     const moveMeTo = (target, opt) => {
-        (0, util_creep_1.customMove)(creep, target, Object.assign({ plainCost: 2, swampCost: 2, ignoreCreeps: true }, opt));
+        (0, util_creep_1.customMove)(creep, target, Object.assign({ plainCost: 2 }, opt));
     };
     if (!isCarrier(creep)) {
         return console.log(`${creep.name} is not Carrier`);
     }
     function checkMode() {
+        var _a;
         if (!isCarrier(creep)) {
             return console.log(`${creep.name} is not Carrier`);
         }
@@ -32,7 +33,8 @@ const behavior = (creep) => {
             }
             creep.memory.transferId = undefined;
             if (newMode === "🚛") {
-                creep.room.memory.carrySize.carrier = (creep.room.memory.carrySize.carrier * 100 + creep.store.energy) / 101;
+                (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).carrier =
+                    ((((_a = creep.room.memory.carrySize) === null || _a === void 0 ? void 0 : _a.carrier) || 100) * 100 + creep.store.energy) / 101;
             }
         }
     }
@@ -80,9 +82,9 @@ const behavior = (creep) => {
         })) === null || _f === void 0 ? void 0 : _f.id;
     }
     if (!creep.memory.storeId) {
-        const harvester = creep.pos.findClosestByRange((0, util_creep_1.getCreepsInRoom)(creep.room).harvester || [], { filter: (c) => c.store.energy > 0 });
-        if (harvester) {
-            moveMeTo(harvester, { range: 1 });
+        const storageOrHarvester = creep.room.storage || creep.pos.findClosestByRange((0, util_creep_1.getCreepsInRoom)(creep.room).harvester || [], { filter: (c) => c.store.energy > 0 });
+        if (storageOrHarvester && !creep.pos.isNearTo(storageOrHarvester)) {
+            moveMeTo(storageOrHarvester, { range: 1 });
         }
     }
     if (creep.memory.storeId && creep.memory.mode === "🛒") {
@@ -156,11 +158,10 @@ const behavior = (creep) => {
         creep.memory.transferId = (_k = (controllerContaeiner && (0, utils_1.getCapacityRate)(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined)) === null || _k === void 0 ? void 0 : _k.id;
     }
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_l = spawn.pos.findClosestByRange(_.compact([...link, room.storage, room.terminal]), {
-            filter: (s) => {
-                return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
-            },
-        })) === null || _l === void 0 ? void 0 : _l.id;
+        creep.memory.transferId = (_l = _([room.storage, room.terminal])
+            .compact()
+            .sortBy((s) => s.store.energy)
+            .first()) === null || _l === void 0 ? void 0 : _l.id;
     }
     if (!creep.memory.transferId) {
         return ERR_NOT_FOUND;

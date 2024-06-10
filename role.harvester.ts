@@ -28,7 +28,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   creep.memory.worked = creep.harvest(source);
   switch (creep.memory.worked) {
     case ERR_NOT_IN_RANGE:
-      customMove(creep, source);
+      customMove(creep, source, { ignoreCreeps: true });
       break;
     // 来ないはずのやつ
     case ERR_INVALID_TARGET: // 対象が変

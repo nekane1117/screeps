@@ -41,7 +41,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.memory.transferId = undefined;
       // 運搬モードに切り替えたときの容量を記憶する
       if (newMode === "🚛") {
-        creep.room.memory.carrySize.mineralCarrier = (creep.room.memory.carrySize.mineralCarrier * 100 + creep.store[mineral.mineralType]) / 101;
+        (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).mineralCarrier =
+          ((creep.room.memory.carrySize?.mineralCarrier || 100) * 100 + creep.store.energy) / 101;
       }
     }
   }

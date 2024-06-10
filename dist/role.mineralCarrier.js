@@ -12,6 +12,7 @@ const behavior = (creep) => {
     }
     const mineral = creep.room.find(FIND_MINERALS)[0];
     function checkMode() {
+        var _a;
         if (!isMc(creep)) {
             return console.log(`${creep.name} is not MineralCarrier`);
         }
@@ -32,7 +33,8 @@ const behavior = (creep) => {
             }
             creep.memory.transferId = undefined;
             if (newMode === "🚛") {
-                creep.room.memory.carrySize.mineralCarrier = (creep.room.memory.carrySize.mineralCarrier * 100 + creep.store[mineral.mineralType]) / 101;
+                (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).mineralCarrier =
+                    ((((_a = creep.room.memory.carrySize) === null || _a === void 0 ? void 0 : _a.mineralCarrier) || 100) * 100 + creep.store.energy) / 101;
             }
         }
     }

@@ -38,7 +38,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.memory.transferId = undefined;
       // 運搬モードに切り替えたときの容量を記憶する
       if (newMode === "🚛") {
-        creep.room.memory.carrySize.carrier = (creep.room.memory.carrySize.carrier * 100 + creep.store.energy) / 101;
+        (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).labManager =
+          ((creep.room.memory.carrySize?.labManager || 100) * 100 + creep.store.energy) / 101;
       }
     }
   }
@@ -116,8 +117,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!creep.memory.storeId && requesting.length > 0) {
     const target = _(requesting).find((lab) => {
       // 指定のミネラルが無いとき
-      if (getAvailableAmount(terminal, lab.memory.expectedType) === 0) {
-        const SEND_UNIT = 1000;
+      const SEND_UNIT = 1000;
+      if (getAvailableAmount(terminal, lab.memory.expectedType) < SEND_UNIT) {
         // 基準値の倍以上あるターミナル
         const redundantTerminal = getTerminals().find((t) => getAvailableAmount(t, lab.memory.expectedType) > SEND_UNIT * 2);
         if (redundantTerminal) {

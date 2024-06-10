@@ -77,7 +77,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     if (spawn) {
       const pos = _(
         mineral.pos.findPathTo(spawn, {
-          swampCost: 2,
+          swampCost: 10,
           plainCost: 2,
         }),
       ).run()[1];
