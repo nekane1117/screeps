@@ -39,8 +39,8 @@ const behavior = (creep) => {
         }
     }
     checkMode();
-    const spawn = (0, util_creep_1.getMainSpawn)(room);
-    if (!spawn) {
+    const mainSpawn = (0, util_creep_1.getMainSpawn)(room);
+    if (!mainSpawn) {
         return creep.say("spawn not found");
     }
     const { extension, spawn: spawns, link, tower, container: containers, lab: labs } = (0, utils_1.findMyStructures)(room);
@@ -53,7 +53,7 @@ const behavior = (creep) => {
     }
     if (!creep.memory.storeId) {
         creep.memory.storeId = (_a = (() => {
-            const extructor = spawn.pos.findClosestByRange(link);
+            const extructor = mainSpawn.pos.findClosestByRange(link);
             return extructor && extructor.store.energy >= CARRY_CAPACITY ? extructor : undefined;
         })()) === null || _a === void 0 ? void 0 : _a.id;
     }
@@ -130,10 +130,17 @@ const behavior = (creep) => {
         .compact()
         .every((g) => { var _a; return ((_a = g === null || g === void 0 ? void 0 : g.memory) === null || _a === void 0 ? void 0 : _a.transferId) !== id; });
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_g = _([...extension, ...spawns])
-            .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY))
-            .sortBy((s) => s.pos.y)
-            .first()) === null || _g === void 0 ? void 0 : _g.id;
+        const targets = _([...extension, ...spawns]).filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY));
+        const min = targets
+            .map((e) => {
+            return Math.atan2(e.pos.x - mainSpawn.pos.x, e.pos.y - mainSpawn.pos.y);
+        })
+            .min();
+        creep.memory.transferId = (_g = creep.pos.findClosestByRange(targets
+            .filter((s) => {
+            return Math.atan2(s.pos.x - mainSpawn.pos.x, s.pos.y - mainSpawn.pos.y) <= min;
+        })
+            .value())) === null || _g === void 0 ? void 0 : _g.id;
     }
     if (!creep.memory.transferId) {
         creep.memory.transferId = (_h = creep.pos.findClosestByRange(tower, {

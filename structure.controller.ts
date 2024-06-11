@@ -33,6 +33,7 @@ const behavior: StructureBehavior = (controller: Structure) => {
       // 建設済みかつあれこれ足りてる時だけ作る
       if (
         !("progress" in myContainer) &&
+        myContainer.store.getFreeCapacity(RESOURCE_ENERGY) === 0 &&
         harvester.length > 0 &&
         carrier.length > 0 &&
         upgrader.length === 0 &&

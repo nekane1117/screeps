@@ -50,8 +50,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
   checkMode();
-  const spawn = getMainSpawn(room);
-  if (!spawn) {
+  const mainSpawn = getMainSpawn(room);
+  if (!mainSpawn) {
     return creep.say("spawn not found");
   }
   // https://docs.screeps.com/simultaneous-actions.html
@@ -72,7 +72,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!creep.memory.storeId) {
     // つっかえちゃうので取り出しようlinkは優先的に取り出す
     creep.memory.storeId = (() => {
-      const extructor = spawn.pos.findClosestByRange(link);
+      const extructor = mainSpawn.pos.findClosestByRange(link);
       return extructor && extructor.store.energy >= CARRY_CAPACITY ? extructor : undefined;
     })()?.id;
   }
@@ -178,10 +178,20 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   //spawnかextension
   if (!creep.memory.transferId) {
     // 上から順番に詰める
-    creep.memory.transferId = _([...extension, ...spawns])
-      .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY))
-      .sortBy((s) => s.pos.y)
-      .first()?.id;
+    const targets = _([...extension, ...spawns]).filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY));
+    const min = targets
+      .map((e) => {
+        return Math.atan2(e.pos.x - mainSpawn.pos.x, e.pos.y - mainSpawn.pos.y);
+      })
+      .min();
+
+    creep.memory.transferId = creep.pos.findClosestByRange(
+      targets
+        .filter((s) => {
+          return Math.atan2(s.pos.x - mainSpawn.pos.x, s.pos.y - mainSpawn.pos.y) <= min;
+        })
+        .value(),
+    )?.id;
   }
 
   // タワーに入れて修理や防御

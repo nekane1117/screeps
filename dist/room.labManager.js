@@ -25,7 +25,7 @@ function behavior(labs, mineral) {
     if (firstLab.room.terminal &&
         firstLab.room.terminal.store.energy > firstLab.room.energyCapacityAvailable &&
         firstLab.room.energyAvailable === firstLab.room.energyCapacityAvailable &&
-        labManager.filter((lm) => lm.ticksToLive && lm.ticksToLive > bodies.length * CREEP_SPAWN_TIME).length === 0) {
+        labManager.filter((lm) => (lm.ticksToLive || Infinity) > bodies.length * CREEP_SPAWN_TIME).length === 0) {
         const spawn = (_a = (0, utils_1.getSpawnsInRoom)(firstLab.pos.roomName)) === null || _a === void 0 ? void 0 : _a.find((s) => !s.spawning);
         if (spawn) {
             spawn.spawnCreep(bodies, `Lm_${firstLab.room.name}_${Game.time}`, {

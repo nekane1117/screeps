@@ -358,7 +358,7 @@ function transfer(creep: RemoteHarvester) {
     if (!memory.storeId) {
       // イイ感じの倉庫を取得する
       creep.memory.storeId = logUsage("search remote container", () => {
-        const targets = [...filtedContainers, ...spawn, ...extension, ...storage, ...link, ...terminal].filter(
+        const targets = _.compact([...filtedContainers, ...spawn, ...extension, ...storage, ...link, ...terminal]).filter(
           (s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
         );
 
@@ -377,7 +377,7 @@ function transfer(creep: RemoteHarvester) {
 
         const goal = _(result.path).last();
         return targets.find((t) => {
-          return t.pos.x === goal.x && t.pos.y === goal.y && t.pos.roomName === goal.roomName;
+          return goal && t.pos.x === goal.x && t.pos.y === goal.y && t.pos.roomName === goal.roomName;
         });
       })?.id;
       // それでもないときは無いはずだけど終わる

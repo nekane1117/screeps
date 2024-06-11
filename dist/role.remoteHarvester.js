@@ -280,7 +280,7 @@ function transfer(creep) {
         const filtedContainers = container.filter((s) => s.pos.findInRange(FIND_MINERALS, 3).length === 0);
         if (!memory.storeId) {
             creep.memory.storeId = (_b = (0, utils_1.logUsage)("search remote container", () => {
-                const targets = [...filtedContainers, ...spawn, ...extension, ...storage, ...link, ...terminal].filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
+                const targets = _.compact([...filtedContainers, ...spawn, ...extension, ...storage, ...link, ...terminal]).filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
                 const result = PathFinder.search(creep.pos, targets.map((p) => p.pos), {
                     plainCost: 2,
                     swampCost: 10,
@@ -290,7 +290,7 @@ function transfer(creep) {
                 }
                 const goal = _(result.path).last();
                 return targets.find((t) => {
-                    return t.pos.x === goal.x && t.pos.y === goal.y && t.pos.roomName === goal.roomName;
+                    return goal && t.pos.x === goal.x && t.pos.y === goal.y && t.pos.roomName === goal.roomName;
                 });
             })) === null || _b === void 0 ? void 0 : _b.id;
         }

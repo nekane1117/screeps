@@ -35,7 +35,7 @@ export default function behavior(labs: StructureLab[], mineral: Mineral) {
     firstLab.room.terminal &&
     firstLab.room.terminal.store.energy > firstLab.room.energyCapacityAvailable &&
     firstLab.room.energyAvailable === firstLab.room.energyCapacityAvailable &&
-    labManager.filter((lm) => lm.ticksToLive && lm.ticksToLive > bodies.length * CREEP_SPAWN_TIME).length === 0
+    labManager.filter((lm) => (lm.ticksToLive || Infinity) > bodies.length * CREEP_SPAWN_TIME).length === 0
   ) {
     const spawn = getSpawnsInRoom(firstLab.pos.roomName)?.find((s) => !s.spawning);
     if (spawn) {
