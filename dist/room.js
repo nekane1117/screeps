@@ -168,7 +168,7 @@ function creteStructures(room) {
             }
             return;
         }
-        for (const target of staticStructures) {
+        for (const target of staticStructures.filter((s) => (0, utils_1.findMyStructures)(room)[s].length === 0)) {
             const targets = (0, utils_1.findMyStructures)(room)[target];
             if (CONTROLLER_STRUCTURES[target][room.controller.level] > 0 &&
                 spawn.pos.findInRange(targets, 1).length === 0 &&

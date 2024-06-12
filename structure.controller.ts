@@ -1,5 +1,5 @@
 import { StructureBehavior } from "./structures";
-import { getCreepsInRoom, getMainSpawn } from "./util.creep";
+import { filterBodiesByCost, getCreepsInRoom, getMainSpawn } from "./util.creep";
 import { findMyStructures, getSitesInRoom, getSpawnsInRoom } from "./utils";
 
 const behavior: StructureBehavior = (controller: Structure) => {
@@ -42,7 +42,7 @@ const behavior: StructureBehavior = (controller: Structure) => {
         console.log("create upgrader");
         const spawn = _(getSpawnsInRoom(controller.room)).find((s) => !s.spawning);
         if (spawn) {
-          spawn.spawnCreep(getUpgraderBody(controller), `U_${controller.room.name}_${Game.time}`, {
+          spawn.spawnCreep(filterBodiesByCost("upgrader", controller.room.energyAvailable).bodies, `U_${controller.room.name}_${Game.time}`, {
             memory: {
               baseRoom: controller.room.name,
               mode: "🛒",
@@ -65,28 +65,4 @@ const behavior: StructureBehavior = (controller: Structure) => {
 export default behavior;
 function isC(s: Structure): s is StructureController {
   return s.structureType === STRUCTURE_CONTROLLER;
-}
-
-function getUpgraderBody(c: StructureController): BodyPartConstant[] {
-  const b: BodyPartConstant[] = [WORK, WORK, WORK, MOVE];
-  let total = 0;
-  // 移動効率は低めで作業効率高く
-  return ([WORK, MOVE, CARRY, WORK] as BodyPartConstant[])
-    .concat(
-      ..._.range(50).map((i) => {
-        return b[i % b.length];
-      }),
-    )
-    .slice(0, 50)
-    .map((parts) => {
-      total += BODYPART_COST[parts];
-      return {
-        parts,
-        total,
-      };
-    })
-    .filter((i) => {
-      return i.total <= c.room.energyAvailable;
-    })
-    .map((i) => i.parts);
 }

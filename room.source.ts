@@ -3,7 +3,9 @@ import { findMyStructures, getSpawnsInRoom } from "./utils";
 
 export function behavior(source: Source) {
   const harvesters = Object.values(Game.creeps).filter((c): c is Harvester => {
-    return isH(c) && c.memory.harvestTargetId === source.id && (c?.ticksToLive || 0) > filterBodiesByCost("harvester", 10000).bodies.length * CREEP_SPAWN_TIME;
+    return (
+      isH(c) && c.memory.harvestTargetId === source.id && (c?.ticksToLive || Infinity) > filterBodiesByCost("harvester", 10000).bodies.length * CREEP_SPAWN_TIME
+    );
   });
 
   // 最大匹数より少なく、WORKのパーツが5未満の時

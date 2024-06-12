@@ -67,17 +67,7 @@ exports.IDEAL_BODY = Object.freeze({
     }))
         .slice(0, 50),
     claimer: [CLAIM, MOVE],
-    reserver: _.range(50).map((i) => {
-        const bodies = (() => {
-            if (i < 4) {
-                return [CLAIM, MOVE];
-            }
-            else {
-                return [RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, HEAL, MOVE];
-            }
-        })();
-        return bodies[i % bodies.length];
-    }),
+    reserver: [CLAIM, MOVE, CLAIM, MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, HEAL, MOVE],
     remoteHarvester: [
         WORK,
         MOVE,
@@ -100,12 +90,7 @@ exports.IDEAL_BODY = Object.freeze({
             return b[i % b.length];
         }),
     ].slice(0, 50),
-    carrier: []
-        .concat(..._.range(12).map((i) => {
-        const b = [MOVE, CARRY];
-        return b[i % b.length];
-    }))
-        .slice(0, 50),
+    carrier: [],
     labManager: [MOVE, CARRY, CARRY],
     defender: _.range(50).map((i) => {
         const b = [MOVE, RANGED_ATTACK, RANGED_ATTACK, MOVE, HEAL, HEAL, MOVE, TOUGH, ATTACK];
@@ -140,7 +125,7 @@ exports.IDEAL_BODY = Object.freeze({
             .flatten()
             .run(),
     ],
-    upgrader: [],
+    upgrader: [WORK, MOVE, CARRY, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE],
 });
 exports.RETURN_CODE_DECODER = Object.freeze({
     [OK.toString()]: "OK",
@@ -284,13 +269,13 @@ exports.moveRoom = moveRoom;
 function getCarrierBody(room, role) {
     var _a;
     const safetyFactor = 2;
-    const bodyCycle = [MOVE, CARRY, CARRY];
+    const bodyCycle = [CARRY, MOVE, CARRY];
     let costTotal = 0;
     const avgSize = ((_a = room.memory.carrySize) === null || _a === void 0 ? void 0 : _a[role]) || 100;
     return _.range(Math.ceil(avgSize / 50) * safetyFactor * 1.5)
         .slice(0, 50)
         .map((i) => {
-        const parts = bodyCycle[i % bodyCycle.length];
+        const parts = i === 0 ? WORK : bodyCycle[i % bodyCycle.length];
         costTotal += BODYPART_COST[parts];
         return { parts, costTotal };
     })

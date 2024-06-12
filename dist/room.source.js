@@ -5,7 +5,7 @@ const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 function behavior(source) {
     const harvesters = Object.values(Game.creeps).filter((c) => {
-        return isH(c) && c.memory.harvestTargetId === source.id && ((c === null || c === void 0 ? void 0 : c.ticksToLive) || 0) > (0, util_creep_1.filterBodiesByCost)("harvester", 10000).bodies.length * CREEP_SPAWN_TIME;
+        return (isH(c) && c.memory.harvestTargetId === source.id && ((c === null || c === void 0 ? void 0 : c.ticksToLive) || Infinity) > (0, util_creep_1.filterBodiesByCost)("harvester", 10000).bodies.length * CREEP_SPAWN_TIME);
     });
     if (harvesters.length < 1 &&
         _(harvesters)

@@ -209,7 +209,7 @@ function creteStructures(room: Room) {
       return;
     }
 
-    for (const target of staticStructures) {
+    for (const target of staticStructures.filter((s) => findMyStructures(room)[s].length === 0)) {
       const targets = findMyStructures(room)[target] as _HasRoomPosition[];
 
       // 対象を扱えて隣にない時

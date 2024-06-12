@@ -35,7 +35,7 @@ const behavior = (controller) => {
                 console.log("create upgrader");
                 const spawn = _((0, utils_1.getSpawnsInRoom)(controller.room)).find((s) => !s.spawning);
                 if (spawn) {
-                    spawn.spawnCreep(getUpgraderBody(controller), `U_${controller.room.name}_${Game.time}`, {
+                    spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("upgrader", controller.room.energyAvailable).bodies, `U_${controller.room.name}_${Game.time}`, {
                         memory: {
                             baseRoom: controller.room.name,
                             mode: "🛒",
@@ -57,24 +57,4 @@ const behavior = (controller) => {
 exports.default = behavior;
 function isC(s) {
     return s.structureType === STRUCTURE_CONTROLLER;
-}
-function getUpgraderBody(c) {
-    const b = [WORK, WORK, WORK, MOVE];
-    let total = 0;
-    return [WORK, MOVE, CARRY, WORK]
-        .concat(..._.range(50).map((i) => {
-        return b[i % b.length];
-    }))
-        .slice(0, 50)
-        .map((parts) => {
-        total += BODYPART_COST[parts];
-        return {
-            parts,
-            total,
-        };
-    })
-        .filter((i) => {
-        return i.total <= c.room.energyAvailable;
-    })
-        .map((i) => i.parts);
 }

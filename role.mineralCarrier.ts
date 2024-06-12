@@ -23,7 +23,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         return "🛒";
       }
 
-      if (c.memory.mode === "🛒" && creep.store.getUsedCapacity() > CARRY_CAPACITY) {
+      if (c.memory.mode === "🛒" && creep.store.getUsedCapacity() >= CARRY_CAPACITY) {
         // 収集モードで50超えたら作業モードにする
         return "🚛";
       }

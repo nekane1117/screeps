@@ -20,7 +20,7 @@ const behavior = (creep) => {
             if (c.memory.mode === "🚛" && creep.store.getUsedCapacity() === 0) {
                 return "🛒";
             }
-            if (c.memory.mode === "🛒" && creep.store.getUsedCapacity() > CARRY_CAPACITY) {
+            if (c.memory.mode === "🛒" && creep.store.getUsedCapacity() >= CARRY_CAPACITY) {
                 return "🚛";
             }
             return c.memory.mode;

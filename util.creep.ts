@@ -73,16 +73,7 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
     )
     .slice(0, 50),
   claimer: [CLAIM, MOVE],
-  reserver: _.range(50).map((i) => {
-    const bodies = (() => {
-      if (i < 4) {
-        return [CLAIM, MOVE];
-      } else {
-        return [RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, HEAL, MOVE];
-      }
-    })();
-    return bodies[i % bodies.length];
-  }),
+  reserver: [CLAIM, MOVE, CLAIM, MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, HEAL, MOVE],
   remoteHarvester: [
     // 最低構成
     WORK,
@@ -109,14 +100,7 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       return b[i % b.length];
     }),
   ].slice(0, 50),
-  carrier: ([] as BodyPartConstant[])
-    .concat(
-      ..._.range(12).map((i) => {
-        const b = [MOVE, CARRY];
-        return b[i % b.length];
-      }),
-    )
-    .slice(0, 50),
+  carrier: [],
   labManager: [MOVE, CARRY, CARRY],
   defender: _.range(50).map((i) => {
     const b = [MOVE, RANGED_ATTACK, RANGED_ATTACK, MOVE, HEAL, HEAL, MOVE, TOUGH, ATTACK];
@@ -161,7 +145,7 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       .flatten<BodyPartConstant>()
       .run(),
   ],
-  upgrader: [],
+  upgrader: [WORK, MOVE, CARRY, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE],
 });
 
 export const RETURN_CODE_DECODER = Object.freeze({
@@ -343,7 +327,7 @@ export function moveRoom(creep: Creeps, fromRoom: string, toRoom: string) {
 export function getCarrierBody(room: Room, role: ROLES): BodyPartConstant[] {
   const safetyFactor = 2;
 
-  const bodyCycle: BodyPartConstant[] = [MOVE, CARRY, CARRY];
+  const bodyCycle: BodyPartConstant[] = [CARRY, MOVE, CARRY];
   let costTotal = 0;
   const avgSize = room.memory.carrySize?.[role] || 100;
   // 個数 (÷50の切り上げ)
@@ -352,7 +336,7 @@ export function getCarrierBody(room: Room, role: ROLES): BodyPartConstant[] {
   return _.range(Math.ceil(avgSize / 50) * safetyFactor * 1.5)
     .slice(0, 50)
     .map((i) => {
-      const parts = bodyCycle[i % bodyCycle.length];
+      const parts = i === 0 ? WORK : bodyCycle[i % bodyCycle.length];
       costTotal += BODYPART_COST[parts];
       return { parts, costTotal };
     })

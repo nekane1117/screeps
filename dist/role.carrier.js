@@ -6,7 +6,7 @@ const behavior = (creep) => {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
     const { room } = creep;
     const moveMeTo = (target, opt) => {
-        (0, util_creep_1.customMove)(creep, target, Object.assign({ plainCost: 2 }, opt));
+        (0, util_creep_1.customMove)(creep, target, Object.assign({ plainCost: 2, swampCost: 2, ignoreCreeps: true }, opt));
     };
     if (!isCarrier(creep)) {
         return console.log(`${creep.name} is not Carrier`);
@@ -82,7 +82,9 @@ const behavior = (creep) => {
         })) === null || _f === void 0 ? void 0 : _f.id;
     }
     if (!creep.memory.storeId) {
-        const storageOrHarvester = creep.room.storage || creep.pos.findClosestByRange((0, util_creep_1.getCreepsInRoom)(creep.room).harvester || [], { filter: (c) => c.store.energy > 0 });
+        const storageOrHarvester = creep.room.storage ||
+            creep.room.terminal ||
+            creep.pos.findClosestByRange((0, util_creep_1.getCreepsInRoom)(creep.room).harvester || [], { filter: (c) => c.store.energy > 0 });
         if (storageOrHarvester && !creep.pos.isNearTo(storageOrHarvester)) {
             moveMeTo(storageOrHarvester, { range: 1 });
         }
@@ -162,7 +164,7 @@ const behavior = (creep) => {
         creep.memory.transferId = room.terminal.id;
     }
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_k = (controllerContaeiner && (0, utils_1.getCapacityRate)(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined)) === null || _k === void 0 ? void 0 : _k.id;
+        creep.memory.transferId = (_k = (controllerContaeiner && (0, utils_1.getCapacityRate)(controllerContaeiner) < 1 ? controllerContaeiner : undefined)) === null || _k === void 0 ? void 0 : _k.id;
     }
     if (!creep.memory.transferId) {
         creep.memory.transferId = (_l = _([room.storage, room.terminal])

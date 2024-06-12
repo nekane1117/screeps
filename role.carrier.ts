@@ -8,6 +8,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
     customMove(creep, target, {
       plainCost: 2,
+      swampCost: 2,
+      ignoreCreeps: true,
       ...opt,
     });
   };
@@ -112,7 +114,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // それすらないときはharvesterに寄っておく
   if (!creep.memory.storeId) {
     const storageOrHarvester =
-      creep.room.storage || creep.pos.findClosestByRange(getCreepsInRoom(creep.room).harvester || [], { filter: (c: Harvester) => c.store.energy > 0 });
+      creep.room.storage ||
+      creep.room.terminal ||
+      creep.pos.findClosestByRange(getCreepsInRoom(creep.room).harvester || [], { filter: (c: Harvester) => c.store.energy > 0 });
     if (storageOrHarvester && !creep.pos.isNearTo(storageOrHarvester)) {
       moveMeTo(storageOrHarvester, { range: 1 });
     }
@@ -222,7 +226,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // コントローラー強化
   if (!creep.memory.transferId) {
-    creep.memory.transferId = (controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : undefined)?.id;
+    creep.memory.transferId = (controllerContaeiner && getCapacityRate(controllerContaeiner) < 1 ? controllerContaeiner : undefined)?.id;
   }
 
   // 貯蓄
