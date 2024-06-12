@@ -29,7 +29,7 @@ function roomBehavior(room) {
             upgrader: 100,
         };
     }
-    const { builder = [], carrier: carriers = [], harvester = [], remoteHarvester = [], reserver = [] } = (0, util_creep_1.getCreepsInRoom)(room);
+    const { builder = [], carrier: carriers = [], harvester = [], remoteCarrier = [], remoteHarvester = [], reserver = [] } = (0, util_creep_1.getCreepsInRoom)(room);
     updateRoadMap(room);
     const { lab, link, source, } = (0, utils_1.findMyStructures)(room);
     source.forEach((s) => (0, room_source_1.behavior)(s));
@@ -144,13 +144,33 @@ function roomBehavior(room) {
                 }
             }
         }
+        _((0, util_creep_1.getCarrierBody)(room, "remoteCarrier"))
+            .tap((body) => {
+            var _a;
+            if (remoteHarvester.length > 0 && remoteCarrier.length < 1) {
+                const spawn = (_a = (0, utils_1.getSpawnsInRoom)(room)) === null || _a === void 0 ? void 0 : _a.find((s) => !s.spawning);
+                if (spawn) {
+                    const spawned = spawn.spawnCreep(body, `Rc_${room.name}_${targetRoomName}_${Game.time}`, {
+                        memory: {
+                            baseRoom: room.name,
+                            role: "remoteCarrier",
+                            mode: "🛒",
+                        },
+                    });
+                    if (spawned !== OK) {
+                        console.log("create remotehaervester", util_creep_1.RETURN_CODE_DECODER[spawned.toString()]);
+                    }
+                }
+            }
+        })
+            .run();
     });
 }
 exports.roomBehavior = roomBehavior;
 function creteStructures(room) {
     var _a, _b;
-    const spawn = (0, util_creep_1.getMainSpawn)(room);
-    if (!spawn) {
+    const mainSpawn = (0, util_creep_1.getMainSpawn)(room);
+    if (!mainSpawn) {
         return;
     }
     const siteInRooms = Object.values(Game.constructionSites)
@@ -171,10 +191,10 @@ function creteStructures(room) {
         for (const target of staticStructures.filter((s) => (0, utils_1.findMyStructures)(room)[s].length === 0)) {
             const targets = (0, utils_1.findMyStructures)(room)[target];
             if (CONTROLLER_STRUCTURES[target][room.controller.level] > 0 &&
-                spawn.pos.findInRange(targets, 1).length === 0 &&
+                mainSpawn.pos.findInRange(targets, 1).length === 0 &&
                 (((_a = siteInRooms[target]) === null || _a === void 0 ? void 0 : _a.length) || 0) === 0) {
                 for (const [dx, dy] of fourNeighbors) {
-                    const pos = room.getPositionAt(spawn.pos.x + dx, spawn.pos.y + dy);
+                    const pos = room.getPositionAt(mainSpawn.pos.x + dx, mainSpawn.pos.y + dy);
                     console.log("search replace position", pos);
                     if (((_b = pos === null || pos === void 0 ? void 0 : pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_EXTENSION)) === null || _b === void 0 ? void 0 : _b.destroy()) === OK) {
                         return;
@@ -193,13 +213,13 @@ function creteStructures(room) {
                 for (const dist of _.range(1, 25)) {
                     for (const dy of _.range(-dist, dist + 1)) {
                         for (const dx of _.range(-dist, dist + 1)) {
-                            const pos = new RoomPosition(spawn.pos.x + dx, spawn.pos.y + dy, room.name);
+                            const pos = new RoomPosition(mainSpawn.pos.x + dx, mainSpawn.pos.y + dy, room.name);
                             if (Math.abs(dx) + Math.abs(dy) === dist &&
                                 pos &&
-                                terrain.get(spawn.pos.x + dx, spawn.pos.y + dy) !== TERRAIN_MASK_WALL &&
+                                terrain.get(mainSpawn.pos.x + dx, mainSpawn.pos.y + dy) !== TERRAIN_MASK_WALL &&
                                 generateCross(dx, dy)) {
                                 pos.lookFor(LOOK_CONSTRUCTION_SITES).forEach((s) => s.remove());
-                                if (room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, target) === OK) {
+                                if (room.createConstructionSite(mainSpawn.pos.x + dx, mainSpawn.pos.y + dy, target) === OK) {
                                     return;
                                 }
                             }

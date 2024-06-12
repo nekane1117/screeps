@@ -28,7 +28,7 @@ export function roomBehavior(room: Room) {
     };
   }
 
-  const { builder = [], carrier: carriers = [], harvester = [], remoteHarvester = [], reserver = [] } = getCreepsInRoom(room);
+  const { builder = [], carrier: carriers = [], harvester = [], remoteCarrier = [], remoteHarvester = [], reserver = [] } = getCreepsInRoom(room);
 
   // ロードマップを更新する
   updateRoadMap(room);
@@ -177,14 +177,35 @@ export function roomBehavior(room: Room) {
         }
       }
     }
+
+    _(getCarrierBody(room, "remoteCarrier"))
+      .tap((body) => {
+        //harvesterが居るのにcarrierが居ないとき
+        if (remoteHarvester.length > 0 && remoteCarrier.length < 1) {
+          const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
+          if (spawn) {
+            const spawned = spawn.spawnCreep(body, `Rc_${room.name}_${targetRoomName}_${Game.time}`, {
+              memory: {
+                baseRoom: room.name,
+                role: "remoteCarrier",
+                mode: "🛒",
+              } as RemoteCarrierMemory,
+            });
+            if (spawned !== OK) {
+              console.log("create remotehaervester", RETURN_CODE_DECODER[spawned.toString()]);
+            }
+          }
+        }
+      })
+      .run();
   });
 }
 
 /** 部屋ごとの色々を建てる */
 function creteStructures(room: Room) {
   // 多分最初のspawn
-  const spawn = getMainSpawn(room);
-  if (!spawn) {
+  const mainSpawn = getMainSpawn(room);
+  if (!mainSpawn) {
     return;
   }
 
@@ -215,11 +236,11 @@ function creteStructures(room: Room) {
       // 対象を扱えて隣にない時
       if (
         CONTROLLER_STRUCTURES[target][room.controller.level] > 0 &&
-        spawn.pos.findInRange(targets, 1).length === 0 &&
+        mainSpawn.pos.findInRange(targets, 1).length === 0 &&
         (siteInRooms[target]?.length || 0) === 0
       ) {
         for (const [dx, dy] of fourNeighbors) {
-          const pos = room.getPositionAt(spawn.pos.x + dx, spawn.pos.y + dy);
+          const pos = room.getPositionAt(mainSpawn.pos.x + dx, mainSpawn.pos.y + dy);
           console.log("search replace position", pos);
           if (
             pos
@@ -245,16 +266,16 @@ function creteStructures(room: Room) {
         for (const dist of _.range(1, 25)) {
           for (const dy of _.range(-dist, dist + 1)) {
             for (const dx of _.range(-dist, dist + 1)) {
-              const pos = new RoomPosition(spawn.pos.x + dx, spawn.pos.y + dy, room.name);
+              const pos = new RoomPosition(mainSpawn.pos.x + dx, mainSpawn.pos.y + dy, room.name);
               if (
                 Math.abs(dx) + Math.abs(dy) === dist &&
                 pos &&
-                terrain.get(spawn.pos.x + dx, spawn.pos.y + dy) !== TERRAIN_MASK_WALL &&
+                terrain.get(mainSpawn.pos.x + dx, mainSpawn.pos.y + dy) !== TERRAIN_MASK_WALL &&
                 generateCross(dx, dy)
               ) {
                 // 建設予定地にすでに何か建ててるときはキャンセルする
                 pos.lookFor(LOOK_CONSTRUCTION_SITES).forEach((s) => s.remove());
-                if (room.createConstructionSite(spawn.pos.x + dx, spawn.pos.y + dy, target) === OK) {
+                if (room.createConstructionSite(mainSpawn.pos.x + dx, mainSpawn.pos.y + dy, target) === OK) {
                   return;
                 }
               }

@@ -16,7 +16,8 @@ declare type ROLES =
   | "defender"
   | "labManager"
   | "reserver"
-  | "remoteHarvester";
+  | "remoteHarvester"
+  | "remoteCarrier";
 declare interface CreepMemory {
   role: ROLES;
   baseRoom: string;
@@ -49,7 +50,8 @@ declare type Creeps =
   | Defender
   | LabManager
   | Reserver
-  | RemoteHarvester;
+  | RemoteHarvester
+  | RemoteCarrier;
 
 declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink | StructureTerminal;
 
@@ -152,6 +154,7 @@ declare type CreepsCache = Partial<{
   labManager: LabManager[];
   reserver: Reserver[];
   remoteHarvester: RemoteHarvester[];
+  remoteCarrier: RemoteCarrier[];
 }>;
 
 declare interface LabMemory {
@@ -303,7 +306,17 @@ declare interface RemoteHarvesterMemory extends CreepMemory {
   targetRoomName: string;
   harvestTargetId?: Source["id"] | null;
   siteId?: ConstructionSite["id"] | null;
-  exit?: RoomPosition | null;
-  route?: ReturnType<(typeof Game)["map"]["findRoute"]>;
   storeId?: StoreTarget["id"] | null;
+}
+declare interface RemoteCarrier extends Creep {
+  memory: RemoteCarrierMemory;
+}
+
+declare interface RemoteCarrierMemory extends CreepMemory {
+  role: "remoteCarrier";
+  mode: "🛒" | "🚛";
+  targetRoomName: string;
+  siteId?: ConstructionSite["id"] | null;
+  storeId?: Id<StructureContainer> | null;
+  transferId?: StoreTarget["id"] | null;
 }

@@ -126,6 +126,7 @@ exports.IDEAL_BODY = Object.freeze({
             .run(),
     ],
     upgrader: [WORK, MOVE, CARRY, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE],
+    remoteCarrier: [],
 });
 exports.RETURN_CODE_DECODER = Object.freeze({
     [OK.toString()]: "OK",
@@ -231,11 +232,10 @@ function moveRoom(creep, fromRoom, toRoom) {
     const route = ((_a = memory.__moveRoom) === null || _a === void 0 ? void 0 : _a.route) ||
         (creep.memory.__moveRoom.route = Game.map.findRoute(fromRoom, toRoom, {
             routeCallback(roomName) {
-                var _a;
+                var _a, _b;
                 const parsed = /^[WE]([0-9]+)[NS]([0-9]+)$/.exec(roomName);
                 const isHighway = parsed && (Number(parsed[1]) % 10 === 0 || Number(parsed[2]) % 10 === 0);
-                const isMyRoom = Game.rooms[roomName] && Game.rooms[roomName].controller && ((_a = Game.rooms[roomName].controller) === null || _a === void 0 ? void 0 : _a.my);
-                if (isHighway || isMyRoom) {
+                if (isHighway || ((_b = (_a = Game.rooms[roomName]) === null || _a === void 0 ? void 0 : _a.controller) === null || _b === void 0 ? void 0 : _b.my)) {
                     return 1;
                 }
                 else {
@@ -293,6 +293,7 @@ const DEFAULT_CREEP_RANGE = {
     mineralCarrier: 1,
     mineralHarvester: 1,
     remoteHarvester: 1,
+    remoteCarrier: 1,
     reserver: 1,
     upgrader: 1,
 };

@@ -146,6 +146,7 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       .run(),
   ],
   upgrader: [WORK, MOVE, CARRY, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE],
+  remoteCarrier: [],
 });
 
 export const RETURN_CODE_DECODER = Object.freeze({
@@ -282,9 +283,8 @@ export function moveRoom(creep: Creeps, fromRoom: string, toRoom: string) {
         // 数値化した座標が10で割れるときはHighway
         const isHighway = parsed && (Number(parsed[1]) % 10 === 0 || Number(parsed[2]) % 10 === 0);
         // myが取れるときは自室
-        const isMyRoom = Game.rooms[roomName] && Game.rooms[roomName].controller && Game.rooms[roomName].controller?.my;
         // 自室か高速道路を通る
-        if (isHighway || isMyRoom) {
+        if (isHighway || Game.rooms[roomName]?.controller?.my) {
           return 1;
         } else {
           // それ以外は遠回り
@@ -355,6 +355,7 @@ const DEFAULT_CREEP_RANGE: Record<ROLES, number> = {
   mineralCarrier: 1,
   mineralHarvester: 1,
   remoteHarvester: 1,
+  remoteCarrier: 1,
   reserver: 1,
   upgrader: 1,
 };
