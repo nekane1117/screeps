@@ -41,6 +41,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   };
   checkMode();
+  const { spawn, storage, terminal, road, rampart, container } = findMyStructures(creep.room);
 
   // https://docs.screeps.com/simultaneous-actions.html
   if (creep.memory.mode === "👷") {
@@ -55,15 +56,15 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         creep.memory.firstAidId = undefined;
       }
     }
-    const { road, rampart, container } = findMyStructures(creep.room);
 
     // 応急修理が要るものを探す
     if (!creep.memory.firstAidId) {
-      creep.memory.firstAidId = creep.pos.findClosestByRange([...road, ...rampart, ...container], {
-        filter: (s: Structure) => {
+      creep.memory.firstAidId = _([...road, ...rampart, ...container])
+        .filter((s: Structure) => {
           return s.hits <= getDecayAmount(s) * 10;
-        },
-      })?.id;
+        })
+        .sortBy((s) => s.hits / (getDecayAmount(s) * 10))
+        .first()?.id;
     }
 
     // 応急修理する
@@ -89,6 +90,18 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
     // #endregion
 
+    //#region エネルギー残量チェック ###############################################################
+    //spawn storage terminaの貯蔵合計がenergyCapacityAvailableより小さいときは何もしない
+    if (
+      _([spawn, storage, terminal])
+        .flatten<StructureSpawn | StructureStorage | StructureTerminal>()
+        .compact()
+        .sum((s) => s.store.energy) < creep.room.energyCapacityAvailable
+    ) {
+      return;
+    }
+
+    //#endregion ###########################################################################################
     // #region 建設 ###########################################################################################
     // 不正な対象の時は初期化する
     if (creep.memory.buildingId) {
@@ -187,9 +200,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // #endregion
   } else {
     // 収集モードの時
-    if (creep.room.storage ? creep.room.storage.store.energy <= creep.room.energyCapacityAvailable : creep.room.energyAvailable < 300) {
-      return;
-    }
 
     // #region エネルギー回収###########################################################################################
     // 空のやつ初期化
@@ -201,15 +211,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // withdraw
     if (
       creep.memory.storeId ||
-      (creep.memory.storeId = creep.pos.findClosestByPath(
-        _.compact([...container, ...[creep.room.terminal, creep.room.storage].filter((s) => (s?.store.energy || 0) >= creep.room.energyCapacityAvailable)]),
-        {
-          filter: (s) => {
-            // いっぱいあるやつからだけ出す
-            return s.store.energy >= creep.store.getCapacity(RESOURCE_ENERGY);
-          },
+      (creep.memory.storeId = creep.pos.findClosestByPath(_.compact([...container, creep.room.terminal, creep.room.storage]), {
+        filter: (s) => {
+          // いっぱいあるやつからだけ出す
+          return s.store.energy >= creep.store.getCapacity(RESOURCE_ENERGY);
         },
-      )?.id)
+      })?.id)
     ) {
       const store = Game.getObjectById(creep.memory.storeId);
       if (store && "store" in store) {

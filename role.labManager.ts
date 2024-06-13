@@ -1,6 +1,6 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, pickUpAll } from "./util.creep";
-import { getAvailableAmount, getLabs, getTerminals } from "./utils";
+import { getAvailableAmount, getLabs, getTerminals, isCompound } from "./utils";
 
 const MINERAL_KEEP_VALUE = 500;
 
@@ -69,12 +69,15 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           if (lab.mineralType !== lab.memory.expectedType) {
             // 期待値と異なる
             mapping.wrong.push(lab);
-          } else if (lab.mineralType.length >= 2) {
+          } else if (isCompound(lab.mineralType)) {
             // 化合物の時
 
             if (lab.store[lab.mineralType] > MINERAL_KEEP_VALUE * 4) {
               // 完成
               mapping.completed.push(lab);
+            } else if (lab.store[lab.mineralType] <= MINERAL_KEEP_VALUE * 2 && terminal.store[lab.mineralType] > 0) {
+              // ターミナルにあってたらなくなってきたときは要求する
+              mapping.requesting.push(lab);
             } else {
               // 処理中のはず
               mapping.noProblem.push(lab);

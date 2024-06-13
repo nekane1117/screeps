@@ -51,9 +51,12 @@ const behavior = (creep) => {
             if (lab.mineralType !== lab.memory.expectedType) {
                 mapping.wrong.push(lab);
             }
-            else if (lab.mineralType.length >= 2) {
+            else if ((0, utils_1.isCompound)(lab.mineralType)) {
                 if (lab.store[lab.mineralType] > MINERAL_KEEP_VALUE * 4) {
                     mapping.completed.push(lab);
+                }
+                else if (lab.store[lab.mineralType] <= MINERAL_KEEP_VALUE * 2 && terminal.store[lab.mineralType] > 0) {
+                    mapping.requesting.push(lab);
                 }
                 else {
                     mapping.noProblem.push(lab);

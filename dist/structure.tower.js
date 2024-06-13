@@ -15,16 +15,16 @@ function behaviors(tower) {
     const decayStructures = _(tower.room.find(FIND_STRUCTURES, {
         filter: (s) => {
             if (s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL) {
-                return s.hits < RAMPART_DECAY_AMOUNT * 10;
+                return s.hits < RAMPART_DECAY_AMOUNT * 2;
             }
             else if (s.structureType === STRUCTURE_ROAD) {
                 switch (_.first(s.pos.lookFor(LOOK_TERRAIN))) {
                     case "plain":
-                        return s.hits < ROAD_DECAY_AMOUNT * 10;
+                        return s.hits < ROAD_DECAY_AMOUNT * 2;
                     case "swamp":
-                        return s.hits < constants_1.ROAD_DECAY_AMOUNT_SWAMP * 10;
+                        return s.hits < constants_1.ROAD_DECAY_AMOUNT_SWAMP * 2;
                     case "wall":
-                        return s.hits < constants_1.ROAD_DECAY_AMOUNT_WALL * 10;
+                        return s.hits < constants_1.ROAD_DECAY_AMOUNT_WALL * 2;
                     default:
                         return false;
                 }

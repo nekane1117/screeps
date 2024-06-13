@@ -112,7 +112,7 @@ export function getSpawnsWithDistance(src: RoomPosition | _HasRoomPosition) {
 
 export function isCompound(resource: ResourceConstant) {
   // 2文字以上で大文字で始まるやつ
-  return resource.length >= 2 && /^[A-Z]/.exec(resource);
+  return !!(resource.length >= 2 && /^[A-Z]/.exec(resource));
 }
 
 export function getLabs(room: Room) {

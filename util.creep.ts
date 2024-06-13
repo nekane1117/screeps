@@ -64,42 +64,41 @@ export function randomWalk(creep: Creep) {
 }
 
 export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
-  builder: ([WORK, CARRY, MOVE, WORK] as BodyPartConstant[])
-    .concat(
-      ..._.range(25).map((i) => {
-        const bodies = [CARRY, MOVE];
-        return bodies[i % bodies.length];
-      }),
-    )
-    .slice(0, 50),
+  builder: _.range(50).map((i) => {
+    const b = [WORK, CARRY, MOVE];
+    return b[i % b.length];
+  }),
   claimer: [CLAIM, MOVE],
   reserver: [CLAIM, MOVE, CLAIM, MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, HEAL, MOVE],
-  remoteHarvester: [
-    // 最低構成
-    WORK,
-    MOVE,
-    CARRY,
-    MOVE,
-    // 最低武装
-    RANGED_ATTACK,
-    MOVE,
-    ATTACK,
-    // 効率上げる
-    MOVE,
-    WORK,
-    MOVE,
-    WORK,
-    MOVE,
-    WORK,
-    MOVE,
-    WORK,
-    MOVE,
-    // 適当に突っ込む
-    ..._.range(50).map((i) => {
-      const b = [MOVE, CARRY];
-      return b[i % b.length];
-    }),
-  ].slice(0, 50),
+  remoteHarvester: _.range(50).map((i) => {
+    const b = [
+      // 最低構成
+      WORK,
+      MOVE,
+      CARRY,
+      MOVE,
+      // 最低武装
+      RANGED_ATTACK,
+      MOVE,
+      ATTACK,
+      // 効率上げる
+      MOVE,
+      WORK,
+      MOVE,
+      WORK,
+      MOVE,
+      WORK,
+      MOVE,
+      WORK,
+      MOVE,
+      // 適当に突っ込む
+      ..._.range(50).map((i) => {
+        const b = [MOVE, CARRY];
+        return b[i % b.length];
+      }),
+    ].slice(0, 25);
+    return b[i % b.length];
+  }),
   carrier: [],
   labManager: [MOVE, CARRY, CARRY],
   defender: _.range(50).map((i) => {

@@ -40,16 +40,12 @@ const behavior = (creep) => {
     }
     creep.memory.harvestTargetId = creep.memory.harvestTargetId || ((_a = findHarvestTarget(creep, targetRoom)) === null || _a === void 0 ? void 0 : _a.id);
     const source = memory.harvestTargetId && Game.getObjectById(memory.harvestTargetId);
-    const mode = creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0 ? "h" : "t";
     if (source) {
         _((creep.memory.worked = creep.harvest(source)))
             .tap((worked) => {
             switch (worked) {
                 case ERR_NOT_IN_RANGE:
-                    if (mode === "h") {
-                        return moveMeTo(source);
-                    }
-                    return;
+                    return moveMeTo(source);
                 case OK:
                     return;
                 case ERR_NOT_ENOUGH_ENERGY:
@@ -76,9 +72,7 @@ const behavior = (creep) => {
                 .tap((result) => {
                 switch (result) {
                     case ERR_NOT_IN_RANGE:
-                        if (mode !== "h") {
-                            moveMeTo(container);
-                        }
+                        moveMeTo(container);
                         break;
                     case OK:
                     case ERR_FULL:

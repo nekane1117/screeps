@@ -34,6 +34,7 @@ const behavior = (creep) => {
         }
     };
     checkMode();
+    const { spawn, storage, terminal, road, rampart, container } = (0, utils_1.findMyStructures)(creep.room);
     if (creep.memory.mode === "👷") {
         if (creep.memory.firstAidId) {
             const target = Game.getObjectById(creep.memory.firstAidId);
@@ -41,13 +42,13 @@ const behavior = (creep) => {
                 creep.memory.firstAidId = undefined;
             }
         }
-        const { road, rampart, container } = (0, utils_1.findMyStructures)(creep.room);
         if (!creep.memory.firstAidId) {
-            creep.memory.firstAidId = (_a = creep.pos.findClosestByRange([...road, ...rampart, ...container], {
-                filter: (s) => {
-                    return s.hits <= (0, utils_1.getDecayAmount)(s) * 10;
-                },
-            })) === null || _a === void 0 ? void 0 : _a.id;
+            creep.memory.firstAidId = (_a = _([...road, ...rampart, ...container])
+                .filter((s) => {
+                return s.hits <= (0, utils_1.getDecayAmount)(s) * 10;
+            })
+                .sortBy((s) => s.hits / ((0, utils_1.getDecayAmount)(s) * 10))
+                .first()) === null || _a === void 0 ? void 0 : _a.id;
         }
         if (creep.memory.firstAidId) {
             if (!isBoosted(creep) && boost(creep) !== null) {
@@ -65,6 +66,12 @@ const behavior = (creep) => {
                 })
                     .run();
             }
+        }
+        if (_([spawn, storage, terminal])
+            .flatten()
+            .compact()
+            .sum((s) => s.store.energy) < creep.room.energyCapacityAvailable) {
+            return;
         }
         if (creep.memory.buildingId) {
             const target = Game.getObjectById(creep.memory.buildingId);
@@ -136,15 +143,12 @@ const behavior = (creep) => {
         }
     }
     else {
-        if (creep.room.storage ? creep.room.storage.store.energy <= creep.room.energyCapacityAvailable : creep.room.energyAvailable < 300) {
-            return;
-        }
         if (creep.memory.storeId && ((_b = Game.getObjectById(creep.memory.storeId)) === null || _b === void 0 ? void 0 : _b.store.energy) === 0) {
             creep.memory.storeId = undefined;
         }
         const { container } = (0, utils_1.findMyStructures)(creep.room);
         if (creep.memory.storeId ||
-            (creep.memory.storeId = (_c = creep.pos.findClosestByPath(_.compact([...container, ...[creep.room.terminal, creep.room.storage].filter((s) => ((s === null || s === void 0 ? void 0 : s.store.energy) || 0) >= creep.room.energyCapacityAvailable)]), {
+            (creep.memory.storeId = (_c = creep.pos.findClosestByPath(_.compact([...container, creep.room.terminal, creep.room.storage]), {
                 filter: (s) => {
                     return s.store.energy >= creep.store.getCapacity(RESOURCE_ENERGY);
                 },

@@ -57,18 +57,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   const source = memory.harvestTargetId && Game.getObjectById(memory.harvestTargetId);
 
-  // 今のところ切り替え処理が要らないのでmemoryに保持しない
-  const mode: "t" | "h" = creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0 ? "h" : "t";
-
   if (source) {
     _((creep.memory.worked = creep.harvest(source)))
       .tap((worked) => {
         switch (worked) {
           case ERR_NOT_IN_RANGE:
-            if (mode === "h") {
-              return moveMeTo(source);
-            }
-            return;
+            return moveMeTo(source);
           case OK:
             return;
 
@@ -104,9 +98,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           switch (result) {
             case ERR_NOT_IN_RANGE:
               // いっぱいの時は寄る
-              if (mode !== "h") {
-                moveMeTo(container);
-              }
+              moveMeTo(container);
               break;
             case OK:
             case ERR_FULL:

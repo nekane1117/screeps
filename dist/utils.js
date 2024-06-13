@@ -102,7 +102,7 @@ function getSpawnsWithDistance(src) {
 }
 exports.getSpawnsWithDistance = getSpawnsWithDistance;
 function isCompound(resource) {
-    return resource.length >= 2 && /^[A-Z]/.exec(resource);
+    return !!(resource.length >= 2 && /^[A-Z]/.exec(resource));
 }
 exports.isCompound = isCompound;
 function getLabs(room) {
