@@ -67,7 +67,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       return ERR_NOT_FOUND;
     }
   }
-  _(creep.pos.findInRange(FIND_MY_CREEPS, 3, { filter: (s) => s.hits < s.hitsMax - creep.getActiveBodyparts(HEAL) * HEAL_POWER }))
+  const heald = _(creep.pos.findInRange(FIND_MY_CREEPS, 3, { filter: (s) => s.hits < s.hitsMax - creep.getActiveBodyparts(HEAL) * HEAL_POWER }))
     .tap((creeps) => {
       const target = _(creeps).min((c) => c.hits);
 
@@ -80,6 +80,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       }
     })
     .run().length;
+  if (!creep.memory.targetId && heald === 0) {
+    const spawn = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, { filter: (s): s is StructureSpawn => s.my && s.structureType === STRUCTURE_SPAWN });
+    if (spawn && spawn.recycleCreep(creep) === ERR_NOT_IN_RANGE) {
+      moveMeTo(spawn);
+    }
+  }
 };
 
 export default behavior;
