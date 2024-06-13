@@ -1,6 +1,6 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, moveRoom, pickUpAll } from "./util.creep";
-import { findMyStructures, readonly } from "./utils";
+import { findMyStructures, getSitesInRoom, isHighway, readonly } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isRemoteCarrier(creep)) {
@@ -14,13 +14,25 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   const memory = readonly(creep.memory);
 
+  const preMode = memory.mode;
   //#region モードチェック
-  if (memory.mode === "🚛" && creep.store.energy < CARRY_CAPACITY) {
+  if (creep.store.energy < CARRY_CAPACITY) {
+    // なくなったら収集モード
     creep.memory.mode = "🛒";
-  } else if (memory.mode === "🛒" && creep.store.energy >= CARRY_CAPACITY) {
+  } else if (creep.room.name !== memory.baseRoom && getSitesInRoom(creep.room).length > 0) {
+    // エネルギーがあって現場ある時は建築モード
+    creep.memory.mode = "👷";
+  } else {
+    // それ以外は運搬モード
     creep.memory.mode = "🚛";
+    // キャリーサイズ記録
     (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).remoteCarrier =
       ((creep.room.memory.carrySize?.remoteCarrier || 100) * 100 + creep.store.energy) / 101;
+  }
+  if (memory.mode !== preMode) {
+    creep.memory.storeId = undefined;
+    creep.memory.transferId = undefined;
+    creep.say(memory.mode);
   }
 
   //#endregion
@@ -40,12 +52,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         const targets = [
           ...container.filter((c) => {
             // ミネラル用のコンテナを除外しておく
-            return baseRoom.find(FIND_MINERALS).some((m) => c.pos.inRangeTo(m, 3));
+            return baseRoom.find(FIND_MINERALS).some((m) => !c.pos.inRangeTo(m, 3));
           }),
           ...link,
           ...storage,
           ...terminal,
-        ];
+        ].filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
 
         // 検索する
         const searched = PathFinder.search(
@@ -87,6 +99,38 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
       //#endregion ##########################################################################
     }
+  } else if (memory.mode === "👷") {
+    //#region 建設 ##########################################################################
+    const sites = getSitesInRoom(creep.room);
+    // 終わってれば初期化
+    if (memory.siteId && !Game.getObjectById(memory.siteId)) {
+      creep.memory.siteId = undefined;
+    }
+
+    // 現場を取得する
+    if (!memory.siteId) {
+      creep.memory.siteId = creep.pos.findClosestByPath(sites)?.id;
+    }
+
+    const site = memory.siteId && Game.getObjectById(memory.siteId);
+    if (site) {
+      _(creep.build(site))
+        .tap((result) => {
+          switch (result) {
+            case OK:
+              break;
+            case ERR_NOT_IN_RANGE:
+              moveMeTo(site);
+              break;
+            default:
+              creep.say(RETURN_CODE_DECODER[result.toString()].replace("ERR_", ""));
+              console.log(creep.name, creep.saying);
+              break;
+          }
+        })
+        .run();
+    }
+    //#endregion
   } else {
     const targetRoom = Game.rooms[memory.targetRoomName] as Room | undefined;
     if (!targetRoom) {
@@ -101,7 +145,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
 
     if (!memory.storeId) {
-      const containers = targetRoom.find(FIND_STRUCTURES, { filter: (s): s is StructureContainer => s.structureType === STRUCTURE_CONTAINER });
+      const containers = targetRoom.find(FIND_STRUCTURES, {
+        filter: (s): s is StructureContainer => s.structureType === STRUCTURE_CONTAINER && s.store.energy > 0,
+      });
       const searched = PathFinder.search(
         creep.pos,
         containers.map((t) => t.pos),
@@ -138,6 +184,20 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         .run();
     }
     //#endregion ##########################################################################
+
+    //#region 道を敷く
+    if (
+      creep.memory.mode === "🚛" &&
+      creep.pos.roomName !== creep.memory.baseRoom &&
+      getSitesInRoom(creep.room).length === 0 &&
+      !isHighway(creep.room) &&
+      !creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD)
+    ) {
+      // 現在地に道が無ければ作らせる
+      creep.pos.createConstructionSite(STRUCTURE_ROAD);
+    }
+
+    //#endregion
 
     //#region その他の処理 ##########################################################################
 

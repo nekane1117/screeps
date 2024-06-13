@@ -128,7 +128,7 @@ function roomBehavior(room) {
             }
         }
         const { bodies } = (0, util_creep_1.filterBodiesByCost)("remoteHarvester", room.energyAvailable);
-        if (remoteHarvester.filter((c) => c.memory.targetRoomName === targetRoomName && (c.ticksToLive || Infinity) > bodies.length * CREEP_SPAWN_TIME).length < 2) {
+        if (remoteHarvester.filter((c) => c.memory.targetRoomName === targetRoomName && (c.ticksToLive || Infinity) > bodies.length * CREEP_SPAWN_TIME).length < 1) {
             const spawn = (_b = (0, utils_1.getSpawnsInRoom)(room)) === null || _b === void 0 ? void 0 : _b.find((s) => !s.spawning);
             if (spawn) {
                 const spawned = spawn.spawnCreep(bodies, `Rh_${room.name}_${targetRoomName}_${Game.time}`, {
@@ -136,7 +136,6 @@ function roomBehavior(room) {
                         baseRoom: room.name,
                         role: "remoteHarvester",
                         targetRoomName,
-                        mode: "🌾",
                     },
                 });
                 if (spawned !== OK) {
@@ -154,6 +153,7 @@ function roomBehavior(room) {
                         memory: {
                             baseRoom: room.name,
                             role: "remoteCarrier",
+                            targetRoomName,
                             mode: "🛒",
                         },
                     });
@@ -188,6 +188,7 @@ function creteStructures(room) {
             }
             return;
         }
+        console.log(staticStructures.filter((s) => (0, utils_1.findMyStructures)(room)[s].length === 0));
         for (const target of staticStructures.filter((s) => (0, utils_1.findMyStructures)(room)[s].length === 0)) {
             const targets = (0, utils_1.findMyStructures)(room)[target];
             if (CONTROLLER_STRUCTURES[target][room.controller.level] > 0 &&
@@ -205,7 +206,7 @@ function creteStructures(room) {
                 }
             }
         }
-        const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN, STRUCTURE_STORAGE, STRUCTURE_LAB];
+        const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN, STRUCTURE_STORAGE];
         const terrain = room.getTerrain();
         for (const target of targets) {
             const extensions = [...siteInRooms.all, ...room.find(FIND_MY_STRUCTURES)].filter((s) => s.structureType === target);
@@ -267,7 +268,7 @@ function updateRoadMap(room) {
                 if (road && value < 0) {
                     "remove" in road ? road.remove() : road.destroy();
                 }
-                else if (!road && Math.ceil(value) >= 10 && pos.findInRange([...roads, ...spawn], 3).length > 0) {
+                else if (!road && Math.ceil(value) >= 10 && pos.findInRange([...roads, ...spawn, ...room.find(FIND_MY_STRUCTURES)], 3).length > 0) {
                     pos.createConstructionSite(STRUCTURE_ROAD);
                 }
             }

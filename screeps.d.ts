@@ -302,11 +302,8 @@ declare interface RemoteHarvesterMemory extends CreepMemory {
    * 🌾 : 収集中
    * 👷 : 建築中
    */
-  mode: "🚛" | "🌾" | "👷";
   targetRoomName: string;
   harvestTargetId?: Source["id"] | null;
-  siteId?: ConstructionSite["id"] | null;
-  storeId?: StoreTarget["id"] | null;
 }
 declare interface RemoteCarrier extends Creep {
   memory: RemoteCarrierMemory;
@@ -314,7 +311,7 @@ declare interface RemoteCarrier extends Creep {
 
 declare interface RemoteCarrierMemory extends CreepMemory {
   role: "remoteCarrier";
-  mode: "🛒" | "🚛";
+  mode: "🛒" | "🚛" | "👷";
   targetRoomName: string;
   siteId?: ConstructionSite["id"] | null;
   storeId?: Id<StructureContainer> | null;

@@ -1,6 +1,6 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, moveRoom, pickUpAll } from "./util.creep";
-import { readonly } from "./utils";
+import { RETURN_CODE_DECODER, customMove, filterBodiesByCost, getCreepsInRoom, moveRoom, pickUpAll } from "./util.creep";
+import { getSpawnsInRoom, readonly } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isRemoteHarvester(creep)) {
@@ -23,6 +23,33 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // 大体ここで0チェックして初期化するが
   // 切れてた時に向かっておきたいので初期化しない
+
+  //#region 防衛##############################################################################
+  const hostiles = creep.room.find(FIND_HOSTILE_CREEPS);
+  const inverderCodre = creep.room.find(FIND_HOSTILE_STRUCTURES, { filter: (s): s is StructureInvaderCore => s.structureType === STRUCTURE_INVADER_CORE });
+  const enemy = creep.pos.findClosestByRange(_.compact([...hostiles, ...inverderCodre]));
+  if (enemy) {
+    const defenders = getCreepsInRoom(creep.room).defender || [];
+    if (defenders.length === 0) {
+      const baseRoom = Game.rooms[memory.baseRoom];
+      if (baseRoom && baseRoom.energyAvailable === baseRoom.energyCapacityAvailable) {
+        const spawn = getSpawnsInRoom(baseRoom).find((s) => !s.spawning);
+        if (spawn) {
+          spawn.spawnCreep(filterBodiesByCost("defender", baseRoom.energyAvailable).bodies, `D_${creep.room.name}_${Game.time}`, {
+            memory: {
+              role: "defender",
+              baseRoom: memory.targetRoomName,
+              targetId: enemy.id,
+            } as DefenderMemory,
+          });
+        }
+      }
+    }
+
+    creep.rangedAttack(enemy);
+    creep.attack(enemy);
+  }
+  //#endregion
 
   // #region harvest ###############################################################################
   // 対象設定処理(1体にするつもりなので排他とかしない)
@@ -68,7 +95,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (source?.pos.isNearTo(creep)) {
     // 隣接してるとき
     // sourceに隣接したコンテナを取得する
-    const container = source.pos.findClosestByRange(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.pos.isNearTo(source) });
+    const container = source.pos.findClosestByRange(FIND_STRUCTURES, {
+      filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.pos.isNearTo(source) && s.store.getFreeCapacity(RESOURCE_ENERGY),
+    });
     if (container) {
       _(creep.transfer(container, RESOURCE_ENERGY))
         .tap((result) => {
@@ -80,6 +109,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
               }
               break;
             case OK:
+            case ERR_FULL:
+            case ERR_NOT_ENOUGH_ENERGY:
               return OK;
             default:
               creep.say(RETURN_CODE_DECODER[result.toString()].replace("ERR_", ""));

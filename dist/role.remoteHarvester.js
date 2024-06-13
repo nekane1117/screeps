@@ -15,6 +15,29 @@ const behavior = (creep) => {
     if (!targetRoom) {
         return (0, util_creep_1.moveRoom)(creep, creep.pos.roomName, memory.targetRoomName);
     }
+    const hostiles = creep.room.find(FIND_HOSTILE_CREEPS);
+    const inverderCodre = creep.room.find(FIND_HOSTILE_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_INVADER_CORE });
+    const enemy = creep.pos.findClosestByRange(_.compact([...hostiles, ...inverderCodre]));
+    if (enemy) {
+        const defenders = (0, util_creep_1.getCreepsInRoom)(creep.room).defender || [];
+        if (defenders.length === 0) {
+            const baseRoom = Game.rooms[memory.baseRoom];
+            if (baseRoom && baseRoom.energyAvailable === baseRoom.energyCapacityAvailable) {
+                const spawn = (0, utils_1.getSpawnsInRoom)(baseRoom).find((s) => !s.spawning);
+                if (spawn) {
+                    spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("defender", baseRoom.energyAvailable).bodies, `D_${creep.room.name}_${Game.time}`, {
+                        memory: {
+                            role: "defender",
+                            baseRoom: memory.targetRoomName,
+                            targetId: enemy.id,
+                        },
+                    });
+                }
+            }
+        }
+        creep.rangedAttack(enemy);
+        creep.attack(enemy);
+    }
     creep.memory.harvestTargetId = creep.memory.harvestTargetId || ((_a = findHarvestTarget(creep, targetRoom)) === null || _a === void 0 ? void 0 : _a.id);
     const source = memory.harvestTargetId && Game.getObjectById(memory.harvestTargetId);
     const mode = creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0 ? "h" : "t";
@@ -45,7 +68,9 @@ const behavior = (creep) => {
         creep.memory.harvestTargetId = undefined;
     }
     if (source === null || source === void 0 ? void 0 : source.pos.isNearTo(creep)) {
-        const container = source.pos.findClosestByRange(FIND_STRUCTURES, { filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.pos.isNearTo(source) });
+        const container = source.pos.findClosestByRange(FIND_STRUCTURES, {
+            filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.pos.isNearTo(source) && s.store.getFreeCapacity(RESOURCE_ENERGY),
+        });
         if (container) {
             _(creep.transfer(container, RESOURCE_ENERGY))
                 .tap((result) => {
@@ -56,6 +81,8 @@ const behavior = (creep) => {
                         }
                         break;
                     case OK:
+                    case ERR_FULL:
+                    case ERR_NOT_ENOUGH_ENERGY:
                         return OK;
                     default:
                         creep.say(util_creep_1.RETURN_CODE_DECODER[result.toString()].replace("ERR_", ""));

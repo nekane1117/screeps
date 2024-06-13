@@ -160,7 +160,7 @@ export function roomBehavior(room: Room) {
     if (
       (remoteHarvester as RemoteHarvester[]).filter(
         (c) => c.memory.targetRoomName === targetRoomName && (c.ticksToLive || Infinity) > bodies.length * CREEP_SPAWN_TIME,
-      ).length < 2
+      ).length < 1
     ) {
       const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
       if (spawn) {
@@ -169,7 +169,6 @@ export function roomBehavior(room: Room) {
             baseRoom: room.name,
             role: "remoteHarvester",
             targetRoomName,
-            mode: "🌾",
           } as RemoteHarvesterMemory,
         });
         if (spawned !== OK) {
@@ -188,6 +187,7 @@ export function roomBehavior(room: Room) {
               memory: {
                 baseRoom: room.name,
                 role: "remoteCarrier",
+                targetRoomName,
                 mode: "🛒",
               } as RemoteCarrierMemory,
             });
@@ -230,6 +230,7 @@ function creteStructures(room: Room) {
       return;
     }
 
+    console.log(staticStructures.filter((s) => findMyStructures(room)[s].length === 0));
     for (const target of staticStructures.filter((s) => findMyStructures(room)[s].length === 0)) {
       const targets = findMyStructures(room)[target] as _HasRoomPosition[];
 
@@ -258,7 +259,7 @@ function creteStructures(room: Room) {
       }
     }
 
-    const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN, STRUCTURE_STORAGE, STRUCTURE_LAB];
+    const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN, STRUCTURE_STORAGE];
     const terrain = room.getTerrain();
     for (const target of targets) {
       const extensions = [...siteInRooms.all, ...room.find(FIND_MY_STRUCTURES)].filter((s) => s.structureType === target);
@@ -334,7 +335,7 @@ function updateRoadMap(room: Room) {
         if (road && value < 0) {
           // 道が使われてないとき
           "remove" in road ? road.remove() : road.destroy();
-        } else if (!road && Math.ceil(value) >= 10 && pos.findInRange([...roads, ...spawn], 3).length > 0) {
+        } else if (!road && Math.ceil(value) >= 10 && pos.findInRange([...roads, ...spawn, ...room.find(FIND_MY_STRUCTURES)], 3).length > 0) {
           // 通るのに道がなくて、道かspawnにつながってるとき
           pos.createConstructionSite(STRUCTURE_ROAD);
         }

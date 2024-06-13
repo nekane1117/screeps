@@ -38,7 +38,7 @@ const behavior = (creep) => {
     if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5) {
         creep.pos.findInRange(Object.values(Game.constructionSites), 3).map((site) => creep.build(site));
     }
-    const repaired = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => "ticksToDecay" in s && s.hits < s.hitsMax - creep.getActiveBodyparts(WORK) * REPAIR_POWER }))
+    const repaired = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => "ticksToDecay" in s && s.hits < Math.min(s.hitsMax, 3000) }))
         .map((damaged) => {
         return creep.repair(damaged);
     })

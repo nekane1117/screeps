@@ -57,9 +57,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // repair
-  const repaired = _(
-    creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => "ticksToDecay" in s && s.hits < s.hitsMax - creep.getActiveBodyparts(WORK) * REPAIR_POWER }),
-  )
+  const repaired = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => "ticksToDecay" in s && s.hits < Math.min(s.hitsMax, 3000) }))
     .map((damaged) => {
       return creep.repair(damaged);
     })
