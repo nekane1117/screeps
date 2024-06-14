@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCarrierBody = exports.moveRoom = exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getMainSpawn = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.REVERSE_BOOSTS = exports.getRepairPower = exports.getCarrierBody = exports.moveRoom = exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getMainSpawn = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
 const util_array_1 = require("./util.array");
 const utils_1 = require("./utils");
 function isStoreTarget(x) {
@@ -297,4 +297,25 @@ const DEFAULT_CREEP_RANGE = {
     remoteCarrier: 1,
     reserver: 1,
     upgrader: 1,
+};
+function getRepairPower(creep) {
+    return _(creep.body)
+        .filter((b) => b.type === WORK)
+        .map((b) => {
+        return REPAIR_POWER * ((b.boost && exports.REVERSE_BOOSTS.repair[b.boost]) || 1);
+    })
+        .sum();
+}
+exports.getRepairPower = getRepairPower;
+exports.REVERSE_BOOSTS = {
+    repair: {
+        [RESOURCE_LEMERGIUM_ACID]: BOOSTS.work[RESOURCE_LEMERGIUM_ACID].repair,
+        [RESOURCE_LEMERGIUM_HYDRIDE]: BOOSTS.work[RESOURCE_LEMERGIUM_HYDRIDE].repair,
+        [RESOURCE_CATALYZED_LEMERGIUM_ACID]: BOOSTS.work[RESOURCE_CATALYZED_LEMERGIUM_ACID].repair,
+    },
+    build: {
+        [RESOURCE_LEMERGIUM_ACID]: BOOSTS.work[RESOURCE_LEMERGIUM_ACID].repair,
+        [RESOURCE_LEMERGIUM_HYDRIDE]: BOOSTS.work[RESOURCE_LEMERGIUM_HYDRIDE].repair,
+        [RESOURCE_CATALYZED_LEMERGIUM_ACID]: BOOSTS.work[RESOURCE_CATALYZED_LEMERGIUM_ACID].repair,
+    },
 };

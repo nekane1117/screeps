@@ -184,27 +184,26 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         .run();
     }
     //#endregion ##########################################################################
-
-    //#region 道を敷く
-    if (
-      creep.memory.mode === "🚛" &&
-      creep.pos.roomName !== creep.memory.baseRoom &&
-      getSitesInRoom(creep.room).length === 0 &&
-      !isHighway(creep.room) &&
-      !creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD)
-    ) {
-      // 現在地に道が無ければ作らせる
-      creep.pos.createConstructionSite(STRUCTURE_ROAD);
-    }
-
-    //#endregion
-
-    //#region その他の処理 ##########################################################################
-
-    // 落っこちてるものをひろう
-    pickUpAll(creep);
-    //#endregion ##########################################################################
   }
+  //#region 道を敷く
+  if (
+    creep.memory.mode === "🚛" &&
+    creep.pos.roomName !== creep.memory.baseRoom &&
+    getSitesInRoom(creep.room).length === 0 &&
+    !isHighway(creep.room) &&
+    !creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD)
+  ) {
+    // 現在地に道が無ければ作らせる
+    creep.pos.createConstructionSite(STRUCTURE_ROAD);
+  }
+
+  //#endregion
+
+  //#region その他の処理 ##########################################################################
+
+  // 落っこちてるものをひろう
+  pickUpAll(creep);
+  //#endregion ##########################################################################
 };
 export default behavior;
 function isRemoteCarrier(creep: Creep): creep is RemoteCarrier {

@@ -10,7 +10,7 @@ const behavior = (creep) => {
     if (!terminal) {
         return ERR_NOT_FOUND;
     }
-    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({}, opt));
+    const moveMeTo = (target, opt) => (0, util_creep_1.customMove)(creep, target, Object.assign({ swampCost: 1, plainCost: 1 }, opt));
     if (!isLabManager(creep)) {
         return console.log(`${creep.name} is not LabManager`);
     }
@@ -30,7 +30,7 @@ const behavior = (creep) => {
             creep.memory.transferId = undefined;
             if (newMode === "🚛") {
                 (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).labManager =
-                    ((((_a = creep.room.memory.carrySize) === null || _a === void 0 ? void 0 : _a.labManager) || 100) * 100 + creep.store.energy) / 101;
+                    ((((_a = creep.room.memory.carrySize) === null || _a === void 0 ? void 0 : _a.labManager) || 100) * 100 + creep.store.getUsedCapacity()) / 101;
             }
         }
     }
@@ -128,7 +128,7 @@ const behavior = (creep) => {
                     }
                     else {
                         if (store.mineralType) {
-                            return creep.withdraw(store, store.mineralType, Math.min(creep.store.getCapacity(store.mineralType), store.store[store.mineralType] - MINERAL_KEEP_VALUE));
+                            return creep.withdraw(store, store.mineralType, Math.min(creep.store.getCapacity(store.mineralType), store.store[store.mineralType]));
                         }
                         else {
                             creep.memory.storeId = undefined;
@@ -173,7 +173,7 @@ const behavior = (creep) => {
         if (!currentType) {
             return ERR_NOT_ENOUGH_RESOURCES;
         }
-        if (currentType.length === 1) {
+        if (!creep.memory.transferId) {
             creep.memory.transferId = (_d = requesting.find((lab) => lab.memory.expectedType === currentType)) === null || _d === void 0 ? void 0 : _d.id;
         }
         if (!creep.memory.transferId) {

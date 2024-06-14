@@ -40,6 +40,14 @@ export default function behaviors(terminal: Structure) {
           });
         });
 
+      if (terminal.store.energy < TRANSFER_THRESHOLD) {
+        _(getTerminals())
+          .filter((t) => t.store.energy > t.room.energyCapacityAvailable * 2)
+          .sort((t) => t.store.energy)
+          .last()
+          ?.send(RESOURCE_ENERGY, TRANSFER_THRESHOLD, terminal.room.name, `${terminal.room.name}にエネルギー補充`);
+      }
+
       // 最終生産物が取れたとき
       if (finalProduct) {
         // 最終生産物がいっぱいあるとき

@@ -112,7 +112,13 @@ function roomBehavior(room) {
         if (room.energyAvailable < room.energyCapacityAvailable) {
             return;
         }
-        if (!reserver.find((c) => { var _a; return ((_a = c === null || c === void 0 ? void 0 : c.memory) === null || _a === void 0 ? void 0 : _a.targetRoomName) === targetRoomName; })) {
+        const filterThisRemote = (c) => { var _a; return ((_a = c === null || c === void 0 ? void 0 : c.memory) === null || _a === void 0 ? void 0 : _a.targetRoomName) === targetRoomName; };
+        const { roomRemoteCarrier, roomRemoteHarvester, roomReserver } = {
+            roomReserver: reserver.filter(filterThisRemote),
+            roomRemoteCarrier: remoteCarrier.filter(filterThisRemote),
+            roomRemoteHarvester: remoteHarvester.filter(filterThisRemote),
+        };
+        if (roomReserver.length === 0) {
             const spawn = (_a = (0, utils_1.getSpawnsInRoom)(room)) === null || _a === void 0 ? void 0 : _a.find((s) => !s.spawning);
             if (spawn) {
                 const spawned = spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("reserver", room.energyAvailable).bodies, `V_${room.name}_${targetRoomName}_${Game.time}`, {
@@ -128,7 +134,7 @@ function roomBehavior(room) {
             }
         }
         const { bodies } = (0, util_creep_1.filterBodiesByCost)("remoteHarvester", room.energyAvailable);
-        if (remoteHarvester.filter((c) => c.memory.targetRoomName === targetRoomName && (c.ticksToLive || Infinity) > bodies.length * CREEP_SPAWN_TIME).length < 1) {
+        if (roomRemoteHarvester.length < 1) {
             const spawn = (_b = (0, utils_1.getSpawnsInRoom)(room)) === null || _b === void 0 ? void 0 : _b.find((s) => !s.spawning);
             if (spawn) {
                 const spawned = spawn.spawnCreep(bodies, `Rh_${room.name}_${targetRoomName}_${Game.time}`, {
@@ -146,7 +152,7 @@ function roomBehavior(room) {
         _((0, util_creep_1.getCarrierBody)(room, "remoteCarrier"))
             .tap((body) => {
             var _a;
-            if (remoteHarvester.length > 0 && remoteCarrier.length < 1) {
+            if (roomRemoteHarvester.length > 0 && roomRemoteCarrier.length < 1) {
                 const spawn = (_a = (0, utils_1.getSpawnsInRoom)(room)) === null || _a === void 0 ? void 0 : _a.find((s) => !s.spawning);
                 if (spawn) {
                     const spawned = spawn.spawnCreep(body, `Rc_${room.name}_${targetRoomName}_${Game.time}`, {

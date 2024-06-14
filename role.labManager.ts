@@ -15,6 +15,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
     customMove(creep, target, {
+      swampCost: 1,
+      plainCost: 1,
       ...opt,
     });
 
@@ -39,7 +41,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       // 運搬モードに切り替えたときの容量を記憶する
       if (newMode === "🚛") {
         (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).labManager =
-          ((creep.room.memory.carrySize?.labManager || 100) * 100 + creep.store.energy) / 101;
+          ((creep.room.memory.carrySize?.labManager || 100) * 100 + creep.store.getUsedCapacity()) / 101;
       }
     }
   }
@@ -173,11 +175,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             // LABの時
             if (store.mineralType) {
               // 取り出す
-              return creep.withdraw(
-                store,
-                store.mineralType,
-                Math.min(creep.store.getCapacity(store.mineralType), store.store[store.mineralType] - MINERAL_KEEP_VALUE),
-              );
+              return creep.withdraw(store, store.mineralType, Math.min(creep.store.getCapacity(store.mineralType), store.store[store.mineralType]));
             } else {
               // 無いときはおかしいので初期化してエラーを返す
               creep.memory.storeId = undefined;
@@ -234,7 +232,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
 
     // 原料の時はリクエストしてるLABがあれば持っていく
-    if (currentType.length === 1) {
+    if (!creep.memory.transferId) {
       creep.memory.transferId = requesting.find((lab) => lab.memory.expectedType === currentType)?.id;
     }
 

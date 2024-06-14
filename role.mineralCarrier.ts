@@ -42,7 +42,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       // 運搬モードに切り替えたときの容量を記憶する
       if (newMode === "🚛") {
         (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).mineralCarrier =
-          ((creep.room.memory.carrySize?.mineralCarrier || 100) * 100 + creep.store.energy) / 101;
+          ((creep.room.memory.carrySize?.mineralCarrier || 100) * 100 + creep.store.getUsedCapacity()) / 101;
       }
     }
   }
@@ -64,8 +64,15 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   const { container } = findMyStructures(creep.room);
   const mineralHarvester = getCreepsInRoom(creep.room).mineralHarvester || [];
   if (!creep.memory.storeId) {
-    creep.memory.storeId = mineral.pos.findClosestByRange([...container, ...mineralHarvester], {
-      filter: (s: Creep | StructureContainer | Tombstone | Ruin): s is StructureContainer => {
+    creep.memory.storeId = mineral.pos.findClosestByRange([...container], {
+      filter: (s: StructureContainer): s is StructureContainer => {
+        return s.store[mineral.mineralType] > CARRY_CAPACITY;
+      },
+    })?.id;
+  }
+  if (!creep.memory.storeId) {
+    creep.memory.storeId = mineral.pos.findClosestByRange(mineralHarvester, {
+      filter: (s: Creep): s is Creep => {
         return s.store[mineral.mineralType] > CARRY_CAPACITY;
       },
     })?.id;

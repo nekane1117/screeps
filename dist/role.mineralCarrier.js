@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
-    var _a, _b;
+    var _a, _b, _c;
     const moveMeTo = (target, opt) => {
         return (0, util_creep_1.customMove)(creep, target, Object.assign({}, opt));
     };
@@ -34,7 +34,7 @@ const behavior = (creep) => {
             creep.memory.transferId = undefined;
             if (newMode === "🚛") {
                 (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).mineralCarrier =
-                    ((((_a = creep.room.memory.carrySize) === null || _a === void 0 ? void 0 : _a.mineralCarrier) || 100) * 100 + creep.store.energy) / 101;
+                    ((((_a = creep.room.memory.carrySize) === null || _a === void 0 ? void 0 : _a.mineralCarrier) || 100) * 100 + creep.store.getUsedCapacity()) / 101;
             }
         }
     }
@@ -51,11 +51,18 @@ const behavior = (creep) => {
     const { container } = (0, utils_1.findMyStructures)(creep.room);
     const mineralHarvester = (0, util_creep_1.getCreepsInRoom)(creep.room).mineralHarvester || [];
     if (!creep.memory.storeId) {
-        creep.memory.storeId = (_a = mineral.pos.findClosestByRange([...container, ...mineralHarvester], {
+        creep.memory.storeId = (_a = mineral.pos.findClosestByRange([...container], {
             filter: (s) => {
                 return s.store[mineral.mineralType] > CARRY_CAPACITY;
             },
         })) === null || _a === void 0 ? void 0 : _a.id;
+    }
+    if (!creep.memory.storeId) {
+        creep.memory.storeId = (_b = mineral.pos.findClosestByRange(mineralHarvester, {
+            filter: (s) => {
+                return s.store[mineral.mineralType] > CARRY_CAPACITY;
+            },
+        })) === null || _b === void 0 ? void 0 : _b.id;
     }
     if (creep.memory.storeId && creep.memory.mode === "🛒") {
         const store = Game.getObjectById(creep.memory.storeId);
@@ -97,7 +104,7 @@ const behavior = (creep) => {
         }
     }
     if (!creep.memory.transferId) {
-        creep.memory.transferId = (_b = creep.room.terminal) === null || _b === void 0 ? void 0 : _b.id;
+        creep.memory.transferId = (_c = creep.room.terminal) === null || _c === void 0 ? void 0 : _c.id;
     }
     if (!creep.memory.transferId) {
         return ERR_NOT_FOUND;

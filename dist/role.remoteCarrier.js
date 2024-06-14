@@ -139,15 +139,15 @@ const behavior = (creep) => {
             })
                 .run();
         }
-        if (creep.memory.mode === "🚛" &&
-            creep.pos.roomName !== creep.memory.baseRoom &&
-            (0, utils_1.getSitesInRoom)(creep.room).length === 0 &&
-            !(0, utils_1.isHighway)(creep.room) &&
-            !creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD)) {
-            creep.pos.createConstructionSite(STRUCTURE_ROAD);
-        }
-        (0, util_creep_1.pickUpAll)(creep);
     }
+    if (creep.memory.mode === "🚛" &&
+        creep.pos.roomName !== creep.memory.baseRoom &&
+        (0, utils_1.getSitesInRoom)(creep.room).length === 0 &&
+        !(0, utils_1.isHighway)(creep.room) &&
+        !creep.pos.lookFor(LOOK_STRUCTURES).find((s) => s.structureType === STRUCTURE_ROAD)) {
+        creep.pos.createConstructionSite(STRUCTURE_ROAD);
+    }
+    (0, util_creep_1.pickUpAll)(creep);
 };
 exports.default = behavior;
 function isRemoteCarrier(creep) {

@@ -139,8 +139,16 @@ export function roomBehavior(room: Room) {
     if (room.energyAvailable < room.energyCapacityAvailable) {
       return;
     }
+    const filterThisRemote = (c: RemoteCarrier | RemoteHarvester | Reserver) => c?.memory?.targetRoomName === targetRoomName;
+
+    const { roomRemoteCarrier, roomRemoteHarvester, roomReserver } = {
+      roomReserver: reserver.filter(filterThisRemote),
+      roomRemoteCarrier: remoteCarrier.filter(filterThisRemote),
+      roomRemoteHarvester: remoteHarvester.filter(filterThisRemote),
+    };
+
     // reserverがいないときは作る
-    if (!(reserver as Reserver[]).find((c) => c?.memory?.targetRoomName === targetRoomName)) {
+    if (roomReserver.length === 0) {
       const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
       if (spawn) {
         const spawned = spawn.spawnCreep(filterBodiesByCost("reserver", room.energyAvailable).bodies, `V_${room.name}_${targetRoomName}_${Game.time}`, {
@@ -157,11 +165,7 @@ export function roomBehavior(room: Room) {
     }
     // harvesterがいないときは作る
     const { bodies } = filterBodiesByCost("remoteHarvester", room.energyAvailable);
-    if (
-      (remoteHarvester as RemoteHarvester[]).filter(
-        (c) => c.memory.targetRoomName === targetRoomName && (c.ticksToLive || Infinity) > bodies.length * CREEP_SPAWN_TIME,
-      ).length < 1
-    ) {
+    if (roomRemoteHarvester.length < 1) {
       const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
       if (spawn) {
         const spawned = spawn.spawnCreep(bodies, `Rh_${room.name}_${targetRoomName}_${Game.time}`, {
@@ -180,7 +184,7 @@ export function roomBehavior(room: Room) {
     _(getCarrierBody(room, "remoteCarrier"))
       .tap((body) => {
         //harvesterが居るのにcarrierが居ないとき
-        if (remoteHarvester.length > 0 && remoteCarrier.length < 1) {
+        if (roomRemoteHarvester.length > 0 && roomRemoteCarrier.length < 1) {
           const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
           if (spawn) {
             const spawned = spawn.spawnCreep(body, `Rc_${room.name}_${targetRoomName}_${Game.time}`, {

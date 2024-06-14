@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, pickUpAll, toColor, withdrawBy } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, getRepairPower, pickUpAll, toColor, withdrawBy } from "./util.creep";
 import { findMyStructures, getDecayAmount, getSitesInRoom } from "./utils";
 // import { findMyStructures } from "./utils";
 
@@ -92,13 +92,19 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     //#region エネルギー残量チェック ###############################################################
     //spawn storage terminaの貯蔵合計がenergyCapacityAvailableより小さいときは何もしない
+    const energyStored = _([spawn, storage, terminal])
+      .flatten<StructureSpawn | StructureStorage | StructureTerminal>()
+      .compact()
+      .sum((s) => s.store.energy);
     if (
       _([spawn, storage, terminal])
         .flatten<StructureSpawn | StructureStorage | StructureTerminal>()
         .compact()
-        .sum((s) => s.store.energy) < creep.room.energyCapacityAvailable
+        .sum((s) => s.store.energy) <
+        creep.room.energyCapacityAvailable * 2 &&
+      creep.room.controller?.pos.findInRange(container, 3).some((c) => c.store.energy > 0)
     ) {
-      return;
+      return creep.say((creep.room.energyCapacityAvailable - energyStored).toString());
     }
 
     //#endregion ###########################################################################################
@@ -335,7 +341,7 @@ function findRepairTarget(creep: Builder) {
       // ダメージのある建物
       filter: (s) => {
         // 閾値
-        return s.hits < s.hitsMax;
+        return s.hits < s.hitsMax - getRepairPower(creep);
       },
     }),
   )

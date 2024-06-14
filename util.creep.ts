@@ -358,3 +358,28 @@ const DEFAULT_CREEP_RANGE: Record<ROLES, number> = {
   reserver: 1,
   upgrader: 1,
 };
+
+export function getRepairPower(creep: Creeps) {
+  return _(creep.body)
+    .filter((b) => b.type === WORK)
+    .map((b: BodyPartDefinition<WORK>) => {
+      return REPAIR_POWER * ((b.boost && REVERSE_BOOSTS.repair[b.boost]) || 1);
+    })
+    .sum();
+}
+
+type BoostMethods = "repair" | "build";
+
+// boost逆引きオブジェクト
+export const REVERSE_BOOSTS: Record<BoostMethods, Partial<Record<ResourceConstant, number>>> = {
+  repair: {
+    [RESOURCE_LEMERGIUM_ACID]: BOOSTS.work[RESOURCE_LEMERGIUM_ACID].repair,
+    [RESOURCE_LEMERGIUM_HYDRIDE]: BOOSTS.work[RESOURCE_LEMERGIUM_HYDRIDE].repair,
+    [RESOURCE_CATALYZED_LEMERGIUM_ACID]: BOOSTS.work[RESOURCE_CATALYZED_LEMERGIUM_ACID].repair,
+  },
+  build: {
+    [RESOURCE_LEMERGIUM_ACID]: BOOSTS.work[RESOURCE_LEMERGIUM_ACID].repair,
+    [RESOURCE_LEMERGIUM_HYDRIDE]: BOOSTS.work[RESOURCE_LEMERGIUM_HYDRIDE].repair,
+    [RESOURCE_CATALYZED_LEMERGIUM_ACID]: BOOSTS.work[RESOURCE_CATALYZED_LEMERGIUM_ACID].repair,
+  },
+};

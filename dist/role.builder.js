@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     if (!isBuilder(creep)) {
         return console.log(`${creep.name} is not Builder`);
     }
@@ -67,11 +67,17 @@ const behavior = (creep) => {
                     .run();
             }
         }
+        const energyStored = _([spawn, storage, terminal])
+            .flatten()
+            .compact()
+            .sum((s) => s.store.energy);
         if (_([spawn, storage, terminal])
             .flatten()
             .compact()
-            .sum((s) => s.store.energy) < creep.room.energyCapacityAvailable) {
-            return;
+            .sum((s) => s.store.energy) <
+            creep.room.energyCapacityAvailable * 2 &&
+            ((_b = creep.room.controller) === null || _b === void 0 ? void 0 : _b.pos.findInRange(container, 3).some((c) => c.store.energy > 0))) {
+            return creep.say((creep.room.energyCapacityAvailable - energyStored).toString());
         }
         if (creep.memory.buildingId) {
             const target = Game.getObjectById(creep.memory.buildingId);
@@ -143,16 +149,16 @@ const behavior = (creep) => {
         }
     }
     else {
-        if (creep.memory.storeId && ((_b = Game.getObjectById(creep.memory.storeId)) === null || _b === void 0 ? void 0 : _b.store.energy) === 0) {
+        if (creep.memory.storeId && ((_c = Game.getObjectById(creep.memory.storeId)) === null || _c === void 0 ? void 0 : _c.store.energy) === 0) {
             creep.memory.storeId = undefined;
         }
         const { container } = (0, utils_1.findMyStructures)(creep.room);
         if (creep.memory.storeId ||
-            (creep.memory.storeId = (_c = creep.pos.findClosestByPath(_.compact([...container, creep.room.terminal, creep.room.storage]), {
+            (creep.memory.storeId = (_d = creep.pos.findClosestByPath(_.compact([...container, creep.room.terminal, creep.room.storage]), {
                 filter: (s) => {
                     return s.store.energy >= creep.store.getCapacity(RESOURCE_ENERGY);
                 },
-            })) === null || _c === void 0 ? void 0 : _c.id)) {
+            })) === null || _d === void 0 ? void 0 : _d.id)) {
             const store = Game.getObjectById(creep.memory.storeId);
             if (store && "store" in store) {
                 creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY);
@@ -247,7 +253,7 @@ function findRepairTarget(creep) {
     var _a;
     return (_a = _(creep.room.find(FIND_STRUCTURES, {
         filter: (s) => {
-            return s.hits < s.hitsMax;
+            return s.hits < s.hitsMax - (0, util_creep_1.getRepairPower)(creep);
         },
     }))
         .sortBy((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME))

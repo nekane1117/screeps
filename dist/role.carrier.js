@@ -151,8 +151,8 @@ const behavior = (creep) => {
             },
         })) === null || _h === void 0 ? void 0 : _h.id;
     }
-    if (!creep.memory.transferId && room.storage && room.storage.store.energy < room.energyCapacityAvailable) {
-        creep.memory.transferId = room.storage.id;
+    if (!creep.memory.transferId && room.terminal && room.terminal.store.energy < room.energyCapacityAvailable) {
+        creep.memory.transferId = room.terminal.id;
     }
     if (!creep.memory.transferId) {
         creep.memory.transferId = (_j = _(labs)
@@ -160,8 +160,8 @@ const behavior = (creep) => {
             .sort((l1, l2) => l1.store.energy - l2.store.energy)
             .first()) === null || _j === void 0 ? void 0 : _j.id;
     }
-    if (!creep.memory.transferId && room.terminal && room.terminal.store.energy < room.energyCapacityAvailable) {
-        creep.memory.transferId = room.terminal.id;
+    if (!creep.memory.transferId && room.storage && room.storage.store.energy < room.energyCapacityAvailable) {
+        creep.memory.transferId = room.storage.id;
     }
     if (!creep.memory.transferId) {
         creep.memory.transferId = (_k = (controllerContaeiner && (0, utils_1.getCapacityRate)(controllerContaeiner) < 1 ? controllerContaeiner : undefined)) === null || _k === void 0 ? void 0 : _k.id;

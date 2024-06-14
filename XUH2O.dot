@@ -1,0 +1,16 @@
+digraph G {
+    rankdir = "BT"
+    U[style = "filled",fillcolor="lightblue"]
+    UH[style = "filled",fillcolor="lightblue"]
+    UH2O[style = "filled",fillcolor="lightblue"]
+    XUH2O[style = "filled",fillcolor="lightblue"]
+    OH[style = "filled",fillcolor="lightgray"]
+    H[style = "filled",fillcolor="lightgray"]
+    O[style = "filled",fillcolor="lightgray"]
+    X[style = "filled",fillcolor="lightpink"]
+    {H, U} -> UH
+    {H, O} -> OH
+    {UH, OH} -> UH2O
+    {UH2O, X} -> XUH2O
+    
+}

@@ -21,7 +21,7 @@ export function behavior(source: Source) {
       const spawns = getSpawnsInRoom(source.room);
       // 部屋にある時は部屋のだけ
       if (spawns.length > 0) {
-        return source.pos.findClosestByRange(spawns);
+        return source.pos.findClosestByRange(spawns.filter((s) => !s.spawning));
       } else {
         return source.pos.findClosestByPath(Object.values(Game.spawns));
       }

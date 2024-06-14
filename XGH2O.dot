@@ -1,0 +1,25 @@
+digraph G {
+    rankdir = "BT"
+    Z[style = "filled",fillcolor="lightyellow"]
+    L[style = "filled",fillcolor="green"]
+    U[style = "filled",fillcolor="lightblue"]
+    K[style = "filled",fillcolor="purple"]
+    G[style = "filled",fillcolor="gray"]
+    ZK[style = "filled",fillcolor="gray"]
+    UL[style = "filled",fillcolor="gray"]
+    GH[style = "filled",fillcolor="gray"]
+    GH2O[style = "filled",fillcolor="gray"]
+    XGH2O[style = "filled",fillcolor="gray"]
+    OH[style = "filled",fillcolor="lightgray"]
+    H[style = "filled",fillcolor="lightgray"]
+    O[style = "filled",fillcolor="lightgray"]
+    X[style = "filled",fillcolor="lightpink"]
+    {Z, K} -> ZK
+    {U, L} -> UL
+    {ZK, UL} -> G
+    {H, G} -> GH
+    {H, O} -> OH
+    {GH, OH} -> GH2O
+    {GH2O, X} -> XGH2O
+    
+}

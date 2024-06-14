@@ -5,7 +5,7 @@ const utils_1 = require("./utils");
 const TRANSFER_THRESHOLD = 1000;
 function behaviors(terminal) {
     (0, utils_1.logUsage)(`terminal:${terminal.room.name}`, () => {
-        var _a;
+        var _a, _b;
         if (!isTerminal(terminal)) {
             return console.log(`${terminal.id} is not terminal`);
         }
@@ -26,6 +26,12 @@ function behaviors(terminal) {
                     return (0, utils_1.isCompound)(lab.memory.expectedType) && lab.memory.expectedType === type;
                 });
             });
+            if (terminal.store.energy < TRANSFER_THRESHOLD) {
+                (_a = _((0, utils_1.getTerminals)())
+                    .filter((t) => t.store.energy > t.room.energyCapacityAvailable * 2)
+                    .sort((t) => t.store.energy)
+                    .last()) === null || _a === void 0 ? void 0 : _a.send(RESOURCE_ENERGY, TRANSFER_THRESHOLD, terminal.room.name, `${terminal.room.name}にエネルギー補充`);
+            }
             if (finalProduct) {
                 if (terminal.store[finalProduct] > TRANSFER_THRESHOLD * 2 && terminal.store.energy >= TRANSFER_THRESHOLD * TERMINAL_SEND_COST) {
                     const sendTarget = _((0, utils_1.getTerminals)()).find((t) => (0, utils_1.getAvailableAmount)(t, finalProduct) < TRANSFER_THRESHOLD);
@@ -59,7 +65,7 @@ function behaviors(terminal) {
         for (const resourceType of Object.keys(terminal.store).filter((resourceType) => {
             return resourceType[0] === resourceType[0].toUpperCase() && resourceType.length >= 2 && (0, utils_1.getAvailableAmount)(terminal, resourceType) > TRANSFER_THRESHOLD;
         })) {
-            const avg = ((_a = _(Game.market.getHistory(resourceType)).last()) === null || _a === void 0 ? void 0 : _a.avgPrice) || Infinity;
+            const avg = ((_b = _(Game.market.getHistory(resourceType)).last()) === null || _b === void 0 ? void 0 : _b.avgPrice) || Infinity;
             const order = _(Game.market.getAllOrders({ type: ORDER_BUY, resourceType }))
                 .filter((o) => o.price >= avg)
                 .max((o) => o.price);

@@ -207,11 +207,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     })?.id;
   }
 
-  // storageにキャッシュ
-  if (!creep.memory.transferId && room.storage && room.storage.store.energy < room.energyCapacityAvailable) {
-    creep.memory.transferId = room.storage.id;
+  // terminalにキャッシュ
+  if (!creep.memory.transferId && room.terminal && room.terminal.store.energy < room.energyCapacityAvailable) {
+    creep.memory.transferId = room.terminal.id;
   }
 
+  // Labに入れておく
   if (!creep.memory.transferId) {
     creep.memory.transferId = _(labs)
       .filter((lab) => getCapacityRate(lab) < 0.8)
@@ -219,9 +220,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       .first()?.id;
   }
 
-  // terminalにキャッシュ
-  if (!creep.memory.transferId && room.terminal && room.terminal.store.energy < room.energyCapacityAvailable) {
-    creep.memory.transferId = room.terminal.id;
+  // storageにキャッシュ
+  if (!creep.memory.transferId && room.storage && room.storage.store.energy < room.energyCapacityAvailable) {
+    creep.memory.transferId = room.storage.id;
   }
 
   // コントローラー強化

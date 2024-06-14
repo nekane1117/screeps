@@ -15,7 +15,7 @@ function behavior(source) {
         const spawn = (() => {
             const spawns = (0, utils_1.getSpawnsInRoom)(source.room);
             if (spawns.length > 0) {
-                return source.pos.findClosestByRange(spawns);
+                return source.pos.findClosestByRange(spawns.filter((s) => !s.spawning));
             }
             else {
                 return source.pos.findClosestByPath(Object.values(Game.spawns));
