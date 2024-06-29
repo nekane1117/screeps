@@ -323,10 +323,15 @@ declare interface RemoteCarrierMemory extends CreepMemory {
 
 declare interface Memory {
   factories: Record<Id<StructureFactory>, FactoryMemory>;
+  terminals: Record<Id<StructureTerminal>, TerminalMemory>;
 }
 
 declare interface FactoryMemory {
   outputType?: ResourceConstant;
   expectedType?: ResourceConstant;
   lastProduced?: ResourceConstant;
+}
+
+declare interface TerminalMemory {
+  lastTrade?: MarketResourceConstant;
 }

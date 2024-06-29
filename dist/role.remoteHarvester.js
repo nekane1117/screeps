@@ -77,49 +77,49 @@ const behavior = (creep) => {
             creep.memory.harvestTargetId = undefined;
         }
         if (source === null || source === void 0 ? void 0 : source.pos.isNearTo(creep)) {
-            const { container: containers } = (0, utils_1.findMyStructures)(creep.room);
-            const container = source.pos.findClosestByRange([...containers, ...(0, utils_1.getSitesInRoom)(creep.room)], {
-                filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.pos.isNearTo(source),
-            });
-            if (container) {
-                if (!("progress" in container)) {
-                    if (creep.store.energy > creep.getActiveBodyparts(WORK)) {
-                        _(creep.transfer(container, RESOURCE_ENERGY))
-                            .tap((result) => {
-                            switch (result) {
-                                case ERR_NOT_IN_RANGE:
-                                    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-                                        moveMeTo(source);
-                                    }
-                                    return;
-                                case OK:
-                                case ERR_FULL:
-                                case ERR_NOT_ENOUGH_ENERGY:
-                                    return OK;
-                                default:
-                                    creep.say(util_creep_1.RETURN_CODE_DECODER[result.toString()].replace("ERR_", ""));
-                                    console.log(creep.name, "transfer", creep.saying);
-                                    break;
-                            }
-                        })
-                            .run();
-                    }
+            const site = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES, { filter: (s) => s.pos.inRangeTo(creep, 3) });
+            const damaged = creep.pos.findClosestByRange(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax && s.pos.inRangeTo(creep, 3) });
+            if (site || damaged) {
+                if (site) {
+                    creep.build(site);
+                }
+                if (damaged) {
+                    creep.repair(damaged);
                 }
             }
             else {
-                creep.pos.createConstructionSite(STRUCTURE_CONTAINER);
-            }
-        }
-        if (source === null || source === void 0 ? void 0 : source.pos.isNearTo(creep)) {
-            const site = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES);
-            if (site) {
-                creep.build(site);
-            }
-        }
-        if (source === null || source === void 0 ? void 0 : source.pos.isNearTo(creep)) {
-            const damaged = creep.pos.findClosestByRange(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax });
-            if (damaged) {
-                creep.repair(damaged);
+                const { container: containers } = (0, utils_1.findMyStructures)(creep.room);
+                const container = source.pos.findClosestByRange([...containers, ...(0, utils_1.getSitesInRoom)(creep.room)], {
+                    filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.pos.isNearTo(source),
+                });
+                if (container) {
+                    if (!("progress" in container)) {
+                        if (creep.store.energy > creep.getActiveBodyparts(WORK)) {
+                            _(creep.transfer(container, RESOURCE_ENERGY))
+                                .tap((result) => {
+                                switch (result) {
+                                    case ERR_NOT_IN_RANGE:
+                                        if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+                                            moveMeTo(source);
+                                        }
+                                        return;
+                                    case OK:
+                                    case ERR_FULL:
+                                    case ERR_NOT_ENOUGH_ENERGY:
+                                        return OK;
+                                    default:
+                                        creep.say(util_creep_1.RETURN_CODE_DECODER[result.toString()].replace("ERR_", ""));
+                                        console.log(creep.name, "transfer", creep.saying);
+                                        break;
+                                }
+                            })
+                                .run();
+                        }
+                    }
+                }
+                else {
+                    creep.pos.createConstructionSite(STRUCTURE_CONTAINER);
+                }
             }
         }
     }

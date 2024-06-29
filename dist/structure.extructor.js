@@ -12,7 +12,7 @@ function behavior(extractor) {
         return ERR_NOT_FOUND;
     }
     const { container } = (0, utils_1.findMyStructures)(extractor.room);
-    if (extractor.room.terminal.store[mineral.mineralType] > constants_1.TERMINAL_THRESHOLD * 2) {
+    if (extractor.room.terminal.store[mineral.mineralType] > constants_1.TERMINAL_LIMIT * 2) {
         return;
     }
     const { mineralHarvester = [], mineralCarrier = [] } = (0, util_creep_1.getCreepsInRoom)(mineral.room);

@@ -209,7 +209,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       if (transferTarget) {
         // 離れていれば近寄る
         if (!creep.pos.isNearTo(transferTarget)) {
-          moveMeTo(transferTarget);
+          moveMeTo(transferTarget, {
+            ignoreCreeps: !creep.pos.inRangeTo(transferTarget, 2),
+          });
         }
         if (transferTarget.structureType !== STRUCTURE_STORAGE) {
           creep.memory.transferId = transferTarget.id;

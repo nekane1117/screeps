@@ -103,67 +103,62 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     // #endregion ####################################################################################
 
-    //#region transfer ##################################################################################
+    //#region sourceの隣にいるとき ##################################################################################
     if (source?.pos.isNearTo(creep)) {
-      // 隣接してるとき
-      const { container: containers } = findMyStructures(creep.room);
-
-      // sourceに隣接したコンテナを取得する
-      const container = source.pos.findClosestByRange([...containers, ...getSitesInRoom(creep.room)], {
-        filter: (s: Structure | ConstructionSite) => s.structureType === STRUCTURE_CONTAINER && s.pos.isNearTo(source),
-      });
-      if (container) {
-        if (!("progress" in container)) {
-          if (creep.store.energy > creep.getActiveBodyparts(WORK)) {
-            _(creep.transfer(container, RESOURCE_ENERGY))
-              .tap((result) => {
-                switch (result) {
-                  case ERR_NOT_IN_RANGE:
-                    // いっぱいの時は寄る
-                    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-                      moveMeTo(source);
-                    }
-                    return;
-                  case OK:
-                  case ERR_FULL:
-                  case ERR_NOT_ENOUGH_ENERGY:
-                    return OK;
-                  default:
-                    creep.say(RETURN_CODE_DECODER[result.toString()].replace("ERR_", ""));
-                    console.log(creep.name, "transfer", creep.saying);
-                    break;
-                }
-              })
-              .run();
-          }
+      const site = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES, { filter: (s) => s.pos.inRangeTo(creep, 3) });
+      const damaged = creep.pos.findClosestByRange(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax && s.pos.inRangeTo(creep, 3) });
+      //#region build ##################################################################################
+      if (site || damaged) {
+        if (site) {
+          creep.build(site);
         }
+        //#endregion
+        //#region repair ##################################################################################
+        if (damaged) {
+          creep.repair(damaged);
+        }
+        //#endregion
       } else {
-        creep.pos.createConstructionSite(STRUCTURE_CONTAINER);
+        //#region transfer ##################################################################################
+        // 隣接してるとき
+        const { container: containers } = findMyStructures(creep.room);
+
+        // sourceに隣接したコンテナを取得する
+        const container = source.pos.findClosestByRange([...containers, ...getSitesInRoom(creep.room)], {
+          filter: (s: Structure | ConstructionSite) => s.structureType === STRUCTURE_CONTAINER && s.pos.isNearTo(source),
+        });
+        if (container) {
+          if (!("progress" in container)) {
+            if (creep.store.energy > creep.getActiveBodyparts(WORK)) {
+              _(creep.transfer(container, RESOURCE_ENERGY))
+                .tap((result) => {
+                  switch (result) {
+                    case ERR_NOT_IN_RANGE:
+                      // いっぱいの時は寄る
+                      if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+                        moveMeTo(source);
+                      }
+                      return;
+                    case OK:
+                    case ERR_FULL:
+                    case ERR_NOT_ENOUGH_ENERGY:
+                      return OK;
+                    default:
+                      creep.say(RETURN_CODE_DECODER[result.toString()].replace("ERR_", ""));
+                      console.log(creep.name, "transfer", creep.saying);
+                      break;
+                  }
+                })
+                .run();
+            }
+          }
+        } else {
+          creep.pos.createConstructionSite(STRUCTURE_CONTAINER);
+        }
+        //#endregion
       }
     }
-    //#endregion
-
-    //#region build ##################################################################################
-
-    // 適当に建設を叩く
-    if (source?.pos.isNearTo(creep)) {
-      const site = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES);
-      if (site) {
-        creep.build(site);
-      }
-    }
-    //#endregion
-
-    //#region repair ##################################################################################
-
-    // 射程内の修理はぜんぶ叩く
-    if (source?.pos.isNearTo(creep)) {
-      const damaged = creep.pos.findClosestByRange(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax });
-      if (damaged) {
-        creep.repair(damaged);
-      }
-    }
-    //#endregion
+    // #endregion ####################################################################################
   } else {
     //#region 建設モード ##################################################################################
     const site = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES);

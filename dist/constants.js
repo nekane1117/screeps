@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ROAD_DECAY_AMOUNT_WALL = exports.ROAD_DECAY_AMOUNT_SWAMP = exports.ALL_REACTIONS = exports.REVERSE_REACTIONS = exports.LAB_STRATEGY = exports.TERMINAL_THRESHOLD = void 0;
+exports.COMPRESSING_INGREDIENT = exports.DECOMPRESSING_COMMODITIES = exports.ROAD_DECAY_AMOUNT_WALL = exports.ROAD_DECAY_AMOUNT_SWAMP = exports.ALL_REACTIONS = exports.REVERSE_REACTIONS = exports.LAB_STRATEGY = exports.TERMINAL_THRESHOLD = exports.TERMINAL_LIMIT = void 0;
 const utils_common_1 = require("./utils.common");
-exports.TERMINAL_THRESHOLD = 10000;
+exports.TERMINAL_LIMIT = 10000;
+exports.TERMINAL_THRESHOLD = 1000;
 exports.LAB_STRATEGY = {
     [RESOURCE_LEMERGIUM]: [
         RESOURCE_LEMERGIUM,
@@ -91,3 +92,24 @@ exports.REVERSE_REACTIONS = {
 exports.ALL_REACTIONS = _((0, utils_common_1.ObjectKeys)(exports.REVERSE_REACTIONS)).sortBy((r) => (r === "G" ? 0 : r.length));
 exports.ROAD_DECAY_AMOUNT_SWAMP = 500;
 exports.ROAD_DECAY_AMOUNT_WALL = 15000;
+exports.DECOMPRESSING_COMMODITIES = [
+    RESOURCE_UTRIUM,
+    RESOURCE_LEMERGIUM,
+    RESOURCE_ZYNTHIUM,
+    RESOURCE_KEANIUM,
+    RESOURCE_GHODIUM,
+    RESOURCE_OXYGEN,
+    RESOURCE_HYDROGEN,
+    RESOURCE_CATALYST,
+    RESOURCE_ENERGY,
+];
+exports.COMPRESSING_INGREDIENT = {
+    [RESOURCE_UTRIUM_BAR]: { type: RESOURCE_UTRIUM, rate: 5 },
+    [RESOURCE_LEMERGIUM_BAR]: { type: RESOURCE_LEMERGIUM, rate: 5 },
+    [RESOURCE_ZYNTHIUM_BAR]: { type: RESOURCE_ZYNTHIUM, rate: 5 },
+    [RESOURCE_KEANIUM_BAR]: { type: RESOURCE_KEANIUM, rate: 5 },
+    [RESOURCE_GHODIUM_MELT]: { type: RESOURCE_GHODIUM, rate: 5 },
+    [RESOURCE_OXIDANT]: { type: RESOURCE_OXYGEN, rate: 5 },
+    [RESOURCE_REDUCTANT]: { type: RESOURCE_HYDROGEN, rate: 5 },
+    [RESOURCE_PURIFIER]: { type: RESOURCE_CATALYST, rate: 5 },
+};

@@ -30,8 +30,8 @@ export default function behaviors(factory: Structure) {
           ObjectEntries(commodity.components).every(([resource, amount]) => factory.store[resource] >= amount)
         );
       })
-      .sortBy(([type, commodity]) => {
-        return (commodity.level || 0) * FACTORY_CAPACITY + factory.store[type];
+      .sortBy(([_type, commodity]) => {
+        return -(commodity.level || 0) * FACTORY_CAPACITY;
       })
       .first();
 
@@ -44,11 +44,11 @@ export default function behaviors(factory: Structure) {
       if (!factory.room.terminal) {
         return false;
       }
-      return !INGREDIENTS.includes(type as ResourceConstant) && factory.store[type] > THRESHOLD * 2 && factory.room.terminal.store[type] < THRESHOLD * 2;
+      return !INGREDIENTS.includes(type as ResourceConstant) && factory.store[type] > THRESHOLD && factory.room.terminal.store[type] < THRESHOLD * 2;
     });
 
     memory.expectedType = RESOURCES_ALL.find((resourceType) => {
-      return (factory.room.terminal?.store[resourceType] || 0) > THRESHOLD * 1 && factory.store[resourceType] < THRESHOLD;
+      return (factory.room.terminal?.store[resourceType] || 0) >= THRESHOLD * 1 && factory.store[resourceType] < THRESHOLD;
     });
   });
 }
@@ -74,5 +74,5 @@ const INGREDIENTS: ResourceConstant[] = [
   RESOURCE_LEMERGIUM,
   RESOURCE_UTRIUM,
   RESOURCE_KEANIUM,
-  RESOURCE_CRYSTAL,
+  RESOURCE_CATALYST,
 ];

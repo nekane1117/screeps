@@ -231,7 +231,7 @@ function findTransferTarget(room) {
         (((factory === null || factory === void 0 ? void 0 : factory.store.energy) || 0) < room.energyCapacityAvailable ? factory : null) ||
         _([room.storage, room.terminal])
             .compact()
-            .filter((s) => s.store.energy < constants_1.TERMINAL_THRESHOLD)
+            .filter((s) => s.store.energy < constants_1.TERMINAL_LIMIT)
             .sortBy((s) => s.store.energy)
             .first());
 }

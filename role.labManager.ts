@@ -50,7 +50,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   const { factory } = findMyStructures(creep.room);
 
-  const labs = _([...getLabs(room).value(), factory && Object.assign(factory, factory && { memory: Memory.factories[factory.id] })]).compact();
+  const labs = _([factory && Object.assign(factory, factory && { memory: Memory.factories[factory.id] }), ...getLabs(room).value()]).compact();
 
   // 取得元設定処理###############################################################################################
 
@@ -87,7 +87,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
               if (structure.store[structure.mineralType] > TRANSFER_THRESHOLD * 2) {
                 // 完成
                 mapping.completed.push(structure);
-              } else if (structure.store[structure.mineralType] <= TRANSFER_THRESHOLD * 2) {
+              } else if (structure.store[structure.mineralType] <= TRANSFER_THRESHOLD) {
                 // ターミナルにあってたらなくなってきたときは要求する
                 mapping.requesting.push(structure);
               } else {
@@ -140,7 +140,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // 要求に応じてターミナルに取りに行く
   if (!creep.memory.storeId) {
-    const req = requesting.find((r) => r.memory.expectedType && terminal.store[r.memory.expectedType] > 0);
+    const req = requesting.find((r) => r.memory.expectedType && terminal.store[r.memory.expectedType] + creep.store.getCapacity(r.memory.expectedType) > 0);
     if (req) {
       creep.memory.storeId = creep.room.terminal?.id;
       creep.memory.mineralType = req.memory.expectedType;
@@ -239,7 +239,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // 輸送先が満タンになってたら消す
   if (creep.memory.transferId) {
     const store = Game.getObjectById(creep.memory.transferId);
-    if (store && "store" in store && store.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+    if (store && "store" in store && store.store.getFreeCapacity(currentType) === 0) {
       creep.memory.transferId = undefined;
     }
   }

@@ -150,7 +150,9 @@ const behavior = (creep) => {
             const transferTarget = creep.memory.transferId ? Game.getObjectById(creep.memory.transferId) : (0, role_carrier_1.findTransferTarget)(creep.room);
             if (transferTarget) {
                 if (!creep.pos.isNearTo(transferTarget)) {
-                    moveMeTo(transferTarget);
+                    moveMeTo(transferTarget, {
+                        ignoreCreeps: !creep.pos.inRangeTo(transferTarget, 2),
+                    });
                 }
                 if (transferTarget.structureType !== STRUCTURE_STORAGE) {
                     creep.memory.transferId = transferTarget.id;

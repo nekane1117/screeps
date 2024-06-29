@@ -36,7 +36,7 @@ const behavior = (creep) => {
     }
     checkMode();
     const { factory } = (0, utils_1.findMyStructures)(creep.room);
-    const labs = _([...(0, utils_1.getLabs)(room).value(), factory && Object.assign(factory, factory && { memory: Memory.factories[factory.id] })]).compact();
+    const labs = _([factory && Object.assign(factory, factory && { memory: Memory.factories[factory.id] }), ...(0, utils_1.getLabs)(room).value()]).compact();
     if (creep.memory.storeId) {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store && "store" in store && store.store.energy < CARRY_CAPACITY) {
@@ -65,7 +65,7 @@ const behavior = (creep) => {
                     if (structure.store[structure.mineralType] > TRANSFER_THRESHOLD * 2) {
                         mapping.completed.push(structure);
                     }
-                    else if (structure.store[structure.mineralType] <= TRANSFER_THRESHOLD * 2) {
+                    else if (structure.store[structure.mineralType] <= TRANSFER_THRESHOLD) {
                         mapping.requesting.push(structure);
                     }
                     else {
@@ -104,7 +104,7 @@ const behavior = (creep) => {
         creep.memory.storeId = (_b = _(completed).first()) === null || _b === void 0 ? void 0 : _b.id;
     }
     if (!creep.memory.storeId) {
-        const req = requesting.find((r) => r.memory.expectedType && terminal.store[r.memory.expectedType] > 0);
+        const req = requesting.find((r) => r.memory.expectedType && terminal.store[r.memory.expectedType] + creep.store.getCapacity(r.memory.expectedType) > 0);
         if (req) {
             creep.memory.storeId = (_c = creep.room.terminal) === null || _c === void 0 ? void 0 : _c.id;
             creep.memory.mineralType = req.memory.expectedType;
@@ -181,7 +181,7 @@ const behavior = (creep) => {
     const currentType = (_d = Object.entries(creep.store).find(([_type, amount]) => amount)) === null || _d === void 0 ? void 0 : _d[0];
     if (creep.memory.transferId) {
         const store = Game.getObjectById(creep.memory.transferId);
-        if (store && "store" in store && store.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+        if (store && "store" in store && store.store.getFreeCapacity(currentType) === 0) {
             creep.memory.transferId = undefined;
         }
     }

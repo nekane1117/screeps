@@ -1,4 +1,4 @@
-import { TERMINAL_THRESHOLD } from "./constants";
+import { TERMINAL_LIMIT } from "./constants";
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, pickUpAll, withdrawBy } from "./util.creep";
 import { findMyStructures, getCapacityRate, getLabs } from "./utils";
@@ -308,7 +308,7 @@ export function findTransferTarget(room: Room) {
     // 貯蓄
     _([room.storage, room.terminal])
       .compact()
-      .filter((s) => s.store.energy < TERMINAL_THRESHOLD)
+      .filter((s) => s.store.energy < TERMINAL_LIMIT)
       .sortBy((s) => s.store.energy)
       .first()
   );

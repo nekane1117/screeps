@@ -24,8 +24,8 @@ function behaviors(factory) {
                 factory.store[type] <= THRESHOLD * 2 &&
                 (0, utils_common_1.ObjectEntries)(commodity.components).every(([resource, amount]) => factory.store[resource] >= amount));
         })
-            .sortBy(([type, commodity]) => {
-            return (commodity.level || 0) * FACTORY_CAPACITY + factory.store[type];
+            .sortBy(([_type, commodity]) => {
+            return -(commodity.level || 0) * FACTORY_CAPACITY;
         })
             .first();
         if (commodity) {
@@ -36,11 +36,11 @@ function behaviors(factory) {
             if (!factory.room.terminal) {
                 return false;
             }
-            return !INGREDIENTS.includes(type) && factory.store[type] > THRESHOLD * 2 && factory.room.terminal.store[type] < THRESHOLD * 2;
+            return !INGREDIENTS.includes(type) && factory.store[type] > THRESHOLD && factory.room.terminal.store[type] < THRESHOLD * 2;
         });
         memory.expectedType = RESOURCES_ALL.find((resourceType) => {
             var _a;
-            return (((_a = factory.room.terminal) === null || _a === void 0 ? void 0 : _a.store[resourceType]) || 0) > THRESHOLD * 1 && factory.store[resourceType] < THRESHOLD;
+            return (((_a = factory.room.terminal) === null || _a === void 0 ? void 0 : _a.store[resourceType]) || 0) >= THRESHOLD * 1 && factory.store[resourceType] < THRESHOLD;
         });
     });
 }
@@ -62,5 +62,5 @@ const INGREDIENTS = [
     RESOURCE_LEMERGIUM,
     RESOURCE_UTRIUM,
     RESOURCE_KEANIUM,
-    RESOURCE_CRYSTAL,
+    RESOURCE_CATALYST,
 ];

@@ -155,7 +155,15 @@ export function getLabs(room: Room) {
 
 export function getTerminals() {
   return _(Object.values(Game.rooms))
-    .map((r) => r.terminal)
+    .map(({ terminal }) => {
+      if (terminal) {
+        return Object.assign(terminal, {
+          memory: ((Memory.terminals = Memory.terminals || {})[terminal.id] = Memory.terminals[terminal.id] || {}),
+        });
+      } else {
+        return undefined;
+      }
+    })
     .compact()
     .run();
 }

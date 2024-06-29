@@ -13,6 +13,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   const targetRoom = Game.rooms[memory.targetRoomName] as Room | undefined;
 
   if (targetRoom) {
+    if (creep.pos.roomName !== targetRoom.name) {
+      return targetRoom.controller && moveMeTo(targetRoom.controller);
+    }
+
     const damaged = _(Object.values(Game.creeps))
       .filter((c) => c.pos.roomName === targetRoom.name && c.hits < c.hitsMax)
       .value();
@@ -41,7 +45,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           })
           .run();
       }
-    } else if (hostiles.length > 0 && creep.getActiveBodyparts(ATTACK)) {
+    } else if (hostiles.length > 0 && creep.getActiveBodyparts(RANGED_ATTACK)) {
       // #region 敵がいる場合#################################################################
       const target = creep.pos.findClosestByRange(hostiles);
       if (target) {
@@ -49,7 +53,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           range: !("body" in target) || target.getActiveBodyparts(ATTACK) === 0 ? 0 : 3,
         });
         creep.rangedAttack(target);
-        creep.attack(target);
       }
       // #endregion
     } else {

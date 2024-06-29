@@ -1,4 +1,4 @@
-import { TERMINAL_THRESHOLD } from "./constants";
+import { TERMINAL_LIMIT } from "./constants";
 import { filterBodiesByCost, getCarrierBody, getCreepsInRoom } from "./util.creep";
 import { findMyStructures, getSpawnsInRoom, getSpawnsOrderdByRange } from "./utils";
 
@@ -14,7 +14,7 @@ export default function behavior(extractor: Structure) {
 
   const { container } = findMyStructures(extractor.room);
 
-  if (extractor.room.terminal.store[mineral.mineralType] > TERMINAL_THRESHOLD * 2) {
+  if (extractor.room.terminal.store[mineral.mineralType] > TERMINAL_LIMIT * 2) {
     // とりあえずいっぱいあるときはいい
     return;
   }
