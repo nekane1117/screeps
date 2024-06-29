@@ -38,68 +38,95 @@ const behavior = (creep) => {
         creep.rangedAttack(enemy);
         creep.attack(enemy);
     }
-    creep.memory.harvestTargetId = creep.memory.harvestTargetId || ((_a = findHarvestTarget(creep, targetRoom)) === null || _a === void 0 ? void 0 : _a.id);
-    const source = memory.harvestTargetId && Game.getObjectById(memory.harvestTargetId);
-    if (source) {
-        _((creep.memory.worked = creep.harvest(source)))
-            .tap((worked) => {
-            switch (worked) {
-                case ERR_NOT_IN_RANGE:
-                    return moveMeTo(source);
-                case OK:
-                    return;
-                case ERR_NOT_ENOUGH_ENERGY:
-                case ERR_NO_PATH:
-                    creep.memory.harvestTargetId = undefined;
-                    return;
-                default:
-                    creep.memory.harvestTargetId = undefined;
-                    creep.say(util_creep_1.RETURN_CODE_DECODER[worked.toString()].replace("ERR_", ""));
-                    console.log(creep.name, "harvest", creep.saying);
-            }
-        })
-            .run();
+    if (creep.memory.targetRoomName !== creep.pos.roomName) {
+        creep.memory.mode = "🌾";
     }
-    else {
-        creep.memory.harvestTargetId = undefined;
+    else if (creep.memory.mode === "🌾" && creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0 && (0, utils_1.getSitesInRoom)(creep.room).length) {
+        creep.memory.mode = "👷";
     }
-    if (source === null || source === void 0 ? void 0 : source.pos.isNearTo(creep)) {
-        const container = source.pos.findClosestByRange(FIND_STRUCTURES, {
-            filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.pos.isNearTo(source) && s.store.getFreeCapacity(RESOURCE_ENERGY),
-        });
-        if (container) {
-            _(creep.transfer(container, RESOURCE_ENERGY))
-                .tap((result) => {
-                switch (result) {
+    else if (creep.store.energy === 0 || (0, utils_1.getSitesInRoom)(creep.room).length === 0) {
+        creep.memory.mode = "🌾";
+    }
+    if (creep.memory.mode === "🌾") {
+        creep.memory.harvestTargetId = creep.memory.harvestTargetId || ((_a = findHarvestTarget(creep, targetRoom)) === null || _a === void 0 ? void 0 : _a.id);
+        const source = memory.harvestTargetId && Game.getObjectById(memory.harvestTargetId);
+        if (source) {
+            _((creep.memory.worked = creep.harvest(source)))
+                .tap((worked) => {
+                switch (worked) {
                     case ERR_NOT_IN_RANGE:
-                        moveMeTo(container);
-                        break;
+                        if (creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+                            moveMeTo(source);
+                        }
+                        return;
                     case OK:
-                    case ERR_FULL:
+                        return;
                     case ERR_NOT_ENOUGH_ENERGY:
-                        return OK;
+                    case ERR_NO_PATH:
+                        creep.memory.harvestTargetId = undefined;
+                        return;
                     default:
-                        creep.say(util_creep_1.RETURN_CODE_DECODER[result.toString()].replace("ERR_", ""));
-                        console.log(creep.name, "transfer", creep.saying);
-                        break;
+                        creep.memory.harvestTargetId = undefined;
+                        creep.say(util_creep_1.RETURN_CODE_DECODER[worked.toString()].replace("ERR_", ""));
+                        console.log(creep.name, "harvest", creep.saying);
                 }
             })
                 .run();
         }
         else {
-            creep.pos.createConstructionSite(STRUCTURE_CONTAINER);
+            creep.memory.harvestTargetId = undefined;
+        }
+        if (source === null || source === void 0 ? void 0 : source.pos.isNearTo(creep)) {
+            const { container: containers } = (0, utils_1.findMyStructures)(creep.room);
+            const container = source.pos.findClosestByRange([...containers, ...(0, utils_1.getSitesInRoom)(creep.room)], {
+                filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.pos.isNearTo(source),
+            });
+            if (container) {
+                if (!("progress" in container)) {
+                    if (creep.store.energy > creep.getActiveBodyparts(WORK)) {
+                        _(creep.transfer(container, RESOURCE_ENERGY))
+                            .tap((result) => {
+                            switch (result) {
+                                case ERR_NOT_IN_RANGE:
+                                    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+                                        moveMeTo(source);
+                                    }
+                                    return;
+                                case OK:
+                                case ERR_FULL:
+                                case ERR_NOT_ENOUGH_ENERGY:
+                                    return OK;
+                                default:
+                                    creep.say(util_creep_1.RETURN_CODE_DECODER[result.toString()].replace("ERR_", ""));
+                                    console.log(creep.name, "transfer", creep.saying);
+                                    break;
+                            }
+                        })
+                            .run();
+                    }
+                }
+            }
+            else {
+                creep.pos.createConstructionSite(STRUCTURE_CONTAINER);
+            }
+        }
+        if (source === null || source === void 0 ? void 0 : source.pos.isNearTo(creep)) {
+            const site = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES);
+            if (site) {
+                creep.build(site);
+            }
+        }
+        if (source === null || source === void 0 ? void 0 : source.pos.isNearTo(creep)) {
+            const damaged = creep.pos.findClosestByRange(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax });
+            if (damaged) {
+                creep.repair(damaged);
+            }
         }
     }
-    if (source === null || source === void 0 ? void 0 : source.pos.isNearTo(creep)) {
+    else {
         const site = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES);
-        if (site) {
-            creep.build(site);
-        }
-    }
-    if (source === null || source === void 0 ? void 0 : source.pos.isNearTo(creep)) {
-        const damaged = creep.pos.findClosestByRange(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax });
-        if (damaged) {
-            creep.repair(damaged);
+        if (site && creep.build(site) === ERR_NOT_IN_RANGE) {
+            moveMeTo(site);
         }
     }
     (0, util_creep_1.pickUpAll)(creep);

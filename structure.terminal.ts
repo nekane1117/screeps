@@ -22,9 +22,10 @@ export default function behaviors(terminal: Structure) {
       room.visual.text(
         `${mineral.mineralType}:${getAvailableAmount(terminal, mineral.mineralType)}(${getOrderRemainingTotal(terminal, mineral.mineralType)})`,
         terminal.pos.x,
-        terminal.pos.y - 1,
+        terminal.pos.y,
         {
           align: "left",
+          font: 0.25,
         },
       );
 

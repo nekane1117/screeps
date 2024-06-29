@@ -8,6 +8,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
     return customMove(creep, target, {
+      plainCost: 2,
+      swampCost: 3,
       ...opt,
     });
   };
@@ -19,7 +21,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (creep.store.energy < CARRY_CAPACITY) {
     // なくなったら収集モード
     creep.memory.mode = "🛒";
-  } else if (creep.room.name !== memory.baseRoom && getSitesInRoom(creep.room).length > 0) {
+  } else if (creep.room.name !== memory.baseRoom && creep.getActiveBodyparts(WORK) > 0 && getSitesInRoom(creep.room).length > 0) {
     // エネルギーがあって現場ある時は建築モード
     creep.memory.mode = "👷";
   } else {
@@ -48,16 +50,16 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         creep.memory.transferId = undefined;
       }
       if (!memory.transferId) {
-        const { container, link, storage, terminal } = findMyStructures(baseRoom);
-        const targets = [
+        const { container, link } = findMyStructures(baseRoom);
+        const targets = _.compact([
           ...container.filter((c) => {
             // ミネラル用のコンテナを除外しておく
             return baseRoom.find(FIND_MINERALS).some((m) => !c.pos.inRangeTo(m, 3));
           }),
           ...link,
-          ...storage,
-          ...terminal,
-        ].filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
+          creep.room.storage,
+          creep.room.terminal,
+        ]).filter((s) => s.structureType === STRUCTURE_LINK || s.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
 
         // 検索する
         const searched = PathFinder.search(
@@ -66,13 +68,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           { plainCost: 2, swampCost: 10 },
         );
         if (!searched.incomplete && searched.path.length > 0) {
-          // RoomPositionしか取れないので同じ場所のやつを探す
-          const target = targets.find((t) => {
-            const goal = _(searched.path).last();
-            // 完全に同じやつを探す
-            return t.pos.x === goal?.x && t.pos.y === goal.y && goal.roomName === t.pos.roomName;
-          });
-          creep.memory.transferId = target?.id;
+          creep.memory.transferId = _(searched.path).last().findClosestByRange(targets)?.id;
         }
       }
       //#endregion ##########################################################################
@@ -101,6 +97,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   } else if (memory.mode === "👷") {
     //#region 建設 ##########################################################################
+    if (creep.getActiveBodyparts(WORK) === 0) {
+      return (creep.memory.mode = "🚛");
+    }
     const sites = getSitesInRoom(creep.room);
     // 終わってれば初期化
     if (memory.siteId && !Game.getObjectById(memory.siteId)) {
@@ -140,27 +139,36 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
 
     //#region 取得先設定処理 ##########################################################################
-    if (creep.memory.storeId && (Game.getObjectById(creep.memory.storeId)?.store.energy || 0) === 0) {
+    if (!creep.memory.storeId || (Game.getObjectById(creep.memory.storeId)?.store.energy || 0) === 0) {
       creep.memory.storeId = undefined;
     }
-
     if (!memory.storeId) {
       const containers = targetRoom.find(FIND_STRUCTURES, {
-        filter: (s): s is StructureContainer => s.structureType === STRUCTURE_CONTAINER && s.store.energy > 0,
+        filter: (s): s is StructureContainer => s.structureType === STRUCTURE_CONTAINER,
       });
       const searched = PathFinder.search(
         creep.pos,
-        containers.map((t) => t.pos),
-        { plainCost: 2, swampCost: 10 },
+        _(containers)
+          .thru((all) => {
+            const hasE = all.filter((c) => c.store.energy);
+            if (hasE.length) {
+              return hasE;
+            } else {
+              return all;
+            }
+          })
+          .map((t: StructureContainer) => t.pos)
+          .value(),
+        { plainCost: 2, swampCost: 3 },
       );
+
       if (!searched.incomplete && searched.path.length > 0) {
         // RoomPositionしか取れないので同じ場所のやつを探す
-        const target = containers.find((c) => {
-          const goal = _(searched.path).last();
-          // 完全に同じやつを探す
-          return c.pos.x === goal?.x && c.pos.y === goal.y && goal.roomName === c.pos.roomName;
-        });
-        creep.memory.storeId = target?.id;
+        creep.memory.storeId = _(searched.path).last().findClosestByRange(containers)?.id;
+      } else {
+        // 部屋が見えない場合
+        // とにかく向かう
+        return moveRoom(creep, creep.pos.roomName, memory.targetRoomName);
       }
     }
     //#endregion #########################################################################

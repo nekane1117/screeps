@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ROAD_DECAY_AMOUNT_WALL = exports.ROAD_DECAY_AMOUNT_SWAMP = exports.REVERSE_REACTIONS = exports.LAB_STRATEGY = exports.TERMINAL_THRESHOLD = void 0;
+exports.ROAD_DECAY_AMOUNT_WALL = exports.ROAD_DECAY_AMOUNT_SWAMP = exports.ALL_REACTIONS = exports.REVERSE_REACTIONS = exports.LAB_STRATEGY = exports.TERMINAL_THRESHOLD = void 0;
+const utils_common_1 = require("./utils.common");
 exports.TERMINAL_THRESHOLD = 10000;
 exports.LAB_STRATEGY = {
     [RESOURCE_LEMERGIUM]: [
@@ -32,6 +33,16 @@ exports.LAB_STRATEGY = {
         RESOURCE_LEMERGIUM_ACID,
         RESOURCE_CATALYST,
         RESOURCE_CATALYZED_LEMERGIUM_ACID,
+    ],
+    [RESOURCE_UTRIUM]: [
+        RESOURCE_UTRIUM,
+        RESOURCE_HYDROGEN,
+        RESOURCE_UTRIUM_HYDRIDE,
+        RESOURCE_OXYGEN,
+        RESOURCE_HYDROXIDE,
+        RESOURCE_UTRIUM_ACID,
+        RESOURCE_CATALYST,
+        RESOURCE_CATALYZED_UTRIUM_ACID,
     ],
 };
 exports.REVERSE_REACTIONS = {
@@ -77,5 +88,6 @@ exports.REVERSE_REACTIONS = {
     X: undefined,
     Z: undefined,
 };
+exports.ALL_REACTIONS = _((0, utils_common_1.ObjectKeys)(exports.REVERSE_REACTIONS)).sortBy((r) => (r === "G" ? 0 : r.length));
 exports.ROAD_DECAY_AMOUNT_SWAMP = 500;
 exports.ROAD_DECAY_AMOUNT_WALL = 15000;

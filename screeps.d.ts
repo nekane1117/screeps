@@ -35,6 +35,7 @@ declare interface CreepMemory {
     route?: ReturnType<(typeof Game)["map"]["findRoute"]>;
     exit?: RoomPosition | null;
   };
+  __avoidCreep: boolean;
 }
 
 /** 全部のCreepの型 */
@@ -91,24 +92,24 @@ declare type MyStructureCache = {
   all: AnyStructure[];
   constructedWall: StructureWall[];
   container: StructureContainer[];
-  controller: StructureController[];
+  controller: StructureController | undefined;
   extension: StructureExtension[];
-  extractor: StructureExtractor[];
-  factory: StructureFactory[];
+  extractor: StructureExtractor | undefined;
+  factory: StructureFactory | undefined;
   invaderCore: StructureInvaderCore[];
   keeperLair: StructureKeeperLair[];
   lab: StructureLab[];
   link: StructureLink[];
-  nuker: StructureNuker[];
-  observer: StructureObserver[];
+  nuker: StructureNuker | undefined;
+  observer: StructureObserver | undefined;
   portal: StructurePortal[];
   powerBank: StructurePowerBank[];
-  powerSpawn: StructurePowerSpawn[];
+  powerSpawn: StructurePowerSpawn | undefined;
   rampart: StructureRampart[];
   road: StructureRoad[];
   spawn: StructureSpawn[];
-  storage: StructureStorage[];
-  terminal: StructureTerminal[];
+  storage: StructureStorage | undefined;
+  terminal: StructureTerminal | undefined;
   tower: StructureTower[];
   source: Source[];
 };
@@ -191,6 +192,7 @@ declare interface BuilderMemory extends CreepMemory {
   mode: "👷" | "🛒";
   /** 今建てたいもの */
   buildingId?: ConstructionSite["id"] | null;
+  transferId?: AnyStoreStructure["id"] | null;
   built?: ReturnType<Creeps["build"]>;
   /** 修理するもの */
   repairId?: Id<Parameters<Creep["repair"]>[0]>;
@@ -198,7 +200,7 @@ declare interface BuilderMemory extends CreepMemory {
   firstAidId?: Id<Parameters<Creep["repair"]>[0]>;
   built?: ReturnType<Creeps["build"]>;
   /** 資源をもらいに行く先 */
-  storeId?: Id<StructureContainer | StructureStorage | StructureTerminal>;
+  storeId?: Id<AnyStoreStructure>;
 }
 
 declare interface Carrier extends Creep {
@@ -302,6 +304,7 @@ declare interface RemoteHarvesterMemory extends CreepMemory {
    * 🌾 : 収集中
    * 👷 : 建築中
    */
+  mode: "🌾" | "👷";
   targetRoomName: string;
   harvestTargetId?: Source["id"] | null;
 }
@@ -316,4 +319,12 @@ declare interface RemoteCarrierMemory extends CreepMemory {
   siteId?: ConstructionSite["id"] | null;
   storeId?: Id<StructureContainer> | null;
   transferId?: StoreTarget["id"] | null;
+}
+
+declare interface Memory {
+  factories: Record<Id<StructureFactory>, FactoryMemory>;
+}
+
+declare interface FactoryMemory {
+  expectedType: RESOURCE_ENERGY | MineralConstant | RESOURCE_GHODIUM | CommodityConstant;
 }

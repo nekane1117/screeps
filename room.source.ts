@@ -1,22 +1,10 @@
-import { filterBodiesByCost, getMainSpawn } from "./util.creep";
+import { filterBodiesByCost, getCreepsInRoom, getMainSpawn } from "./util.creep";
 import { findMyStructures, getSpawnsInRoom } from "./utils";
 
 export function behavior(source: Source) {
-  const harvesters = Object.values(Game.creeps).filter((c): c is Harvester => {
-    return (
-      isH(c) && c.memory.harvestTargetId === source.id && (c?.ticksToLive || Infinity) > filterBodiesByCost("harvester", 10000).bodies.length * CREEP_SPAWN_TIME
-    );
-  });
-
-  // 最大匹数より少なく、WORKのパーツが5未満の時
-  if (
-    harvesters.length < 1 &&
-    _(harvesters)
-      .map((h) => h.getActiveBodyparts(WORK))
-      .flatten()
-      .sum() < 5
-  ) {
-    // 自分用のWORKが5個以下の時
+  const harvesters = getCreepsInRoom(source.room).harvester || [];
+  const myH = harvesters.filter((h) => h.memory?.harvestTargetId === source.id);
+  if (myH.length < 1) {
     const spawn = (() => {
       const spawns = getSpawnsInRoom(source.room);
       // 部屋にある時は部屋のだけ
@@ -31,7 +19,7 @@ export function behavior(source: Source) {
       return ERR_NOT_FOUND;
     }
 
-    if (spawn.room.energyAvailable >= 300) {
+    if (harvesters.length > 0 ? spawn.room.energyAvailable >= spawn.room.energyCapacityAvailable : spawn.room.energyAvailable >= 300) {
       const name = `H_${source.room.name}_${Game.time}`;
       const spawned = spawn.spawnCreep(filterBodiesByCost("harvester", spawn.room.energyAvailable).bodies, name, {
         memory: {
@@ -42,6 +30,13 @@ export function behavior(source: Source) {
       });
       return spawned;
     }
+  } else if (myH.length > 1) {
+    _(myH)
+      .sortBy((c) => c.ticksToLive || Infinity)
+      .reverse()
+      .tail()
+      .forEach((c) => c.suicide())
+      .run();
   }
 
   if (
@@ -64,8 +59,4 @@ export function behavior(source: Source) {
     }
   }
   return OK;
-}
-
-function isH(c: Creeps): c is Harvester {
-  return c.memory.role === "harvester";
 }

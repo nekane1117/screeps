@@ -1,6 +1,6 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, filterBodiesByCost, getCreepsInRoom, moveRoom, pickUpAll } from "./util.creep";
-import { getSpawnsInRoom, readonly } from "./utils";
+import { findMyStructures, getSitesInRoom, getSpawnsInRoom, readonly } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isRemoteHarvester(creep)) {
@@ -51,94 +51,127 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
   //#endregion
 
-  // #region harvest ###############################################################################
-  // 対象設定処理(1体にするつもりなので排他とかしない)
-  creep.memory.harvestTargetId = creep.memory.harvestTargetId || findHarvestTarget(creep, targetRoom)?.id;
-
-  const source = memory.harvestTargetId && Game.getObjectById(memory.harvestTargetId);
-
-  if (source) {
-    _((creep.memory.worked = creep.harvest(source)))
-      .tap((worked) => {
-        switch (worked) {
-          case ERR_NOT_IN_RANGE:
-            return moveMeTo(source);
-          case OK:
-            return;
-
-          // 通れないときと中身が無いときに初期化する
-          case ERR_NOT_ENOUGH_ENERGY:
-          case ERR_NO_PATH:
-            creep.memory.harvestTargetId = undefined;
-            return;
-          default:
-            creep.memory.harvestTargetId = undefined;
-            creep.say(RETURN_CODE_DECODER[worked.toString()].replace("ERR_", ""));
-            console.log(creep.name, "harvest", creep.saying);
-        }
-      })
-      .run();
-  } else {
-    // 対象が見つからないときは初期化して処理を続ける
-    creep.memory.harvestTargetId = undefined;
+  // #region モードチェック ###############################################################################
+  if (creep.memory.targetRoomName !== creep.pos.roomName) {
+    // 部屋にいないときはとにかく向かう
+    creep.memory.mode = "🌾";
+  } else if (creep.memory.mode === "🌾" && creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0 && getSitesInRoom(creep.room).length) {
+    // 収穫モードで満タン持っててサイトがあるときは建てる
+    creep.memory.mode = "👷";
+  } else if (creep.store.energy === 0 || getSitesInRoom(creep.room).length === 0) {
+    // 部屋にいないときはとにかく向かう
+    creep.memory.mode = "🌾";
   }
 
-  // #endregion ####################################################################################
+  //#endregion
 
-  //#region transfer ##################################################################################
-  if (source?.pos.isNearTo(creep)) {
-    // 隣接してるとき
-    // sourceに隣接したコンテナを取得する
-    const container = source.pos.findClosestByRange(FIND_STRUCTURES, {
-      filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.pos.isNearTo(source) && s.store.getFreeCapacity(RESOURCE_ENERGY),
-    });
-    if (container) {
-      _(creep.transfer(container, RESOURCE_ENERGY))
-        .tap((result) => {
-          switch (result) {
+  if (creep.memory.mode === "🌾") {
+    // #region harvest ###############################################################################
+    // 対象設定処理(1体にするつもりなので排他とかしない)
+    creep.memory.harvestTargetId = creep.memory.harvestTargetId || findHarvestTarget(creep, targetRoom)?.id;
+
+    const source = memory.harvestTargetId && Game.getObjectById(memory.harvestTargetId);
+
+    if (source) {
+      _((creep.memory.worked = creep.harvest(source)))
+        .tap((worked) => {
+          switch (worked) {
             case ERR_NOT_IN_RANGE:
-              // いっぱいの時は寄る
-              moveMeTo(container);
-              break;
+              if (creep.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+                moveMeTo(source);
+              }
+              return;
             case OK:
-            case ERR_FULL:
+              return;
+
+            // 通れないときと中身が無いときに初期化する
             case ERR_NOT_ENOUGH_ENERGY:
-              return OK;
+            case ERR_NO_PATH:
+              creep.memory.harvestTargetId = undefined;
+              return;
             default:
-              creep.say(RETURN_CODE_DECODER[result.toString()].replace("ERR_", ""));
-              console.log(creep.name, "transfer", creep.saying);
-              break;
+              creep.memory.harvestTargetId = undefined;
+              creep.say(RETURN_CODE_DECODER[worked.toString()].replace("ERR_", ""));
+              console.log(creep.name, "harvest", creep.saying);
           }
         })
         .run();
     } else {
-      creep.pos.createConstructionSite(STRUCTURE_CONTAINER);
+      // 対象が見つからないときは初期化して処理を続ける
+      creep.memory.harvestTargetId = undefined;
     }
-  }
-  //#endregion
 
-  //#region build ##################################################################################
+    // #endregion ####################################################################################
 
-  // 適当に建設を叩く
-  if (source?.pos.isNearTo(creep)) {
+    //#region transfer ##################################################################################
+    if (source?.pos.isNearTo(creep)) {
+      // 隣接してるとき
+      const { container: containers } = findMyStructures(creep.room);
+
+      // sourceに隣接したコンテナを取得する
+      const container = source.pos.findClosestByRange([...containers, ...getSitesInRoom(creep.room)], {
+        filter: (s: Structure | ConstructionSite) => s.structureType === STRUCTURE_CONTAINER && s.pos.isNearTo(source),
+      });
+      if (container) {
+        if (!("progress" in container)) {
+          if (creep.store.energy > creep.getActiveBodyparts(WORK)) {
+            _(creep.transfer(container, RESOURCE_ENERGY))
+              .tap((result) => {
+                switch (result) {
+                  case ERR_NOT_IN_RANGE:
+                    // いっぱいの時は寄る
+                    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+                      moveMeTo(source);
+                    }
+                    return;
+                  case OK:
+                  case ERR_FULL:
+                  case ERR_NOT_ENOUGH_ENERGY:
+                    return OK;
+                  default:
+                    creep.say(RETURN_CODE_DECODER[result.toString()].replace("ERR_", ""));
+                    console.log(creep.name, "transfer", creep.saying);
+                    break;
+                }
+              })
+              .run();
+          }
+        }
+      } else {
+        creep.pos.createConstructionSite(STRUCTURE_CONTAINER);
+      }
+    }
+    //#endregion
+
+    //#region build ##################################################################################
+
+    // 適当に建設を叩く
+    if (source?.pos.isNearTo(creep)) {
+      const site = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES);
+      if (site) {
+        creep.build(site);
+      }
+    }
+    //#endregion
+
+    //#region repair ##################################################################################
+
+    // 射程内の修理はぜんぶ叩く
+    if (source?.pos.isNearTo(creep)) {
+      const damaged = creep.pos.findClosestByRange(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax });
+      if (damaged) {
+        creep.repair(damaged);
+      }
+    }
+    //#endregion
+  } else {
+    //#region 建設モード ##################################################################################
     const site = creep.pos.findClosestByRange(FIND_MY_CONSTRUCTION_SITES);
-    if (site) {
-      creep.build(site);
+    if (site && creep.build(site) === ERR_NOT_IN_RANGE) {
+      moveMeTo(site);
     }
+    //#endregion
   }
-  //#endregion
-
-  //#region repair ##################################################################################
-
-  // 射程内の修理はぜんぶ叩く
-  if (source?.pos.isNearTo(creep)) {
-    const damaged = creep.pos.findClosestByRange(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax });
-    if (damaged) {
-      creep.repair(damaged);
-    }
-  }
-  //#endregion
-
   //#region withdraw ##################################################################################
   pickUpAll(creep);
   //#endregion

@@ -53,7 +53,7 @@ const behavior = (creep) => {
     if (!creep.memory.storeId) {
         creep.memory.storeId = (_a = mineral.pos.findClosestByRange([...container], {
             filter: (s) => {
-                return s.store[mineral.mineralType] > CARRY_CAPACITY;
+                return s.store[mineral.mineralType] > 0;
             },
         })) === null || _a === void 0 ? void 0 : _a.id;
     }

@@ -13,9 +13,35 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   const targetRoom = Game.rooms[memory.targetRoomName] as Room | undefined;
 
   if (targetRoom) {
+    const damaged = _(Object.values(Game.creeps))
+      .filter((c) => c.pos.roomName === targetRoom.name && c.hits < c.hitsMax)
+      .value();
+
     // FIND_HOSTILE_XXXをぜんぶやる
     const hostiles = [...targetRoom.find(FIND_HOSTILE_CREEPS), ...targetRoom.find(FIND_HOSTILE_SPAWNS), ...targetRoom.find(FIND_HOSTILE_STRUCTURES)];
-    if (hostiles.length > 0 && creep.getActiveBodyparts(ATTACK)) {
+
+    if (damaged.length > 0 && creep.getActiveBodyparts(HEAL) > 0) {
+      const target = creep.pos.findClosestByRange(damaged);
+      if (target) {
+        if (!creep.pos.isNearTo(target)) {
+          moveMeTo(target);
+        }
+        _(creep.pos.isNearTo(target) ? creep.heal(target) : creep.rangedHeal(target))
+          .tap((result) => {
+            switch (result) {
+              case ERR_NOT_IN_RANGE:
+                moveMeTo(target);
+                break;
+              case OK:
+                break;
+              default:
+                creep.say(RETURN_CODE_DECODER[result.toString()]);
+                break;
+            }
+          })
+          .run();
+      }
+    } else if (hostiles.length > 0 && creep.getActiveBodyparts(ATTACK)) {
       // #region 敵がいる場合#################################################################
       const target = creep.pos.findClosestByRange(hostiles);
       if (target) {

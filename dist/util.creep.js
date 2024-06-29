@@ -61,34 +61,30 @@ function randomWalk(creep) {
 exports.randomWalk = randomWalk;
 exports.IDEAL_BODY = Object.freeze({
     builder: _.range(50).map((i) => {
-        const b = [WORK, CARRY, MOVE];
+        const b = [WORK, MOVE, CARRY, MOVE];
         return b[i % b.length];
     }),
     claimer: [CLAIM, MOVE],
     reserver: [CLAIM, MOVE, CLAIM, MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, HEAL, MOVE],
     remoteHarvester: _.range(50).map((i) => {
         const b = [
+            CARRY,
+            MOVE,
             WORK,
             MOVE,
-            CARRY,
+            WORK,
+            MOVE,
+            WORK,
+            MOVE,
+            WORK,
+            MOVE,
+            WORK,
             MOVE,
             RANGED_ATTACK,
             MOVE,
             ATTACK,
             MOVE,
-            WORK,
-            MOVE,
-            WORK,
-            MOVE,
-            WORK,
-            MOVE,
-            WORK,
-            MOVE,
-            ..._.range(50).map((i) => {
-                const b = [MOVE, CARRY];
-                return b[i % b.length];
-            }),
-        ].slice(0, 25);
+        ];
         return b[i % b.length];
     }),
     carrier: [],
@@ -151,7 +147,7 @@ const customMove = (creep, target, opt) => {
     if (creep.fatigue) {
         return OK;
     }
-    creep.memory.moved = creep.moveTo(target, Object.assign(Object.assign({ plainCost: 2, swampCost: 10, serializeMemory: false, ignoreCreeps: !creep.pos.inRangeTo(target, DEFAULT_CREEP_RANGE[creep.memory.role] + 2) }, opt), { visualizePathStyle: Object.assign({ opacity: 0.55, stroke: toColor(creep) }, opt === null || opt === void 0 ? void 0 : opt.visualizePathStyle) }));
+    creep.memory.moved = creep.moveTo(target, Object.assign(Object.assign({ plainCost: 2, swampCost: 10, serializeMemory: false, ignoreCreeps: !(creep.memory.__avoidCreep || creep.pos.inRangeTo(target, DEFAULT_CREEP_RANGE[creep.memory.role] + 2)) }, opt), { visualizePathStyle: Object.assign({ opacity: 0.55, stroke: toColor(creep) }, opt === null || opt === void 0 ? void 0 : opt.visualizePathStyle) }));
     if (creep.memory.moved === OK && Game.time % 3) {
         const { dy, dx } = ((_b = (_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b[0]) || {};
         const isInRange = (n) => {
@@ -164,6 +160,7 @@ const customMove = (creep, target, opt) => {
                 const move = blocker.move(creep);
                 creep.memory._move = undefined;
                 blocker.memory._move = undefined;
+                blocker.memory.__avoidCreep = true;
                 (pull || move) &&
                     console.log(JSON.stringify({ name: creep.name, pull: exports.RETURN_CODE_DECODER[pull.toString()], move: exports.RETURN_CODE_DECODER[move.toString()] }));
             }
@@ -173,6 +170,9 @@ const customMove = (creep, target, opt) => {
 };
 exports.customMove = customMove;
 function getCreepsInRoom(room) {
+    if (!room) {
+        return {};
+    }
     if (room.memory.creeps) {
         return room.memory.creeps;
     }
@@ -202,16 +202,22 @@ function getMainSpawn(room) {
 }
 exports.getMainSpawn = getMainSpawn;
 function pickUpAll(creep, resourceType = RESOURCE_ENERGY) {
+    let result = undefined;
     creep.pos
         .findInRange(FIND_DROPPED_RESOURCES, 1, {
         filter: (s) => s.resourceType === resourceType,
     })
         .forEach((resource) => {
-        creep.pickup(resource);
+        if (creep.pickup(resource) === OK) {
+            result = OK;
+        }
     });
     [...creep.pos.findInRange(FIND_TOMBSTONES, 1), ...creep.pos.findInRange(FIND_RUINS, 1)].forEach((tombstone) => {
-        creep.withdraw(tombstone, resourceType);
+        if (creep.withdraw(tombstone, resourceType)) {
+            result = OK;
+        }
     });
+    return result;
 }
 exports.pickUpAll = pickUpAll;
 function withdrawBy(creep, roles, type = RESOURCE_ENERGY) {
@@ -273,7 +279,7 @@ function getCarrierBody(room, role) {
     const bodyCycle = [CARRY, MOVE, CARRY];
     let costTotal = 0;
     const avgSize = ((_a = room.memory.carrySize) === null || _a === void 0 ? void 0 : _a[role]) || 100;
-    return _.range(Math.ceil(avgSize / 50) * safetyFactor * 1.5)
+    return _.range(Math.ceil(avgSize / 50) * safetyFactor * 3)
         .slice(0, 50)
         .map((i) => {
         const parts = i === 0 ? WORK : bodyCycle[i % bodyCycle.length];

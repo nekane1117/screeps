@@ -17,20 +17,22 @@ export default function behaviors(tower: Structure) {
   // repair
   const decayStructures = _(
     tower.room.find(FIND_STRUCTURES, {
-      filter: (s): s is StructureRampart | StructureRoad | StructureWall => {
+      filter: (s): s is StructureRampart | StructureRoad | StructureWall | StructureContainer => {
         if (s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL) {
-          return s.hits < RAMPART_DECAY_AMOUNT * 2;
+          return s.hits < RAMPART_DECAY_AMOUNT * 10;
         } else if (s.structureType === STRUCTURE_ROAD) {
           switch (_.first(s.pos.lookFor(LOOK_TERRAIN))) {
             case "plain":
-              return s.hits < ROAD_DECAY_AMOUNT * 2;
+              return s.hits < ROAD_DECAY_AMOUNT * 10;
             case "swamp":
-              return s.hits < ROAD_DECAY_AMOUNT_SWAMP * 2;
+              return s.hits < ROAD_DECAY_AMOUNT_SWAMP * 10;
             case "wall":
-              return s.hits < ROAD_DECAY_AMOUNT_WALL * 2;
+              return s.hits < ROAD_DECAY_AMOUNT_WALL * 10;
             default:
               return false;
           }
+        } else if (s.structureType === STRUCTURE_CONTAINER) {
+          return s.hits < CONTAINER_DECAY * 10;
         } else {
           return false;
         }

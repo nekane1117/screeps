@@ -15,14 +15,12 @@ module.exports.loop = function () {
             Game.cpu.generatePixel();
         }
         (0, utils_1.logUsage)("delete memoery", () => {
-            if (Object.keys(Game.creeps).length !== Object.keys(Memory.creeps).length) {
-                Object.keys(Memory.creeps).forEach((name) => {
-                    if (!Game.creeps[name]) {
-                        delete Memory.creeps[name];
-                        console.log("Clearing non-existing creep memory:", name);
-                    }
-                });
-            }
+            Object.keys(Memory.creeps).forEach((name) => {
+                if (!Game.creeps[name]) {
+                    delete Memory.creeps[name];
+                    console.log("Clearing non-existing creep memory:", name);
+                }
+            });
         });
         (0, utils_1.logUsage)("flags", () => {
             Object.values(Game.flags).forEach((flag) => { var _a; return (_a = flags_1.default[flag.color]) === null || _a === void 0 ? void 0 : _a.call(flags_1.default, flag); });
@@ -51,7 +49,8 @@ module.exports.loop = function () {
                         .lookFor(LOOK_STRUCTURES)
                         .filter((s) => [STRUCTURE_CONTAINER, STRUCTURE_ROAD].includes(s.structureType) && s.hits < s.hitsMax)
                         .forEach((s) => c.repair(s));
-                c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
+                c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
+                c.memory.moved === OK && (c.memory.__avoidCreep = false);
             });
         });
         Object.keys(Memory.rooms).forEach((name) => {

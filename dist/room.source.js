@@ -4,14 +4,9 @@ exports.behavior = void 0;
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 function behavior(source) {
-    const harvesters = Object.values(Game.creeps).filter((c) => {
-        return (isH(c) && c.memory.harvestTargetId === source.id && ((c === null || c === void 0 ? void 0 : c.ticksToLive) || Infinity) > (0, util_creep_1.filterBodiesByCost)("harvester", 10000).bodies.length * CREEP_SPAWN_TIME);
-    });
-    if (harvesters.length < 1 &&
-        _(harvesters)
-            .map((h) => h.getActiveBodyparts(WORK))
-            .flatten()
-            .sum() < 5) {
+    const harvesters = (0, util_creep_1.getCreepsInRoom)(source.room).harvester || [];
+    const myH = harvesters.filter((h) => { var _a; return ((_a = h.memory) === null || _a === void 0 ? void 0 : _a.harvestTargetId) === source.id; });
+    if (myH.length < 1) {
         const spawn = (() => {
             const spawns = (0, utils_1.getSpawnsInRoom)(source.room);
             if (spawns.length > 0) {
@@ -25,7 +20,7 @@ function behavior(source) {
             console.log(`source ${source.id} can't find spawn`);
             return ERR_NOT_FOUND;
         }
-        if (spawn.room.energyAvailable >= 300) {
+        if (harvesters.length > 0 ? spawn.room.energyAvailable >= spawn.room.energyCapacityAvailable : spawn.room.energyAvailable >= 300) {
             const name = `H_${source.room.name}_${Game.time}`;
             const spawned = spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("harvester", spawn.room.energyAvailable).bodies, name, {
                 memory: {
@@ -36,6 +31,14 @@ function behavior(source) {
             });
             return spawned;
         }
+    }
+    else if (myH.length > 1) {
+        _(myH)
+            .sortBy((c) => c.ticksToLive || Infinity)
+            .reverse()
+            .tail()
+            .forEach((c) => c.suicide())
+            .run();
     }
     if (source.pos.findInRange([
         ...(0, utils_1.findMyStructures)(source.room).container,
@@ -52,6 +55,3 @@ function behavior(source) {
     return OK;
 }
 exports.behavior = behavior;
-function isH(c) {
-    return c.memory.role === "harvester";
-}

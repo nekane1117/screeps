@@ -1,3 +1,5 @@
+import { ObjectKeys } from "./utils.common";
+
 export const TERMINAL_THRESHOLD = 10000;
 
 type AllMinerals = MineralConstant | MineralCompoundConstant;
@@ -32,6 +34,16 @@ export const LAB_STRATEGY: Partial<Record<MineralConstant, AllMinerals[]>> = {
     RESOURCE_LEMERGIUM_ACID,
     RESOURCE_CATALYST,
     RESOURCE_CATALYZED_LEMERGIUM_ACID,
+  ],
+  [RESOURCE_UTRIUM]: [
+    RESOURCE_UTRIUM,
+    RESOURCE_HYDROGEN,
+    RESOURCE_UTRIUM_HYDRIDE,
+    RESOURCE_OXYGEN,
+    RESOURCE_HYDROXIDE,
+    RESOURCE_UTRIUM_ACID,
+    RESOURCE_CATALYST,
+    RESOURCE_CATALYZED_UTRIUM_ACID,
   ],
 };
 
@@ -78,6 +90,8 @@ export const REVERSE_REACTIONS: Record<AllMinerals, [AllMinerals, AllMinerals] |
   X: undefined,
   Z: undefined,
 };
+
+export const ALL_REACTIONS = _(ObjectKeys(REVERSE_REACTIONS)).sortBy((r) => (r === "G" ? 0 : r.length));
 
 export const ROAD_DECAY_AMOUNT_SWAMP = 500;
 export const ROAD_DECAY_AMOUNT_WALL = 15000;
