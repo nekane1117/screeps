@@ -5,13 +5,13 @@ const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 function behavior(labs, mineral) {
     var _a;
-    const strategy = constants_1.LAB_STRATEGY[mineral.mineralType];
-    if (!strategy) {
-        return console.log(mineral.mineralType, "not have strategy");
-    }
     const firstLab = _.first(labs);
     if (!firstLab) {
         return;
+    }
+    const strategy = constants_1.LAB_STRATEGY[mineral.mineralType];
+    if (!strategy) {
+        return console.log(mineral.mineralType, "not have strategy");
     }
     firstLab.room.memory.labs = firstLab.room.memory.labs || {};
     const labId = labs.map((lab) => lab.id);
@@ -48,6 +48,7 @@ function behavior(labs, mineral) {
     labWithMemory.map((lab) => {
         lab.room.visual.text(lab.memory.expectedType, lab.pos.x, lab.pos.y, {
             color: "#008800",
+            font: 0.25,
         });
         const ingredients = constants_1.REVERSE_REACTIONS[lab.memory.expectedType];
         if ((!lab.mineralType || lab.mineralType === lab.memory.expectedType) && ingredients) {

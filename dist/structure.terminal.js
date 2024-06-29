@@ -15,8 +15,9 @@ function behaviors(terminal) {
         const { room } = terminal;
         const mineral = _(room.find(FIND_MINERALS)).first();
         if (mineral) {
-            room.visual.text(`${mineral.mineralType}:${(0, utils_1.getAvailableAmount)(terminal, mineral.mineralType)}(${(0, utils_1.getOrderRemainingTotal)(terminal, mineral.mineralType)})`, terminal.pos.x, terminal.pos.y - 1, {
+            room.visual.text(`${mineral.mineralType}:${(0, utils_1.getAvailableAmount)(terminal, mineral.mineralType)}(${(0, utils_1.getOrderRemainingTotal)(terminal, mineral.mineralType)})`, terminal.pos.x, terminal.pos.y, {
                 align: "left",
+                font: 0.25,
             });
             const labs = (0, utils_1.getLabs)(terminal.room);
             const strategy = constants_1.LAB_STRATEGY[mineral.mineralType] || [];

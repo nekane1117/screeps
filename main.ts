@@ -12,14 +12,12 @@ module.exports.loop = function () {
     }
     //死んだcreepは削除する
     logUsage("delete memoery", () => {
-      if (Object.keys(Game.creeps).length !== Object.keys(Memory.creeps).length) {
-        Object.keys(Memory.creeps).forEach((name) => {
-          if (!Game.creeps[name]) {
-            delete Memory.creeps[name];
-            console.log("Clearing non-existing creep memory:", name);
-          }
-        });
-      }
+      Object.keys(Memory.creeps).forEach((name) => {
+        if (!Game.creeps[name]) {
+          delete Memory.creeps[name];
+          console.log("Clearing non-existing creep memory:", name);
+        }
+      });
     });
 
     // Flag -> Room -> Spawn -> Container -> Creep
@@ -54,7 +52,8 @@ module.exports.loop = function () {
             .filter((s) => ([STRUCTURE_CONTAINER, STRUCTURE_ROAD] as StructureConstant[]).includes(s.structureType) && s.hits < s.hitsMax)
             .forEach((s) => c.repair(s));
         // 現在地の履歴を更新する
-        c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
+        c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
+        c.memory.moved === OK && (c.memory.__avoidCreep = false);
       });
     });
 

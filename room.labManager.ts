@@ -3,16 +3,16 @@ import { getCarrierBody, getCreepsInRoom } from "./util.creep";
 import { getSpawnsInRoom } from "./utils";
 
 export default function behavior(labs: StructureLab[], mineral: Mineral) {
-  const strategy = LAB_STRATEGY[mineral.mineralType];
-  if (!strategy) {
-    return console.log(mineral.mineralType, "not have strategy");
-  }
-
   const firstLab = _.first(labs);
 
   if (!firstLab) {
     // ラボが1個も無ければ終わる
     return;
+  }
+
+  const strategy = LAB_STRATEGY[mineral.mineralType];
+  if (!strategy) {
+    return console.log(mineral.mineralType, "not have strategy");
   }
 
   // とりあえず初期化
@@ -70,6 +70,7 @@ export default function behavior(labs: StructureLab[], mineral: Mineral) {
   labWithMemory.map((lab) => {
     lab.room.visual.text(lab.memory.expectedType, lab.pos.x, lab.pos.y, {
       color: "#008800",
+      font: 0.25,
     });
 
     const ingredients = REVERSE_REACTIONS[lab.memory.expectedType];

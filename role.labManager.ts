@@ -149,6 +149,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     creep.memory.storeId = _(completed).first()?.id;
   }
 
+  // 落っこちてるものを拾う
+  if (creep.memory.mineralType && pickUpAll(creep, creep.memory.mineralType) === OK) {
+    return;
+  }
+
   // 取り出し処理###############################################################################################
   if (creep.memory.storeId && creep.memory.mode === "🛒") {
     const store = Game.getObjectById(creep.memory.storeId);
@@ -215,7 +220,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
-  // 輸送先設定処理###############################################################################################
+  // #region 輸送先設定処理###############################################################################################
 
   const currentType = Object.entries(creep.store).find(([_type, amount]) => amount)?.[0] as MineralConstant | MineralCompoundConstant | undefined;
   // 輸送先が満タンになってたら消す
@@ -242,6 +247,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
+  //#endregion###############################################################################################
+  //#region 輸送処理###############################################################################################
   if (creep.memory.transferId && creep.memory.mode === "🚛") {
     const transferTarget = Game.getObjectById(creep.memory.transferId);
     if (transferTarget) {
@@ -284,9 +291,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.memory.transferId = undefined;
     }
   }
-
-  // 落っこちてるものを拾う
-  pickUpAll(creep, currentType);
+  //#endregion###############################################################################################
 };
 
 export default behavior;

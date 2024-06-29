@@ -2,15 +2,20 @@ digraph G {
     rankdir = "BT"
     L[style = "filled",fillcolor="green"]
     LH[style = "filled",fillcolor="green"]
+    LO[style = "filled",fillcolor="green"]
     LH2O[style = "filled",fillcolor="green"]
+    LHO2[style = "filled",fillcolor="green"]
     XLH2O[style = "filled",fillcolor="green"]
+    XLHO2[style = "filled",fillcolor="green"]
     OH[style = "filled",fillcolor="lightgray"]
     H[style = "filled",fillcolor="lightgray"]
     O[style = "filled",fillcolor="lightgray"]
     X[style = "filled",fillcolor="lightpink"]
     {H, L} -> LH
     {H, O} -> OH
+    {L, O} -> LO
     {LH, OH} -> LH2O
     {LH2O, X} -> XLH2O
-    
+    {LHO2, X} -> XLHO2
+    {LO, OH} -> LHO2
 }

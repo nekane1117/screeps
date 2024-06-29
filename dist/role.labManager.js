@@ -108,6 +108,9 @@ const behavior = (creep) => {
     if (!creep.memory.storeId) {
         creep.memory.storeId = (_b = _(completed).first()) === null || _b === void 0 ? void 0 : _b.id;
     }
+    if (creep.memory.mineralType && (0, util_creep_1.pickUpAll)(creep, creep.memory.mineralType) === OK) {
+        return;
+    }
     if (creep.memory.storeId && creep.memory.mode === "🛒") {
         const store = Game.getObjectById(creep.memory.storeId);
         if (store) {
@@ -215,7 +218,6 @@ const behavior = (creep) => {
             creep.memory.transferId = undefined;
         }
     }
-    (0, util_creep_1.pickUpAll)(creep, currentType);
 };
 exports.default = behavior;
 function isLabManager(creep) {

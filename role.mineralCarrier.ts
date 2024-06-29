@@ -66,7 +66,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!creep.memory.storeId) {
     creep.memory.storeId = mineral.pos.findClosestByRange([...container], {
       filter: (s: StructureContainer): s is StructureContainer => {
-        return s.store[mineral.mineralType] > CARRY_CAPACITY;
+        return s.store[mineral.mineralType] > 0;
       },
     })?.id;
   }

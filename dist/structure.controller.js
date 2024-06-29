@@ -9,7 +9,8 @@ const behavior = (controller) => {
     }
     const showSummary = (texts) => {
         texts.forEach((text, i) => {
-            controller.room.visual.text(text, Math.max(controller.pos.x - 3, 1), Math.max(1, controller.pos.y - texts.length + i), { align: "left" });
+            const center = (0, util_creep_1.getMainSpawn)(controller.room) || controller;
+            controller.room.visual.text(text, Math.max(center.pos.x - 3, 1), Math.max(1, center.pos.y - 3 - texts.length + i), { align: "left" });
         });
     };
     showSummary([
@@ -19,7 +20,7 @@ const behavior = (controller) => {
     ]);
     updateUpgraderSize(controller.room);
     const { harvester = [], upgrader = [], carrier = [] } = (0, util_creep_1.getCreepsInRoom)(controller.room);
-    const { container } = (0, utils_1.findMyStructures)(controller.room);
+    const { container, extension } = (0, utils_1.findMyStructures)(controller.room);
     const containerSite = (0, utils_1.getSitesInRoom)(controller.room).filter((s) => s.structureType === STRUCTURE_CONTAINER);
     const mainSpawn = (0, util_creep_1.getMainSpawn)(controller.room);
     if (mainSpawn) {
@@ -29,6 +30,7 @@ const behavior = (controller) => {
         const upgraderBody = getUpgraderBody(controller.room);
         if (myContainer) {
             if (!("progress" in myContainer) &&
+                extension.length >= CONTROLLER_STRUCTURES.extension[controller.level] &&
                 myContainer.store.energy &&
                 harvester.length > 0 &&
                 carrier.length > 0 &&

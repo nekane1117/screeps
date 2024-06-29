@@ -3,19 +3,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e, _f;
     if (!isRemoteCarrier(creep)) {
         return console.log(`${creep.name} is not RemoteCarrier`);
     }
     const moveMeTo = (target, opt) => {
-        return (0, util_creep_1.customMove)(creep, target, Object.assign({}, opt));
+        return (0, util_creep_1.customMove)(creep, target, Object.assign({ plainCost: 2, swampCost: 3 }, opt));
     };
     const memory = (0, utils_1.readonly)(creep.memory);
     const preMode = memory.mode;
     if (creep.store.energy < CARRY_CAPACITY) {
         creep.memory.mode = "🛒";
     }
-    else if (creep.room.name !== memory.baseRoom && (0, utils_1.getSitesInRoom)(creep.room).length > 0) {
+    else if (creep.room.name !== memory.baseRoom && creep.getActiveBodyparts(WORK) > 0 && (0, utils_1.getSitesInRoom)(creep.room).length > 0) {
         creep.memory.mode = "👷";
     }
     else {
@@ -35,22 +35,18 @@ const behavior = (creep) => {
                 creep.memory.transferId = undefined;
             }
             if (!memory.transferId) {
-                const { container, link, storage, terminal } = (0, utils_1.findMyStructures)(baseRoom);
-                const targets = [
+                const { container, link } = (0, utils_1.findMyStructures)(baseRoom);
+                const targets = _.compact([
                     ...container.filter((c) => {
                         return baseRoom.find(FIND_MINERALS).some((m) => !c.pos.inRangeTo(m, 3));
                     }),
                     ...link,
-                    ...storage,
-                    ...terminal,
-                ].filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
+                    creep.room.storage,
+                    creep.room.terminal,
+                ]).filter((s) => s.structureType === STRUCTURE_LINK || s.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
                 const searched = PathFinder.search(creep.pos, targets.map((t) => t.pos), { plainCost: 2, swampCost: 10 });
                 if (!searched.incomplete && searched.path.length > 0) {
-                    const target = targets.find((t) => {
-                        const goal = _(searched.path).last();
-                        return t.pos.x === (goal === null || goal === void 0 ? void 0 : goal.x) && t.pos.y === goal.y && goal.roomName === t.pos.roomName;
-                    });
-                    creep.memory.transferId = target === null || target === void 0 ? void 0 : target.id;
+                    creep.memory.transferId = (_c = _(searched.path).last().findClosestByRange(targets)) === null || _c === void 0 ? void 0 : _c.id;
                 }
             }
             const transferTarget = memory.transferId && Game.getObjectById(memory.transferId);
@@ -74,12 +70,15 @@ const behavior = (creep) => {
         }
     }
     else if (memory.mode === "👷") {
+        if (creep.getActiveBodyparts(WORK) === 0) {
+            return (creep.memory.mode = "🚛");
+        }
         const sites = (0, utils_1.getSitesInRoom)(creep.room);
         if (memory.siteId && !Game.getObjectById(memory.siteId)) {
             creep.memory.siteId = undefined;
         }
         if (!memory.siteId) {
-            creep.memory.siteId = (_c = creep.pos.findClosestByPath(sites)) === null || _c === void 0 ? void 0 : _c.id;
+            creep.memory.siteId = (_d = creep.pos.findClosestByPath(sites)) === null || _d === void 0 ? void 0 : _d.id;
         }
         const site = memory.siteId && Game.getObjectById(memory.siteId);
         if (site) {
@@ -105,20 +104,30 @@ const behavior = (creep) => {
         if (!targetRoom) {
             return (0, util_creep_1.moveRoom)(creep, creep.pos.roomName, memory.targetRoomName);
         }
-        if (creep.memory.storeId && (((_d = Game.getObjectById(creep.memory.storeId)) === null || _d === void 0 ? void 0 : _d.store.energy) || 0) === 0) {
+        if (!creep.memory.storeId || (((_e = Game.getObjectById(creep.memory.storeId)) === null || _e === void 0 ? void 0 : _e.store.energy) || 0) === 0) {
             creep.memory.storeId = undefined;
         }
         if (!memory.storeId) {
             const containers = targetRoom.find(FIND_STRUCTURES, {
-                filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.store.energy > 0,
+                filter: (s) => s.structureType === STRUCTURE_CONTAINER,
             });
-            const searched = PathFinder.search(creep.pos, containers.map((t) => t.pos), { plainCost: 2, swampCost: 10 });
+            const searched = PathFinder.search(creep.pos, _(containers)
+                .thru((all) => {
+                const hasE = all.filter((c) => c.store.energy);
+                if (hasE.length) {
+                    return hasE;
+                }
+                else {
+                    return all;
+                }
+            })
+                .map((t) => t.pos)
+                .value(), { plainCost: 2, swampCost: 3 });
             if (!searched.incomplete && searched.path.length > 0) {
-                const target = containers.find((c) => {
-                    const goal = _(searched.path).last();
-                    return c.pos.x === (goal === null || goal === void 0 ? void 0 : goal.x) && c.pos.y === goal.y && goal.roomName === c.pos.roomName;
-                });
-                creep.memory.storeId = target === null || target === void 0 ? void 0 : target.id;
+                creep.memory.storeId = (_f = _(searched.path).last().findClosestByRange(containers)) === null || _f === void 0 ? void 0 : _f.id;
+            }
+            else {
+                return (0, util_creep_1.moveRoom)(creep, creep.pos.roomName, memory.targetRoomName);
             }
         }
         const store = memory.storeId && Game.getObjectById(memory.storeId);

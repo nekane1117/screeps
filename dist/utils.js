@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAvailableAmount = exports.getOrderRemainingTotal = exports.getDecayAmount = exports.readonly = exports.calcMaxTransferAmount = exports.isHighway = exports.logUsage = exports.getTerminals = exports.getLabs = exports.isCompound = exports.getSpawnsWithDistance = exports.getSpawnsOrderdByRange = exports.getSitesInRoom = exports.getSpawnsInRoom = exports.findMyStructures = exports.getCapacityRate = void 0;
+exports.getSurplusEnergy = exports.getAvailableAmount = exports.getOrderRemainingTotal = exports.getDecayAmount = exports.readonly = exports.calcMaxTransferAmount = exports.isHighway = exports.logUsage = exports.getTerminals = exports.getLabs = exports.isCompound = exports.getSpawnsWithDistance = exports.getSpawnsOrderdByRange = exports.getSitesInRoom = exports.getSpawnsInRoom = exports.findMyStructures = exports.getCapacityRate = void 0;
 const constants_1 = require("./constants");
 function getCapacityRate(s, type = RESOURCE_ENERGY) {
     if ("store" in s) {
@@ -24,30 +24,58 @@ const findMyStructures = (room) => {
             time: Game.time,
             data: room.find(FIND_STRUCTURES).reduce((structures, s) => {
                 structures.all.push(s);
-                structures[s.structureType].push(s);
+                switch (s.structureType) {
+                    case STRUCTURE_CONTROLLER:
+                        structures.controller = s;
+                        break;
+                    case STRUCTURE_POWER_SPAWN:
+                        structures.powerSpawn = s;
+                        break;
+                    case STRUCTURE_STORAGE:
+                        structures.storage = s;
+                        break;
+                    case STRUCTURE_OBSERVER:
+                        structures.observer = s;
+                        break;
+                    case STRUCTURE_EXTRACTOR:
+                        structures.extractor = s;
+                        break;
+                    case STRUCTURE_TERMINAL:
+                        structures.terminal = s;
+                        break;
+                    case STRUCTURE_NUKER:
+                        structures.nuker = s;
+                        break;
+                    case STRUCTURE_FACTORY:
+                        structures.factory = s;
+                        break;
+                    default:
+                        structures[s.structureType].push(s);
+                        break;
+                }
                 return structures;
             }, {
                 all: [],
                 constructedWall: [],
                 container: [],
-                controller: [],
+                controller: room.controller,
                 extension: [],
-                extractor: [],
-                factory: [],
+                extractor: undefined,
+                factory: undefined,
                 invaderCore: [],
                 keeperLair: [],
                 lab: [],
                 link: [],
-                nuker: [],
-                observer: [],
+                nuker: undefined,
+                observer: undefined,
                 portal: [],
                 powerBank: [],
-                powerSpawn: [],
+                powerSpawn: undefined,
                 rampart: [],
                 road: [],
                 spawn: [],
-                storage: [],
-                terminal: [],
+                storage: room.storage,
+                terminal: room.terminal,
                 tower: [],
                 source: room.find(FIND_SOURCES),
             }),
@@ -181,3 +209,11 @@ function getAvailableAmount(terminal, resourceType) {
     return terminal.store[resourceType] - getOrderRemainingTotal(terminal, resourceType);
 }
 exports.getAvailableAmount = getAvailableAmount;
+function getSurplusEnergy(room) {
+    const { container, link } = (0, exports.findMyStructures)(room);
+    return _([container, link])
+        .flatten()
+        .compact()
+        .sum((s) => s.store.energy);
+}
+exports.getSurplusEnergy = getSurplusEnergy;

@@ -28,17 +28,91 @@ export function roomBehavior(room: Room) {
     };
   }
 
-  const { builder = [], carrier: carriers = [], harvester = [], remoteCarrier = [], remoteHarvester = [], reserver = [] } = getCreepsInRoom(room);
+  const { carrier: carriers = [], harvester = [], remoteCarrier = [], remoteHarvester = [], reserver = [] } = getCreepsInRoom(room);
+
+  if (room.storage) {
+    room.visual.text(room.storage.store.energy.toString(), room.storage.pos.x, room.storage.pos.y, {
+      font: 0.25,
+    });
+  }
+
+  //#region remote #########################################################################
+  room.memory.remote?.forEach((targetRoomName) => {
+    // エネルギー満タンの時以外無視する
+    if (room.energyAvailable < Math.max(600, room.energyCapacityAvailable)) {
+      return;
+    }
+    const filterThisRemote = (c: RemoteCarrier | RemoteHarvester | Reserver) => c?.memory?.targetRoomName === targetRoomName;
+
+    const { roomRemoteCarrier, roomRemoteHarvester, roomReserver } = {
+      roomReserver: reserver.filter(filterThisRemote),
+      roomRemoteCarrier: remoteCarrier.filter(filterThisRemote),
+      roomRemoteHarvester: remoteHarvester.filter(filterThisRemote),
+    };
+
+    // reserverがいないときは作る
+    if (roomReserver.length === 0) {
+      const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
+      if (spawn) {
+        const spawned = spawn.spawnCreep(filterBodiesByCost("reserver", room.energyAvailable).bodies, `V_${room.name}_${targetRoomName}_${Game.time}`, {
+          memory: {
+            baseRoom: room.name,
+            role: "reserver",
+            targetRoomName,
+          } as ReserverMemory,
+        });
+        if (spawned !== OK) {
+          console.log("crete reserver", RETURN_CODE_DECODER[spawned.toString()]);
+        }
+      }
+    }
+    // harvesterがいないときは作る
+    const { bodies } = filterBodiesByCost("remoteHarvester", room.energyAvailable);
+    if (roomRemoteHarvester.length < 1) {
+      const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
+      if (spawn) {
+        const spawned = spawn.spawnCreep(bodies, `Rh_${room.name}_${targetRoomName}_${Game.time}`, {
+          memory: {
+            baseRoom: room.name,
+            mode: "🌾",
+            role: "remoteHarvester",
+            targetRoomName,
+          } as RemoteHarvesterMemory,
+        });
+        if (spawned !== OK) {
+          console.log("create remotehaervester", RETURN_CODE_DECODER[spawned.toString()]);
+        }
+      }
+    }
+
+    _(getCarrierBody(room, "remoteCarrier"))
+      .tap((body) => {
+        //harvesterが居るのにcarrierが居ないとき
+        if (roomRemoteHarvester.length > 0 && roomRemoteCarrier.length < 1) {
+          const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
+          if (spawn) {
+            const spawned = spawn.spawnCreep(body, `Rc_${room.name}_${targetRoomName}_${Game.time}`, {
+              memory: {
+                baseRoom: room.name,
+                role: "remoteCarrier",
+                targetRoomName,
+                mode: "🛒",
+              } as RemoteCarrierMemory,
+            });
+            if (spawned !== OK) {
+              console.log("create remotehaervester", RETURN_CODE_DECODER[spawned.toString()]);
+            }
+          }
+        }
+      })
+      .run();
+  });
+  //#endregion remote ######################################################################
 
   // ロードマップを更新する
   updateRoadMap(room);
 
-  const {
-    // tower,
-    lab,
-    link,
-    source,
-  } = findMyStructures(room);
+  const { lab, source } = findMyStructures(room);
   source.forEach((s) => behavior(s));
 
   const mineral = _(room.find(FIND_MINERALS)).first();
@@ -47,8 +121,8 @@ export function roomBehavior(room: Room) {
   }
 
   // 部屋ごとの色々を建てる
-  if (Game.time % 100 === 0) {
-    creteStructures(room);
+  if (room.name === "sim" || Game.time % 100 === 0) {
+    createStructures(room);
   }
 
   // linkの挙動
@@ -62,7 +136,7 @@ export function roomBehavior(room: Room) {
   if (
     carriers.filter((g) => {
       return carrierBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || Infinity);
-    }).length < (link.length >= source.length + 1 ? 1 : 2)
+    }).length < 1
   ) {
     const name = `C_${room.name}_${Game.time}`;
 
@@ -101,18 +175,7 @@ export function roomBehavior(room: Room) {
       console.log("can't find spawn for defender");
     }
   }
-  const { bodies: builderBodies } = filterBodiesByCost("builder", room.energyCapacityAvailable);
-
-  if (
-    // ビルダーが居ない
-    builder.filter((g) => {
-      return builderBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || Infinity);
-    }).length < 1 &&
-    // 壊れかけ建物
-    (room.find(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax }).length > 0 ||
-      // 建設現場
-      getSitesInRoom(room).length > 0)
-  ) {
+  if (checkSpawnBuilder(room)) {
     const spawn = (() => {
       const spawns = getSpawnsInRoom(room);
       if (spawns.length > 0) {
@@ -133,189 +196,106 @@ export function roomBehavior(room: Room) {
       });
     }
   }
-
-  room.memory.remote?.forEach((targetRoomName) => {
-    // エネルギー満タンの時以外無視する
-    if (room.energyAvailable < room.energyCapacityAvailable) {
-      return;
-    }
-    const filterThisRemote = (c: RemoteCarrier | RemoteHarvester | Reserver) => c?.memory?.targetRoomName === targetRoomName;
-
-    const { roomRemoteCarrier, roomRemoteHarvester, roomReserver } = {
-      roomReserver: reserver.filter(filterThisRemote),
-      roomRemoteCarrier: remoteCarrier.filter(filterThisRemote),
-      roomRemoteHarvester: remoteHarvester.filter(filterThisRemote),
-    };
-
-    // reserverがいないときは作る
-    if (roomReserver.length === 0) {
-      const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
-      if (spawn) {
-        const spawned = spawn.spawnCreep(filterBodiesByCost("reserver", room.energyAvailable).bodies, `V_${room.name}_${targetRoomName}_${Game.time}`, {
-          memory: {
-            baseRoom: room.name,
-            role: "reserver",
-            targetRoomName,
-          } as ReserverMemory,
-        });
-        if (spawned !== OK) {
-          console.log("crete reserver", RETURN_CODE_DECODER[spawned.toString()]);
-        }
-      }
-    }
-    // harvesterがいないときは作る
-    const { bodies } = filterBodiesByCost("remoteHarvester", room.energyAvailable);
-    if (roomRemoteHarvester.length < 1) {
-      const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
-      if (spawn) {
-        const spawned = spawn.spawnCreep(bodies, `Rh_${room.name}_${targetRoomName}_${Game.time}`, {
-          memory: {
-            baseRoom: room.name,
-            role: "remoteHarvester",
-            targetRoomName,
-          } as RemoteHarvesterMemory,
-        });
-        if (spawned !== OK) {
-          console.log("create remotehaervester", RETURN_CODE_DECODER[spawned.toString()]);
-        }
-      }
-    }
-
-    _(getCarrierBody(room, "remoteCarrier"))
-      .tap((body) => {
-        //harvesterが居るのにcarrierが居ないとき
-        if (roomRemoteHarvester.length > 0 && roomRemoteCarrier.length < 1) {
-          const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
-          if (spawn) {
-            const spawned = spawn.spawnCreep(body, `Rc_${room.name}_${targetRoomName}_${Game.time}`, {
-              memory: {
-                baseRoom: room.name,
-                role: "remoteCarrier",
-                targetRoomName,
-                mode: "🛒",
-              } as RemoteCarrierMemory,
-            });
-            if (spawned !== OK) {
-              console.log("create remotehaervester", RETURN_CODE_DECODER[spawned.toString()]);
-            }
-          }
-        }
-      })
-      .run();
-  });
 }
 
 /** 部屋ごとの色々を建てる */
-function creteStructures(room: Room) {
+function createStructures(room: Room) {
   // 多分最初のspawn
   const mainSpawn = getMainSpawn(room);
   if (!mainSpawn) {
     return;
   }
 
-  const siteInRooms = Object.values(Game.constructionSites)
-    .filter((s) => s.room?.name === room.name)
-    .reduce(
-      (sites, s) => {
-        sites.all.push(s);
-        (sites[s.structureType] = sites[s.structureType] || []).push(s);
-        return sites;
-      },
-      { all: [] } as Partial<Record<StructureConstant, ConstructionSite[]>> & { all: ConstructionSite[] },
-    );
+  const { extractor } = findMyStructures(room);
+  const { extractor: extractorSite = [] } = _(getSitesInRoom(room))
+    .groupBy((s) => s.structureType)
+    .value() as Partial<{
+    [k in BuildableStructureConstant]: ConstructionSite<k>[];
+  }>;
 
-  if (room.controller) {
-    if (CONTROLLER_STRUCTURES[STRUCTURE_EXTRACTOR][room.controller.level] && !siteInRooms.extractor && findMyStructures(room).extractor.length === 0) {
-      const mineral = _(room.find(FIND_MINERALS)).first();
+  if (!room.controller) {
+    return;
+  }
+  // extractor扱えるレベルで建設中含め存在しないとき
+  if (CONTROLLER_STRUCTURES[STRUCTURE_EXTRACTOR][room.controller.level] && extractorSite.length === 0 && !extractor) {
+    const mineral = _(room.find(FIND_MINERALS)).first();
 
-      if (mineral) {
-        mineral.pos.createConstructionSite(STRUCTURE_EXTRACTOR);
-      }
-      return;
+    if (mineral) {
+      mineral.pos.createConstructionSite(STRUCTURE_EXTRACTOR);
     }
+  }
 
-    console.log(staticStructures.filter((s) => findMyStructures(room)[s].length === 0));
-    for (const target of staticStructures.filter((s) => findMyStructures(room)[s].length === 0)) {
-      const targets = findMyStructures(room)[target] as _HasRoomPosition[];
+  const getDiffPosition = (dx: number, dy: number) => {
+    return room.getPositionAt(mainSpawn.pos.x + dx, mainSpawn.pos.y + dy);
+  };
 
-      // 対象を扱えて隣にない時
-      if (
-        CONTROLLER_STRUCTURES[target][room.controller.level] > 0 &&
-        mainSpawn.pos.findInRange(targets, 1).length === 0 &&
-        (siteInRooms[target]?.length || 0) === 0
-      ) {
-        for (const [dx, dy] of fourNeighbors) {
-          const pos = room.getPositionAt(mainSpawn.pos.x + dx, mainSpawn.pos.y + dy);
-          console.log("search replace position", pos);
-          if (
-            pos
-              ?.lookFor(LOOK_STRUCTURES)
-              .find((s) => s.structureType === STRUCTURE_EXTENSION)
-              ?.destroy() === OK
-          ) {
-            // extensionが見つかったらとりあえず壊して終わる
-            return;
-          } else if (pos?.createConstructionSite(target) === OK) {
-            // extensionが無ければ立ててみて、成功したら終わる
-            return;
-          }
-        }
+  // 固定位置オブジェクトたち
+  STATIC_STRUCTURES.forEach(({ dx, dy, structureType }) => {
+    const pos = getDiffPosition(dx, dy);
+    if (pos) {
+      const built = pos.lookFor(LOOK_STRUCTURES);
+
+      // 違うものがあるときは壊す
+      if (built.filter((s) => s.structureType !== STRUCTURE_ROAD && s.structureType !== structureType).length > 0) {
+        built.forEach((b) => b.destroy());
+      }
+
+      // 指定のものが無いときは作る
+      if (structureType && !built.find((s) => s.structureType === structureType)) {
+        pos.createConstructionSite(structureType);
       }
     }
+  });
 
-    const targets = [STRUCTURE_EXTENSION, STRUCTURE_TOWER, STRUCTURE_SPAWN, STRUCTURE_STORAGE];
-    const terrain = room.getTerrain();
-    for (const target of targets) {
-      const extensions = [...siteInRooms.all, ...room.find(FIND_MY_STRUCTURES)].filter((s) => s.structureType === target);
-      if (extensions.length < CONTROLLER_STRUCTURES[target][room.controller.level]) {
-        for (const dist of _.range(1, 25)) {
-          for (const dy of _.range(-dist, dist + 1)) {
-            for (const dx of _.range(-dist, dist + 1)) {
-              const pos = new RoomPosition(mainSpawn.pos.x + dx, mainSpawn.pos.y + dy, room.name);
-              if (
-                Math.abs(dx) + Math.abs(dy) === dist &&
-                pos &&
-                terrain.get(mainSpawn.pos.x + dx, mainSpawn.pos.y + dy) !== TERRAIN_MASK_WALL &&
-                generateCross(dx, dy)
-              ) {
-                // 建設予定地にすでに何か建ててるときはキャンセルする
-                pos.lookFor(LOOK_CONSTRUCTION_SITES).forEach((s) => s.remove());
-                if (room.createConstructionSite(mainSpawn.pos.x + dx, mainSpawn.pos.y + dy, target) === OK) {
-                  return;
-                }
-              }
-            }
-          }
-        }
-      }
+  for (const structureType of [STRUCTURE_OBSERVER, STRUCTURE_TOWER, STRUCTURE_EXTENSION]) {
+    const structures = _([findMyStructures(room)[structureType]])
+      .flatten()
+      .value();
+    const sites = getSitesInRoom(room).filter((s) => s.structureType === structureType);
+    if (structures.length + sites.length < CONTROLLER_STRUCTURES[structureType][room.controller.level]) {
+      // main spawnの位置が奇数か偶数か
+      const isOdd = !!((mainSpawn.pos.x + mainSpawn.pos.y) % 2);
+
+      const pos = (room.storage || mainSpawn).pos.findClosestByPath(
+        // 全部の場所
+        _(2500)
+          .range()
+          .filter((i) => {
+            // 座標取得
+            const [x, y] = [i % 50, Math.floor(i / 50)];
+            // mainの位置に合わせたやつだけ残す
+            return (
+              isOdd === !!((x + y) % 2) &&
+              !STATIC_STRUCTURES.find(({ dx, dy }) => {
+                return x === mainSpawn.pos.x + dx && y === mainSpawn.pos.y + dy;
+              })
+            );
+          })
+          .map((i) => {
+            // 座標取得
+            return room.getPositionAt(i % 50, Math.floor(i / 50));
+          })
+          .compact()
+          .value(),
+        {
+          filter: (p) => {
+            // 建設可能な場所
+            return (
+              _(p.lookFor(LOOK_TERRAIN)).first() !== "wall" &&
+              ![...p.lookFor(LOOK_STRUCTURES), ...p.lookFor(LOOK_CONSTRUCTION_SITES)].find((s) => {
+                return s.structureType !== STRUCTURE_ROAD;
+              })
+            );
+          },
+        },
+      );
+      pos?.createConstructionSite(structureType);
     }
   }
 }
 
-/**
- * 十字を作る
- * @returns {boolean} true:建設したいもの false:道
- */
-const generateCross = (dx: number, dy: number): boolean => {
-  if (dx % 2 === 0) {
-    return !((dy + (dx % 4 === 0 ? -2 : 0)) % 4 === 0);
-  } else {
-    return dy % 2 === 0;
-  }
-};
-
-// 上下左右4近傍
-const fourNeighbors = [
-  [0, -1],
-  [-1, 0],
-  [1, 0],
-  [0, 1],
-];
-
-const staticStructures = [STRUCTURE_STORAGE, STRUCTURE_LINK, STRUCTURE_TERMINAL];
-
 function updateRoadMap(room: Room) {
-  const { road: roads, spawn } = findMyStructures(room);
+  const { road: roads, spawn, source } = findMyStructures(room);
 
   room.memory.roadMap = (room.memory.roadMap || _.range(2500).map(() => 0)).map((usage, i) => {
     const value = Math.min(10, Math.max(-10, usage - 10 / 2000));
@@ -339,7 +319,7 @@ function updateRoadMap(room: Room) {
         if (road && value < 0) {
           // 道が使われてないとき
           "remove" in road ? road.remove() : road.destroy();
-        } else if (!road && Math.ceil(value) >= 10 && pos.findInRange([...roads, ...spawn, ...room.find(FIND_MY_STRUCTURES)], 3).length > 0) {
+        } else if (!road && Math.ceil(value) >= 10 && pos.findInRange([...source, ...roads, ...spawn, ...room.find(FIND_MY_STRUCTURES)], 3).length > 0) {
           // 通るのに道がなくて、道かspawnにつながってるとき
           pos.createConstructionSite(STRUCTURE_ROAD);
         }
@@ -347,4 +327,47 @@ function updateRoadMap(room: Room) {
     }
     return value;
   });
+}
+
+const STATIC_STRUCTURES = [
+  { dy: -2, dx: 2, structureType: undefined },
+  { dy: -2, dx: 3, structureType: undefined },
+  { dy: -2, dx: 4, structureType: undefined },
+  { dy: -1, dx: -1, structureType: STRUCTURE_SPAWN },
+  { dy: -1, dx: 1, structureType: undefined },
+  { dy: -1, dx: 2, structureType: STRUCTURE_LAB },
+  { dy: -1, dx: 3, structureType: STRUCTURE_LAB },
+  { dy: -1, dx: 4, structureType: STRUCTURE_LAB },
+  { dy: -1, dx: 5, structureType: undefined },
+  { dy: 0, dx: -2, structureType: STRUCTURE_SPAWN },
+  { dy: 0, dx: 1, structureType: undefined },
+  { dy: 0, dx: 2, structureType: STRUCTURE_LAB },
+  { dy: 0, dx: 3, structureType: STRUCTURE_LAB },
+  { dy: 0, dx: 4, structureType: STRUCTURE_LAB },
+  { dy: 0, dx: 5, structureType: undefined },
+  { dy: 1, dx: -1, structureType: STRUCTURE_STORAGE },
+  { dy: 1, dx: 1, structureType: STRUCTURE_TERMINAL },
+  { dy: 1, dx: 3, structureType: STRUCTURE_LAB },
+  { dy: 1, dx: 4, structureType: STRUCTURE_LAB },
+  { dy: 1, dx: 5, structureType: undefined },
+  { dy: 2, dx: -2, structureType: STRUCTURE_POWER_SPAWN },
+  { dy: 2, dx: 0, structureType: STRUCTURE_LINK },
+  { dy: 2, dx: 2, structureType: undefined },
+  { dy: 2, dx: 4, structureType: undefined },
+  { dy: 3, dx: -1, structureType: STRUCTURE_FACTORY },
+  { dy: 3, dx: 1, structureType: STRUCTURE_NUKER },
+];
+
+function checkSpawnBuilder(room: Room) {
+  const { builder = [] } = getCreepsInRoom(room);
+  // 満タンじゃないときはfalse
+  if (room.energyAvailable < room.energyCapacityAvailable) {
+    return false;
+  }
+  const { bodies: builderBodies } = filterBodiesByCost("builder", room.energyCapacityAvailable);
+  return (
+    builder.filter((g) => {
+      return builderBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || Infinity);
+    }).length < 1
+  );
 }
