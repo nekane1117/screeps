@@ -31,6 +31,7 @@ const behavior = (creep) => {
             creep.memory.firstAidId = undefined;
             creep.memory.buildingId = undefined;
             creep.memory.storeId = undefined;
+            creep.memory.transferId = undefined;
             creep.say(creep.memory.mode);
         }
     };
@@ -129,7 +130,7 @@ const behavior = (creep) => {
                                 return moveMeTo(target);
                             case OK:
                                 creep.memory.repairId = (_a = _(creep.pos.findInRange(FIND_STRUCTURES, 4, { filter: (s) => s.structureType === target.structureType && s.hits < s.hitsMax })).min((s) => s.hits)) === null || _a === void 0 ? void 0 : _a.id;
-                                return;
+                                return moveMeTo(target);
                             default:
                                 return;
                         }

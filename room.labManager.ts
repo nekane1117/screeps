@@ -1,5 +1,5 @@
 import { LAB_STRATEGY, REVERSE_REACTIONS } from "./constants";
-import { getCarrierBody, getCreepsInRoom } from "./util.creep";
+import { filterBodiesByCost, getCreepsInRoom } from "./util.creep";
 import { getSpawnsInRoom } from "./utils";
 
 export default function behavior(labs: StructureLab[], mineral: Mineral) {
@@ -28,7 +28,7 @@ export default function behavior(labs: StructureLab[], mineral: Mineral) {
 
   const { labManager = [] } = getCreepsInRoom(firstLab.room);
 
-  const bodies = getCarrierBody(firstLab.room, "labManager");
+  const bodies = filterBodiesByCost("labManager", firstLab.room.energyAvailable).bodies;
 
   // 管理者を作る
   if (

@@ -276,9 +276,9 @@ declare interface LabManagerMemory extends CreepMemory {
    */
   mode: "🚛" | "🛒";
   /** 担当倉庫 */
-  storeId?: Id<StructureLab | StructureTerminal>;
+  storeId?: Id<StructureLab | StructureTerminal | StructureFactory>;
   /** 担当倉庫 */
-  mineralType?: MineralConstant | MineralCompoundConstant;
+  mineralType?: ResourceConstant;
   /** 配送先 */
   transferId?: Id<Parameters<Creep["transfer"]>[0]>;
 }
@@ -326,5 +326,7 @@ declare interface Memory {
 }
 
 declare interface FactoryMemory {
-  expectedType: RESOURCE_ENERGY | MineralConstant | RESOURCE_GHODIUM | CommodityConstant;
+  outputType?: ResourceConstant;
+  expectedType?: ResourceConstant;
+  lastProduced?: ResourceConstant;
 }

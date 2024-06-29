@@ -38,6 +38,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.memory.firstAidId = undefined;
       creep.memory.buildingId = undefined;
       creep.memory.storeId = undefined;
+      creep.memory.transferId = undefined;
       creep.say(creep.memory.mode);
     }
   };
@@ -184,7 +185,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
                   creep.memory.repairId = _(
                     creep.pos.findInRange(FIND_STRUCTURES, 4, { filter: (s) => s.structureType === target.structureType && s.hits < s.hitsMax }),
                   ).min((s) => s.hits)?.id;
-                  return;
+                  return moveMeTo(target);
                 default:
                   return;
               }

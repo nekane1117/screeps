@@ -1,8 +1,8 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, pickUpAll } from "./util.creep";
-import { getAvailableAmount, getLabs, getTerminals, isCompound } from "./utils";
+import { findMyStructures, getLabs, isCompound } from "./utils";
 
-const MINERAL_KEEP_VALUE = 500;
+const TRANSFER_THRESHOLD = 1000;
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const { room } = creep;
@@ -48,7 +48,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   checkMode();
   // https://docs.screeps.com/simultaneous-actions.html
 
-  const labs = getLabs(room);
+  const { factory } = findMyStructures(creep.room);
+
+  const labs = _([...getLabs(room).value(), factory && Object.assign(factory, factory && { memory: Memory.factories[factory.id] })]).compact();
 
   // 取得元設定処理###############################################################################################
 
@@ -62,47 +64,57 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // ラボの情報を整理する
   const { wrong, requesting, completed } = labs
-    .sort((l1, l2) => {
-      return l2.memory.expectedType.length - l1.memory.expectedType.length;
+    .sortBy((l) => {
+      return l.memory.expectedType;
     })
     .reduce(
-      (mapping, lab) => {
-        if (lab.mineralType) {
-          if (lab.mineralType !== lab.memory.expectedType) {
-            // 期待値と異なる
-            mapping.wrong.push(lab);
-          } else if (isCompound(lab.mineralType)) {
-            // 化合物の時
-
-            if (lab.store[lab.mineralType] > MINERAL_KEEP_VALUE * 4) {
-              // 完成
-              mapping.completed.push(lab);
-            } else if (lab.store[lab.mineralType] <= MINERAL_KEEP_VALUE * 2 && terminal.store[lab.mineralType] > 0) {
-              // ターミナルにあってたらなくなってきたときは要求する
-              mapping.requesting.push(lab);
-            } else {
-              // 処理中のはず
-              mapping.noProblem.push(lab);
-            }
-          } else {
-            // 原料の時
-            if (lab.store.getFreeCapacity(lab.mineralType) > 1000) {
-              // 空きがあるときは要求中
-              mapping.requesting.push(lab);
-            } else {
-              // 処理待ち
-              mapping.noProblem.push(lab);
-            }
+      (mapping, structure) => {
+        if (structure.structureType === STRUCTURE_FACTORY) {
+          if (structure.memory.outputType) {
+            mapping.completed.push(structure);
+          }
+          if (structure.memory.expectedType) {
+            mapping.requesting.push(structure);
           }
         } else {
-          if (lab.memory.expectedType.length >= 2) {
-            // 化合物待ち中は正しい
-            mapping.noProblem.push(lab);
+          if (structure.mineralType) {
+            if (structure.mineralType !== structure.memory.expectedType) {
+              // 期待値と異なる
+              mapping.wrong.push(structure);
+            } else if (isCompound(structure.mineralType)) {
+              // 化合物の時
+
+              if (structure.store[structure.mineralType] > TRANSFER_THRESHOLD * 2) {
+                // 完成
+                mapping.completed.push(structure);
+              } else if (structure.store[structure.mineralType] <= TRANSFER_THRESHOLD * 2) {
+                // ターミナルにあってたらなくなってきたときは要求する
+                mapping.requesting.push(structure);
+              } else {
+                // 処理中のはず
+                mapping.noProblem.push(structure);
+              }
+            } else {
+              // 原料の時
+              if (structure.store.getFreeCapacity(structure.mineralType) > 1000) {
+                // 空きがあるときは要求中
+                mapping.requesting.push(structure);
+              } else {
+                // 処理待ち
+                mapping.noProblem.push(structure);
+              }
+            }
           } else {
-            // 原料待ち中は要求中
-            mapping.requesting.push(lab);
+            if (structure.memory.expectedType.length >= 2) {
+              // 化合物待ち中は正しい
+              mapping.noProblem.push(structure);
+            } else {
+              // 原料待ち中は要求中
+              mapping.requesting.push(structure);
+            }
           }
         }
+
         return mapping;
       },
       {
@@ -110,7 +122,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         noProblem: [],
         requesting: [],
         wrong: [],
-      } as Record<"wrong" | "completed" | "requesting" | "noProblem", (StructureLab & { memory: LabMemory })[]>,
+      } as Record<
+        "wrong" | "completed" | "requesting" | "noProblem",
+        ((StructureLab & { memory: LabMemory }) | (StructureFactory & { memory: FactoryMemory }))[]
+      >,
     );
 
   // 正しくないやつは整理する
@@ -118,35 +133,18 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     creep.memory.storeId = _(wrong).first()?.id;
   }
 
-  // 原料待ちのやつでターミナルに原料があるやつ
-  if (!creep.memory.storeId && requesting.length > 0) {
-    const target = _(requesting).find((lab) => {
-      // 指定のミネラルが無いとき
-      const SEND_UNIT = 1000;
-      if (getAvailableAmount(terminal, lab.memory.expectedType) < SEND_UNIT) {
-        // 基準値の倍以上あるターミナル
-        const redundantTerminal = getTerminals().find((t) => getAvailableAmount(t, lab.memory.expectedType) > SEND_UNIT * 2);
-        if (redundantTerminal) {
-          redundantTerminal.send(
-            lab.memory.expectedType,
-            SEND_UNIT,
-            terminal.room.name,
-            `send ${lab.memory.expectedType} ${redundantTerminal.room.name} to ${terminal.room.name}`,
-          );
-        }
-      }
-      return getAvailableAmount(terminal, lab.memory.expectedType) > 0;
-    });
-    if (target) {
-      // ターミナルに指定の原料を取りに行く
-      creep.memory.storeId = terminal.id;
-      creep.memory.mineralType = target.memory.expectedType;
-    }
-  }
-
   // 出来てるやつを取りに行く
   if (!creep.memory.storeId) {
     creep.memory.storeId = _(completed).first()?.id;
+  }
+
+  // 要求に応じてターミナルに取りに行く
+  if (!creep.memory.storeId) {
+    const req = requesting.find((r) => r.memory.expectedType && terminal.store[r.memory.expectedType] > 0);
+    if (req) {
+      creep.memory.storeId = creep.room.terminal?.id;
+      creep.memory.mineralType = req.memory.expectedType;
+    }
   }
 
   // 落っこちてるものを拾う
@@ -170,6 +168,21 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             if (creep.memory.mineralType) {
               // 取り出す
               return creep.withdraw(store, creep.memory.mineralType);
+            } else {
+              // 無いときはおかしいので初期化してエラーを返す
+              creep.memory.storeId = undefined;
+              creep.memory.mineralType = undefined;
+              return ERR_INVALID_ARGS;
+            }
+          } else if (store.structureType === STRUCTURE_FACTORY) {
+            const memory = Memory.factories[store.id];
+            if (memory.outputType) {
+              // 取り出す
+              return creep.withdraw(
+                store,
+                memory.outputType,
+                Math.min(creep.store.getCapacity(memory.outputType), Math.max(0, store.store[memory.outputType] - TRANSFER_THRESHOLD * 2)),
+              );
             } else {
               // 無いときはおかしいので初期化してエラーを返す
               creep.memory.storeId = undefined;
