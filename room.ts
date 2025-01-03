@@ -120,7 +120,15 @@ export function roomBehavior(room: Room) {
         return spawns.find((s) => !s.spawning && s.room.energyAvailable === s.room.energyCapacityAvailable);
       } else {
         // 他の部屋も含むときはとにかく一番近いやつを返す
-        return room.controller?.pos.findClosestByPath(Object.values(Game.spawns));
+        return _(Object.values(Game.spawns))
+          .map((spawn) => {
+            return {
+              spawn,
+              cost: room.controller ? PathFinder.search(room.controller.pos, spawn.pos).cost : Infinity,
+            };
+          })
+          .filter((v) => _.isFinite(v.cost))
+          .min((v) => v.cost).spawn;
       }
     })();
     if (spawn && spawn.room.energyAvailable === spawn.room.energyCapacityAvailable) {

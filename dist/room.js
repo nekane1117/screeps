@@ -88,13 +88,20 @@ function roomBehavior(room) {
         (room.find(FIND_STRUCTURES, { filter: (s) => s.hits < s.hitsMax }).length > 0 ||
             (0, utils_1.getSitesInRoom)(room).length > 0)) {
         const spawn = (() => {
-            var _a;
             const spawns = (0, utils_1.getSpawnsInRoom)(room);
             if (spawns.length > 0) {
                 return spawns.find((s) => !s.spawning && s.room.energyAvailable === s.room.energyCapacityAvailable);
             }
             else {
-                return (_a = room.controller) === null || _a === void 0 ? void 0 : _a.pos.findClosestByPath(Object.values(Game.spawns));
+                return _(Object.values(Game.spawns))
+                    .map((spawn) => {
+                    return {
+                        spawn,
+                        cost: room.controller ? PathFinder.search(room.controller.pos, spawn.pos).cost : Infinity,
+                    };
+                })
+                    .filter((v) => _.isFinite(v.cost))
+                    .min((v) => v.cost).spawn;
             }
         })();
         if (spawn && spawn.room.energyAvailable === spawn.room.energyCapacityAvailable) {
