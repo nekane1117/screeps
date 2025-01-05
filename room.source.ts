@@ -11,7 +11,14 @@ export function behavior(source: Source) {
       if (spawns.length > 0) {
         return source.pos.findClosestByRange(spawns.filter((s) => !s.spawning));
       } else {
-        return source.pos.findClosestByPath(Object.values(Game.spawns));
+        return _(Object.values(Game.spawns))
+          .map((spawn) => {
+            return {
+              spawn,
+              cost: PathFinder.search(source.pos, spawn.pos).cost,
+            };
+          })
+          .min((v) => v.cost).spawn;
       }
     })();
     if (!spawn) {
