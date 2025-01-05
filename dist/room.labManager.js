@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = behavior;
 const constants_1 = require("./constants");
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
@@ -64,4 +65,3 @@ function behavior(labs, mineral) {
         return;
     });
 }
-exports.default = behavior;

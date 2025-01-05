@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = behaviors;
 const utils_1 = require("./utils");
 const utils_common_1 = require("./utils.common");
 const THRESHOLD = 1000;
@@ -44,7 +45,6 @@ function behaviors(factory) {
         });
     });
 }
-exports.default = behaviors;
 function isFactory(s) {
     return s.structureType === STRUCTURE_FACTORY;
 }

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.roomBehavior = void 0;
+exports.roomBehavior = roomBehavior;
 const room_labManager_1 = __importDefault(require("./room.labManager"));
 const room_source_1 = require("./room.source");
 const structure_links_1 = __importDefault(require("./structure.links"));
@@ -173,7 +173,6 @@ function roomBehavior(room) {
         }
     }
 }
-exports.roomBehavior = roomBehavior;
 function createStructures(room) {
     const mainSpawn = (0, util_creep_1.getMainSpawn)(room);
     if (!mainSpawn) {

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.findTransferTarget = void 0;
+exports.findTransferTarget = findTransferTarget;
 const constants_1 = require("./constants");
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
@@ -235,4 +235,3 @@ function findTransferTarget(room) {
             .sortBy((s) => s.store.energy)
             .first());
 }
-exports.findTransferTarget = findTransferTarget;

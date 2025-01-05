@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = behavior;
 const util_creep_1 = require("./util.creep");
 function behavior(links) {
     var _a;
@@ -19,4 +20,3 @@ function behavior(links) {
         }
     });
 }
-exports.default = behavior;

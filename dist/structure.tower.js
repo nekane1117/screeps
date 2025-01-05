@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = behaviors;
 const constants_1 = require("./constants");
 function behaviors(tower) {
     if (!isTower(tower)) {
@@ -57,7 +58,6 @@ function behaviors(tower) {
     })
         .run();
 }
-exports.default = behaviors;
 function isTower(s) {
     return s.structureType === STRUCTURE_TOWER;
 }

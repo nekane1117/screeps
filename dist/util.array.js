@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.complexOrder = exports.ORDER = void 0;
+exports.ORDER = void 0;
+exports.complexOrder = complexOrder;
 var ORDER;
 (function (ORDER) {
     ORDER[ORDER["PREV"] = -1] = "PREV";
@@ -18,4 +19,3 @@ function complexOrder(arr, evaluation) {
         return ORDER.KEEP;
     }));
 }
-exports.complexOrder = complexOrder;

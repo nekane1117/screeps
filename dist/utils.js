@@ -1,6 +1,22 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSurplusEnergy = exports.getAvailableAmount = exports.getOrderRemainingTotal = exports.getDecayAmount = exports.readonly = exports.calcMaxTransferAmount = exports.isHighway = exports.logUsage = exports.getTerminals = exports.getLabs = exports.isCompound = exports.getSpawnsWithDistance = exports.getSpawnsOrderdByRange = exports.getSitesInRoom = exports.getSpawnsInRoom = exports.findMyStructures = exports.getCapacityRate = void 0;
+exports.findMyStructures = void 0;
+exports.getCapacityRate = getCapacityRate;
+exports.getSpawnsInRoom = getSpawnsInRoom;
+exports.getSitesInRoom = getSitesInRoom;
+exports.getSpawnsOrderdByRange = getSpawnsOrderdByRange;
+exports.getSpawnsWithDistance = getSpawnsWithDistance;
+exports.isCompound = isCompound;
+exports.getLabs = getLabs;
+exports.getTerminals = getTerminals;
+exports.logUsage = logUsage;
+exports.isHighway = isHighway;
+exports.calcMaxTransferAmount = calcMaxTransferAmount;
+exports.readonly = readonly;
+exports.getDecayAmount = getDecayAmount;
+exports.getOrderRemainingTotal = getOrderRemainingTotal;
+exports.getAvailableAmount = getAvailableAmount;
+exports.getSurplusEnergy = getSurplusEnergy;
 const constants_1 = require("./constants");
 function getCapacityRate(s, type = RESOURCE_ENERGY) {
     if ("store" in s) {
@@ -10,7 +26,6 @@ function getCapacityRate(s, type = RESOURCE_ENERGY) {
         return Infinity;
     }
 }
-exports.getCapacityRate = getCapacityRate;
 const findMyStructures = (room) => {
     var _a, _b;
     if (!room.memory.find) {
@@ -90,7 +105,6 @@ function getSpawnsInRoom(r) {
     }
     return Object.values(Game.spawns).filter((s) => s.pos.roomName === room.name);
 }
-exports.getSpawnsInRoom = getSpawnsInRoom;
 function getSitesInRoom(r) {
     const room = _.isString(r) ? Game.rooms[r] : r;
     if (!room) {
@@ -98,7 +112,6 @@ function getSitesInRoom(r) {
     }
     return Object.values(Game.constructionSites).filter((s) => s.pos.roomName === room.name);
 }
-exports.getSitesInRoom = getSitesInRoom;
 function getSpawnsOrderdByRange(src, maxRooms) {
     const pos = "pos" in src ? src.pos : src;
     return _(Object.values(Game.spawns))
@@ -118,7 +131,6 @@ function getSpawnsOrderdByRange(src, maxRooms) {
     })
         .map((p) => p.spawn);
 }
-exports.getSpawnsOrderdByRange = getSpawnsOrderdByRange;
 function getSpawnsWithDistance(src) {
     const pos = "pos" in src ? src.pos : src;
     return _(Object.values(Game.spawns)).map((spawn) => {
@@ -128,11 +140,9 @@ function getSpawnsWithDistance(src) {
         };
     });
 }
-exports.getSpawnsWithDistance = getSpawnsWithDistance;
 function isCompound(resource) {
     return !!(resource.length >= 2 && /^[A-Z]/.exec(resource));
 }
-exports.isCompound = isCompound;
 function getLabs(room) {
     const lab = (0, exports.findMyStructures)(room).lab;
     return _(lab).map((lab) => {
@@ -141,7 +151,6 @@ function getLabs(room) {
         });
     });
 }
-exports.getLabs = getLabs;
 function getTerminals() {
     return _(Object.values(Game.rooms))
         .map(({ terminal }) => {
@@ -157,7 +166,6 @@ function getTerminals() {
         .compact()
         .run();
 }
-exports.getTerminals = getTerminals;
 let indent = -1;
 function logUsage(title, func, threthold = 0) {
     if (indent > 10) {
@@ -171,23 +179,19 @@ function logUsage(title, func, threthold = 0) {
     indent = Math.max(indent - 1, 0);
     return value;
 }
-exports.logUsage = logUsage;
 function isHighway(room) {
     const parsed = /^[WE]([0-9]+)[NS]([0-9]+)$/.exec(room.name);
     return parsed && (Number(parsed[1]) % 10 === 0 || Number(parsed[2]) % 10 === 0);
 }
-exports.isHighway = isHighway;
 function calcMaxTransferAmount(order, terminal) {
     if (!order.roomName) {
         return 0;
     }
     return Math.floor(terminal.store.energy / (1 - Math.exp(-Game.map.getRoomLinearDistance(terminal.room.name, order.roomName) / 30)));
 }
-exports.calcMaxTransferAmount = calcMaxTransferAmount;
 function readonly(a) {
     return a;
 }
-exports.readonly = readonly;
 function getDecayAmount(s) {
     switch (s.structureType) {
         case STRUCTURE_RAMPART:
@@ -207,17 +211,14 @@ function getDecayAmount(s) {
             return 0;
     }
 }
-exports.getDecayAmount = getDecayAmount;
 function getOrderRemainingTotal(terminal, resourceType) {
     return _(Object.values(Game.market.orders))
         .filter((o) => o.type === ORDER_SELL && o.resourceType === resourceType && o.roomName === terminal.room.name)
         .sum((o) => o.remainingAmount);
 }
-exports.getOrderRemainingTotal = getOrderRemainingTotal;
 function getAvailableAmount(terminal, resourceType) {
     return terminal.store[resourceType] - getOrderRemainingTotal(terminal, resourceType);
 }
-exports.getAvailableAmount = getAvailableAmount;
 function getSurplusEnergy(room) {
     const { container, link } = (0, exports.findMyStructures)(room);
     return _([container, link])
@@ -225,4 +226,3 @@ function getSurplusEnergy(room) {
         .compact()
         .sum((s) => s.store.energy);
 }
-exports.getSurplusEnergy = getSurplusEnergy;

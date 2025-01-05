@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = behavior;
 function behavior(flag) {
     var _a;
     if (flag.color !== COLOR_PURPLE) {
@@ -19,4 +20,3 @@ function behavior(flag) {
     }
     flag.remove();
 }
-exports.default = behavior;

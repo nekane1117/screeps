@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = behaviors;
 const constants_1 = require("./constants");
 const utils_1 = require("./utils");
 const utils_common_1 = require("./utils.common");
@@ -69,7 +70,6 @@ function behaviors(terminal) {
         }
     });
 }
-exports.default = behaviors;
 function isTerminal(s) {
     return s.structureType === STRUCTURE_TERMINAL;
 }

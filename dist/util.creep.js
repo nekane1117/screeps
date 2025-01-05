@@ -1,12 +1,22 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.REVERSE_BOOSTS = exports.getRepairPower = exports.getCarrierBody = exports.moveRoom = exports.toColor = exports.withdrawBy = exports.pickUpAll = exports.getMainSpawn = exports.getCreepsInRoom = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.randomWalk = exports.DIRECTIONS = exports.filterBodiesByCost = exports.squareDiff = exports.isStoreTarget = void 0;
+exports.REVERSE_BOOSTS = exports.customMove = exports.RETURN_CODE_DECODER = exports.IDEAL_BODY = exports.DIRECTIONS = exports.squareDiff = void 0;
+exports.isStoreTarget = isStoreTarget;
+exports.filterBodiesByCost = filterBodiesByCost;
+exports.randomWalk = randomWalk;
+exports.getCreepsInRoom = getCreepsInRoom;
+exports.getMainSpawn = getMainSpawn;
+exports.pickUpAll = pickUpAll;
+exports.withdrawBy = withdrawBy;
+exports.toColor = toColor;
+exports.moveRoom = moveRoom;
+exports.getCarrierBody = getCarrierBody;
+exports.getRepairPower = getRepairPower;
 const util_array_1 = require("./util.array");
 const utils_1 = require("./utils");
 function isStoreTarget(x) {
     return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);
 }
-exports.isStoreTarget = isStoreTarget;
 exports.squareDiff = Object.freeze([
     [-1, -1],
     [0, -1],
@@ -40,7 +50,6 @@ function filterBodiesByCost(role, cost) {
         cost: ((_a = _.last(bodies)) === null || _a === void 0 ? void 0 : _a.total) || 0,
     };
 }
-exports.filterBodiesByCost = filterBodiesByCost;
 exports.DIRECTIONS = {
     [TOP_LEFT]: "TOP_LEFT",
     [TOP]: "TOP",
@@ -58,7 +67,6 @@ function randomWalk(creep) {
         .run();
     return creep.move(directions[_.random(0, directions.length - 1)]);
 }
-exports.randomWalk = randomWalk;
 exports.IDEAL_BODY = Object.freeze({
     builder: _.range(50).map((i) => {
         const b = [WORK, MOVE, CARRY, MOVE];
@@ -188,7 +196,6 @@ function getCreepsInRoom(room) {
         }, {}));
     }
 }
-exports.getCreepsInRoom = getCreepsInRoom;
 function getMainSpawn(room) {
     const spawn = room.memory.mainSpawn && Game.getObjectById(room.memory.mainSpawn);
     if (spawn) {
@@ -200,7 +207,6 @@ function getMainSpawn(room) {
         return spawn;
     }
 }
-exports.getMainSpawn = getMainSpawn;
 function pickUpAll(creep, resourceType = RESOURCE_ENERGY) {
     let result = undefined;
     creep.pos
@@ -219,7 +225,6 @@ function pickUpAll(creep, resourceType = RESOURCE_ENERGY) {
     });
     return result;
 }
-exports.pickUpAll = pickUpAll;
 function withdrawBy(creep, roles, type = RESOURCE_ENERGY) {
     return creep.pos
         .findInRange(FIND_MY_CREEPS, 1, {
@@ -227,11 +232,9 @@ function withdrawBy(creep, roles, type = RESOURCE_ENERGY) {
     })
         .map((t) => t.transfer(creep, type));
 }
-exports.withdrawBy = withdrawBy;
 function toColor({ id }) {
     return `#${id.slice(-6)}`;
 }
-exports.toColor = toColor;
 function moveRoom(creep, fromRoom, toRoom) {
     var _a, _b, _c, _d;
     const memory = (0, utils_1.readonly)(creep.memory);
@@ -272,7 +275,6 @@ function moveRoom(creep, fromRoom, toRoom) {
     }
     return moved;
 }
-exports.moveRoom = moveRoom;
 function getCarrierBody(room, role) {
     var _a;
     const safetyFactor = 2;
@@ -289,7 +291,6 @@ function getCarrierBody(room, role) {
         .filter((p) => p.costTotal <= room.energyAvailable)
         .map((p) => p.parts);
 }
-exports.getCarrierBody = getCarrierBody;
 const DEFAULT_CREEP_RANGE = {
     builder: 3,
     carrier: 1,
@@ -312,7 +313,6 @@ function getRepairPower(creep) {
     })
         .sum();
 }
-exports.getRepairPower = getRepairPower;
 exports.REVERSE_BOOSTS = {
     repair: {
         [RESOURCE_LEMERGIUM_ACID]: BOOSTS.work[RESOURCE_LEMERGIUM_ACID].repair,

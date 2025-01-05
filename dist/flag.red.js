@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = behavior;
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 function behavior(flag) {
@@ -42,4 +43,3 @@ function behavior(flag) {
         flag.remove();
     }
 }
-exports.default = behavior;
