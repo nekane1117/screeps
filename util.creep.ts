@@ -168,7 +168,7 @@ export const customMove: CustomMove = (creep, target, opt) => {
   }
 
   creep.memory.moved = creep.moveTo(target, {
-    plainCost: 2,
+    plainCost: creep.store.energy > 0 ? 2 : 1,
     swampCost: 10,
     serializeMemory: false,
     ignoreCreeps: !(creep.memory.__avoidCreep || creep.pos.inRangeTo(target, DEFAULT_CREEP_RANGE[creep.memory.role] + 2)),
