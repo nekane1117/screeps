@@ -147,7 +147,7 @@ const customMove = (creep, target, opt) => {
     if (creep.fatigue) {
         return OK;
     }
-    creep.memory.moved = creep.moveTo(target, Object.assign(Object.assign({ plainCost: creep.store.energy > 0 ? 2 : 1, swampCost: 10, serializeMemory: false, ignoreCreeps: !(creep.memory.__avoidCreep || creep.pos.inRangeTo(target, DEFAULT_CREEP_RANGE[creep.memory.role] + 2)) }, opt), { visualizePathStyle: Object.assign({ opacity: 0.55, stroke: toColor(creep) }, opt === null || opt === void 0 ? void 0 : opt.visualizePathStyle) }));
+    creep.memory.moved = creep.moveTo(target, Object.assign(Object.assign({ plainCost: creep.store.getUsedCapacity() > 0 ? 2 : 1, swampCost: 10, serializeMemory: false, ignoreCreeps: !(creep.memory.__avoidCreep || creep.pos.inRangeTo(target, DEFAULT_CREEP_RANGE[creep.memory.role] + 2)) }, opt), { visualizePathStyle: Object.assign({ opacity: 0.55, stroke: toColor(creep) }, opt === null || opt === void 0 ? void 0 : opt.visualizePathStyle) }));
     if (creep.memory.moved === OK && Game.time % 3) {
         const { dy, dx } = ((_b = (_a = creep.memory._move) === null || _a === void 0 ? void 0 : _a.path) === null || _b === void 0 ? void 0 : _b[0]) || {};
         const isInRange = (n) => {
