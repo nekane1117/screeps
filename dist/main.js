@@ -53,6 +53,32 @@ module.exports.loop = function () {
                 c.memory.moved === OK && (c.memory.__avoidCreep = false);
             });
         });
+        (0, utils_1.logUsage)("constructionSites", () => {
+            Object.values(Game.constructionSites).forEach((site) => {
+                var _a, _b, _c, _d;
+                if (((_a = site.room) === null || _a === void 0 ? void 0 : _a.name) && Memory.rooms[(_b = site.room) === null || _b === void 0 ? void 0 : _b.name]) {
+                    if ((((_c = Memory.rooms[site.room.name].creeps) === null || _c === void 0 ? void 0 : _c.builder) || []).length === 0) {
+                        const spawn = (_d = _(Object.values(Game.spawns))
+                            .map((spawn) => {
+                            return {
+                                spawn,
+                                cost: PathFinder.search(site.pos, spawn.pos).cost,
+                            };
+                        })
+                            .min((v) => v.cost)) === null || _d === void 0 ? void 0 : _d.spawn;
+                        if (spawn) {
+                            spawn.spawnCreep((0, util_creep_1.filterBodiesByCost)("builder", spawn.room.energyCapacityAvailable).bodies, `B_${site.room.name}_${Game.time}`, {
+                                memory: {
+                                    mode: "🛒",
+                                    baseRoom: site.room.name,
+                                    role: "builder",
+                                },
+                            });
+                        }
+                    }
+                }
+            });
+        });
         Object.keys(Memory.rooms).forEach((name) => {
             var _a, _b;
             if (!((_b = (_a = Game.rooms[name]) === null || _a === void 0 ? void 0 : _a.controller) === null || _b === void 0 ? void 0 : _b.my)) {
