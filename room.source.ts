@@ -4,7 +4,11 @@ import { findMyStructures, getSpawnsInRoom } from "./utils";
 export function behavior(source: Source) {
   const harvesters = getCreepsInRoom(source.room).harvester || [];
   const myH = harvesters.filter((h) => h.memory?.harvestTargetId === source.id);
-  if (myH.length < 1) {
+  if (
+    _(myH)
+      .map((h) => h.getActiveBodyparts(WORK))
+      .sum() < 5
+  ) {
     const spawn = (() => {
       const spawns = getSpawnsInRoom(source.room);
       // 部屋にある時は部屋のだけ
@@ -26,7 +30,7 @@ export function behavior(source: Source) {
       return ERR_NOT_FOUND;
     }
 
-    if (harvesters.length > 0 ? spawn.room.energyAvailable >= spawn.room.energyCapacityAvailable : spawn.room.energyAvailable >= 300) {
+    if (spawn.room.energyAvailable >= (harvesters.length === 0 ? 300 : 400)) {
       const name = `H_${source.room.name}_${Game.time}`;
       const spawned = spawn.spawnCreep(filterBodiesByCost("harvester", spawn.room.energyAvailable).bodies, name, {
         memory: {
@@ -37,13 +41,6 @@ export function behavior(source: Source) {
       });
       return spawned;
     }
-  } else if (myH.length > 1) {
-    _(myH)
-      .sortBy((c) => c.ticksToLive || Infinity)
-      .reverse()
-      .tail()
-      .forEach((c) => c.suicide())
-      .run();
   }
 
   if (
