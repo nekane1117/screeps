@@ -127,7 +127,7 @@ const behavior = (creep) => {
                         var _a;
                         switch (repaired) {
                             case ERR_NOT_IN_RANGE:
-                                return moveMeTo(target);
+                                return moveMeTo(target, { range: 3 });
                             case OK:
                                 creep.memory.repairId = (_a = _(creep.pos.findInRange(FIND_STRUCTURES, 4, { filter: (s) => s.structureType === target.structureType && s.hits < s.hitsMax })).min((s) => s.hits)) === null || _a === void 0 ? void 0 : _a.id;
                                 return moveMeTo(target);

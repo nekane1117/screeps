@@ -179,7 +179,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             .tap((repaired) => {
               switch (repaired) {
                 case ERR_NOT_IN_RANGE:
-                  return moveMeTo(target);
+                  return moveMeTo(target, { range: 3 });
                 case OK:
                   // 成功したら同じ種類で近くの一番壊れてるやつにリタゲする
                   creep.memory.repairId = _(

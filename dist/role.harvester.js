@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_creep_1 = require("./util.creep");
 const utils_1 = require("./utils");
 const behavior = (creep) => {
-    var _a;
     if (!isHarvester(creep)) {
         console.log(`${creep.name} is not harvester`);
         return ERR_INVALID_TARGET;
@@ -19,10 +18,7 @@ const behavior = (creep) => {
     switch (creep.memory.worked) {
         case ERR_NOT_IN_RANGE:
             (0, util_creep_1.customMove)(creep, source, {
-                ignoreCreeps: true,
                 range: 1,
-                ignore: (_a = (0, util_creep_1.getCreepsInRoom)(creep.room)
-                    .harvester) === null || _a === void 0 ? void 0 : _a.filter((c) => c.id !== creep.id).map((h) => h.pos),
             });
             break;
         case ERR_INVALID_TARGET:

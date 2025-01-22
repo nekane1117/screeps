@@ -1,6 +1,6 @@
 import { CreepBehavior } from "./roles";
 
-import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, moveRoom, pickUpAll } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, moveRoom, pickUpAll } from "./util.creep";
 import { findMyStructures } from "./utils";
 
 /**
@@ -30,11 +30,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   switch (creep.memory.worked) {
     case ERR_NOT_IN_RANGE:
       customMove(creep, source, {
-        ignoreCreeps: true,
         range: 1,
-        ignore: getCreepsInRoom(creep.room)
-          .harvester?.filter((c) => c.id !== creep.id)
-          .map((h) => h.pos),
       });
       break;
     // 来ないはずのやつ
