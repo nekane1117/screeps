@@ -6,9 +6,10 @@ const utils_1 = require("./utils");
 function behavior(source) {
     const harvesters = (0, util_creep_1.getCreepsInRoom)(source.room).harvester || [];
     const myH = harvesters.filter((h) => { var _a; return ((_a = h.memory) === null || _a === void 0 ? void 0 : _a.harvestTargetId) === source.id; });
-    if (_(myH)
-        .map((h) => h.getActiveBodyparts(WORK))
-        .sum() < 5) {
+    if (myH.length < 2 &&
+        _(myH)
+            .map((h) => h.getActiveBodyparts(WORK))
+            .sum() < 5) {
         const spawn = (() => {
             const spawns = (0, utils_1.getSpawnsInRoom)(source.room);
             if (spawns.length > 0) {

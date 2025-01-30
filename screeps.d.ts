@@ -156,7 +156,9 @@ declare type CreepsCache = Partial<{
   reserver: Reserver[];
   remoteHarvester: RemoteHarvester[];
   remoteCarrier: RemoteCarrier[];
-}>;
+}> & {
+  timestamp: number;
+};
 
 declare interface LabMemory {
   expectedType: MineralConstant | MineralCompoundConstant;

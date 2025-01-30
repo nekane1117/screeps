@@ -178,10 +178,11 @@ const customMove = (creep, target, opt) => {
 };
 exports.customMove = customMove;
 function getCreepsInRoom(room) {
+    var _a;
     if (!room) {
-        return {};
+        return { timestamp: Game.time };
     }
-    if (room.memory.creeps) {
+    if (((_a = room.memory.creeps) === null || _a === void 0 ? void 0 : _a.timestamp) === Game.time) {
         return room.memory.creeps;
     }
     else {
@@ -193,7 +194,9 @@ function getCreepsInRoom(room) {
             }
             creeps[c.memory.role].push(c);
             return creeps;
-        }, {}));
+        }, {
+            timestamp: Game.time,
+        }));
     }
 }
 function getMainSpawn(room) {

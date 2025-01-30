@@ -204,21 +204,26 @@ export const customMove: CustomMove = (creep, target, opt) => {
 
 export function getCreepsInRoom(room: Room | undefined) {
   if (!room) {
-    return {};
+    return { timestamp: Game.time } as CreepsCache;
   }
-  if (room.memory.creeps) {
+  if (room.memory.creeps?.timestamp === Game.time) {
     return room.memory.creeps;
   } else {
     return (room.memory.creeps = Object.values(Game.creeps)
       .filter((c) => c.memory.baseRoom === room.name)
-      .reduce((creeps, c) => {
-        if (!creeps[c.memory.role]) {
-          creeps[c.memory.role] = [];
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        creeps[c.memory.role]!.push(c as any);
-        return creeps;
-      }, {} as CreepsCache));
+      .reduce(
+        (creeps, c) => {
+          if (!creeps[c.memory.role]) {
+            creeps[c.memory.role] = [];
+          }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          creeps[c.memory.role]!.push(c as any);
+          return creeps;
+        },
+        {
+          timestamp: Game.time,
+        } as CreepsCache,
+      ));
   }
 }
 

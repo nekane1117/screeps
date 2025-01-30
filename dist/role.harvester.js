@@ -46,7 +46,7 @@ const behavior = (creep) => {
     })
         .run();
     (0, util_creep_1.pickUpAll)(creep);
-    if (repaired.length === 0) {
+    if (creep.store.getUsedCapacity(RESOURCE_ENERGY) && repaired.length === 0) {
         const { container: containers, link: links } = (0, utils_1.findMyStructures)(creep.room);
         const link = source.pos.findClosestByRange(links, {
             filter: (s) => s.pos.inRangeTo(source, 2),
@@ -62,9 +62,7 @@ const behavior = (creep) => {
             }
         }
         else {
-            const container = source.pos.findClosestByRange(containers, {
-                filter: (s) => s.pos.inRangeTo(source, 2),
-            });
+            const container = creep.pos.findClosestByRange(containers);
             if (container) {
                 if (creep.transfer(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                     (0, util_creep_1.customMove)(creep, container);

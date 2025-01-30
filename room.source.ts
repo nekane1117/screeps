@@ -5,6 +5,7 @@ export function behavior(source: Source) {
   const harvesters = getCreepsInRoom(source.room).harvester || [];
   const myH = harvesters.filter((h) => h.memory?.harvestTargetId === source.id);
   if (
+    myH.length < 2 &&
     _(myH)
       .map((h) => h.getActiveBodyparts(WORK))
       .sum() < 5

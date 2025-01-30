@@ -87,7 +87,6 @@ module.exports.loop = function () {
         });
         Object.values(Memory.rooms).forEach((mem) => {
             delete mem.find;
-            delete mem.creeps;
         });
     });
 };
