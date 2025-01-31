@@ -185,7 +185,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
                   creep.memory.repairId = _(
                     creep.pos.findInRange(FIND_STRUCTURES, 4, { filter: (s) => s.structureType === target.structureType && s.hits < s.hitsMax }),
                   ).min((s) => s.hits)?.id;
-                  return moveMeTo(target);
+                  return moveMeTo(target, { range: 3 });
                 default:
                   return;
               }

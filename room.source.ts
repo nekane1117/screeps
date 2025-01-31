@@ -31,7 +31,7 @@ export function behavior(source: Source) {
       return ERR_NOT_FOUND;
     }
 
-    if (spawn.room.energyAvailable >= (harvesters.length === 0 ? 300 : 400)) {
+    if (spawn.room.energyAvailable >= 300) {
       const name = `H_${source.room.name}_${Game.time}`;
       const spawned = spawn.spawnCreep(filterBodiesByCost("harvester", spawn.room.energyAvailable).bodies, name, {
         memory: {
