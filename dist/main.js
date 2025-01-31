@@ -3,8 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const flags_1 = __importDefault(require("./flags"));
-const roles_1 = require("./roles");
 const room_1 = require("./room");
 const structures_1 = __importDefault(require("./structures"));
 const util_creep_1 = require("./util.creep");
@@ -51,7 +49,7 @@ module.exports.loop = function () {
             return;
         }
         (0, utils_1.logUsage)("flags", () => {
-            Object.values(Game.flags).forEach((flag) => { var _a; return (_a = flags_1.default[flag.color]) === null || _a === void 0 ? void 0 : _a.call(flags_1.default, flag); });
+            Object.values(Game.flags).forEach((flag) => { var _a, _b; return (_b = (_a = require("./flags"))[flag.color]) === null || _b === void 0 ? void 0 : _b.call(_a, flag); });
         });
         (0, utils_1.logUsage)("rooms", () => {
             Object.values(Game.rooms)
@@ -63,7 +61,7 @@ module.exports.loop = function () {
         });
         (0, utils_1.logUsage)("creep", () => {
             Object.values(Game.creeps).forEach((c) => {
-                var _a;
+                var _a, _b;
                 if (c.spawning) {
                     return;
                 }
@@ -71,7 +69,7 @@ module.exports.loop = function () {
                 c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
                     color: (0, util_creep_1.toColor)(c),
                 });
-                (_a = roles_1.behaviors[c.memory.role]) === null || _a === void 0 ? void 0 : _a.call(roles_1.behaviors, c);
+                (_b = (_a = require("./roles").behaviors)[c.memory.role]) === null || _b === void 0 ? void 0 : _b.call(_a, c);
                 c.getActiveBodyparts(WORK) &&
                     c.pos
                         .lookFor(LOOK_STRUCTURES)
