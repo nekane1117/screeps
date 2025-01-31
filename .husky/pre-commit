@@ -1,5 +1,5 @@
 #!/bin/sh
 rm -rf dist/*
-yarn build
+yarn es
 git add -f dist
 npx lint-staged
