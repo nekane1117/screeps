@@ -7,24 +7,38 @@ import { findMyStructures, isHighway, logUsage } from "./utils";
 
 module.exports.loop = function () {
   console.log(`start ${Game.time}`);
+  if (Game.cpu.bucket > 200) {
+    Memory.do = true;
+  } else if (Game.cpu.bucket < 100) {
+    Memory.do = false;
+  }
+
+  if (!Memory.do) {
+    console.log(`end bucket不足(${Game.cpu.bucket}) usage : ${Game.cpu.getUsed()}`);
+    return;
+  }
+
   logUsage("all", () => {
     if (Game.cpu.bucket === 10000) {
       Game.cpu.generatePixel();
     }
     //死んだcreepは削除する
-    logUsage("delete memoery", () => {
+    logUsage("delete creep memoery", () => {
       Object.keys(Memory.creeps).forEach((name) => {
         if (!Game.creeps[name]) {
           delete Memory.creeps[name];
           console.log("Clearing non-existing creep memory:", name);
         }
       });
+    });
+    logUsage("delete rooms memoery", () => {
       Object.keys(Memory.rooms).forEach((name) => {
         if (!Game.rooms[name]?.controller?.my) {
           delete Memory.rooms[name];
         }
       });
-
+    });
+    logUsage("delete room find memoery", () => {
       Object.values(Memory.rooms).forEach((mem) => {
         delete mem.find;
       });
@@ -49,45 +63,42 @@ module.exports.loop = function () {
         });
     });
     // Creepの動き
-    if (Game.cpu.bucket < 100) {
-      console.log(`bucket不足 :(${Game.cpu.bucket})`);
-      return;
-    } else {
-      logUsage("creep", () => {
-        Object.values(Game.creeps).forEach((c) => {
-          if (c.spawning) {
-            return;
-          }
-          c.memory.moved = undefined;
-          c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
-            color: toColor(c),
-          });
-          behaviors[c.memory.role]?.(c);
-          // 通った場所はみんなで直す
-          c.getActiveBodyparts(WORK) &&
-            c.pos
-              .lookFor(LOOK_STRUCTURES)
-              .filter((s) => ([STRUCTURE_CONTAINER, STRUCTURE_ROAD] as StructureConstant[]).includes(s.structureType) && s.hits < s.hitsMax)
-              .forEach((s) => c.repair(s));
-          // 現在地の履歴を更新する
-          c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
-          c.memory.moved === OK && (c.memory.__avoidCreep = false);
+    logUsage("creep", () => {
+      Object.values(Game.creeps).forEach((c) => {
+        if (c.spawning) {
+          return;
+        }
+        c.memory.moved = undefined;
+        c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
+          color: toColor(c),
         });
+        behaviors[c.memory.role]?.(c);
+        // 通った場所はみんなで直す
+        c.getActiveBodyparts(WORK) &&
+          c.pos
+            .lookFor(LOOK_STRUCTURES)
+            .filter((s) => ([STRUCTURE_CONTAINER, STRUCTURE_ROAD] as StructureConstant[]).includes(s.structureType) && s.hits < s.hitsMax)
+            .forEach((s) => c.repair(s));
+        // 現在地の履歴を更新する
+        c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
+        c.memory.moved === OK && (c.memory.__avoidCreep = false);
       });
-    }
+    });
     logUsage("constructionSites", () => {
       Object.values(Game.constructionSites).forEach((site) => {
         // 型チェック
         if (site.room?.name && Memory.rooms[site.room?.name]) {
           const { builder: builders = [] } = getCreepsInRoom(site.room);
-          _(builders)
-            .sortBy((b) => -(b.ticksToLive || 0))
-            .forEach((b, i) => {
-              if (i !== 0) {
-                b.suicide();
-              }
-            })
-            .run();
+          if (builders.length > 2) {
+            _(builders)
+              .sortBy((b) => -(b.ticksToLive || 0))
+              .forEach((b, i) => {
+                if (i !== 0) {
+                  b.suicide();
+                }
+              })
+              .run();
+          }
           // builderが一人もいないとき
           if (builders.length === 0) {
             const spawn: StructureSpawn | undefined = _(Object.values(Game.spawns))

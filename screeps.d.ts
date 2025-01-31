@@ -326,6 +326,7 @@ declare interface RemoteCarrierMemory extends CreepMemory {
 declare interface Memory {
   factories: Record<Id<StructureFactory>, FactoryMemory>;
   terminals: Record<Id<StructureTerminal>, TerminalMemory>;
+  do: boolean;
 }
 
 declare interface FactoryMemory {
