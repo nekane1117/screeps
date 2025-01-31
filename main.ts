@@ -1,4 +1,5 @@
-import { CreepBehavior } from "./roles";
+import flags from "./flags";
+import { behaviors } from "./roles";
 import { roomBehavior } from "./room";
 import structures from "./structures";
 import { filterBodiesByCost, getCreepsInRoom, toColor } from "./util.creep";
@@ -49,8 +50,7 @@ module.exports.loop = function () {
 
     // Flag -> Room -> Spawn -> Container -> Creep
     logUsage("flags", () => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      Object.values(Game.flags).forEach((flag) => require("./flags")[flag.color]?.(flag));
+      Object.values(Game.flags).forEach((flag) => flags[flag.color]?.(flag));
     });
 
     logUsage("rooms", () => {
@@ -72,8 +72,7 @@ module.exports.loop = function () {
         c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
           color: toColor(c),
         });
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        (require("./roles").behaviors as Record<ROLES, CreepBehavior>)[c.memory.role]?.(c);
+        behaviors[c.memory.role]?.(c);
         // 通った場所はみんなで直す
         c.getActiveBodyparts(WORK) &&
           c.pos
