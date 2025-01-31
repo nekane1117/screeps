@@ -3183,27 +3183,6 @@ module.exports.loop = function() {
     if (Game.cpu.bucket === 1e4) {
       Game.cpu.generatePixel();
     }
-    logUsage("delete creep memoery", () => {
-      Object.keys(Memory.creeps).forEach((name) => {
-        if (!Game.creeps[name]) {
-          delete Memory.creeps[name];
-          console.log("Clearing non-existing creep memory:", name);
-        }
-      });
-    });
-    logUsage("delete rooms memoery", () => {
-      Object.keys(Memory.rooms).forEach((name) => {
-        var _a, _b;
-        if (!((_b = (_a = Game.rooms[name]) == null ? void 0 : _a.controller) == null ? void 0 : _b.my)) {
-          delete Memory.rooms[name];
-        }
-      });
-    });
-    logUsage("delete room find memoery", () => {
-      Object.values(Memory.rooms).forEach((mem) => {
-        delete mem.find;
-      });
-    });
     if (Game.cpu.bucket < 100) {
       console.log(`bucket\u4E0D\u8DB3 :(${Game.cpu.bucket})`);
       return;
@@ -3242,38 +3221,27 @@ module.exports.loop = function() {
         c.memory.moved === OK && (c.memory.__avoidCreep = false);
       });
     });
-    logUsage("constructionSites", () => {
-      Object.values(Game.constructionSites).forEach((site) => {
-        var _a, _b, _c;
-        if (((_a = site.room) == null ? void 0 : _a.name) && Memory.rooms[(_b = site.room) == null ? void 0 : _b.name]) {
-          const { builder: builders = [] } = getCreepsInRoom(site.room);
-          if (builders.length > 2) {
-            _(builders).sortBy((b) => -(b.ticksToLive || 0)).forEach((b, i) => {
-              if (i !== 0) {
-                b.suicide();
-              }
-            }).run();
-          }
-          if (builders.length === 0) {
-            const spawn = (_c = _(Object.values(Game.spawns)).map((spawn2) => {
-              return {
-                spawn: spawn2,
-                cost: PathFinder.search(site.pos, spawn2.pos).cost
-              };
-            }).min((v) => v.cost)) == null ? void 0 : _c.spawn;
-            if (spawn) {
-              spawn.spawnCreep(filterBodiesByCost("builder", spawn.room.energyCapacityAvailable).bodies, `B_${site.room.name}_${Game.time}`, {
-                memory: {
-                  mode: "\u{1F6D2}",
-                  baseRoom: site.room.name,
-                  role: "builder"
-                }
-              });
-            }
-          }
-        }
-      });
+  });
+  logUsage("delete creep memoery", () => {
+    Object.keys(Memory.creeps).forEach((name) => {
+      if (!Game.creeps[name]) {
+        delete Memory.creeps[name];
+        console.log("Clearing non-existing creep memory:", name);
+      }
     });
   });
-  console.log(`end ${Game.time}`);
+  logUsage("delete rooms memoery", () => {
+    Object.keys(Memory.rooms).forEach((name) => {
+      var _a, _b;
+      if (!((_b = (_a = Game.rooms[name]) == null ? void 0 : _a.controller) == null ? void 0 : _b.my)) {
+        delete Memory.rooms[name];
+      }
+    });
+  });
+  logUsage("delete room find memoery", () => {
+    Object.values(Memory.rooms).forEach((mem) => {
+      delete mem.find;
+    });
+  });
+  console.log(`end ${Game.time} usage : ${Game.cpu.getUsed()}`);
 };

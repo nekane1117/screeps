@@ -2,7 +2,7 @@ import flags from "./flags";
 import { behaviors } from "./roles";
 import { roomBehavior } from "./room";
 import structures from "./structures";
-import { filterBodiesByCost, getCreepsInRoom, toColor } from "./util.creep";
+import { toColor } from "./util.creep";
 import { findMyStructures, isHighway, logUsage } from "./utils";
 
 module.exports.loop = function () {
@@ -22,27 +22,6 @@ module.exports.loop = function () {
     if (Game.cpu.bucket === 10000) {
       Game.cpu.generatePixel();
     }
-    //死んだcreepは削除する
-    logUsage("delete creep memoery", () => {
-      Object.keys(Memory.creeps).forEach((name) => {
-        if (!Game.creeps[name]) {
-          delete Memory.creeps[name];
-          console.log("Clearing non-existing creep memory:", name);
-        }
-      });
-    });
-    logUsage("delete rooms memoery", () => {
-      Object.keys(Memory.rooms).forEach((name) => {
-        if (!Game.rooms[name]?.controller?.my) {
-          delete Memory.rooms[name];
-        }
-      });
-    });
-    logUsage("delete room find memoery", () => {
-      Object.values(Memory.rooms).forEach((mem) => {
-        delete mem.find;
-      });
-    });
     if (Game.cpu.bucket < 100) {
       console.log(`bucket不足 :(${Game.cpu.bucket})`);
       return;
@@ -84,46 +63,27 @@ module.exports.loop = function () {
         c.memory.moved === OK && (c.memory.__avoidCreep = false);
       });
     });
-    logUsage("constructionSites", () => {
-      Object.values(Game.constructionSites).forEach((site) => {
-        // 型チェック
-        if (site.room?.name && Memory.rooms[site.room?.name]) {
-          const { builder: builders = [] } = getCreepsInRoom(site.room);
-          if (builders.length > 2) {
-            _(builders)
-              .sortBy((b) => -(b.ticksToLive || 0))
-              .forEach((b, i) => {
-                if (i !== 0) {
-                  b.suicide();
-                }
-              })
-              .run();
-          }
-          // builderが一人もいないとき
-          if (builders.length === 0) {
-            const spawn: StructureSpawn | undefined = _(Object.values(Game.spawns))
-              .map((spawn) => {
-                return {
-                  spawn,
-                  cost: PathFinder.search(site.pos, spawn.pos).cost,
-                };
-              })
-              .min((v) => v.cost)?.spawn;
-
-            // 最寄りのspawnからbuilderを作る
-            if (spawn) {
-              spawn.spawnCreep(filterBodiesByCost("builder", spawn.room.energyCapacityAvailable).bodies, `B_${site.room.name}_${Game.time}`, {
-                memory: {
-                  mode: "🛒",
-                  baseRoom: site.room.name,
-                  role: "builder",
-                } as BuilderMemory,
-              });
-            }
-          }
-        }
-      });
+  });
+  //死んだcreepは削除する
+  logUsage("delete creep memoery", () => {
+    Object.keys(Memory.creeps).forEach((name) => {
+      if (!Game.creeps[name]) {
+        delete Memory.creeps[name];
+        console.log("Clearing non-existing creep memory:", name);
+      }
     });
   });
-  console.log(`end ${Game.time}`);
+  logUsage("delete rooms memoery", () => {
+    Object.keys(Memory.rooms).forEach((name) => {
+      if (!Game.rooms[name]?.controller?.my) {
+        delete Memory.rooms[name];
+      }
+    });
+  });
+  logUsage("delete room find memoery", () => {
+    Object.values(Memory.rooms).forEach((mem) => {
+      delete mem.find;
+    });
+  });
+  console.log(`end ${Game.time} usage : ${Game.cpu.getUsed()}`);
 };
