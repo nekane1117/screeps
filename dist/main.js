@@ -2889,7 +2889,7 @@ var behavior19 = (controller) => {
   ]);
   updateUpgraderSize(controller.room);
   const { harvester = [], upgrader = [], carrier = [] } = getCreepsInRoom(controller.room);
-  const { container, extension } = findMyStructures(controller.room);
+  const { container } = findMyStructures(controller.room);
   const containerSite = getSitesInRoom(controller.room).filter((s) => s.structureType === STRUCTURE_CONTAINER);
   const mainSpawn = getMainSpawn(controller.room);
   if (mainSpawn) {
@@ -2898,7 +2898,7 @@ var behavior19 = (controller) => {
     });
     const upgraderBody = getUpgraderBody(controller.room);
     if (myContainer) {
-      if (!("progress" in myContainer) && extension.length >= CONTROLLER_STRUCTURES.extension[controller.level] && myContainer.store.energy && harvester.length > 0 && carrier.length > 0 && upgrader.filter((c) => (c.ticksToLive || Infinity) > upgraderBody.length * CREEP_SPAWN_TIME).length === 0 && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
+      if (!("progress" in myContainer) && myContainer.store.energy && harvester.length > 0 && carrier.length > 0 && upgrader.filter((c) => (c.ticksToLive || Infinity) > upgraderBody.length * CREEP_SPAWN_TIME).length === 0 && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
         const spawn = _(getSpawnsInRoom(controller.room)).find((s) => !s.spawning);
         if (spawn) {
           spawn.spawnCreep(upgraderBody, `U_${controller.room.name}_${Game.time}`, {
