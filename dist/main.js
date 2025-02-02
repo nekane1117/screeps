@@ -1392,14 +1392,15 @@ var behavior8 = (creep) => {
       creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
       break;
   }
+  let built = [];
   if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5) {
-    creep.pos.findInRange(Object.values(Game.constructionSites), 3).map((site) => creep.build(site));
+    built = _(creep.pos.findInRange(Object.values(Game.constructionSites), 3)).sortBy((s) => s.progress - s.progressTotal).map((site) => creep.build(site)).run();
   }
   const repaired = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => "ticksToDecay" in s && s.hits < Math.min(s.hitsMax, 3e3) })).map((damaged) => {
     return creep.repair(damaged);
   }).run();
   pickUpAll(creep);
-  if (creep.store.getUsedCapacity(RESOURCE_ENERGY) && repaired.length === 0) {
+  if (built.length === 0 && creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5 && repaired.length === 0) {
     const { container: containers, link: links } = findMyStructures(creep.room);
     const link = source.pos.findClosestByRange(links, {
       filter: (s) => s.pos.inRangeTo(source, 2)
@@ -2332,7 +2333,12 @@ var behavior15 = (creep) => {
       console.log(`${creep.name}:${RETURN_CODE_DECODER[signed.toString()]}`);
     }
   }
-  if (controller.ticksToDowngrade < 1e3 || getSitesInRoom(controller.room).length === 0) {
+  const myContainer = controller.pos.findClosestByRange(container, {
+    filter: (c) => {
+      return c.pos.inRangeTo(controller, 3);
+    }
+  });
+  if (controller.ticksToDowngrade < 1e3 || getSitesInRoom(controller.room).length === 0 || myContainer && getCapacityRate(myContainer, RESOURCE_ENERGY) > 0.5) {
     creep.memory.worked = creep.upgradeController(controller);
     switch (creep.memory.worked) {
       // 資源不足

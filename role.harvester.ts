@@ -53,10 +53,15 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       break;
   }
 
+  let built: (CreepActionReturnCode | ERR_NOT_ENOUGH_RESOURCES | ERR_RCL_NOT_ENOUGH)[] = [];
+
   // build
   // 射程圏内の建設はとりあえずぜんぶ叩いておく
   if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5) {
-    creep.pos.findInRange(Object.values(Game.constructionSites), 3).map((site) => creep.build(site));
+    built = _(creep.pos.findInRange(Object.values(Game.constructionSites), 3))
+      .sortBy((s) => s.progress - s.progressTotal)
+      .map((site) => creep.build(site))
+      .run();
   }
 
   // repair
@@ -69,7 +74,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // 周りのものを拾う
   pickUpAll(creep);
 
-  if (creep.store.getUsedCapacity(RESOURCE_ENERGY) && repaired.length === 0) {
+  if (built.length === 0 && creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5 && repaired.length === 0) {
     // 周りの建物に投げる
     const { container: containers, link: links } = findMyStructures(creep.room);
 

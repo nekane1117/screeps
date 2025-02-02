@@ -1,6 +1,6 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, getMainSpawn, pickUpAll } from "./util.creep";
-import { findMyStructures, getSitesInRoom } from "./utils";
+import { findMyStructures, getCapacityRate, getSitesInRoom } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
@@ -41,8 +41,18 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
+  const myContainer = controller.pos.findClosestByRange(container, {
+    filter: (c: StructureContainer) => {
+      return c.pos.inRangeTo(controller, 3);
+    },
+  });
+
   // 建設がないときかダウングレードしちゃいそうなとき
-  if (controller.ticksToDowngrade < 1000 || getSitesInRoom(controller.room).length === 0) {
+  if (
+    controller.ticksToDowngrade < 1000 ||
+    getSitesInRoom(controller.room).length === 0 ||
+    (myContainer && getCapacityRate(myContainer, RESOURCE_ENERGY) > 0.5)
+  ) {
     // upgradeController
     creep.memory.worked = creep.upgradeController(controller);
 
