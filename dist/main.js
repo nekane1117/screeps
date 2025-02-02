@@ -646,7 +646,7 @@ function behavior(flag) {
           spawn.spawnCreep(filterBodiesByCost("claimer", spawn.room.energyAvailable).bodies, `C_${flag.pos.roomName}_${flag.name}`, {
             memory: {
               role: "claimer",
-              baseRoom: spawn.room.name,
+              baseRoom: (flag.room || spawn.room).name,
               flagName: flag.name
             }
           });
@@ -3221,6 +3221,33 @@ module.exports.loop = function() {
         c.memory.moved === OK && (c.memory.__avoidCreep = false);
       });
     });
+  });
+  logUsage("constructionSites", () => {
+    _(Game.constructionSites).values().unique(false, (c) => {
+      var _a;
+      return (_a = c.room) == null ? void 0 : _a.name;
+    }).forEach((site) => {
+      var _a, _b, _c, _d;
+      if (((_a = site.room) == null ? void 0 : _a.name) && Memory.rooms[(_b = site.room) == null ? void 0 : _b.name]) {
+        if ((((_c = Memory.rooms[site.room.name].creeps) == null ? void 0 : _c.builder) || []).length === 0) {
+          const spawn = (_d = _(Object.values(Game.spawns)).map((spawn2) => {
+            return {
+              spawn: spawn2,
+              cost: PathFinder.search(site.pos, spawn2.pos).cost
+            };
+          }).min((v) => v.cost)) == null ? void 0 : _d.spawn;
+          if (spawn) {
+            spawn.spawnCreep(filterBodiesByCost("builder", spawn.room.energyCapacityAvailable).bodies, `B_${site.room.name}_${Game.time}`, {
+              memory: {
+                mode: "\u{1F6D2}",
+                baseRoom: site.room.name,
+                role: "builder"
+              }
+            });
+          }
+        }
+      }
+    }).run();
   });
   logUsage("delete creep memoery", () => {
     Object.keys(Memory.creeps).forEach((name) => {

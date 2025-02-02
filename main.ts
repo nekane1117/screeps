@@ -2,7 +2,7 @@ import flags from "./flags";
 import { behaviors } from "./roles";
 import { roomBehavior } from "./room";
 import structures from "./structures";
-import { toColor } from "./util.creep";
+import { filterBodiesByCost, toColor } from "./util.creep";
 import { findMyStructures, isHighway, logUsage } from "./utils";
 
 module.exports.loop = function () {
@@ -63,6 +63,39 @@ module.exports.loop = function () {
         c.memory.moved === OK && (c.memory.__avoidCreep = false);
       });
     });
+  });
+  logUsage("constructionSites", () => {
+    _(Game.constructionSites)
+      .values<ConstructionSite>()
+      .unique(false, (c) => c.room?.name)
+      .forEach((site) => {
+        // 型チェック
+        if (site.room?.name && Memory.rooms[site.room?.name]) {
+          // builderが一人もいないとき
+          if ((Memory.rooms[site.room.name].creeps?.builder || []).length === 0) {
+            const spawn: StructureSpawn | undefined = _(Object.values(Game.spawns))
+              .map((spawn) => {
+                return {
+                  spawn,
+                  cost: PathFinder.search(site.pos, spawn.pos).cost,
+                };
+              })
+              .min((v) => v.cost)?.spawn;
+
+            // 最寄りのspawnからbuilderを作る
+            if (spawn) {
+              spawn.spawnCreep(filterBodiesByCost("builder", spawn.room.energyCapacityAvailable).bodies, `B_${site.room.name}_${Game.time}`, {
+                memory: {
+                  mode: "🛒",
+                  baseRoom: site.room.name,
+                  role: "builder",
+                } as BuilderMemory,
+              });
+            }
+          }
+        }
+      })
+      .run();
   });
   //死んだcreepは削除する
   logUsage("delete creep memoery", () => {
