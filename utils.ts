@@ -23,31 +23,59 @@ export const findMyStructures = (room: Room) => {
       data: room.find(FIND_STRUCTURES).reduce(
         (structures, s) => {
           structures.all.push(s);
-          (structures[s.structureType] as AnyStructure[]).push(s);
+          switch (s.structureType) {
+            case STRUCTURE_CONTROLLER:
+              structures.controller = s;
+              break;
+            case STRUCTURE_POWER_SPAWN:
+              structures.powerSpawn = s;
+              break;
+            case STRUCTURE_STORAGE:
+              structures.storage = s;
+              break;
+            case STRUCTURE_OBSERVER:
+              structures.observer = s;
+              break;
+            case STRUCTURE_EXTRACTOR:
+              structures.extractor = s;
+              break;
+            case STRUCTURE_TERMINAL:
+              structures.terminal = s;
+              break;
+            case STRUCTURE_NUKER:
+              structures.nuker = s;
+              break;
+            case STRUCTURE_FACTORY:
+              structures.factory = s;
+              break;
+            default:
+              (structures[s.structureType] as AnyStructure[]).push(s);
+              break;
+          }
           return structures;
         },
         {
           all: [],
           constructedWall: [],
           container: [],
-          controller: [],
+          controller: room.controller,
           extension: [],
-          extractor: [],
-          factory: [],
+          extractor: undefined,
+          factory: undefined,
           invaderCore: [],
           keeperLair: [],
           lab: [],
           link: [],
-          nuker: [],
-          observer: [],
+          nuker: undefined,
+          observer: undefined,
           portal: [],
           powerBank: [],
-          powerSpawn: [],
+          powerSpawn: undefined,
           rampart: [],
           road: [],
           spawn: [],
-          storage: [],
-          terminal: [],
+          storage: room.storage,
+          terminal: room.terminal,
           tower: [],
           source: room.find(FIND_SOURCES),
         } as MyStructureCache,
@@ -127,7 +155,15 @@ export function getLabs(room: Room) {
 
 export function getTerminals() {
   return _(Object.values(Game.rooms))
-    .map((r) => r.terminal)
+    .map(({ terminal }) => {
+      if (terminal) {
+        return Object.assign(terminal, {
+          memory: ((Memory.terminals = Memory.terminals || {})[terminal.id] = Memory.terminals[terminal.id] || {}),
+        });
+      } else {
+        return undefined;
+      }
+    })
     .compact()
     .run();
 }
@@ -197,4 +233,13 @@ export function getOrderRemainingTotal(terminal: StructureTerminal, resourceType
 export function getAvailableAmount(terminal: StructureTerminal, resourceType: ResourceConstant) {
   // 実際持ってる量に売り注文の合計を引いたものを返す
   return terminal.store[resourceType] - getOrderRemainingTotal(terminal, resourceType);
+}
+
+export function getSurplusEnergy(room: Room) {
+  const { container, link } = findMyStructures(room);
+  // spawn storage terminalの合計
+  return _([container, link])
+    .flatten<StructureContainer | StructureStorage | StructureTerminal | StructureLink>()
+    .compact()
+    .sum((s) => s.store.energy);
 }

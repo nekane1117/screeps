@@ -1,7 +1,5 @@
 #!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-echo
 rm -rf dist/*
-yarn build
+yarn es
 git add -f dist
 npx lint-staged

@@ -1,5 +1,6 @@
-import { LAB_STRATEGY } from "./constants";
-import { calcMaxTransferAmount, getAvailableAmount, getLabs, getOrderRemainingTotal, getTerminals, isCompound, logUsage } from "./utils";
+import { COMPRESSING_INGREDIENT, DECOMPRESSING_COMMODITIES, TERMINAL_THRESHOLD } from "./constants";
+import { getTerminals, logUsage } from "./utils";
+import { ObjectKeys } from "./utils.common";
 
 /** terminal間輸送閾値 */
 const TRANSFER_THRESHOLD = 1000;
@@ -10,186 +11,83 @@ export default function behaviors(terminal: Structure) {
       return console.log(`${terminal.id} is not terminal`);
     }
 
-    if (Game.cpu.bucket < 100) {
+    const memory = ((Memory.terminals = Memory.terminals || {})[terminal.id] = Memory.terminals[terminal.id] || {});
+
+    memory.lastTrade && terminal.room.visual.text(memory.lastTrade, terminal.pos.x, terminal.pos.y, { font: 0.25, color: "#ffff00" });
+    if (Game.cpu.bucket < 1000 || terminal.cooldown > 0) {
       return;
     }
 
     const { room } = terminal;
 
-    const mineral = _(room.find(FIND_MINERALS)).first();
-
-    if (mineral) {
-      room.visual.text(
-        `${mineral.mineralType}:${getAvailableAmount(terminal, mineral.mineralType)}(${getOrderRemainingTotal(terminal, mineral.mineralType)})`,
-        terminal.pos.x,
-        terminal.pos.y - 1,
-        {
-          align: "left",
-        },
-      );
-
-      const labs = getLabs(terminal.room);
-      const strategy = LAB_STRATEGY[mineral.mineralType] || [];
-      // 現在の最終生産物を取得する
-      const finalProduct = _(strategy)
-        // 原料から並んでいるので後ろから探す
-        .findLast((type) => {
-          return labs.find((lab) => {
-            // 化合物かつlabで作っている
-            return isCompound(lab.memory.expectedType) && lab.memory.expectedType === type;
-          });
-        });
-
-      if (terminal.store.energy < TRANSFER_THRESHOLD) {
-        _(getTerminals())
-          .filter((t) => t.store.energy > t.room.energyCapacityAvailable * 2)
-          .sort((t) => t.store.energy)
-          .last()
-          ?.send(RESOURCE_ENERGY, TRANSFER_THRESHOLD, terminal.room.name, `${terminal.room.name}にエネルギー補充`);
-      }
-
-      // 最終生産物が取れたとき
-      if (finalProduct) {
-        // 最終生産物がいっぱいあるとき
-        if (terminal.store[finalProduct] > TRANSFER_THRESHOLD * 2 && terminal.store.energy >= TRANSFER_THRESHOLD * TERMINAL_SEND_COST) {
-          // 足らないterminaに送る
-          const sendTarget = _(getTerminals()).find((t) => getAvailableAmount(t, finalProduct) < TRANSFER_THRESHOLD);
-          if (sendTarget) {
-            terminal.send(finalProduct, TRANSFER_THRESHOLD, sendTarget.room.name, `send ${finalProduct} to ${sendTarget.room.name} from ${terminal.room.name}`);
+    // とにかくリソースを共有する
+    const terminals = getTerminals();
+    for (const resourceType of RESOURCES_ALL) {
+      // 閾値の2倍あるときは不足してるターミナルに送る
+      if (terminal.store[resourceType] > room.energyCapacityAvailable + TRANSFER_THRESHOLD * 2) {
+        const transferTarget = terminals.find((t) => t.store[resourceType] < TRANSFER_THRESHOLD * 2);
+        // 足らないターミナルを見つけたとき
+        if (transferTarget) {
+          if (terminal.send(resourceType, TRANSFER_THRESHOLD * 2, transferTarget.room.name) === OK) {
+            break;
           }
         }
+      }
+    }
 
-        // 不足している原料
-        const missingIngredient = strategy.find((s) => s.length === 1 && terminal.store[s] < TRANSFER_THRESHOLD / 2);
-        // 不足してる素材があるとき
-        if (missingIngredient) {
-          const redundantTerminal = _(getTerminals())
-            .sortBy((t) => getAvailableAmount(t, missingIngredient) > TRANSFER_THRESHOLD * 2)
-            .last();
-          if (redundantTerminal) {
-            redundantTerminal.send(
-              missingIngredient,
-              TRANSFER_THRESHOLD,
-              `${missingIngredient} を ${redundantTerminal.pos.roomName} から ${terminal.room.name} に補充`,
-            );
-          } else {
-            // 最終生産物の一番高い買い注文
+    const freeTerminal = _(terminals).find((t) => !t.cooldown && t.id !== terminal.id);
+    // 対象があってエネルギーが十分あるとき
+    if (
+      (terminal.room.storage?.store.energy || 0) > terminal.room.energyCapacityAvailable &&
+      terminal.store.energy >= TERMINAL_THRESHOLD * 2 &&
+      freeTerminal &&
+      freeTerminal.store.energy >= TERMINAL_THRESHOLD * 2
+    ) {
+      const market = Game.market;
+      for (const commodity of ObjectKeys(COMMODITIES)) {
+        const ingredients = COMPRESSING_INGREDIENT[commodity];
+        // 対象外条件
+        if (
+          DECOMPRESSING_COMMODITIES.includes(commodity) || // 逆変換
+          terminal.store[commodity] < TERMINAL_THRESHOLD * 2 || // 少ない
+          !ingredients ||
+          terminal.store[ingredients.type] > TERMINAL_THRESHOLD || // 材料がいっぱいある
+          !ingredients // 変換表がない
+        ) {
+          continue;
+        }
 
-            // 足らない素材の一番安い売り注文
-            const lowestSell = _(Game.market.getAllOrders({ resourceType: missingIngredient, type: ORDER_SELL }))
-              .filter((o) => o.price <= _(Game.market.getHistory(finalProduct)).last().avgPrice)
-              .sortBy((o) => o.price)
-              .first();
-            if (lowestSell) {
-              Game.market.deal(
-                lowestSell.id,
-                Math.min(lowestSell.remainingAmount, Game.market.credits / lowestSell.price, calcMaxTransferAmount(lowestSell, terminal)),
-                terminal.room.name,
-              );
+        // 一番高く買ってくれる注文
+        const highestBuy = _(market.getAllOrders({ resourceType: commodity, type: ORDER_BUY }))
+          .sortBy((o) => o.price)
+          .last() as Order | undefined;
+
+        if (highestBuy) {
+          const cheapestSell = _(market.getAllOrders({ resourceType: ingredients.type, type: ORDER_SELL }))
+            .filter((o) => {
+              // 原材料の比率とマージンで1.2倍とってもまだ購入注文より安いやつ
+              return o.price * ingredients.rate * 1.2 <= highestBuy.price;
+            })
+            .sortBy((o) => o.price)
+            .first();
+
+          if (cheapestSell) {
+            // 実際売れる最大量は持ってる量と買いたい量の少ないほうとエネルギー上限
+            const sellAmountMax = Math.min(terminal.store[commodity], highestBuy.remainingAmount, TERMINAL_THRESHOLD * 2);
+            // 買い戻せる量は売ってる量と最大売った時のお金で買えるだけとエネルギー上限
+            const buyAmountMax = Math.min(cheapestSell.remainingAmount, (sellAmountMax * highestBuy.price) / cheapestSell.price, TERMINAL_THRESHOLD * 2);
+
+            // 実際売るべき量 = 買い戻す量 * 買値 / 売値
+            const sellAmountActual = (buyAmountMax * cheapestSell.price) / highestBuy.price;
+
+            if (market.deal(highestBuy.id, Math.ceil(sellAmountActual), terminal.room.name) === OK) {
+              memory.lastTrade = highestBuy.resourceType;
+              if (market.deal(cheapestSell.id, Math.floor(buyAmountMax), freeTerminal.room.name) == OK) {
+                freeTerminal.memory.lastTrade = cheapestSell.resourceType;
+              }
+              break;
             }
           }
-        }
-      }
-    }
-
-    // ここから購入処理なのでcooldown有るときは終わる
-    if (terminal.cooldown) {
-      return ERR_TIRED;
-    }
-
-    // // 自室のミネラルをため込んでるときはとにかく売る
-    // if (
-    //   mineral &&
-    //   getAvailableAmount(terminal, RESOURCE_ENERGY) > room.energyCapacityAvailable &&
-    //   getAvailableAmount(terminal, mineral.mineralType) > TERMINAL_THRESHOLD * 2
-    // ) {
-    //   // 一番高く買ってくれるオーダー
-    //   const history = _(Game.market.getHistory(mineral.mineralType)).last();
-    //   if (history) {
-    //     // 平均より高い額の買い注文があるか
-    //     const buyOrder = _(Game.market.getAllOrders({ type: ORDER_BUY, resourceType: mineral.mineralType }))
-    //       // 部屋名がないのはよくわからないので無視する
-    //       .filter((o) => o.roomName && o.price >= history.avgPrice)
-    //       .max((o) => o.price) as unknown as Order | number;
-
-    //     // 有る場合は今のエネルギーで支払える最大量売る
-    //     if (!_.isNumber(buyOrder)) {
-    //       return console.log(
-    //         "deal",
-    //         RETURN_CODE_DECODER[
-    //           Game.market
-    //             .deal(
-    //               buyOrder.id,
-    //               // オーダーの残量、支払える上限、保有上限の中で一番少ない分売る
-    //               Math.min(buyOrder.remainingAmount, calcMaxTransferAmount(buyOrder, terminal), getAvailableAmount(terminal, mineral.mineralType)),
-    //               room.name,
-    //             )
-    //             .toString()
-    //         ],
-    //         JSON.stringify(buyOrder),
-    //       );
-    //     } else {
-    //       // 買い注文が無いとき
-
-    //       // 平均値より高い中で一番安い注文を探す
-    //       const minSellOrder = _(Game.market.getAllOrders({ type: ORDER_SELL, resourceType: mineral.mineralType }))
-    //         // 部屋名がないのはよくわからないので無視する
-    //         .filter((o) => o.roomName && o.price >= history.avgPrice)
-    //         .min((o) => o.price);
-
-    //       if (minSellOrder) {
-    //         const price = minSellOrder.price - 0.01;
-    //         const totalAmount = Math.min(
-    //           getAvailableAmount(terminal, mineral.mineralType) - TERMINAL_THRESHOLD,
-    //           Math.floor(Game.market.credits / price / 0.05),
-    //         );
-    //         if (totalAmount > TRANSFER_THRESHOLD) {
-    //           return Game.market.createOrder({
-    //             type: ORDER_SELL,
-    //             resourceType: mineral.mineralType,
-    //             price,
-    //             // 保有量か支払手数料で払える額の少ないほう
-    //             totalAmount: totalAmount,
-    //             roomName: terminal.room.name,
-    //           });
-    //         }
-    //       }
-    //     }
-    //   } else {
-    //     console.log("no history");
-    //   }
-    // }
-
-    for (const resourceType of (Object.keys(terminal.store) as (MineralConstant | MineralCompoundConstant)[]).filter((resourceType) => {
-      // とりあえず1000以上ある化合物
-      return resourceType[0] === resourceType[0].toUpperCase() && resourceType.length >= 2 && getAvailableAmount(terminal, resourceType) > TRANSFER_THRESHOLD;
-    })) {
-      // const ingredients = REVERSE_REACTIONS[resourceType];
-      // if (!ingredients) {
-      //   return console.log("化合物でない", resourceType);
-      // }
-
-      // const orders = _(ingredients)
-      //   .map((ingredient) => {
-      //     // 素材の売り注文の一番安いやつを探す
-      //     return _(Game.market.getAllOrders({ type: ORDER_SELL, resourceType: ingredient })).min((o) => o.price);
-      //   })
-      //   .compact()
-      //   .run();
-      // if (orders.length !== 2) {
-      //   return console.log("素材の売り注文がない", JSON.stringify(ingredients), JSON.stringify(orders));
-      // }
-
-      // const totalCost = _(orders).sum((o) => o.price);
-      // console.log(JSON.stringify({ resourceType, totalCost }));
-      const avg = _(Game.market.getHistory(resourceType)).last()?.avgPrice || Infinity;
-      const order = _(Game.market.getAllOrders({ type: ORDER_BUY, resourceType }))
-        .filter((o) => o.price >= avg)
-        .max((o) => o.price);
-      if (order) {
-        const result = Game.market.deal(order.id, Math.min(order.amount, getAvailableAmount(terminal, resourceType) - TRANSFER_THRESHOLD), terminal.room.name);
-        if (result === OK) {
-          return;
         }
       }
     }

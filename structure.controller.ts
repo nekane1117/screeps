@@ -9,7 +9,8 @@ const behavior: StructureBehavior = (controller: Structure) => {
 
   const showSummary = (texts: string[]) => {
     texts.forEach((text, i) => {
-      controller.room.visual.text(text, Math.max(controller.pos.x - 3, 1), Math.max(1, controller.pos.y - texts.length + i), { align: "left" });
+      const center = getMainSpawn(controller.room) || controller;
+      controller.room.visual.text(text, Math.max(center.pos.x - 3, 1), Math.max(1, center.pos.y - 3 - texts.length + i), { align: "left" });
     });
   };
 
@@ -23,7 +24,7 @@ const behavior: StructureBehavior = (controller: Structure) => {
   updateUpgraderSize(controller.room);
 
   const { harvester = [], upgrader = [], carrier = [] } = getCreepsInRoom(controller.room);
-  const { container } = findMyStructures(controller.room);
+  const { container, extension } = findMyStructures(controller.room);
   const containerSite = getSitesInRoom(controller.room).filter((s) => s.structureType === STRUCTURE_CONTAINER);
   // 中心地がある
   const mainSpawn = getMainSpawn(controller.room);
@@ -32,12 +33,12 @@ const behavior: StructureBehavior = (controller: Structure) => {
     const myContainer = controller.pos.findClosestByRange([...container, ...containerSite], {
       filter: (s: StructureContainer | ConstructionSite) => controller.pos.inRangeTo(s, 3),
     });
-
     const upgraderBody = getUpgraderBody(controller.room);
     if (myContainer) {
       // 建設済みかつあれこれ足りてる時だけ作る
       if (
         !("progress" in myContainer) &&
+        extension.length >= CONTROLLER_STRUCTURES.extension[controller.level] &&
         myContainer.store.energy &&
         harvester.length > 0 &&
         carrier.length > 0 &&

@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "build": "yarn format && rm -rf dist/* && tsc",
-    "sync": "rsync -rv --delete dist/ /mnt/c/Users/iridge/AppData/Local/Screeps/scripts/screeps.com/dist",
+    "es": "yarn format && rm -rf dist/* && node build.js",
+    "sync": "rsync -rv --delete dist/ /mnt/c/Users/takeshikoino/AppData/Local/Screeps/scripts/screeps.com/dist",
     "prepare": "husky",
     "format": "npx prettier --cache --write .",
     "lint": "eslint --cache"
@@ -17,6 +18,7 @@
     "@types/eslint__js": "^8.42.3",
     "@types/lodash": "3.10.1",
     "@types/node": "^20.12.7",
+    "esbuild": "^0.24.2",
     "eslint": "^9.0.0",
     "globals": "^15.0.0",
     "husky": ">=7",

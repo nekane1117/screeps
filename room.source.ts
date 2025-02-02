@@ -1,29 +1,29 @@
-import { filterBodiesByCost, getMainSpawn } from "./util.creep";
+import { filterBodiesByCost, getCreepsInRoom, getMainSpawn } from "./util.creep";
 import { findMyStructures, getSpawnsInRoom } from "./utils";
 
 export function behavior(source: Source) {
-  const harvesters = Object.values(Game.creeps).filter((c): c is Harvester => {
-    return (
-      isH(c) && c.memory.harvestTargetId === source.id && (c?.ticksToLive || Infinity) > filterBodiesByCost("harvester", 10000).bodies.length * CREEP_SPAWN_TIME
-    );
-  });
-
-  // 最大匹数より少なく、WORKのパーツが5未満の時
+  const harvesters = getCreepsInRoom(source.room).harvester || [];
+  const myH = harvesters.filter((h) => h.memory?.harvestTargetId === source.id);
   if (
-    harvesters.length < 1 &&
-    _(harvesters)
+    myH.length < 2 &&
+    _(myH)
       .map((h) => h.getActiveBodyparts(WORK))
-      .flatten()
       .sum() < 5
   ) {
-    // 自分用のWORKが5個以下の時
     const spawn = (() => {
       const spawns = getSpawnsInRoom(source.room);
       // 部屋にある時は部屋のだけ
       if (spawns.length > 0) {
         return source.pos.findClosestByRange(spawns.filter((s) => !s.spawning));
       } else {
-        return source.pos.findClosestByPath(Object.values(Game.spawns));
+        return _(Object.values(Game.spawns))
+          .map((spawn) => {
+            return {
+              spawn,
+              cost: PathFinder.search(source.pos, spawn.pos).cost,
+            };
+          })
+          .min((v) => v.cost).spawn;
       }
     })();
     if (!spawn) {
@@ -33,13 +33,19 @@ export function behavior(source: Source) {
 
     if (spawn.room.energyAvailable >= 300) {
       const name = `H_${source.room.name}_${Game.time}`;
-      const spawned = spawn.spawnCreep(filterBodiesByCost("harvester", spawn.room.energyAvailable).bodies, name, {
-        memory: {
-          role: "harvester",
-          baseRoom: source.room.name,
-          harvestTargetId: source.id,
-        } as HarvesterMemory,
-      });
+      const spawned = spawn.spawnCreep(
+        filterBodiesByCost("harvester", spawn.room.energyAvailable, {
+          acrossRoom: spawn.room.name !== source.room.name,
+        }).bodies,
+        name,
+        {
+          memory: {
+            role: "harvester",
+            baseRoom: source.room.name,
+            harvestTargetId: source.id,
+          } as HarvesterMemory,
+        },
+      );
       return spawned;
     }
   }
@@ -64,8 +70,4 @@ export function behavior(source: Source) {
     }
   }
   return OK;
-}
-
-function isH(c: Creeps): c is Harvester {
-  return c.memory.role === "harvester";
 }

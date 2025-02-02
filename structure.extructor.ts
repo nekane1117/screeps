@@ -1,5 +1,5 @@
-import { TERMINAL_THRESHOLD } from "./constants";
-import { filterBodiesByCost, getCarrierBody } from "./util.creep";
+import { TERMINAL_LIMIT } from "./constants";
+import { filterBodiesByCost, getCarrierBody, getCreepsInRoom } from "./util.creep";
 import { findMyStructures, getSpawnsInRoom, getSpawnsOrderdByRange } from "./utils";
 
 export default function behavior(extractor: Structure) {
@@ -8,32 +8,21 @@ export default function behavior(extractor: Structure) {
   }
 
   const mineral = _(extractor.pos.lookFor(LOOK_MINERALS)).first();
-  const terminal = _(findMyStructures(extractor.room).terminal).first();
-
-  if (!mineral || mineral.ticksToRegeneration || !terminal) {
+  if (!mineral || mineral.ticksToRegeneration || !extractor.room.terminal) {
     return ERR_NOT_FOUND;
   }
 
-  if (terminal.store[mineral.mineralType] > TERMINAL_THRESHOLD * 2) {
+  const { container } = findMyStructures(extractor.room);
+
+  if (extractor.room.terminal.store[mineral.mineralType] > TERMINAL_LIMIT * 2) {
     // とりあえずいっぱいあるときはいい
     return;
   }
 
-  const { mineralHarvester = [], mineralCarrier = [] } = Object.values(Game.creeps)
-    .filter((c) => c.memory.baseRoom === extractor.pos.roomName)
-    .reduce(
-      (groups, c) => {
-        (groups[c.memory.role] = groups[c.memory.role] || []).push(c);
-        return groups;
-      },
-      {} as Partial<Record<ROLES, Creeps[]>>,
-    );
+  const { mineralHarvester = [], mineralCarrier = [] } = getCreepsInRoom(mineral.room);
 
   // 最大匹数より少ないとき
-  if (
-    (extractor.room.terminal?.store.energy || 0) > extractor.room.energyCapacityAvailable &&
-    !(mineralHarvester as MineralHarvester[]).find((c) => c.memory.targetId === mineral.id)
-  ) {
+  if (mineral.mineralAmount > 0 && mineralHarvester.length < 1) {
     const spawn = getSpawnsOrderdByRange(extractor, 1).first();
     if (!spawn) {
       console.log(`source ${extractor.id} can't find spawn`);
@@ -51,7 +40,8 @@ export default function behavior(extractor: Structure) {
       });
       return spawned;
     }
-  } else if ((extractor.room.terminal?.store.energy || 0) > extractor.room.energyCapacityAvailable && (mineralCarrier as MineralCarrier[]).length < 1) {
+  }
+  if (container.find((s) => s.store[mineral.mineralType] > 0) && mineralCarrier.length < 1) {
     const spawn = _(getSpawnsInRoom(extractor.room))
       .filter((s) => !s.spawning)
       .first();

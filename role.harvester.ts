@@ -26,9 +26,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return creep.suicide();
   }
   creep.memory.worked = creep.harvest(source);
+
   switch (creep.memory.worked) {
     case ERR_NOT_IN_RANGE:
-      customMove(creep, source, { ignoreCreeps: true });
+      customMove(creep, source, {
+        range: 1,
+      });
       break;
     // 来ないはずのやつ
     case ERR_INVALID_TARGET: // 対象が変
@@ -66,7 +69,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // 周りのものを拾う
   pickUpAll(creep);
 
-  if (repaired.length === 0) {
+  if (creep.store.getUsedCapacity(RESOURCE_ENERGY) && repaired.length === 0) {
     // 周りの建物に投げる
     const { container: containers, link: links } = findMyStructures(creep.room);
 
@@ -85,9 +88,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         customMove(creep, link);
       }
     } else {
-      const container = source.pos.findClosestByRange(containers, {
-        filter: (s: StructureContainer) => s.pos.inRangeTo(source, 2),
-      });
+      const container = creep.pos.findClosestByRange(containers);
       if (container) {
         if (creep.transfer(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
           customMove(creep, container);

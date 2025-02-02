@@ -16,8 +16,22 @@ export const squareDiff = Object.freeze([
   [1, 1],
 ] as [number, number][]);
 
-export function filterBodiesByCost(role: ROLES, cost: number) {
-  const bodies = IDEAL_BODY[role]
+type FilterBodiesByCostOptions = {
+  acrossRoom?: boolean;
+};
+
+export function filterBodiesByCost(role: ROLES, cost: number, opts?: FilterBodiesByCostOptions) {
+  const { acrossRoom = false } = opts || {};
+
+  const idealBody = IDEAL_BODY[role];
+
+  if (acrossRoom) {
+    const move = idealBody.filter((b) => b === MOVE);
+    const notMove = idealBody.filter((b) => b !== MOVE);
+    idealBody.push(..._.range(notMove.length - move.length).map(() => MOVE));
+  }
+
+  const bodies = idealBody
     .reduce(
       (bodies, parts) => {
         const total = _.last(bodies)?.total || 0;
@@ -65,7 +79,7 @@ export function randomWalk(creep: Creep) {
 
 export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
   builder: _.range(50).map((i) => {
-    const b = [WORK, CARRY, MOVE];
+    const b = [WORK, MOVE, CARRY, MOVE];
     return b[i % b.length];
   }),
   claimer: [CLAIM, MOVE],
@@ -73,30 +87,24 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
   remoteHarvester: _.range(50).map((i) => {
     const b = [
       // 最低構成
+      CARRY,
+      MOVE,
       WORK,
       MOVE,
-      CARRY,
+      WORK,
+      MOVE,
+      WORK,
+      MOVE,
+      WORK,
+      MOVE,
+      WORK,
       MOVE,
       // 最低武装
       RANGED_ATTACK,
       MOVE,
       ATTACK,
-      // 効率上げる
       MOVE,
-      WORK,
-      MOVE,
-      WORK,
-      MOVE,
-      WORK,
-      MOVE,
-      WORK,
-      MOVE,
-      // 適当に突っ込む
-      ..._.range(50).map((i) => {
-        const b = [MOVE, CARRY];
-        return b[i % b.length];
-      }),
-    ].slice(0, 25);
+    ];
     return b[i % b.length];
   }),
   carrier: [],
@@ -177,7 +185,7 @@ export const customMove: CustomMove = (creep, target, opt) => {
     plainCost: 2,
     swampCost: 10,
     serializeMemory: false,
-    ignoreCreeps: !creep.pos.inRangeTo(target, DEFAULT_CREEP_RANGE[creep.memory.role] + 2),
+    ignoreCreeps: !(creep.memory.__avoidCreep || creep.pos.inRangeTo(target, DEFAULT_CREEP_RANGE[creep.memory.role] + 2)),
     ...opt,
     visualizePathStyle: {
       opacity: 0.55,
@@ -198,6 +206,7 @@ export const customMove: CustomMove = (creep, target, opt) => {
         const move = blocker.move(creep);
         creep.memory._move = undefined;
         blocker.memory._move = undefined;
+        blocker.memory.__avoidCreep = true;
         (pull || move) &&
           console.log(JSON.stringify({ name: creep.name, pull: RETURN_CODE_DECODER[pull.toString()], move: RETURN_CODE_DECODER[move.toString()] }));
       }
@@ -207,20 +216,28 @@ export const customMove: CustomMove = (creep, target, opt) => {
   return creep.memory.moved;
 };
 
-export function getCreepsInRoom(room: Room) {
-  if (room.memory.creeps) {
+export function getCreepsInRoom(room: Room | undefined) {
+  if (!room) {
+    return { timestamp: Game.time } as CreepsCache;
+  }
+  if (room.memory.creeps?.timestamp === Game.time) {
     return room.memory.creeps;
   } else {
     return (room.memory.creeps = Object.values(Game.creeps)
       .filter((c) => c.memory.baseRoom === room.name)
-      .reduce((creeps, c) => {
-        if (!creeps[c.memory.role]) {
-          creeps[c.memory.role] = [];
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        creeps[c.memory.role]!.push(c as any);
-        return creeps;
-      }, {} as CreepsCache));
+      .reduce(
+        (creeps, c) => {
+          if (!creeps[c.memory.role]) {
+            creeps[c.memory.role] = [];
+          }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          creeps[c.memory.role]!.push(c as any);
+          return creeps;
+        },
+        {
+          timestamp: Game.time,
+        } as CreepsCache,
+      ));
   }
 }
 
@@ -239,18 +256,25 @@ export function getMainSpawn(room: Room): StructureSpawn | undefined {
 export function pickUpAll(creep: Creep, resourceType: ResourceConstant = RESOURCE_ENERGY) {
   //withdraw
   // 通りがかりに落っこちてるリソースを拾う
+
+  let result: CreepActionReturnCode | undefined = undefined;
   creep.pos
     .findInRange(FIND_DROPPED_RESOURCES, 1, {
       filter: (s) => s.resourceType === resourceType,
     })
     .forEach((resource) => {
-      creep.pickup(resource);
+      if (creep.pickup(resource) === OK) {
+        result = OK;
+      }
     });
 
   // 通りがかりの墓から拾う
   [...creep.pos.findInRange(FIND_TOMBSTONES, 1), ...creep.pos.findInRange(FIND_RUINS, 1)].forEach((tombstone) => {
-    creep.withdraw(tombstone, resourceType);
+    if (creep.withdraw(tombstone, resourceType)) {
+      result = OK;
+    }
   });
+  return result;
 }
 
 /**
@@ -332,7 +356,7 @@ export function getCarrierBody(room: Room, role: ROLES): BodyPartConstant[] {
   // 個数 (÷50の切り上げ)
   // 安全係数
   // の２倍(CARRY,MOVE)
-  return _.range(Math.ceil(avgSize / 50) * safetyFactor * 1.5)
+  return _.range(Math.ceil(avgSize / 50) * safetyFactor * 3)
     .slice(0, 50)
     .map((i) => {
       const parts = i === 0 ? WORK : bodyCycle[i % bodyCycle.length];

@@ -32,7 +32,7 @@ export default function behavior(flag: Flag) {
           spawn.spawnCreep(filterBodiesByCost("claimer", spawn.room.energyAvailable).bodies, `C_${flag.pos.roomName}_${flag.name}`, {
             memory: {
               role: "claimer",
-              baseRoom: spawn.room.name,
+              baseRoom: (flag.room || spawn.room).name,
               flagName: flag.name,
             } as ClaimerMemory,
           });
