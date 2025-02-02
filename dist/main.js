@@ -2332,36 +2332,36 @@ var behavior15 = (creep) => {
       console.log(`${creep.name}:${RETURN_CODE_DECODER[signed.toString()]}`);
     }
   }
-  creep.memory.worked = creep.upgradeController(controller);
-  switch (creep.memory.worked) {
-    // 資源不足
-    case ERR_NOT_ENOUGH_RESOURCES:
-      changeMode(creep, "\u{1F6D2}");
-      break;
-    case ERR_NOT_IN_RANGE:
-      if (creep.memory.mode === "\u{1F4AA}") {
-        moveMeTo(controller);
-      }
-      break;
-    // 有りえない系
-    case ERR_NOT_OWNER:
-    case ERR_INVALID_TARGET:
-    case ERR_NO_BODYPART:
-      console.log(`${creep.name} upgradeController returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
-      creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
-      break;
-    // 問題ない系
-    case OK:
-    case ERR_BUSY:
-    default:
-      break;
+  if (controller.ticksToDowngrade < 1e3 || getSitesInRoom(controller.room).length === 0) {
+    creep.memory.worked = creep.upgradeController(controller);
+    switch (creep.memory.worked) {
+      // 資源不足
+      case ERR_NOT_ENOUGH_RESOURCES:
+        changeMode(creep, "\u{1F6D2}");
+        break;
+      case ERR_NOT_IN_RANGE:
+        if (creep.memory.mode === "\u{1F4AA}") {
+          moveMeTo(controller);
+        }
+        break;
+      // 有りえない系
+      case ERR_NOT_OWNER:
+      case ERR_INVALID_TARGET:
+      case ERR_NO_BODYPART:
+        console.log(`${creep.name} upgradeController returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
+        creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
+        break;
+      // 問題ない系
+      case OK:
+      case ERR_BUSY:
+      default:
+        break;
+    }
   }
   if (creep.memory.storeId && (((_c = Game.getObjectById(creep.memory.storeId)) == null ? void 0 : _c.store.energy) || 0) <= 0) {
     creep.memory.storeId = void 0;
   }
-  if (creep.memory.storeId || (creep.memory.storeId = (_d = controller.pos.findClosestByRange(_.compact([...links, ...container]), {
-    filter: (s) => s.pos.inRangeTo(controller, 3)
-  })) == null ? void 0 : _d.id) || (creep.memory.storeId = (_e = (() => {
+  if (creep.memory.storeId || (creep.memory.storeId = (_d = controller.pos.findClosestByRange(_.compact([...links, ...container]))) == null ? void 0 : _d.id) || (creep.memory.storeId = (_e = (() => {
     if (creep.room.energyAvailable < creep.room.energyCapacityAvailable) {
       return void 0;
     } else {
@@ -2402,8 +2402,8 @@ var behavior15 = (creep) => {
         // 有りえない系
         case ERR_NOT_OWNER:
         case ERR_INVALID_ARGS:
-          console.log(`${creep.name} build returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
-          creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
+          console.log(`${creep.name} build returns ${creep.memory.worked && RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
+          creep.memory.worked && creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
           break;
         // 問題ない系
         case OK:
@@ -2898,7 +2898,7 @@ var behavior19 = (controller) => {
     });
     const upgraderBody = getUpgraderBody(controller.room);
     if (myContainer) {
-      if (!("progress" in myContainer) && myContainer.store.energy && harvester.length > 0 && carrier.length > 0 && upgrader.filter((c) => (c.ticksToLive || Infinity) > upgraderBody.length * CREEP_SPAWN_TIME).length === 0 && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
+      if (harvester.length > 0 && carrier.length > 0 && upgrader.filter((c) => (c.ticksToLive || Infinity) > upgraderBody.length * CREEP_SPAWN_TIME).length === 0 && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
         const spawn = _(getSpawnsInRoom(controller.room)).find((s) => !s.spawning);
         if (spawn) {
           spawn.spawnCreep(upgraderBody, `U_${controller.room.name}_${Game.time}`, {

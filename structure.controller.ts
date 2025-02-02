@@ -37,8 +37,6 @@ const behavior: StructureBehavior = (controller: Structure) => {
     if (myContainer) {
       // 建設済みかつあれこれ足りてる時だけ作る
       if (
-        !("progress" in myContainer) &&
-        myContainer.store.energy &&
         harvester.length > 0 &&
         carrier.length > 0 &&
         upgrader.filter((c) => (c.ticksToLive || Infinity) > upgraderBody.length * CREEP_SPAWN_TIME).length === 0 &&

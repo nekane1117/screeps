@@ -1,6 +1,6 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, getMainSpawn, pickUpAll } from "./util.creep";
-import { findMyStructures } from "./utils";
+import { findMyStructures, getSitesInRoom } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
@@ -41,31 +41,34 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
-  // upgradeController
-  creep.memory.worked = creep.upgradeController(controller);
+  // 建設がないときかダウングレードしちゃいそうなとき
+  if (controller.ticksToDowngrade < 1000 || getSitesInRoom(controller.room).length === 0) {
+    // upgradeController
+    creep.memory.worked = creep.upgradeController(controller);
 
-  switch (creep.memory.worked) {
-    // 資源不足
-    case ERR_NOT_ENOUGH_RESOURCES:
-      changeMode(creep, "🛒");
-      break;
-    case ERR_NOT_IN_RANGE:
-      if (creep.memory.mode === "💪") {
-        moveMeTo(controller);
-      }
-      break;
-    // 有りえない系
-    case ERR_NOT_OWNER:
-    case ERR_INVALID_TARGET:
-    case ERR_NO_BODYPART:
-      console.log(`${creep.name} upgradeController returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
-      creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
-      break;
-    // 問題ない系
-    case OK:
-    case ERR_BUSY:
-    default:
-      break;
+    switch (creep.memory.worked) {
+      // 資源不足
+      case ERR_NOT_ENOUGH_RESOURCES:
+        changeMode(creep, "🛒");
+        break;
+      case ERR_NOT_IN_RANGE:
+        if (creep.memory.mode === "💪") {
+          moveMeTo(controller);
+        }
+        break;
+      // 有りえない系
+      case ERR_NOT_OWNER:
+      case ERR_INVALID_TARGET:
+      case ERR_NO_BODYPART:
+        console.log(`${creep.name} upgradeController returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
+        creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
+        break;
+      // 問題ない系
+      case OK:
+      case ERR_BUSY:
+      default:
+        break;
+    }
   }
 
   if (creep.memory.storeId && (Game.getObjectById(creep.memory.storeId)?.store.energy || 0) <= 0) {
@@ -75,9 +78,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // withdraw
   if (
     creep.memory.storeId ||
-    (creep.memory.storeId = controller.pos.findClosestByRange(_.compact([...links, ...container]), {
-      filter: (s: Structure) => s.pos.inRangeTo(controller, 3),
-    })?.id) ||
+    (creep.memory.storeId = controller.pos.findClosestByRange(_.compact([...links, ...container]))?.id) ||
     (creep.memory.storeId = (() => {
       if (creep.room.energyAvailable < creep.room.energyCapacityAvailable) {
         return undefined;
@@ -124,8 +125,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         // 有りえない系
         case ERR_NOT_OWNER:
         case ERR_INVALID_ARGS:
-          console.log(`${creep.name} build returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
-          creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
+          console.log(`${creep.name} build returns ${creep.memory.worked && RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
+          creep.memory.worked && creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
           break;
         // 問題ない系
         case OK:
