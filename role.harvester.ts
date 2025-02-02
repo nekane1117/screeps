@@ -56,11 +56,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // build
   // 射程圏内の建設はとりあえずぜんぶ叩いておく
   if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5) {
-    _(creep.pos.findInRange(Object.values(Game.constructionSites), 3))
-      .sortBy((c) => (c.structureType === STRUCTURE_SPAWN ? 0 : c.progressTotal - c.progress))
-      .slice(0, 1)
-      .map((site) => creep.build(site))
-      .run();
+    creep.pos.findInRange(Object.values(Game.constructionSites), 3).map((site) => creep.build(site));
   }
 
   // repair

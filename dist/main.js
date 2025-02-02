@@ -1393,7 +1393,7 @@ var behavior8 = (creep) => {
       break;
   }
   if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5) {
-    _(creep.pos.findInRange(Object.values(Game.constructionSites), 3)).sortBy((c) => c.structureType === STRUCTURE_SPAWN ? 0 : c.progressTotal - c.progress).slice(0, 1).map((site) => creep.build(site)).run();
+    creep.pos.findInRange(Object.values(Game.constructionSites), 3).map((site) => creep.build(site));
   }
   const repaired = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => "ticksToDecay" in s && s.hits < Math.min(s.hitsMax, 3e3) })).map((damaged) => {
     return creep.repair(damaged);
