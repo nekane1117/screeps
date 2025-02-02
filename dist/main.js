@@ -2867,13 +2867,14 @@ var STATIC_STRUCTURES = [
 ];
 function checkSpawnBuilder(room) {
   const { builder = [] } = getCreepsInRoom(room);
+  const { container } = findMyStructures(room);
   if (room.energyAvailable < room.energyCapacityAvailable) {
     return false;
   }
   const { bodies: builderBodies } = filterBodiesByCost("builder", room.energyCapacityAvailable);
   return builder.filter((g) => {
     return builderBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || Infinity);
-  }).length < 1;
+  }).length < Math.max(1, container.filter((c) => getCapacityRate(c, RESOURCE_ENERGY) > 0.5).length);
 }
 
 // structure.controller.ts

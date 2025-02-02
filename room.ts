@@ -2,7 +2,7 @@ import labManager from "./room.labManager";
 import { behavior } from "./room.source";
 import linkBehavior from "./structure.links";
 import { RETURN_CODE_DECODER, filterBodiesByCost, getCarrierBody, getCreepsInRoom, getMainSpawn } from "./util.creep";
-import { findMyStructures, getSitesInRoom, getSpawnsInRoom } from "./utils";
+import { findMyStructures, getCapacityRate, getSitesInRoom, getSpawnsInRoom } from "./utils";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
@@ -368,6 +368,7 @@ const STATIC_STRUCTURES = [
 
 function checkSpawnBuilder(room: Room) {
   const { builder = [] } = getCreepsInRoom(room);
+  const { container } = findMyStructures(room);
   // 満タンじゃないときはfalse
   if (room.energyAvailable < room.energyCapacityAvailable) {
     return false;
@@ -376,6 +377,6 @@ function checkSpawnBuilder(room: Room) {
   return (
     builder.filter((g) => {
       return builderBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || Infinity);
-    }).length < 1
+    }).length < Math.max(1, container.filter((c) => getCapacityRate(c, RESOURCE_ENERGY) > 0.5).length)
   );
 }
