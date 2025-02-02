@@ -33,13 +33,19 @@ export function behavior(source: Source) {
 
     if (spawn.room.energyAvailable >= 300) {
       const name = `H_${source.room.name}_${Game.time}`;
-      const spawned = spawn.spawnCreep(filterBodiesByCost("harvester", spawn.room.energyAvailable).bodies, name, {
-        memory: {
-          role: "harvester",
-          baseRoom: source.room.name,
-          harvestTargetId: source.id,
-        } as HarvesterMemory,
-      });
+      const spawned = spawn.spawnCreep(
+        filterBodiesByCost("harvester", spawn.room.energyAvailable, {
+          acrossRoom: spawn.room.name !== source.room.name,
+        }).bodies,
+        name,
+        {
+          memory: {
+            role: "harvester",
+            baseRoom: source.room.name,
+            harvestTargetId: source.id,
+          } as HarvesterMemory,
+        },
+      );
       return spawned;
     }
   }

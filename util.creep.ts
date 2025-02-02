@@ -16,8 +16,22 @@ export const squareDiff = Object.freeze([
   [1, 1],
 ] as [number, number][]);
 
-export function filterBodiesByCost(role: ROLES, cost: number) {
-  const bodies = IDEAL_BODY[role]
+type FilterBodiesByCostOptions = {
+  acrossRoom?: boolean;
+};
+
+export function filterBodiesByCost(role: ROLES, cost: number, opts?: FilterBodiesByCostOptions) {
+  const { acrossRoom = false } = opts || {};
+
+  const idealBody = IDEAL_BODY[role];
+
+  if (acrossRoom) {
+    const move = idealBody.filter((b) => b === MOVE);
+    const notMove = idealBody.filter((b) => b !== MOVE);
+    idealBody.push(..._.range(notMove.length - move.length).map(() => MOVE));
+  }
+
+  const bodies = idealBody
     .reduce(
       (bodies, parts) => {
         const total = _.last(bodies)?.total || 0;

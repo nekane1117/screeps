@@ -2,7 +2,7 @@ import flags from "./flags";
 import { behaviors } from "./roles";
 import { roomBehavior } from "./room";
 import structures from "./structures";
-import { filterBodiesByCost, toColor } from "./util.creep";
+import { filterBodiesByCost, getCreepsInRoom, toColor } from "./util.creep";
 import { findMyStructures, isHighway, logUsage } from "./utils";
 
 module.exports.loop = function () {
@@ -78,7 +78,7 @@ module.exports.loop = function () {
         // 型チェック
         if (site.room?.name && Memory.rooms[site.room?.name]) {
           // builderが一人もいないとき
-          if ((Memory.rooms[site.room.name].creeps?.builder || []).length === 0) {
+          if ((getCreepsInRoom(site.room).builder || []).length === 0) {
             const spawn: StructureSpawn | undefined = _(Object.values(Game.spawns))
               .map((spawn) => {
                 return {

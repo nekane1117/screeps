@@ -1,6 +1,6 @@
 import { findTransferTarget } from "./role.carrier";
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getRepairPower, pickUpAll, toColor, withdrawBy } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getRepairPower, moveRoom, pickUpAll, toColor, withdrawBy } from "./util.creep";
 import { findMyStructures, getDecayAmount, getLabs, getSitesInRoom } from "./utils";
 // import { findMyStructures } from "./utils";
 
@@ -8,6 +8,18 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isBuilder(creep)) {
     return console.log(`${creep.name} is not Builder`);
   }
+
+  // 自室の建設があるときはすぐ行く
+  if (
+    creep.pos.roomName !== creep.memory.baseRoom &&
+    _(Game.constructionSites)
+      .values<ConstructionSite>()
+      .filter((c) => c.room?.name === creep.memory.baseRoom)
+      .size() > 0
+  ) {
+    return moveRoom(creep, creep.pos.roomName, creep.memory.baseRoom);
+  }
+
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
     const pos = "pos" in target ? target.pos : target;
     Game.rooms[pos.roomName]?.visual.text("x", pos, {

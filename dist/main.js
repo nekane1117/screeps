@@ -321,9 +321,16 @@ var squareDiff = Object.freeze([
   [0, 1],
   [1, 1]
 ]);
-function filterBodiesByCost(role, cost) {
+function filterBodiesByCost(role, cost, opts) {
   var _a;
-  const bodies = IDEAL_BODY[role].reduce(
+  const { acrossRoom = false } = opts || {};
+  const idealBody = IDEAL_BODY[role];
+  if (acrossRoom) {
+    const move = idealBody.filter((b) => b === MOVE);
+    const notMove = idealBody.filter((b) => b !== MOVE);
+    idealBody.push(..._.range(notMove.length - move.length).map(() => MOVE));
+  }
+  const bodies = idealBody.reduce(
     (bodies2, parts) => {
       var _a2;
       const total = ((_a2 = _.last(bodies2)) == null ? void 0 : _a2.total) || 0;
@@ -926,6 +933,12 @@ var behavior5 = (creep) => {
   if (!isBuilder(creep)) {
     return console.log(`${creep.name} is not Builder`);
   }
+  if (creep.pos.roomName !== creep.memory.baseRoom && _(Game.constructionSites).values().filter((c) => {
+    var _a2;
+    return ((_a2 = c.room) == null ? void 0 : _a2.name) === creep.memory.baseRoom;
+  }).size() > 0) {
+    return moveRoom(creep, creep.pos.roomName, creep.memory.baseRoom);
+  }
   const moveMeTo = (target, opt) => {
     var _a2;
     const pos = "pos" in target ? target.pos : target;
@@ -1380,7 +1393,7 @@ var behavior8 = (creep) => {
       break;
   }
   if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5) {
-    _(creep.pos.findInRange(Object.values(Game.constructionSites), 3)).sortBy((c) => c.progressTotal - c.progress).slice(0, 1).map((site) => creep.build(site)).run();
+    _(creep.pos.findInRange(Object.values(Game.constructionSites), 3)).sortBy((c) => c.structureType === STRUCTURE_SPAWN ? 0 : c.progressTotal - c.progress).slice(0, 1).map((site) => creep.build(site)).run();
   }
   const repaired = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => "ticksToDecay" in s && s.hits < Math.min(s.hitsMax, 3e3) })).map((damaged) => {
     return creep.repair(damaged);
@@ -2518,13 +2531,19 @@ function behavior17(source) {
     }
     if (spawn.room.energyAvailable >= 300) {
       const name = `H_${source.room.name}_${Game.time}`;
-      const spawned = spawn.spawnCreep(filterBodiesByCost("harvester", spawn.room.energyAvailable).bodies, name, {
-        memory: {
-          role: "harvester",
-          baseRoom: source.room.name,
-          harvestTargetId: source.id
+      const spawned = spawn.spawnCreep(
+        filterBodiesByCost("harvester", spawn.room.energyAvailable, {
+          acrossRoom: spawn.room.name !== source.room.name
+        }).bodies,
+        name,
+        {
+          memory: {
+            role: "harvester",
+            baseRoom: source.room.name,
+            harvestTargetId: source.id
+          }
         }
-      });
+      );
       return spawned;
     }
   }
@@ -3233,15 +3252,15 @@ module.exports.loop = function() {
       var _a;
       return (_a = c.room) == null ? void 0 : _a.name;
     }).forEach((site) => {
-      var _a, _b, _c, _d;
+      var _a, _b, _c;
       if (((_a = site.room) == null ? void 0 : _a.name) && Memory.rooms[(_b = site.room) == null ? void 0 : _b.name]) {
-        if ((((_c = Memory.rooms[site.room.name].creeps) == null ? void 0 : _c.builder) || []).length === 0) {
-          const spawn = (_d = _(Object.values(Game.spawns)).map((spawn2) => {
+        if ((getCreepsInRoom(site.room).builder || []).length === 0) {
+          const spawn = (_c = _(Object.values(Game.spawns)).map((spawn2) => {
             return {
               spawn: spawn2,
               cost: PathFinder.search(site.pos, spawn2.pos).cost
             };
-          }).min((v) => v.cost)) == null ? void 0 : _d.spawn;
+          }).min((v) => v.cost)) == null ? void 0 : _c.spawn;
           if (spawn) {
             spawn.spawnCreep(filterBodiesByCost("builder", spawn.room.energyCapacityAvailable).bodies, `B_${site.room.name}_${Game.time}`, {
               memory: {
