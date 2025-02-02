@@ -1380,7 +1380,7 @@ var behavior8 = (creep) => {
       break;
   }
   if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5) {
-    creep.pos.findInRange(Object.values(Game.constructionSites), 3).map((site) => creep.build(site));
+    _(creep.pos.findInRange(Object.values(Game.constructionSites), 3)).sortBy((c) => c.progressTotal - c.progress).slice(0, 1).map((site) => creep.build(site)).run();
   }
   const repaired = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => "ticksToDecay" in s && s.hits < Math.min(s.hitsMax, 3e3) })).map((damaged) => {
     return creep.repair(damaged);
@@ -3207,18 +3207,24 @@ module.exports.loop = function() {
     });
     logUsage("creep", () => {
       Object.values(Game.creeps).forEach((c) => {
-        var _a, _b;
-        if (c.spawning) {
-          return;
-        }
-        c.memory.moved = void 0;
-        c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
-          color: toColor(c)
-        });
-        (_b = (_a = behaviors)[c.memory.role]) == null ? void 0 : _b.call(_a, c);
-        c.getActiveBodyparts(WORK) && c.pos.lookFor(LOOK_STRUCTURES).filter((s) => [STRUCTURE_CONTAINER, STRUCTURE_ROAD].includes(s.structureType) && s.hits < s.hitsMax).forEach((s) => c.repair(s));
-        c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
-        c.memory.moved === OK && (c.memory.__avoidCreep = false);
+        logUsage(
+          c.name,
+          () => {
+            var _a, _b;
+            if (c.spawning) {
+              return;
+            }
+            c.memory.moved = void 0;
+            c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
+              color: toColor(c)
+            });
+            (_b = (_a = behaviors)[c.memory.role]) == null ? void 0 : _b.call(_a, c);
+            c.getActiveBodyparts(WORK) && c.pos.lookFor(LOOK_STRUCTURES).filter((s) => [STRUCTURE_CONTAINER, STRUCTURE_ROAD].includes(s.structureType) && s.hits < s.hitsMax).forEach((s) => c.repair(s));
+            c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
+            c.memory.moved === OK && (c.memory.__avoidCreep = false);
+          },
+          2
+        );
       });
     });
   });
