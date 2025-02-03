@@ -1,6 +1,6 @@
 import { StructureBehavior } from "./structures";
 import { getCreepsInRoom, getMainSpawn } from "./util.creep";
-import { findMyStructures, getSitesInRoom, getSpawnsInRoom } from "./utils";
+import { findMyStructures, getCapacityRate, getSitesInRoom, getSpawnsInRoom } from "./utils";
 
 const behavior: StructureBehavior = (controller: Structure) => {
   if (!isC(controller)) {
@@ -33,13 +33,25 @@ const behavior: StructureBehavior = (controller: Structure) => {
     const myContainer = controller.pos.findClosestByRange([...container, ...containerSite], {
       filter: (s: StructureContainer | ConstructionSite) => controller.pos.inRangeTo(s, 3),
     });
+
+    const getLimit = () => {
+      if (!myContainer) {
+        return 1;
+      }
+      if ("progress" in myContainer) {
+        return 1;
+      } else {
+        return getCapacityRate(myContainer, RESOURCE_ENERGY) * 3;
+      }
+    };
+
     const upgraderBody = getUpgraderBody(controller.room);
     if (myContainer) {
       // 建設済みかつあれこれ足りてる時だけ作る
       if (
         harvester.length > 0 &&
         carrier.length > 0 &&
-        upgrader.filter((c) => (c.ticksToLive || Infinity) > upgraderBody.length * CREEP_SPAWN_TIME).length === 0 &&
+        upgrader.filter((c) => (c.ticksToLive || Infinity) > upgraderBody.length * CREEP_SPAWN_TIME).length < getLimit() &&
         controller.room.energyAvailable === controller.room.energyCapacityAvailable
       ) {
         const spawn = _(getSpawnsInRoom(controller.room)).find((s) => !s.spawning);

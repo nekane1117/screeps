@@ -2903,9 +2903,19 @@ var behavior19 = (controller) => {
     const myContainer = controller.pos.findClosestByRange([...container, ...containerSite], {
       filter: (s) => controller.pos.inRangeTo(s, 3)
     });
+    const getLimit = () => {
+      if (!myContainer) {
+        return 1;
+      }
+      if ("progress" in myContainer) {
+        return 1;
+      } else {
+        return getCapacityRate(myContainer, RESOURCE_ENERGY) * 3;
+      }
+    };
     const upgraderBody = getUpgraderBody(controller.room);
     if (myContainer) {
-      if (harvester.length > 0 && carrier.length > 0 && upgrader.filter((c) => (c.ticksToLive || Infinity) > upgraderBody.length * CREEP_SPAWN_TIME).length === 0 && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
+      if (harvester.length > 0 && carrier.length > 0 && upgrader.filter((c) => (c.ticksToLive || Infinity) > upgraderBody.length * CREEP_SPAWN_TIME).length < getLimit() && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
         const spawn = _(getSpawnsInRoom(controller.room)).find((s) => !s.spawning);
         if (spawn) {
           spawn.spawnCreep(upgraderBody, `U_${controller.room.name}_${Game.time}`, {
