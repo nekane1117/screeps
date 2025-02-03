@@ -374,9 +374,14 @@ function checkSpawnBuilder(room: Room) {
     return false;
   }
   const { bodies: builderBodies } = filterBodiesByCost("builder", room.energyCapacityAvailable);
+  /**
+   * ビルダーの数が
+   * - 建設地が無いとき：1
+   * - あるとき：50％以上あるコンテナの数だけ
+   */
   return (
     builder.filter((g) => {
       return builderBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || Infinity);
-    }).length < Math.max(1, container.filter((c) => getCapacityRate(c, RESOURCE_ENERGY) > 0.5).length)
+    }).length < (getSitesInRoom(room).length === 0 ? 1 : Math.max(1, container.filter((c) => getCapacityRate(c, RESOURCE_ENERGY) > 0.5).length))
   );
 }

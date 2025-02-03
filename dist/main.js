@@ -2874,7 +2874,7 @@ function checkSpawnBuilder(room) {
   const { bodies: builderBodies } = filterBodiesByCost("builder", room.energyCapacityAvailable);
   return builder.filter((g) => {
     return builderBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || Infinity);
-  }).length < Math.max(1, container.filter((c) => getCapacityRate(c, RESOURCE_ENERGY) > 0.5).length);
+  }).length < (getSitesInRoom(room).length === 0 ? 1 : Math.max(1, container.filter((c) => getCapacityRate(c, RESOURCE_ENERGY) > 0.5).length));
 }
 
 // structure.controller.ts
