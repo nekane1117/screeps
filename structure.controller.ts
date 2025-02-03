@@ -92,7 +92,7 @@ function updateUpgraderSize(room: Room) {
 
 function getUpgraderBody(room: Room): BodyPartConstant[] {
   // きゃりーサイズ * 係数 / 2(2個単位で入れるので)
-  const requestSize = _.ceil(((room.memory.carrySize?.upgrader || 1) * 2) / 2);
+  const requestSize = 10;
 
   let totalCost = 0;
 
