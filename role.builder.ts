@@ -9,14 +9,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return console.log(`${creep.name} is not Builder`);
   }
 
+  const mySite = _(Game.constructionSites)
+    .values<ConstructionSite>()
+    .filter((c) => c.room?.name === creep.memory.baseRoom)
+    .run();
+
   // 自室の建設があるときはすぐ行く
-  if (
-    creep.pos.roomName !== creep.memory.baseRoom &&
-    _(Game.constructionSites)
-      .values<ConstructionSite>()
-      .filter((c) => c.room?.name === creep.memory.baseRoom)
-      .size() > 0
-  ) {
+  if (creep.pos.roomName !== creep.memory.baseRoom && mySite.length > 0) {
     return moveRoom(creep, creep.pos.roomName, creep.memory.baseRoom);
   }
 
@@ -29,6 +28,19 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       ...opt,
     });
   };
+
+  const { builder = [] } = getCreepsInRoom(creep.room);
+
+  if (mySite.length === 0 && builder.length > 1) {
+    const closestSpawn = creep.pos.findClosestByPath(findMyStructures(creep.room).spawn);
+
+    if (closestSpawn) {
+      if (closestSpawn.recycleCreep(creep) === ERR_NOT_IN_RANGE) {
+        moveMeTo(closestSpawn);
+      }
+    }
+    return;
+  }
 
   const checkMode = () => {
     const newMode: BuilderMemory["mode"] = ((c: Builder) => {
@@ -141,7 +153,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
                   break;
                 // 建築モードで離れてるときは近寄る
                 case ERR_NOT_IN_RANGE:
-                  moveMeTo(site);
+                  moveMeTo(site, { range: 3 });
                   break;
 
                 // 有りえない系

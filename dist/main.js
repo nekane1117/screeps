@@ -933,10 +933,11 @@ var behavior5 = (creep) => {
   if (!isBuilder(creep)) {
     return console.log(`${creep.name} is not Builder`);
   }
-  if (creep.pos.roomName !== creep.memory.baseRoom && _(Game.constructionSites).values().filter((c) => {
+  const mySite = _(Game.constructionSites).values().filter((c) => {
     var _a2;
     return ((_a2 = c.room) == null ? void 0 : _a2.name) === creep.memory.baseRoom;
-  }).size() > 0) {
+  }).run();
+  if (creep.pos.roomName !== creep.memory.baseRoom && mySite.length > 0) {
     return moveRoom(creep, creep.pos.roomName, creep.memory.baseRoom);
   }
   const moveMeTo = (target, opt) => {
@@ -949,6 +950,16 @@ var behavior5 = (creep) => {
       ...opt
     });
   };
+  const { builder = [] } = getCreepsInRoom(creep.room);
+  if (mySite.length === 0 && builder.length > 1) {
+    const closestSpawn = creep.pos.findClosestByPath(findMyStructures(creep.room).spawn);
+    if (closestSpawn) {
+      if (closestSpawn.recycleCreep(creep) === ERR_NOT_IN_RANGE) {
+        moveMeTo(closestSpawn);
+      }
+    }
+    return;
+  }
   const checkMode = () => {
     const newMode = ((c) => {
       if (c.memory.mode === "\u{1F477}" && c.store.energy === 0) {
@@ -1019,7 +1030,7 @@ var behavior5 = (creep) => {
                 break;
               // 建築モードで離れてるときは近寄る
               case ERR_NOT_IN_RANGE:
-                moveMeTo(site);
+                moveMeTo(site, { range: 3 });
                 break;
               // 有りえない系
               case ERR_NOT_OWNER:
@@ -2581,7 +2592,10 @@ function behavior18(links) {
   if (!center) {
     return;
   }
-  const [centerLink, ...tail] = _(links).sortBy((l) => {
+  const controllerLink = findMyStructures(room).link.find((l) => room.controller && l.pos.inRangeTo(room.controller.pos, 3));
+  const [centerLink, ...tail] = _(links).filter((l) => {
+    return l.id !== (controllerLink == null ? void 0 : controllerLink.id);
+  }).sortBy((l) => {
     return l.pos.getRangeTo(center);
   }).value();
   tail.reverse().forEach((l) => {
@@ -2589,6 +2603,9 @@ function behavior18(links) {
       l.transferEnergy(centerLink, _.floor(Math.min(l.store.energy, centerLink.store.getFreeCapacity(RESOURCE_ENERGY)), -2));
     }
   });
+  if (getCapacityRate(centerLink) > 0.5 && controllerLink) {
+    centerLink.transferEnergy(controllerLink, _.floor(Math.min(centerLink.store.energy, controllerLink.store.getFreeCapacity(RESOURCE_ENERGY)), -2));
+  }
 }
 
 // room.ts
