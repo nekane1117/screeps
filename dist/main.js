@@ -2832,6 +2832,7 @@ function createStructures(room) {
   }
 }
 function updateRoadMap(room) {
+  var _a;
   const { road: roads, spawn, source } = findMyStructures(room);
   room.memory.roadMap = (room.memory.roadMap || _.range(2500).map(() => 0)).map((usage, i) => {
     const value = Math.min(10, Math.max(-10, usage - 10 / 2e3));
@@ -2855,6 +2856,9 @@ function updateRoadMap(room) {
       }
     }
     return value;
+  });
+  (_a = room.memory.staticRoad) == null ? void 0 : _a.map((s) => {
+    room.memory.roadMap[s.y * 50 + s.x] = 10;
   });
 }
 var STATIC_STRUCTURES = [
@@ -2923,19 +2927,9 @@ var behavior19 = (controller) => {
     const myContainer = controller.pos.findClosestByRange([...container, ...containerSite], {
       filter: (s) => controller.pos.inRangeTo(s, 3)
     });
-    const getLimit = () => {
-      if (!myContainer) {
-        return 1;
-      }
-      if ("progress" in myContainer) {
-        return 1;
-      } else {
-        return getCapacityRate(myContainer, RESOURCE_ENERGY) * 3;
-      }
-    };
     const upgraderBody = getUpgraderBody(controller.room);
     if (myContainer) {
-      if (harvester.length > 0 && carrier.length > 0 && upgrader.filter((c) => (c.ticksToLive || Infinity) > upgraderBody.length * CREEP_SPAWN_TIME).length < getLimit() && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
+      if (harvester.length > 0 && carrier.length > 0 && upgrader.filter((c) => (c.ticksToLive || Infinity) > upgraderBody.length * CREEP_SPAWN_TIME).length < 1 && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
         const spawn = _(getSpawnsInRoom(controller.room)).find((s) => !s.spawning);
         if (spawn) {
           spawn.spawnCreep(upgraderBody, `U_${controller.room.name}_${Game.time}`, {

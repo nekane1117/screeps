@@ -335,6 +335,11 @@ function updateRoadMap(room: Room) {
     }
     return value;
   });
+
+  // 固定で道を引くところは10固定
+  room.memory.staticRoad?.map((s) => {
+    room.memory.roadMap[s.y * 50 + s.x] = 10;
+  });
 }
 
 const STATIC_STRUCTURES = [

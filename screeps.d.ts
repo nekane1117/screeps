@@ -141,6 +141,9 @@ declare interface RoomMemory {
     [r in ROLES]: number;
   }>;
   roadMap: number[];
+
+  /** 固定で道路を置くところの配列 */
+  staticRoad: { x: number; y: number }[];
 }
 
 declare type CreepsCache = Partial<{
