@@ -348,7 +348,7 @@ function filterBodiesByCost(role, cost, opts) {
       bodies.map((c) => c.parts),
       [
         (p) => {
-          return [TOUGH, HEAL, RANGED_ATTACK, ATTACK, CLAIM, MOVE, CARRY, WORK].indexOf(p);
+          return [TOUGH, MOVE, CARRY, WORK, CLAIM, ATTACK, RANGED_ATTACK, HEAL].indexOf(p);
         }
       ]
     ).run(),
@@ -833,8 +833,11 @@ var behavior4 = (creep) => {
     }
   }
   if (creep.memory.transferId) {
+    const isStorage = (x) => {
+      return !!(x && "structureType" in x && x.structureType === STRUCTURE_STORAGE);
+    };
     const store = Game.getObjectById(creep.memory.transferId);
-    if (store && "store" in store && store.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+    if (store && "store" in store && store.store.getFreeCapacity(RESOURCE_ENERGY) === 0 || isStorage(store) && store.store.energy >= store.room.energyCapacityAvailable) {
       creep.memory.transferId = void 0;
     }
   }

@@ -176,8 +176,15 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // 輸送先が満タンになってたら消す
   if (creep.memory.transferId) {
+    const isStorage = (x: AnyCreep | Structure<StructureConstant> | null): x is StructureStorage => {
+      return !!(x && "structureType" in x && x.structureType === STRUCTURE_STORAGE);
+    };
+
     const store = Game.getObjectById(creep.memory.transferId);
-    if (store && "store" in store && store.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+    if (
+      (store && "store" in store && store.store.getFreeCapacity(RESOURCE_ENERGY) === 0) ||
+      (isStorage(store) && store.store.energy >= store.room.energyCapacityAvailable)
+    ) {
       creep.memory.transferId = undefined;
     }
   }

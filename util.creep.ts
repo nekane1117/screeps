@@ -50,7 +50,7 @@ export function filterBodiesByCost(role: ROLES, cost: number, opts?: FilterBodie
       bodies.map((c) => c.parts),
       [
         (p) => {
-          return ([TOUGH, HEAL, RANGED_ATTACK, ATTACK, CLAIM, MOVE, CARRY, WORK] as BodyPartConstant[]).indexOf(p);
+          return ([TOUGH, MOVE, CARRY, WORK, CLAIM, ATTACK, RANGED_ATTACK, HEAL] as BodyPartConstant[]).indexOf(p);
         },
       ],
     ).run(),
