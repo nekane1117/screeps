@@ -2960,13 +2960,14 @@ function updateUpgraderSize(room) {
     memory.carrySize = {};
   }
   if (!memory.carrySize.upgrader) {
-    memory.carrySize.upgrader = 1;
+    memory.carrySize.upgrader = 50;
   }
   const border = CREEP_LIFE_TIME / 4;
   memory.carrySize.upgrader = (memory.carrySize.upgrader * border + _(room.getEventLog()).map((e) => e.event === EVENT_UPGRADE_CONTROLLER && e.data.energySpent).compact().sum()) / (border + 1);
 }
 function getUpgraderBody(room) {
-  const requestSize = 10;
+  var _a;
+  const requestSize = _.ceil((((_a = room.memory.carrySize) == null ? void 0 : _a.upgrader) || 1) * 2 / 2);
   let totalCost = 0;
   return _([CARRY]).concat(
     ..._.range(requestSize).map(() => {

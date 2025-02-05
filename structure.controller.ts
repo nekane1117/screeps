@@ -78,7 +78,7 @@ function updateUpgraderSize(room: Room) {
   }
 
   if (!memory.carrySize.upgrader) {
-    memory.carrySize.upgrader = 1;
+    memory.carrySize.upgrader = 50;
   }
 
   const border = CREEP_LIFE_TIME / 4;
@@ -93,7 +93,7 @@ function updateUpgraderSize(room: Room) {
 
 function getUpgraderBody(room: Room): BodyPartConstant[] {
   // きゃりーサイズ * 係数 / 2(2個単位で入れるので)
-  const requestSize = 10;
+  const requestSize = _.ceil(((room.memory.carrySize?.upgrader || 1) * 2) / 2);
 
   let totalCost = 0;
 
