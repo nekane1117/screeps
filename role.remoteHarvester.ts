@@ -15,7 +15,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   const memory = readonly(creep.memory);
 
   const targetRoom = Game.rooms[memory.targetRoomName] as Room | undefined;
-  if (!targetRoom || creep.memory.targetRoomName !== creep.memory.baseRoom) {
+  if (!targetRoom || creep.memory.targetRoomName !== creep.pos.roomName) {
     // 部屋が見えない場合
     // とにかく向かう
     return moveRoom(creep, creep.pos.roomName, memory.targetRoomName);

@@ -2319,7 +2319,7 @@ var behavior14 = (creep) => {
   };
   const memory = readonly(creep.memory);
   const targetRoom = Game.rooms[memory.targetRoomName];
-  if (!targetRoom || creep.memory.targetRoomName !== creep.memory.baseRoom) {
+  if (!targetRoom || creep.memory.targetRoomName !== creep.pos.roomName) {
     return moveRoom(creep, creep.pos.roomName, memory.targetRoomName);
   }
   const hostiles = creep.room.find(FIND_HOSTILE_CREEPS);
