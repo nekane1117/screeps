@@ -8,6 +8,7 @@ declare interface SourceMemory {
 declare type ROLES =
   | "harvester"
   | "carrier"
+  | "gatherer"
   | "builder"
   | "upgrader"
   | "claimer"
@@ -147,18 +148,19 @@ declare interface RoomMemory {
 }
 
 declare type CreepsCache = Partial<{
-  harvester: Harvester[];
-  carrier: Carrier[];
   builder: Builder[];
-  upgrader: Upgrader[];
+  carrier: Carrier[];
   claimer: Claimer[];
-  mineralHarvester: MineralHarvester[];
-  mineralCarrier: MineralCarrier[];
   defender: Defender[];
+  gatherer: Gatherer[];
+  harvester: Harvester[];
   labManager: LabManager[];
-  reserver: Reserver[];
-  remoteHarvester: RemoteHarvester[];
+  mineralCarrier: MineralCarrier[];
+  mineralHarvester: MineralHarvester[];
   remoteCarrier: RemoteCarrier[];
+  remoteHarvester: RemoteHarvester[];
+  reserver: Reserver[];
+  upgrader: Upgrader[];
 }> & {
   timestamp: number;
 };
@@ -224,6 +226,22 @@ declare interface CarrierMemory extends CreepMemory {
   storeId?: Id<StructureExtension | StructureSpawn | StructureLink | StructureStorage | StructureTerminal | StructureContainer>;
   /** 配送先 */
   transferId?: Id<Parameters<Creep["transfer"]>[0]>;
+}
+declare interface Gatherer extends Creep {
+  memory: GathererMemory;
+}
+
+declare interface GathererMemory extends CreepMemory {
+  role: "gatherer";
+  /** 今何してるか
+   * working    : 作業中
+   * collecting : 資源取得中
+   * harvesting : 自力で収集中
+   */
+  mode: "🚛" | "🛒";
+
+  /** 資源をもらいに行く先 */
+  storeId?: Ruin["id"] | Tombstone["id"] | null;
 }
 declare interface MineralCarrier extends Creep {
   memory: MineralCarrierMemory;

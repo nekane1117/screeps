@@ -28,7 +28,7 @@ export function roomBehavior(room: Room) {
     };
   }
 
-  const { carrier: carriers = [], harvester = [], remoteCarrier = [], remoteHarvester = [], reserver = [] } = getCreepsInRoom(room);
+  const { carrier: carriers = [], harvester = [], remoteCarrier = [], remoteHarvester = [], reserver = [], gatherer = [] } = getCreepsInRoom(room);
 
   if (room.storage) {
     room.visual.text(room.storage.store.energy.toString(), room.storage.pos.x, room.storage.pos.y, {
@@ -204,6 +204,28 @@ export function roomBehavior(room: Room) {
       });
     }
   }
+
+  //#region gatherer
+
+  // 容量のある廃墟がある時
+  if (
+    gatherer.length === 0 &&
+    room.storage &&
+    room.energyCapacityAvailable >= 300 &&
+    room.find(FIND_RUINS, { filter: (r) => r.store.getUsedCapacity() > 0 }).length > 0
+  ) {
+    const spawn = getSpawnsInRoom(room).find((s) => !s.spawning);
+    if (spawn) {
+      spawn.spawnCreep(filterBodiesByCost("gatherer", room.energyCapacityAvailable).bodies, `G_${room.name}_${Game.time}`, {
+        memory: {
+          role: "gatherer",
+          baseRoom: room.name,
+          mode: "🛒",
+        } as GathererMemory,
+      });
+    }
+  }
+  //#endregion
 }
 
 /** 部屋ごとの色々を建てる */

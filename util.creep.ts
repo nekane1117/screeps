@@ -17,6 +17,7 @@ export const squareDiff = Object.freeze([
 ] as [number, number][]);
 
 type FilterBodiesByCostOptions = {
+  /** 部屋を股くときはmoveもいっぱい積む */
   acrossRoom?: boolean;
 };
 
@@ -113,6 +114,58 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
     const b = [MOVE, RANGED_ATTACK, RANGED_ATTACK, MOVE, HEAL, HEAL, MOVE, TOUGH, ATTACK];
     return b[i % b.length];
   }),
+  gatherer: [
+    MOVE,
+    WORK,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+    MOVE,
+    CARRY,
+  ],
   mineralCarrier: [
     ..._(
       _.range(25).map(() => {
@@ -373,6 +426,7 @@ const DEFAULT_CREEP_RANGE: Record<ROLES, number> = {
   carrier: 1,
   claimer: 1,
   defender: 3,
+  gatherer: 1,
   harvester: 1,
   labManager: 1,
   mineralCarrier: 1,

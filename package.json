@@ -18,6 +18,7 @@
     "@types/eslint__js": "^8.42.3",
     "@types/lodash": "3.10.1",
     "@types/node": "^20.12.7",
+    "@types/screeps": "^3.3.8",
     "esbuild": "^0.24.2",
     "eslint": "^9.0.0",
     "globals": "^15.0.0",
@@ -32,7 +33,5 @@
       "eslint --cache --fix"
     ]
   },
-  "dependencies": {
-    "@types/screeps": "^3.3.8"
-  }
+  "dependencies": {}
 }
