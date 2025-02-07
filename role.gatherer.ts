@@ -69,7 +69,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // 取得元が空になってたら消す
   if (creep.memory.storeId) {
     const store = Game.getObjectById(creep.memory.storeId);
-    if (store && "store" in store && store.store.energy < CARRY_CAPACITY) {
+    if (!store || (store && "store" in store && store.store.energy < CARRY_CAPACITY)) {
       creep.memory.storeId = undefined;
     }
   }

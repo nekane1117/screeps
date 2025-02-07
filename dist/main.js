@@ -1464,7 +1464,7 @@ var behavior8 = (creep) => {
   }
   if (creep.memory.storeId) {
     const store = Game.getObjectById(creep.memory.storeId);
-    if (store && "store" in store && store.store.energy < CARRY_CAPACITY) {
+    if (!store || store && "store" in store && store.store.energy < CARRY_CAPACITY) {
       creep.memory.storeId = void 0;
     }
   }
