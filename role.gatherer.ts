@@ -58,9 +58,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
   checkMode();
-  const canter = room.storage || getMainSpawn(room);
-  if (!canter) {
-    return creep.say("canter not found");
+  const center = room.storage || getMainSpawn(room);
+  if (!center) {
+    return creep.say("center not found");
   }
   // https://docs.screeps.com/simultaneous-actions.html
 

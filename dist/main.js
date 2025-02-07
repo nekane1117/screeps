@@ -1458,9 +1458,9 @@ var behavior8 = (creep) => {
     }
   }
   checkMode();
-  const canter = room.storage || getMainSpawn(room);
-  if (!canter) {
-    return creep.say("canter not found");
+  const center = room.storage || getMainSpawn(room);
+  if (!center) {
+    return creep.say("center not found");
   }
   if (creep.memory.storeId) {
     const store = Game.getObjectById(creep.memory.storeId);
