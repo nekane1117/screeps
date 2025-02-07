@@ -89,8 +89,21 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         }
       });
 
-      if (creep.transfer(link, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE && creep.store.energy > 10) {
-        customMove(creep, link);
+      // 分配処理
+      switch (creep.transfer(link, RESOURCE_ENERGY)) {
+        // 遠いときは近づく
+        case ERR_NOT_IN_RANGE:
+          if (creep.store.energy > 10) {
+            customMove(creep, link);
+          }
+          break;
+
+        // 満タンなら現在地の隣接コンテナに突っ込む
+        case ERR_FULL:
+          creep.pos.findInRange(containers, 2).forEach((c) => creep.transfer(c, RESOURCE_ENERGY));
+          break;
+        default:
+          break;
       }
     } else {
       const container = creep.pos.findClosestByRange(containers);
