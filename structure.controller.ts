@@ -96,7 +96,7 @@ function getUpgraderBody(room: Room): BodyPartConstant[] {
   }
 
   // 実際に欲しいサイズ[((実効値 * 係数) - 今あるWORKの数) / 個数単位]
-  const requestUnit = (Math.min((room.memory.carrySize?.upgrader || 1) * 2, 20) - _(upgrader).sum((u) => u.getActiveBodyparts(WORK))) / 3;
+  const requestUnit = (Math.min((room.memory.carrySize?.upgrader || 1) * 1.1, 20) - _(upgrader).sum((u) => u.getActiveBodyparts(WORK))) / 3;
 
   let totalCost = 0;
   // 要求サイズが0以下の時は返さない
