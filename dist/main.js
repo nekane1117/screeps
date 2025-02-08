@@ -2535,7 +2535,7 @@ function isReserver(creep) {
 
 // role.upgrader.ts
 var behavior16 = (creep) => {
-  var _a, _b, _c, _d;
+  var _a, _b, _c, _d, _e;
   const moveMeTo = (target, opt) => customMove(creep, target, {
     ...opt
   });
@@ -2598,12 +2598,29 @@ var behavior16 = (creep) => {
   if (creep.memory.storeId && (((_c = Game.getObjectById(creep.memory.storeId)) == null ? void 0 : _c.store.energy) || 0) <= 0) {
     creep.memory.storeId = void 0;
   }
-  if (creep.memory.storeId || (creep.memory.storeId = (_d = controller.pos.findClosestByRange(_.compact([...links, ...container]))) == null ? void 0 : _d.id, {
+  if (creep.memory.storeId || (creep.memory.storeId = (_d = controller.pos.findClosestByRange(_.compact([...links, ...container]), {
     filter: (c) => {
       var _a2;
       return c.store.energy > 0 && ((_a2 = c.room.controller) == null ? void 0 : _a2.pos.inRangeTo(c, 3));
     }
-  })) {
+  })) == null ? void 0 : _d.id) || (creep.memory.storeId = (_e = (() => {
+    if (creep.room.energyAvailable < creep.room.energyCapacityAvailable) {
+      return void 0;
+    } else {
+      return controller.pos.findClosestByRange(
+        _.compact([
+          ...links,
+          ...container,
+          ..._([creep.room.storage, creep.room.terminal]).compact().filter((s) => (s == null ? void 0 : s.store.energy) > creep.room.energyCapacityAvailable).value()
+        ]),
+        {
+          filter: (s) => {
+            return s.store.energy > 0;
+          }
+        }
+      );
+    }
+  })()) == null ? void 0 : _e.id)) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
       creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);
