@@ -3206,13 +3206,13 @@ function getUpgraderBody(room) {
   if (((_a = room.controller) == null ? void 0 : _a.level) === 8 && upgrader.length === 0) {
     return [MOVE, WORK, CARRY];
   }
-  const requestSize = (((_b = room.memory.carrySize) == null ? void 0 : _b.upgrader) || 1) * 2 - _(upgrader).sum((u) => u.getActiveBodyparts(WORK)) / 3;
+  const requestUnit = (Math.min((((_b = room.memory.carrySize) == null ? void 0 : _b.upgrader) || 1) * 2, 20) - _(upgrader).sum((u) => u.getActiveBodyparts(WORK))) / 3;
   let totalCost = 0;
-  if (requestSize <= 0) {
+  if (requestUnit <= 0) {
     return [];
   } else {
     return _([CARRY]).concat(
-      ..._.range(requestSize).map(() => {
+      ..._.range(requestUnit).map(() => {
         return [WORK, WORK, WORK, MOVE];
       })
     ).flatten().map((parts) => {

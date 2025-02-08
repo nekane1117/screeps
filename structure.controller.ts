@@ -23,7 +23,7 @@ const behavior: StructureBehavior = (controller: Structure) => {
   // upgradeのサイズを枚tick更新する
   updateUpgraderSize(controller.room);
 
-  const { harvester = [], upgrader = [], carrier = [] } = getCreepsInRoom(controller.room);
+  const { harvester = [], carrier = [] } = getCreepsInRoom(controller.room);
   const { container } = findMyStructures(controller.room);
   const containerSite = getSitesInRoom(controller.room).filter((s) => s.structureType === STRUCTURE_CONTAINER);
   // 中心地がある
@@ -36,22 +36,9 @@ const behavior: StructureBehavior = (controller: Structure) => {
 
     const upgraderBody = getUpgraderBody(controller.room);
 
-    /**
-     * upgrader必要チェック
-     * レベルが8ならWORKが１個あればいい
-     * それ以外なら2体か20個まで
-     */
-    const checkNeedUpgrader = () => {
-      if (controller.level === 8) {
-        return _(upgrader).sum((u) => u.getActiveBodyparts(WORK)) < 1;
-      } else {
-        return upgrader.length < 2 && _(upgrader).sum((u) => u.getActiveBodyparts(WORK)) < Math.min(controller.room.memory.carrySize?.upgrader || 0, 20);
-      }
-    };
-
     if (myContainer) {
       // 建設済みかつあれこれ足りてる時だけ作る
-      if (harvester.length > 0 && carrier.length > 0 && checkNeedUpgrader() && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
+      if (harvester.length > 0 && carrier.length > 0 && upgraderBody.length && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
         const spawn = _(getSpawnsInRoom(controller.room)).find((s) => !s.spawning);
         if (spawn) {
           spawn.spawnCreep(upgraderBody, `U_${controller.room.name}_${Game.time}`, {
@@ -101,32 +88,39 @@ function updateUpgraderSize(room: Room) {
 }
 
 function getUpgraderBody(room: Room): BodyPartConstant[] {
-  if (room.controller?.level === 8) {
+  const { upgrader = [] } = getCreepsInRoom(room);
+
+  // lveel 8の時は維持だけできればいいので特別に小さいのを出す
+  if (room.controller?.level === 8 && upgrader.length === 0) {
     return [MOVE, WORK, CARRY];
   }
 
-  // きゃりーサイズ * 係数 / 3(3個単位で入れるので)
-  const requestSize = _.ceil(((room.memory.carrySize?.upgrader || 1) * 2) / 3);
+  // 実際に欲しいサイズ[((実効値 * 係数) - 今あるWORKの数) / 個数単位]
+  const requestUnit = (Math.min((room.memory.carrySize?.upgrader || 1) * 2, 20) - _(upgrader).sum((u) => u.getActiveBodyparts(WORK))) / 3;
 
   let totalCost = 0;
-
-  return _([CARRY])
-    .concat(
-      ..._.range(requestSize).map(() => {
-        return [WORK, WORK, WORK, MOVE];
-      }),
-    )
-    .flatten<BodyPartConstant>()
-    .map((parts) => {
-      totalCost += BODYPART_COST[parts];
-      return {
-        parts,
-        totalCost,
-      };
-    })
-    .filter((p) => {
-      return p.totalCost <= room.energyAvailable;
-    })
-    .map((p) => p.parts)
-    .value();
+  // 要求サイズが0以下の時は返さない
+  if (requestUnit <= 0) {
+    return [];
+  } else {
+    return _([CARRY])
+      .concat(
+        ..._.range(requestUnit).map(() => {
+          return [WORK, WORK, WORK, MOVE];
+        }),
+      )
+      .flatten<BodyPartConstant>()
+      .map((parts) => {
+        totalCost += BODYPART_COST[parts];
+        return {
+          parts,
+          totalCost,
+        };
+      })
+      .filter((p) => {
+        return p.totalCost <= room.energyAvailable;
+      })
+      .map((p) => p.parts)
+      .value();
+  }
 }
