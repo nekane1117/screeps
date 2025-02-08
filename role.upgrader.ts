@@ -88,7 +88,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // withdraw
   if (
     creep.memory.storeId ||
-    (creep.memory.storeId = controller.pos.findClosestByRange(_.compact([...links, ...container]))?.id) ||
+    ((creep.memory.storeId = controller.pos.findClosestByRange(_.compact([...links, ...container]))?.id),
+    {
+      filter: (c: StructureLink | StructureContainer) => {
+        return c.store.energy > 0 && c.room.controller?.pos.inRangeTo(c, 3);
+      },
+    }) ||
     (creep.memory.storeId = (() => {
       if (creep.room.energyAvailable < creep.room.energyCapacityAvailable) {
         return undefined;

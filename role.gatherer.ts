@@ -108,10 +108,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         const target = _(RESOURCES_ALL)
           .filter((r) => store.store.getUsedCapacity(r) > 0)
           .sort((r1, r2) => store.store.getUsedCapacity(r1) - store.store.getUsedCapacity(r2))
-          .tap((arr) => console.log(arr.join(",")))
           .first();
 
-        console.log(`creep.withdraw(store, ${target}, ${(Math.min(store.store.getUsedCapacity(target)), creep.store.getFreeCapacity(target))})`);
         creep.memory.worked = target && creep.withdraw(store, target, Math.min(store.store.getUsedCapacity(target), creep.store.getFreeCapacity(target)));
         switch (creep.memory.worked) {
           // 空の時

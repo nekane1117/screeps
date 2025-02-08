@@ -1493,8 +1493,7 @@ var behavior8 = (creep) => {
         moveMeTo(store, { range: 1 });
       }
       if (creep.pos.isNearTo(store)) {
-        const target = _(RESOURCES_ALL).filter((r) => store.store.getUsedCapacity(r) > 0).sort((r1, r2) => store.store.getUsedCapacity(r1) - store.store.getUsedCapacity(r2)).tap((arr) => console.log(arr.join(","))).first();
-        console.log(`creep.withdraw(store, ${target}, ${Math.min(store.store.getUsedCapacity(target)), creep.store.getFreeCapacity(target)})`);
+        const target = _(RESOURCES_ALL).filter((r) => store.store.getUsedCapacity(r) > 0).sort((r1, r2) => store.store.getUsedCapacity(r1) - store.store.getUsedCapacity(r2)).first();
         creep.memory.worked = target && creep.withdraw(store, target, Math.min(store.store.getUsedCapacity(target), creep.store.getFreeCapacity(target)));
         switch (creep.memory.worked) {
           // 空の時
@@ -2536,7 +2535,7 @@ function isReserver(creep) {
 
 // role.upgrader.ts
 var behavior16 = (creep) => {
-  var _a, _b, _c, _d, _e;
+  var _a, _b, _c, _d;
   const moveMeTo = (target, opt) => customMove(creep, target, {
     ...opt
   });
@@ -2599,24 +2598,12 @@ var behavior16 = (creep) => {
   if (creep.memory.storeId && (((_c = Game.getObjectById(creep.memory.storeId)) == null ? void 0 : _c.store.energy) || 0) <= 0) {
     creep.memory.storeId = void 0;
   }
-  if (creep.memory.storeId || (creep.memory.storeId = (_d = controller.pos.findClosestByRange(_.compact([...links, ...container]))) == null ? void 0 : _d.id) || (creep.memory.storeId = (_e = (() => {
-    if (creep.room.energyAvailable < creep.room.energyCapacityAvailable) {
-      return void 0;
-    } else {
-      return controller.pos.findClosestByRange(
-        _.compact([
-          ...links,
-          ...container,
-          ..._([creep.room.storage, creep.room.terminal]).compact().filter((s) => (s == null ? void 0 : s.store.energy) > creep.room.energyCapacityAvailable).value()
-        ]),
-        {
-          filter: (s) => {
-            return s.store.energy > 0;
-          }
-        }
-      );
+  if (creep.memory.storeId || (creep.memory.storeId = (_d = controller.pos.findClosestByRange(_.compact([...links, ...container]))) == null ? void 0 : _d.id, {
+    filter: (c) => {
+      var _a2;
+      return c.store.energy > 0 && ((_a2 = c.room.controller) == null ? void 0 : _a2.pos.inRangeTo(c, 3));
     }
-  })()) == null ? void 0 : _e.id)) {
+  })) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
       creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);
@@ -3198,11 +3185,11 @@ function updateUpgraderSize(room) {
 }
 function getUpgraderBody(room) {
   var _a;
-  const requestSize = _.ceil((((_a = room.memory.carrySize) == null ? void 0 : _a.upgrader) || 1) * 2 / 2);
+  const requestSize = _.ceil((((_a = room.memory.carrySize) == null ? void 0 : _a.upgrader) || 1) * 2 / 3);
   let totalCost = 0;
   return _([CARRY]).concat(
     ..._.range(requestSize).map(() => {
-      return [WORK, WORK, MOVE];
+      return [WORK, WORK, WORK, MOVE];
     })
   ).flatten().map((parts) => {
     totalCost += BODYPART_COST[parts];
@@ -3508,7 +3495,7 @@ module.exports.loop = function() {
             c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
             c.memory.moved === OK && (c.memory.__avoidCreep = false);
           },
-          2
+          1.5
         );
       });
     });

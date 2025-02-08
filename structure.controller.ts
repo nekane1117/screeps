@@ -92,15 +92,15 @@ function updateUpgraderSize(room: Room) {
 }
 
 function getUpgraderBody(room: Room): BodyPartConstant[] {
-  // きゃりーサイズ * 係数 / 2(2個単位で入れるので)
-  const requestSize = _.ceil(((room.memory.carrySize?.upgrader || 1) * 2) / 2);
+  // きゃりーサイズ * 係数 / 3(3個単位で入れるので)
+  const requestSize = _.ceil(((room.memory.carrySize?.upgrader || 1) * 2) / 3);
 
   let totalCost = 0;
 
   return _([CARRY])
     .concat(
       ..._.range(requestSize).map(() => {
-        return [WORK, WORK, MOVE];
+        return [WORK, WORK, WORK, MOVE];
       }),
     )
     .flatten<BodyPartConstant>()
