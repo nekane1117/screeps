@@ -35,14 +35,23 @@ const behavior: StructureBehavior = (controller: Structure) => {
     });
 
     const upgraderBody = getUpgraderBody(controller.room);
+
+    /**
+     * upgrader必要チェック
+     * レベルが8ならWORKが１個あればいい
+     * それ以外なら2体か20個まで
+     */
+    const checkNeedUpgrader = () => {
+      if (controller.level === 8) {
+        return _(upgrader).sum((u) => u.getActiveBodyparts(WORK)) < 1;
+      } else {
+        return upgrader.length < 2 && _(upgrader).sum((u) => u.getActiveBodyparts(WORK)) < Math.min(controller.room.memory.carrySize?.upgrader || 0, 20);
+      }
+    };
+
     if (myContainer) {
       // 建設済みかつあれこれ足りてる時だけ作る
-      if (
-        harvester.length > 0 &&
-        carrier.length > 0 &&
-        upgrader.filter((c) => (c.ticksToLive || Infinity) > upgraderBody.length * CREEP_SPAWN_TIME).length < 1 &&
-        controller.room.energyAvailable === controller.room.energyCapacityAvailable
-      ) {
+      if (harvester.length > 0 && carrier.length > 0 && checkNeedUpgrader() && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
         const spawn = _(getSpawnsInRoom(controller.room)).find((s) => !s.spawning);
         if (spawn) {
           spawn.spawnCreep(upgraderBody, `U_${controller.room.name}_${Game.time}`, {
@@ -92,6 +101,10 @@ function updateUpgraderSize(room: Room) {
 }
 
 function getUpgraderBody(room: Room): BodyPartConstant[] {
+  if (room.controller?.level === 8) {
+    return [MOVE, WORK, CARRY];
+  }
+
   // きゃりーサイズ * 係数 / 3(3個単位で入れるので)
   const requestSize = _.ceil(((room.memory.carrySize?.upgrader || 1) * 2) / 3);
 

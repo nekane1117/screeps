@@ -65,7 +65,7 @@ module.exports.loop = function () {
             c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
             c.memory.moved === OK && (c.memory.__avoidCreep = false);
           },
-          1.5,
+          1,
         );
       });
     });

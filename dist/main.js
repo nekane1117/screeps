@@ -3154,7 +3154,7 @@ var behavior20 = (controller) => {
     `progress:${(controller.progressTotal - controller.progress).toLocaleString()}`
   ]);
   updateUpgraderSize(controller.room);
-  const { harvester = [], upgrader = [], carrier = [] } = getCreepsInRoom(controller.room);
+  const { harvester = [], carrier = [] } = getCreepsInRoom(controller.room);
   const { container } = findMyStructures(controller.room);
   const containerSite = getSitesInRoom(controller.room).filter((s) => s.structureType === STRUCTURE_CONTAINER);
   const mainSpawn = getMainSpawn(controller.room);
@@ -3164,7 +3164,7 @@ var behavior20 = (controller) => {
     });
     const upgraderBody = getUpgraderBody(controller.room);
     if (myContainer) {
-      if (harvester.length > 0 && carrier.length > 0 && upgrader.filter((c) => (c.ticksToLive || Infinity) > upgraderBody.length * CREEP_SPAWN_TIME).length < 1 && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
+      if (harvester.length > 0 && carrier.length > 0 && upgraderBody.length && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
         const spawn = _(getSpawnsInRoom(controller.room)).find((s) => !s.spawning);
         if (spawn) {
           spawn.spawnCreep(upgraderBody, `U_${controller.room.name}_${Game.time}`, {
@@ -3201,22 +3201,30 @@ function updateUpgraderSize(room) {
   memory.carrySize.upgrader = (memory.carrySize.upgrader * border + _(room.getEventLog()).map((e) => e.event === EVENT_UPGRADE_CONTROLLER && e.data.energySpent).compact().sum()) / (border + 1);
 }
 function getUpgraderBody(room) {
-  var _a;
-  const requestSize = _.ceil((((_a = room.memory.carrySize) == null ? void 0 : _a.upgrader) || 1) * 2 / 3);
+  var _a, _b;
+  const { upgrader = [] } = getCreepsInRoom(room);
+  if (((_a = room.controller) == null ? void 0 : _a.level) === 8 && upgrader.length === 0) {
+    return [MOVE, WORK, CARRY];
+  }
+  const requestSize = (((_b = room.memory.carrySize) == null ? void 0 : _b.upgrader) || 1) * 2 - _(upgrader).sum((u) => u.getActiveBodyparts(WORK)) / 3;
   let totalCost = 0;
-  return _([CARRY]).concat(
-    ..._.range(requestSize).map(() => {
-      return [WORK, WORK, WORK, MOVE];
-    })
-  ).flatten().map((parts) => {
-    totalCost += BODYPART_COST[parts];
-    return {
-      parts,
-      totalCost
-    };
-  }).filter((p) => {
-    return p.totalCost <= room.energyAvailable;
-  }).map((p) => p.parts).value();
+  if (requestSize <= 0) {
+    return [];
+  } else {
+    return _([CARRY]).concat(
+      ..._.range(requestSize).map(() => {
+        return [WORK, WORK, WORK, MOVE];
+      })
+    ).flatten().map((parts) => {
+      totalCost += BODYPART_COST[parts];
+      return {
+        parts,
+        totalCost
+      };
+    }).filter((p) => {
+      return p.totalCost <= room.energyAvailable;
+    }).map((p) => p.parts).value();
+  }
 }
 
 // structure.extructor.ts
@@ -3512,7 +3520,7 @@ module.exports.loop = function() {
             c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
             c.memory.moved === OK && (c.memory.__avoidCreep = false);
           },
-          1.5
+          1
         );
       });
     });
