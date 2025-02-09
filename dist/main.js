@@ -3162,16 +3162,17 @@ function updateUpgraderSize(room) {
   const border = CREEP_LIFE_TIME / 4;
   memory.carrySize.upgrader = (memory.carrySize.upgrader * border + _(room.getEventLog()).map((e) => e.event === EVENT_UPGRADE_CONTROLLER && e.data.energySpent).compact().sum()) / (border + 1);
 }
+var SIZE_FACTOR = 1.1;
 function getUpgraderBody(room) {
   var _a, _b;
   const { upgrader = [] } = getCreepsInRoom(room);
   if (((_a = room.controller) == null ? void 0 : _a.level) === 8 && upgrader.length === 0) {
     return [MOVE, WORK, CARRY];
   }
-  if (upgrader.length >= 2) {
+  if (upgrader.length >= 1) {
     return [];
   }
-  const requestUnit = (Math.min((((_b = room.memory.carrySize) == null ? void 0 : _b.upgrader) || 1) * 1.1, 20) - _(upgrader).sum((u) => u.getActiveBodyparts(WORK))) / 3;
+  const requestUnit = Math.min((((_b = room.memory.carrySize) == null ? void 0 : _b.upgrader) || 1) * SIZE_FACTOR, 20) / 3;
   let totalCost = 0;
   if (requestUnit <= 0) {
     return [];
@@ -3487,13 +3488,13 @@ module.exports.loop = function() {
             c.memory.moved === OK && (c.memory.__avoidCreep = false);
             return {
               name: c.name,
-              const: Game.cpu.getUsed() - startUsage
+              cost: Game.cpu.getUsed() - startUsage
             };
           },
           1
         );
       });
-      console.log(JSON.stringify(_(usages).max((u) => u == null ? void 0 : u.const)));
+      console.log(JSON.stringify(_(usages).max((u) => u == null ? void 0 : u.cost)));
     });
   });
   logUsage("constructionSites", () => {

@@ -68,13 +68,13 @@ module.exports.loop = function () {
 
             return {
               name: c.name,
-              const: Game.cpu.getUsed() - startUsage,
+              cost: Game.cpu.getUsed() - startUsage,
             };
           },
           1,
         );
       });
-      console.log(JSON.stringify(_(usages).max((u) => u?.const)));
+      console.log(JSON.stringify(_(usages).max((u) => u?.cost)));
     });
   });
   logUsage("constructionSites", () => {
