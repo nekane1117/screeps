@@ -3463,14 +3463,15 @@ module.exports.loop = function() {
       });
     });
     logUsage("creep", () => {
-      Object.values(Game.creeps).forEach((c) => {
-        logUsage(
+      const usages = Object.values(Game.creeps).map((c) => {
+        return logUsage(
           c.name,
           () => {
             var _a, _b;
             if (c.spawning) {
               return;
             }
+            const startUsage = Game.cpu.getUsed();
             c.memory.moved = void 0;
             c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
               color: toColor(c)
@@ -3479,10 +3480,15 @@ module.exports.loop = function() {
             c.getActiveBodyparts(WORK) && c.pos.lookFor(LOOK_STRUCTURES).filter((s) => [STRUCTURE_CONTAINER, STRUCTURE_ROAD].includes(s.structureType) && s.hits < s.hitsMax).forEach((s) => c.repair(s));
             c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
             c.memory.moved === OK && (c.memory.__avoidCreep = false);
+            return {
+              name: c.name,
+              const: Game.cpu.getUsed() - startUsage
+            };
           },
           1
         );
       });
+      console.log(JSON.stringify(_(usages).max((u) => u == null ? void 0 : u.const)));
     });
   });
   logUsage("constructionSites", () => {

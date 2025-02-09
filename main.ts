@@ -43,13 +43,14 @@ module.exports.loop = function () {
     });
     // Creepの動き
     logUsage("creep", () => {
-      Object.values(Game.creeps).forEach((c) => {
-        logUsage(
+      const usages = Object.values(Game.creeps).map((c) => {
+        return logUsage(
           c.name,
           () => {
             if (c.spawning) {
               return;
             }
+            const startUsage = Game.cpu.getUsed();
             c.memory.moved = undefined;
             c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
               color: toColor(c),
@@ -64,10 +65,16 @@ module.exports.loop = function () {
             // 現在地の履歴を更新する
             c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
             c.memory.moved === OK && (c.memory.__avoidCreep = false);
+
+            return {
+              name: c.name,
+              const: Game.cpu.getUsed() - startUsage,
+            };
           },
           1,
         );
       });
+      console.log(JSON.stringify(_(usages).max((u) => u?.const)));
     });
   });
   logUsage("constructionSites", () => {
