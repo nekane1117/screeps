@@ -223,7 +223,7 @@ declare interface CarrierMemory extends CreepMemory {
    */
   mode: "🚛" | "🛒";
   /** 担当倉庫 */
-  storeId?: Id<StructureExtension | StructureSpawn | StructureLink | StructureStorage | StructureTerminal | StructureContainer>;
+  storeId?: Id<StructureLink | StructureContainer | StructureStorage | StructureTerminal | StructureFactory>;
   /** 配送先 */
   transferId?: Id<Parameters<Creep["transfer"]>[0]>;
 }
