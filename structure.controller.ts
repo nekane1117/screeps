@@ -95,7 +95,7 @@ function getUpgraderBody(room: Room): BodyPartConstant[] {
     return [MOVE, WORK, CARRY];
   }
 
-  if (upgrader.length > 2) {
+  if (upgrader.length >= 2) {
     return [];
   }
 

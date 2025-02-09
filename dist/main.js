@@ -3163,7 +3163,7 @@ function getUpgraderBody(room) {
   if (((_a = room.controller) == null ? void 0 : _a.level) === 8 && upgrader.length === 0) {
     return [MOVE, WORK, CARRY];
   }
-  if (upgrader.length > 2) {
+  if (upgrader.length >= 2) {
     return [];
   }
   const requestUnit = (Math.min((((_b = room.memory.carrySize) == null ? void 0 : _b.upgrader) || 1) * 1.1, 20) - _(upgrader).sum((u) => u.getActiveBodyparts(WORK))) / 3;
