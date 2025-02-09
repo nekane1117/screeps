@@ -755,7 +755,7 @@ var flags_default = {
 
 // role.carrier.ts
 var behavior4 = (creep) => {
-  var _a, _b;
+  var _a, _b, _c;
   const { room } = creep;
   const moveMeTo = (target, opt) => {
     customMove(creep, target, {
@@ -795,9 +795,9 @@ var behavior4 = (creep) => {
     }
   }
   checkMode();
-  const canter = room.storage || getMainSpawn(room);
-  if (!canter) {
-    return creep.say("canter not found");
+  const center = room.storage || getMainSpawn(room);
+  if (!center) {
+    return creep.say("center not found");
   }
   if (creep.memory.storeId) {
     const store = Game.getObjectById(creep.memory.storeId);
@@ -805,11 +805,14 @@ var behavior4 = (creep) => {
       creep.memory.storeId = void 0;
     }
   }
+  const { link, container, storage, terminal, factory } = findMyStructures(room);
   if (!creep.memory.storeId) {
-    const { link, container, storage, terminal, factory } = findMyStructures(room);
+    creep.memory.storeId = (_a = link.find((l) => getCapacityRate(l) > 0 && center.pos.inRangeTo(l, 3))) == null ? void 0 : _a.id;
+  }
+  if (!creep.memory.storeId) {
     const allTargets = _([link, container, storage]).flatten().compact();
     const max = allTargets.map((s) => s.store.energy).max() || Infinity;
-    creep.memory.storeId = (_a = creep.pos.findClosestByPath(allTargets.filter((t) => t.store.energy === max).run()) || factory || terminal || storage) == null ? void 0 : _a.id;
+    creep.memory.storeId = (_b = creep.pos.findClosestByPath(allTargets.filter((t) => t.store.energy === max).run()) || factory || terminal || storage) == null ? void 0 : _b.id;
   }
   if (creep.memory.storeId && creep.memory.mode === "\u{1F6D2}") {
     const store = Game.getObjectById(creep.memory.storeId);
@@ -855,7 +858,7 @@ var behavior4 = (creep) => {
       creep.memory.transferId = void 0;
     }
   }
-  creep.memory.transferId = creep.memory.transferId || ((_b = findTransferTarget(creep.room)) == null ? void 0 : _b.id);
+  creep.memory.transferId = creep.memory.transferId || ((_c = findTransferTarget(creep.room)) == null ? void 0 : _c.id);
   if (!creep.memory.transferId) {
     return ERR_NOT_FOUND;
   }
@@ -917,8 +920,8 @@ function isCarrier(creep) {
   return creep.memory.role === "carrier";
 }
 function findTransferTarget(room) {
-  const canter = room.storage || getMainSpawn(room);
-  if (!canter) {
+  const center = room.storage || getMainSpawn(room);
+  if (!center) {
     console.log(room.name, "center not found");
     return null;
   }
@@ -928,6 +931,8 @@ function findTransferTarget(room) {
       case "extension":
       case "spawn":
         return 0;
+      case "tower":
+        return 1;
       case "container":
         return 1e4;
       default:
@@ -935,7 +940,7 @@ function findTransferTarget(room) {
     }
   };
   return _(all).filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && s.store.energy < s.room.energyCapacityAvailable).sortBy((e) => {
-    return getPriority(e) + Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x);
+    return getPriority(e) + Math.atan2(e.pos.y - center.pos.y, center.pos.x - e.pos.x);
   }).first();
 }
 

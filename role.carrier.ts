@@ -57,9 +57,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
   checkMode();
-  const canter = room.storage || getMainSpawn(room);
-  if (!canter) {
-    return creep.say("canter not found");
+  const center = room.storage || getMainSpawn(room);
+  if (!center) {
+    return creep.say("center not found");
   }
   // https://docs.screeps.com/simultaneous-actions.html
 
@@ -73,10 +73,15 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
-  if (!creep.memory.storeId) {
-    // 取り出していいやつら
-    const { link, container, storage, terminal, factory } = findMyStructures(room);
+  // 取り出していいやつら
+  const { link, container, storage, terminal, factory } = findMyStructures(room);
 
+  // つっかえるので中央のリンクは最優先
+  if (!creep.memory.storeId) {
+    creep.memory.storeId = link.find((l) => getCapacityRate(l) > 0 && center.pos.inRangeTo(l, 3))?.id;
+  }
+
+  if (!creep.memory.storeId) {
     // 連結する
     const allTargets = _([link, container, storage])
       .flatten<StructureLink | StructureContainer | StructureStorage | StructureTerminal | StructureFactory>()
@@ -215,8 +220,8 @@ type StructureWithStore = Extract<AnyStructure, { store: StoreDefinition }>;
  * 共通エネルギー溜める順
  */
 export function findTransferTarget(room: Room) {
-  const canter = room.storage || getMainSpawn(room);
-  if (!canter) {
+  const center = room.storage || getMainSpawn(room);
+  if (!center) {
     console.log(room.name, "center not found");
     return null;
   }
@@ -230,6 +235,8 @@ export function findTransferTarget(room: Room) {
       case "extension":
       case "spawn":
         return 0;
+      case "tower":
+        return 1;
       case "container":
         return 10000;
       default:
@@ -240,7 +247,7 @@ export function findTransferTarget(room: Room) {
   return _(all)
     .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && s.store.energy < s.room.energyCapacityAvailable)
     .sortBy((e) => {
-      return getPriority(e) + Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x);
+      return getPriority(e) + Math.atan2(e.pos.y - center.pos.y, center.pos.x - e.pos.x);
     })
     .first();
 }
