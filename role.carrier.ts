@@ -236,8 +236,27 @@ export function findTransferTarget(room: Room) {
       case "spawn":
         return 0;
       case "tower":
-        return 1;
+        return 200;
       case "container":
+        // 周囲にリンクがあるときは送らない
+        if (
+          s.pos.findInRange(FIND_STRUCTURES, 3, {
+            filter(s: AnyStructure) {
+              return s.structureType === STRUCTURE_LINK;
+            },
+          }).length > 0 ||
+          s.pos.findInRange(FIND_MINERALS, 3, {
+            filter(s: AnyStructure) {
+              return s.structureType === STRUCTURE_LINK;
+            },
+          }).length > 0
+        ) {
+          return 10000;
+        } else {
+          // それ以外は2番目
+          return 100;
+        }
+      case "link":
         return 10000;
       default:
         return 1000;
@@ -245,7 +264,7 @@ export function findTransferTarget(room: Room) {
   };
 
   return _(all)
-    .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && s.store.energy < s.room.energyCapacityAvailable)
+    .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && s.store.energy < s.room.energyCapacityAvailable * 2)
     .sortBy((e) => {
       return getPriority(e) + Math.atan2(e.pos.y - center.pos.y, center.pos.x - e.pos.x);
     })

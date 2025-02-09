@@ -29,19 +29,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     });
   };
 
-  const { builder = [] } = getCreepsInRoom(creep.room);
-
-  if (mySite.length === 0 && builder.length > 1) {
-    const closestSpawn = creep.pos.findClosestByPath(findMyStructures(creep.room).spawn);
-
-    if (closestSpawn) {
-      if (closestSpawn.recycleCreep(creep) === ERR_NOT_IN_RANGE) {
-        moveMeTo(closestSpawn);
-      }
-    }
-    return;
-  }
-
   const checkMode = () => {
     const newMode: BuilderMemory["mode"] = ((c: Builder) => {
       if (c.memory.mode === "👷" && c.store.energy === 0) {
@@ -143,7 +130,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         }
 
         const site = Game.getObjectById(creep.memory.buildingId);
-        console.log(JSON.stringify(site));
         if (site) {
           return _((creep.memory.built = creep.build(site)))
             .tap((built) => {
@@ -258,7 +244,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     // withdraw
     if (!creep.memory.storeId) {
-      creep.memory.storeId = creep.pos.findClosestByPath(
+      creep.memory.storeId = creep.pos.findClosestByRange(
         _.compact([
           ...container,
           ...link.filter((l) => !l.cooldown && l.store.energy),
@@ -267,7 +253,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           ),
         ]),
         {
-          filter: (s) => {
+          filter: (s: StructureContainer | StructureLink) => {
             // いっぱいあるやつからだけ出す
             return s.store.energy >= capacityThreshold;
           },
@@ -279,7 +265,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     if (!creep.memory.storeId && container.length === 0) {
       const { harvester = [] } = getCreepsInRoom(creep.room);
-      const h = creep.pos.findClosestByPath(harvester);
+      const h = creep.pos.findClosestByRange(harvester);
       if (h?.transfer(creep, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
         moveMeTo(h);
       }

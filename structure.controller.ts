@@ -87,7 +87,7 @@ function updateUpgraderSize(room: Room) {
     (border + 1);
 }
 
-const SIZE_FACTOR = 1.1;
+const SIZE_FACTOR = 2;
 
 function getUpgraderBody(room: Room): BodyPartConstant[] {
   const { upgrader = [] } = getCreepsInRoom(room);

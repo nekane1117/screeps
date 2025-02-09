@@ -43,7 +43,7 @@ module.exports.loop = function () {
     });
     // Creepの動き
     logUsage("creep", () => {
-      const usages = Object.values(Game.creeps).map((c) => {
+      Object.values(Game.creeps).map((c) => {
         return logUsage(
           c.name,
           () => {
@@ -74,7 +74,6 @@ module.exports.loop = function () {
           1,
         );
       });
-      console.log(JSON.stringify(_(usages).max((u) => u?.cost)));
     });
   });
   logUsage("constructionSites", () => {

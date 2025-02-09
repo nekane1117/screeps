@@ -932,14 +932,28 @@ function findTransferTarget(room) {
       case "spawn":
         return 0;
       case "tower":
-        return 1;
+        return 200;
       case "container":
+        if (s.pos.findInRange(FIND_STRUCTURES, 3, {
+          filter(s2) {
+            return s2.structureType === STRUCTURE_LINK;
+          }
+        }).length > 0 || s.pos.findInRange(FIND_MINERALS, 3, {
+          filter(s2) {
+            return s2.structureType === STRUCTURE_LINK;
+          }
+        }).length > 0) {
+          return 1e4;
+        } else {
+          return 100;
+        }
+      case "link":
         return 1e4;
       default:
         return 1e3;
     }
   };
-  return _(all).filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && s.store.energy < s.room.energyCapacityAvailable).sortBy((e) => {
+  return _(all).filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && s.store.energy < s.room.energyCapacityAvailable * 2).sortBy((e) => {
     return getPriority(e) + Math.atan2(e.pos.y - center.pos.y, center.pos.x - e.pos.x);
   }).first();
 }
@@ -967,16 +981,6 @@ var behavior5 = (creep) => {
       ...opt
     });
   };
-  const { builder = [] } = getCreepsInRoom(creep.room);
-  if (mySite.length === 0 && builder.length > 1) {
-    const closestSpawn = creep.pos.findClosestByPath(findMyStructures(creep.room).spawn);
-    if (closestSpawn) {
-      if (closestSpawn.recycleCreep(creep) === ERR_NOT_IN_RANGE) {
-        moveMeTo(closestSpawn);
-      }
-    }
-    return;
-  }
   const checkMode = () => {
     const newMode = ((c) => {
       if (c.memory.mode === "\u{1F477}" && c.store.energy === 0) {
@@ -1038,7 +1042,6 @@ var behavior5 = (creep) => {
           return;
         }
         const site = Game.getObjectById(creep.memory.buildingId);
-        console.log(JSON.stringify(site));
         if (site) {
           return _(creep.memory.built = creep.build(site)).tap((built) => {
             switch (built) {
@@ -1122,7 +1125,7 @@ var behavior5 = (creep) => {
       creep.memory.storeId = void 0;
     }
     if (!creep.memory.storeId) {
-      creep.memory.storeId = (_c = creep.pos.findClosestByPath(
+      creep.memory.storeId = (_c = creep.pos.findClosestByRange(
         _.compact([
           ...container,
           ...link.filter((l) => !l.cooldown && l.store.energy),
@@ -1140,7 +1143,7 @@ var behavior5 = (creep) => {
     creep.memory.storeId = creep.memory.storeId || ((_d = creep.room.storage) == null ? void 0 : _d.id);
     if (!creep.memory.storeId && container.length === 0) {
       const { harvester = [] } = getCreepsInRoom(creep.room);
-      const h = creep.pos.findClosestByPath(harvester);
+      const h = creep.pos.findClosestByRange(harvester);
       if ((h == null ? void 0 : h.transfer(creep, RESOURCE_ENERGY)) === ERR_NOT_IN_RANGE) {
         moveMeTo(h);
       }
@@ -3161,7 +3164,7 @@ function updateUpgraderSize(room) {
   const border = CREEP_LIFE_TIME / 4;
   memory.carrySize.upgrader = (memory.carrySize.upgrader * border + _(room.getEventLog()).map((e) => e.event === EVENT_UPGRADE_CONTROLLER && e.data.energySpent).compact().sum()) / (border + 1);
 }
-var SIZE_FACTOR = 1.1;
+var SIZE_FACTOR = 2;
 function getUpgraderBody(room) {
   var _a, _b;
   const { upgrader = [] } = getCreepsInRoom(room);
@@ -3468,7 +3471,7 @@ module.exports.loop = function() {
       });
     });
     logUsage("creep", () => {
-      const usages = Object.values(Game.creeps).map((c) => {
+      Object.values(Game.creeps).map((c) => {
         return logUsage(
           c.name,
           () => {
@@ -3493,7 +3496,6 @@ module.exports.loop = function() {
           1
         );
       });
-      console.log(JSON.stringify(_(usages).max((u) => u == null ? void 0 : u.cost)));
     });
   });
   logUsage("constructionSites", () => {
