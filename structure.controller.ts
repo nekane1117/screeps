@@ -95,6 +95,10 @@ function getUpgraderBody(room: Room): BodyPartConstant[] {
     return [MOVE, WORK, CARRY];
   }
 
+  if (upgrader.length > 2) {
+    return [];
+  }
+
   // 実際に欲しいサイズ[((実効値 * 係数) - 今あるWORKの数) / 個数単位]
   const requestUnit = (Math.min((room.memory.carrySize?.upgrader || 1) * 1.1, 20) - _(upgrader).sum((u) => u.getActiveBodyparts(WORK))) / 3;
 
@@ -103,7 +107,7 @@ function getUpgraderBody(room: Room): BodyPartConstant[] {
   if (requestUnit <= 0) {
     return [];
   } else {
-    return _([CARRY])
+    return _([CARRY, MOVE])
       .concat(
         ..._.range(requestUnit).map(() => {
           return [WORK, WORK, WORK, MOVE];

@@ -78,13 +78,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     const { link, container, storage, terminal, factory } = findMyStructures(room);
 
     // 連結する
-    const allTargets = _([link, container, storage, terminal, factory])
+    const allTargets = _([link, container, storage])
       .flatten<StructureLink | StructureContainer | StructureStorage | StructureTerminal | StructureFactory>()
       .compact();
 
     // 一番あるやつ
-    const max = allTargets.map((s) => s.store.energy).max();
-    creep.memory.storeId = creep.pos.findClosestByPath(allTargets.filter((t) => t.store.energy === max).run())?.id;
+    const max = allTargets.map((s) => s.store.energy).max() || Infinity;
+    creep.memory.storeId = (creep.pos.findClosestByPath(allTargets.filter((t) => t.store.energy === max).run()) || factory || terminal || storage)?.id;
   }
   //#endregion
   // region 取り出し処理###############################################################################################
@@ -215,38 +215,32 @@ type StructureWithStore = Extract<AnyStructure, { store: StoreDefinition }>;
  * 共通エネルギー溜める順
  */
 export function findTransferTarget(room: Room) {
-  const mainSpawn = getMainSpawn(room);
-  const { link } = findMyStructures(room);
-  const canter =
-    mainSpawn?.pos.findClosestByRange(link, {
-      filter: (l: StructureLink) => mainSpawn.pos.inRangeTo(l, 3),
-    }) ||
-    room.storage ||
-    getMainSpawn(room);
+  const canter = room.storage || getMainSpawn(room);
   if (!canter) {
     console.log(room.name, "center not found");
     return null;
   }
 
-  const hasStore = (x: AnyStructure): x is StructureWithStore => {
-    return "store" in x;
+  const all = _(findMyStructures(room).all)
+    .filter((x) => "store" in x)
+    .run() as StructureWithStore[];
+
+  const getPriority = (s: StructureWithStore) => {
+    switch (s.structureType) {
+      case "extension":
+      case "spawn":
+        return 0;
+      case "container":
+        return 10000;
+      default:
+        return 1000;
+    }
   };
 
-  const { extension } = findMyStructures(room);
-  const all = _(findMyStructures(room).all).filter(hasStore).run() as StructureWithStore[];
-
-  return (
-    _(extension)
-      .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
-      .sortBy((e) => {
-        return Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x);
-      })
-      .first() ||
-    _(all)
-      .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
-      .sortBy((e) => {
-        return Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x);
-      })
-      .first()
-  );
+  return _(all)
+    .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && s.store.energy < s.room.energyCapacityAvailable)
+    .sortBy((e) => {
+      return getPriority(e) + Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x);
+    })
+    .first();
 }

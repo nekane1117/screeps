@@ -7,7 +7,7 @@ import { findMyStructures, isHighway, logUsage } from "./utils";
 
 module.exports.loop = function () {
   console.log(`start ${Game.time}`);
-  if (Game.cpu.bucket > 200) {
+  if (Game.cpu.bucket === undefined || Game.cpu.bucket > 200) {
     Memory.do = true;
   } else if (Game.cpu.bucket < 100) {
     Memory.do = false;

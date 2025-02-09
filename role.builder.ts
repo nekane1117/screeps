@@ -143,6 +143,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         }
 
         const site = Game.getObjectById(creep.memory.buildingId);
+        console.log(JSON.stringify(site));
         if (site) {
           return _((creep.memory.built = creep.build(site)))
             .tap((built) => {

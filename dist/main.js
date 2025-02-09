@@ -807,9 +807,9 @@ var behavior4 = (creep) => {
   }
   if (!creep.memory.storeId) {
     const { link, container, storage, terminal, factory } = findMyStructures(room);
-    const allTargets = _([link, container, storage, terminal, factory]).flatten().compact();
-    const max = allTargets.map((s) => s.store.energy).max();
-    creep.memory.storeId = (_a = creep.pos.findClosestByPath(allTargets.filter((t) => t.store.energy === max).run())) == null ? void 0 : _a.id;
+    const allTargets = _([link, container, storage]).flatten().compact();
+    const max = allTargets.map((s) => s.store.energy).max() || Infinity;
+    creep.memory.storeId = (_a = creep.pos.findClosestByPath(allTargets.filter((t) => t.store.energy === max).run()) || factory || terminal || storage) == null ? void 0 : _a.id;
   }
   if (creep.memory.storeId && creep.memory.mode === "\u{1F6D2}") {
     const store = Game.getObjectById(creep.memory.storeId);
@@ -917,24 +917,25 @@ function isCarrier(creep) {
   return creep.memory.role === "carrier";
 }
 function findTransferTarget(room) {
-  const mainSpawn = getMainSpawn(room);
-  const { link } = findMyStructures(room);
-  const canter = (mainSpawn == null ? void 0 : mainSpawn.pos.findClosestByRange(link, {
-    filter: (l) => mainSpawn.pos.inRangeTo(l, 3)
-  })) || room.storage || getMainSpawn(room);
+  const canter = room.storage || getMainSpawn(room);
   if (!canter) {
     console.log(room.name, "center not found");
     return null;
   }
-  const hasStore = (x) => {
-    return "store" in x;
+  const all = _(findMyStructures(room).all).filter((x) => "store" in x).run();
+  const getPriority = (s) => {
+    switch (s.structureType) {
+      case "extension":
+      case "spawn":
+        return 0;
+      case "container":
+        return 1e4;
+      default:
+        return 1e3;
+    }
   };
-  const { extension } = findMyStructures(room);
-  const all = _(findMyStructures(room).all).filter(hasStore).run();
-  return _(extension).filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0).sortBy((e) => {
-    return Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x);
-  }).first() || _(all).filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0).sortBy((e) => {
-    return Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x);
+  return _(all).filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && s.store.energy < s.room.energyCapacityAvailable).sortBy((e) => {
+    return getPriority(e) + Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x);
   }).first();
 }
 
@@ -1032,6 +1033,7 @@ var behavior5 = (creep) => {
           return;
         }
         const site = Game.getObjectById(creep.memory.buildingId);
+        console.log(JSON.stringify(site));
         if (site) {
           return _(creep.memory.built = creep.build(site)).tap((built) => {
             switch (built) {
@@ -3161,12 +3163,15 @@ function getUpgraderBody(room) {
   if (((_a = room.controller) == null ? void 0 : _a.level) === 8 && upgrader.length === 0) {
     return [MOVE, WORK, CARRY];
   }
+  if (upgrader.length > 2) {
+    return [];
+  }
   const requestUnit = (Math.min((((_b = room.memory.carrySize) == null ? void 0 : _b.upgrader) || 1) * 1.1, 20) - _(upgrader).sum((u) => u.getActiveBodyparts(WORK))) / 3;
   let totalCost = 0;
   if (requestUnit <= 0) {
     return [];
   } else {
-    return _([CARRY]).concat(
+    return _([CARRY, MOVE]).concat(
       ..._.range(requestUnit).map(() => {
         return [WORK, WORK, WORK, MOVE];
       })
@@ -3422,7 +3427,7 @@ var structures_default = structures;
 // main.ts
 module.exports.loop = function() {
   console.log(`start ${Game.time}`);
-  if (Game.cpu.bucket > 200) {
+  if (Game.cpu.bucket === void 0 || Game.cpu.bucket > 200) {
     Memory.do = true;
   } else if (Game.cpu.bucket < 100) {
     Memory.do = false;
