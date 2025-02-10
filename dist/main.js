@@ -27,45 +27,41 @@ function ObjectEntries(o) {
 var TERMINAL_LIMIT = 1e4;
 var TERMINAL_THRESHOLD = 1e3;
 var LAB_STRATEGY = {
-  [RESOURCE_LEMERGIUM]: [
-    RESOURCE_LEMERGIUM,
-    RESOURCE_HYDROGEN,
-    RESOURCE_LEMERGIUM_HYDRIDE,
-    RESOURCE_OXYGEN,
-    RESOURCE_HYDROXIDE,
-    RESOURCE_LEMERGIUM_ACID,
+  builder: [
+    RESOURCE_CATALYZED_LEMERGIUM_ACID,
     RESOURCE_CATALYST,
-    RESOURCE_CATALYZED_LEMERGIUM_ACID
-  ],
-  [RESOURCE_OXYGEN]: [
-    RESOURCE_LEMERGIUM,
-    RESOURCE_HYDROGEN,
-    RESOURCE_LEMERGIUM_HYDRIDE,
-    RESOURCE_OXYGEN,
-    RESOURCE_HYDROXIDE,
     RESOURCE_LEMERGIUM_ACID,
-    RESOURCE_CATALYST,
-    RESOURCE_CATALYZED_LEMERGIUM_ACID
-  ],
-  [RESOURCE_HYDROGEN]: [
-    RESOURCE_LEMERGIUM,
-    RESOURCE_HYDROGEN,
-    RESOURCE_LEMERGIUM_HYDRIDE,
-    RESOURCE_OXYGEN,
     RESOURCE_HYDROXIDE,
-    RESOURCE_LEMERGIUM_ACID,
-    RESOURCE_CATALYST,
-    RESOURCE_CATALYZED_LEMERGIUM_ACID
+    RESOURCE_OXYGEN,
+    RESOURCE_LEMERGIUM_HYDRIDE,
+    RESOURCE_HYDROGEN,
+    RESOURCE_LEMERGIUM
   ],
-  [RESOURCE_UTRIUM]: [
+  mineralHarvester: [
+    RESOURCE_CATALYZED_LEMERGIUM_ALKALIDE,
+    RESOURCE_CATALYST,
+    RESOURCE_LEMERGIUM_ALKALIDE,
+    RESOURCE_HYDROXIDE,
+    RESOURCE_HYDROGEN,
+    RESOURCE_UTRIUM_OXIDE,
+    RESOURCE_OXYGEN,
+    RESOURCE_UTRIUM
+  ],
+  upgrader: [
+    RESOURCE_CATALYZED_GHODIUM_ACID,
+    RESOURCE_CATALYST,
+    RESOURCE_GHODIUM_ACID,
+    RESOURCE_HYDROXIDE,
+    RESOURCE_OXYGEN,
+    RESOURCE_GHODIUM_HYDRIDE,
+    RESOURCE_HYDROGEN,
+    RESOURCE_GHODIUM,
+    RESOURCE_UTRIUM_LEMERGITE,
     RESOURCE_UTRIUM,
-    RESOURCE_HYDROGEN,
-    RESOURCE_UTRIUM_HYDRIDE,
-    RESOURCE_OXYGEN,
-    RESOURCE_HYDROXIDE,
-    RESOURCE_UTRIUM_ACID,
-    RESOURCE_CATALYST,
-    RESOURCE_CATALYZED_UTRIUM_ACID
+    RESOURCE_LEMERGIUM,
+    RESOURCE_ZYNTHIUM_KEANITE,
+    RESOURCE_KEANIUM,
+    RESOURCE_ZYNTHIUM
   ]
 };
 var REVERSE_REACTIONS = {
@@ -778,7 +774,7 @@ var behavior4 = (creep) => {
   if (!isCarrier(creep)) {
     return console.log(`${creep.name} is not Carrier`);
   }
-  function checkMode() {
+  function checkMode2() {
     var _a2;
     if (!isCarrier(creep)) {
       return console.log(`${creep.name} is not Carrier`);
@@ -804,7 +800,7 @@ var behavior4 = (creep) => {
       }
     }
   }
-  checkMode();
+  checkMode2();
   const center = room.storage || getMainSpawn(room);
   if (!center) {
     return creep.say("center not found");
@@ -836,11 +832,11 @@ var behavior4 = (creep) => {
           // 空の時
           case ERR_NOT_ENOUGH_RESOURCES:
             creep.memory.storeId = void 0;
-            checkMode();
+            checkMode2();
             break;
           // お腹いっぱい
           case ERR_FULL:
-            checkMode();
+            checkMode2();
             break;
           // 有りえない系
           case ERR_NOT_IN_RANGE:
@@ -856,7 +852,7 @@ var behavior4 = (creep) => {
           case ERR_BUSY:
           default:
             creep.memory.storeId = void 0;
-            checkMode();
+            checkMode2();
             break;
         }
       }
@@ -883,7 +879,7 @@ var behavior4 = (creep) => {
         switch (returnVal) {
           // 手持ちがない
           case ERR_NOT_ENOUGH_RESOURCES:
-            checkMode();
+            checkMode2();
             break;
           // 対象が変
           case ERR_INVALID_TARGET:
@@ -977,7 +973,7 @@ var behavior5 = (creep) => {
       ...opt
     });
   };
-  const checkMode = () => {
+  const checkMode2 = () => {
     const newMode = ((c) => {
       if (c.memory.mode === "\u{1F477}" && c.store.energy === 0) {
         return "\u{1F6D2}";
@@ -996,7 +992,7 @@ var behavior5 = (creep) => {
       creep.say(creep.memory.mode);
     }
   };
-  checkMode();
+  checkMode2();
   const { road, rampart, container, link } = findMyStructures(creep.room);
   if (creep.memory.mode === "\u{1F477}") {
     if (creep.memory.firstAidId) {
@@ -1393,7 +1389,7 @@ var behavior8 = (creep) => {
   if (!creep.room.storage) {
     return creep.suicide();
   }
-  function checkMode() {
+  function checkMode2() {
     var _a2;
     if (!isGatherer(creep)) {
       return console.log(`${creep.name} is not Gatherer`);
@@ -1418,7 +1414,7 @@ var behavior8 = (creep) => {
       }
     }
   }
-  checkMode();
+  checkMode2();
   const center = room.storage || getMainSpawn(room);
   if (!center) {
     return creep.say("center not found");
@@ -1460,11 +1456,11 @@ var behavior8 = (creep) => {
           // 空の時
           case ERR_NOT_ENOUGH_RESOURCES:
             creep.memory.storeId = void 0;
-            checkMode();
+            checkMode2();
             break;
           // お腹いっぱい
           case ERR_FULL:
-            checkMode();
+            checkMode2();
             break;
           // 有りえない系
           case ERR_NOT_IN_RANGE:
@@ -1481,7 +1477,7 @@ var behavior8 = (creep) => {
           case ERR_BUSY:
           default:
             creep.memory.storeId = void 0;
-            checkMode();
+            checkMode2();
             break;
         }
       }
@@ -1498,7 +1494,7 @@ var behavior8 = (creep) => {
       switch (returnVal) {
         // 手持ちがない
         case ERR_NOT_ENOUGH_RESOURCES:
-          checkMode();
+          checkMode2();
           break;
         // 対象が変
         // 有りえない系
@@ -1638,7 +1634,7 @@ var behavior10 = (creep) => {
   if (!isLabManager(creep)) {
     return console.log(`${creep.name} is not LabManager`);
   }
-  function checkMode() {
+  function checkMode2() {
     var _a2;
     if (!isLabManager(creep)) {
       return console.log(`${creep.name} is not LabManager`);
@@ -1657,7 +1653,7 @@ var behavior10 = (creep) => {
       }
     }
   }
-  checkMode();
+  checkMode2();
   const { factory } = findMyStructures(creep.room);
   const labs = _([factory && Object.assign(factory, factory && { memory: Memory.factories[factory.id] }), ...getLabs(room).value()]).compact();
   if (creep.memory.storeId) {
@@ -1776,11 +1772,11 @@ var behavior10 = (creep) => {
           // 空の時
           case ERR_NOT_ENOUGH_RESOURCES:
             creep.memory.storeId = void 0;
-            checkMode();
+            checkMode2();
             break;
           // お腹いっぱい
           case ERR_FULL:
-            checkMode();
+            checkMode2();
             break;
           // 有りえない系
           case ERR_NOT_IN_RANGE:
@@ -1796,7 +1792,7 @@ var behavior10 = (creep) => {
           case ERR_BUSY:
           default:
             creep.memory.storeId = void 0;
-            checkMode();
+            checkMode2();
             break;
         }
       }
@@ -1832,7 +1828,7 @@ var behavior10 = (creep) => {
           switch (returnVal) {
             // 手持ちがない
             case ERR_NOT_ENOUGH_RESOURCES:
-              checkMode();
+              checkMode2();
               break;
             // 対象が変
             case ERR_INVALID_TARGET:
@@ -1880,7 +1876,7 @@ var behavior11 = (creep) => {
     return console.log(`${creep.name} is not MineralCarrier`);
   }
   const mineral = creep.room.find(FIND_MINERALS)[0];
-  function checkMode() {
+  function checkMode2() {
     var _a2;
     if (!isMc(creep)) {
       return console.log(`${creep.name} is not MineralCarrier`);
@@ -1906,7 +1902,7 @@ var behavior11 = (creep) => {
       }
     }
   }
-  checkMode();
+  checkMode2();
   if (!mineral) {
     return creep.suicide();
   }
@@ -1944,11 +1940,11 @@ var behavior11 = (creep) => {
           // 空の時
           case ERR_NOT_ENOUGH_RESOURCES:
             creep.memory.storeId = void 0;
-            checkMode();
+            checkMode2();
             break;
           // お腹いっぱい
           case ERR_FULL:
-            checkMode();
+            checkMode2();
             break;
           // 有りえない系
           case ERR_NOT_IN_RANGE:
@@ -1964,7 +1960,7 @@ var behavior11 = (creep) => {
           case ERR_BUSY:
           default:
             creep.memory.storeId = void 0;
-            checkMode();
+            checkMode2();
             break;
         }
       }
@@ -1994,7 +1990,7 @@ var behavior11 = (creep) => {
           switch (returnVal) {
             // 手持ちがない
             case ERR_NOT_ENOUGH_RESOURCES:
-              checkMode();
+              checkMode2();
               break;
             // 対象が変
             case ERR_INVALID_TARGET:
@@ -2046,7 +2042,7 @@ var behavior12 = (creep) => {
   if (!mineral) {
     return creep.suicide();
   }
-  const checkMode = () => {
+  const checkMode2 = () => {
     const newMode = ((c) => {
       if (c.memory.mode !== "\u{1F69B}" && c.memory.mode !== "\u{1F6D2}") {
         return "\u{1F6D2}";
@@ -2071,7 +2067,7 @@ var behavior12 = (creep) => {
       creep.say(creep.memory.mode);
     }
   };
-  checkMode();
+  checkMode2();
   if (creep.memory.mode === "\u{1F69B}") {
     delivery(creep);
   } else {
@@ -2680,12 +2676,9 @@ var behaviors = {
 function behavior17(labs, mineral) {
   var _a;
   const firstLab = _.first(labs);
-  if (!firstLab) {
+  const room = firstLab == null ? void 0 : firstLab.room;
+  if (!firstLab || !room) {
     return;
-  }
-  const strategy = LAB_STRATEGY[mineral.mineralType];
-  if (!strategy) {
-    return console.log(mineral.mineralType, "not have strategy");
   }
   firstLab.room.memory.labs = firstLab.room.memory.labs || {};
   const labId = labs.map((lab) => lab.id);
@@ -2696,7 +2689,7 @@ function behavior17(labs, mineral) {
   });
   const { labManager = [] } = getCreepsInRoom(firstLab.room);
   const bodies = filterBodiesByCost("labManager", firstLab.room.energyAvailable).bodies;
-  if (firstLab.room.terminal && firstLab.room.terminal.store.energy > firstLab.room.energyCapacityAvailable && firstLab.room.energyAvailable === firstLab.room.energyCapacityAvailable && labManager.filter((lm) => (lm.ticksToLive || Infinity) > bodies.length * CREEP_SPAWN_TIME).length === 0) {
+  if (firstLab.room.terminal && firstLab.room.terminal.store.energy > firstLab.room.energyCapacityAvailable && firstLab.room.energyAvailable === firstLab.room.energyCapacityAvailable && labManager.length === 0) {
     const spawn = (_a = getSpawnsInRoom(firstLab.pos.roomName)) == null ? void 0 : _a.find((s) => !s.spawning);
     if (spawn) {
       spawn.spawnCreep(bodies, `Lm_${firstLab.room.name}_${Game.time}`, {
@@ -2708,11 +2701,23 @@ function behavior17(labs, mineral) {
       });
     }
   }
-  const labWithMemory = labs.slice(0, strategy.length).map((lab, i) => {
-    const memory = lab.room.memory.labs[lab.id] || (lab.room.memory.labs[lab.id] = {
-      expectedType: strategy[i]
-    });
-    memory.expectedType = strategy[i];
+  room.memory.labMode = checkMode(room);
+  const strategy = _.clone(LAB_STRATEGY[room.memory.labMode]);
+  if (!strategy) {
+    console.log("strategy is not defined: " + room.memory.labMode);
+    return ERR_INVALID_ARGS;
+  }
+  while (strategy.length > labs.length) {
+    if (strategy.slice(-3).every((r) => (getAllResouces(room)[r] || 0) > 1e3)) {
+      strategy.pop();
+    } else {
+      break;
+    }
+  }
+  const labWithMemory = labs.map((lab, i) => {
+    const expectedType = strategy[strategy.length - labs.length - i];
+    const memory = lab.room.memory.labs[lab.id] || (lab.room.memory.labs[lab.id] = { expectedType });
+    memory.expectedType = expectedType;
     return Object.assign(lab, { memory });
   });
   labWithMemory.map((lab) => {
@@ -2733,6 +2738,37 @@ function behavior17(labs, mineral) {
     }
     return;
   });
+}
+var allResouces = { timestamp: 0 };
+function getAllResouces(room) {
+  allResouces = allResouces || { timestamp: Game.time };
+  if (allResouces.timestamp === Game.time) {
+    return allResouces;
+  }
+  const { factory } = findMyStructures(room);
+  for (const storage of _.compact([room.storage, room.terminal, factory])) {
+    for (const resource of RESOURCES_ALL) {
+      allResouces[resource] = (allResouces[resource] || 0) + storage.store.getUsedCapacity(resource);
+    }
+  }
+  return allResouces;
+}
+function checkMode(room) {
+  const { builder = [], mineralHarvester = [] } = getCreepsInRoom(room);
+  if (isUnBoosted(mineralHarvester)) {
+    return "mineralHarvester";
+  } else if (getSitesInRoom(room).length > 0 && isUnBoosted(builder)) {
+    return "builder";
+  } else {
+    return "upgrader";
+  }
+}
+function isUnBoosted(creeps) {
+  return creeps.find(
+    (c) => c.body.find((b) => {
+      return b.type === WORK && !b.boost;
+    })
+  );
 }
 
 // room.source.ts

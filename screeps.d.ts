@@ -1,10 +1,5 @@
 /// <reference types="screeps" />
 
-declare interface SourceMemory {
-  /** 使える場所の数 */
-  positions: number;
-}
-
 declare type ROLES =
   | "harvester"
   | "carrier"
@@ -145,6 +140,8 @@ declare interface RoomMemory {
 
   /** 固定で道路を置くところの配列 */
   staticRoad: { x: number; y: number }[];
+
+  labMode: ROLES;
 }
 
 declare type CreepsCache = Partial<{
