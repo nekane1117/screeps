@@ -1,6 +1,7 @@
+import { TERMINAL_LIMIT } from "./constants";
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, getMainSpawn, pickUpAll, withdrawBy } from "./util.creep";
-import { findMyStructures, getCapacityRate } from "./utils";
+import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, pickUpAll, withdrawBy } from "./util.creep";
+import { findMyStructures, getCapacityRate, getLabs } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const { room } = creep;
@@ -214,59 +215,54 @@ function isCarrier(creep: Creeps): creep is Carrier {
   return creep.memory.role === "carrier";
 }
 
-type StructureWithStore = Extract<AnyStructure, { store: StoreDefinition }>;
-
 /**
  * 共通エネルギー溜める順
  */
 export function findTransferTarget(room: Room) {
-  const center = room.storage || getMainSpawn(room);
-  if (!center) {
+  const canter = room.storage || getMainSpawn(room);
+  if (!canter) {
     console.log(room.name, "center not found");
     return null;
   }
-
-  const all = _(findMyStructures(room).all)
-    .filter((x) => "store" in x)
-    .run() as StructureWithStore[];
-
-  const getPriority = (s: StructureWithStore) => {
-    switch (s.structureType) {
-      case "extension":
-      case "spawn":
-        return 0;
-      case "tower":
-        return 200;
-      case "container":
-        // 周囲にリンクがあるときは送らない
-        if (
-          s.pos.findInRange(FIND_STRUCTURES, 3, {
-            filter(s: AnyStructure) {
-              return s.structureType === STRUCTURE_LINK;
-            },
-          }).length > 0 ||
-          s.pos.findInRange(FIND_MINERALS, 3, {
-            filter(s: AnyStructure) {
-              return s.structureType === STRUCTURE_LINK;
-            },
-          }).length > 0
-        ) {
-          return 10000;
-        } else {
-          // それ以外は2番目
-          return 100;
-        }
-      case "link":
-        return 10000;
-      default:
-        return 1000;
-    }
-  };
-
-  return _(all)
-    .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && s.store.energy < s.room.energyCapacityAvailable * 2)
-    .sortBy((e) => {
-      return getPriority(e) + Math.atan2(e.pos.y - center.pos.y, center.pos.x - e.pos.x);
-    })
-    .first();
+  const { extension, spawn, tower, container, factory } = findMyStructures(room);
+  const controllerContaeiner = room.controller && _(room.controller.pos.findInRange(container, 3)).first();
+  //spawnかextension
+  return (
+    _([...extension, ...spawn])
+      .filter(
+        (s) =>
+          s.store.getFreeCapacity(RESOURCE_ENERGY) &&
+          !_(Object.values(getCreepsInRoom(room)))
+            .flatten<Creeps>()
+            .find((c) => c.memory && "transferId" in c.memory && c.memory.transferId === s.id),
+      )
+      .sortBy((e) => {
+        return Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x);
+      })
+      .first() ||
+    // タワーに入れて防衛
+    canter.pos.findClosestByRange(tower, {
+      filter: (t: StructureTower) => {
+        return getCapacityRate(t) < 0.9;
+      },
+    }) ||
+    ((room.terminal?.store.energy || 0) < room.energyCapacityAvailable ? room.terminal : null) ||
+    // Labに入れておく
+    getLabs(room)
+      .filter((lab) => getCapacityRate(lab) < 0.8)
+      .sort((l1, l2) => l1.store.energy - l2.store.energy)
+      .first() ||
+    // storageにキャッシュ
+    ((room.storage?.store.energy || 0) < room.energyCapacityAvailable ? room.storage : null) ||
+    // コントローラー強化
+    (controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : null) ||
+    // storageにキャッシュ
+    ((factory?.store.energy || 0) < room.energyCapacityAvailable ? factory : null) ||
+    // 貯蓄
+    _([room.storage, room.terminal])
+      .compact()
+      .filter((s) => s.store.energy < TERMINAL_LIMIT)
+      .sortBy((s) => s.store.energy)
+      .first()
+  );
 }

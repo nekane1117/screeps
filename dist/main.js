@@ -1626,7 +1626,7 @@ function isHarvester(c) {
 // role.labManager.ts
 var TRANSFER_THRESHOLD = 1e3;
 var behavior10 = (creep) => {
-  var _a, _b, _c, _d;
+  var _a, _b, _c, _d, _e;
   const { room } = creep;
   const terminal = room.terminal;
   if (!terminal) {
@@ -1800,7 +1800,7 @@ var behavior10 = (creep) => {
       }
     }
   }
-  const currentType = RESOURCES_ALL.find((type) => creep.store[type]);
+  const currentType = (_d = Object.entries(creep.store).find(([_type, amount]) => amount)) == null ? void 0 : _d[0];
   if (creep.memory.transferId) {
     const store = Game.getObjectById(creep.memory.transferId);
     if (store && "store" in store && store.store.getFreeCapacity(currentType) === 0) {
@@ -1812,7 +1812,7 @@ var behavior10 = (creep) => {
       return ERR_NOT_ENOUGH_RESOURCES;
     }
     if (!creep.memory.transferId) {
-      creep.memory.transferId = (_d = requesting.find((lab) => lab.memory.expectedType === currentType)) == null ? void 0 : _d.id;
+      creep.memory.transferId = (_e = requesting.find((lab) => lab.memory.expectedType === currentType)) == null ? void 0 : _e.id;
     }
     if (!creep.memory.transferId) {
       creep.memory.transferId = terminal.id;
@@ -1854,12 +1854,6 @@ var behavior10 = (creep) => {
             default:
               break;
           }
-          console.log(
-            JSON.stringify({
-              resourceType,
-              returnVal
-            })
-          );
         });
       }
     } else {
