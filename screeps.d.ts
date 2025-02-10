@@ -301,7 +301,7 @@ declare interface LabManagerMemory extends CreepMemory {
    */
   mode: "🚛" | "🛒";
   /** 担当倉庫 */
-  storeId?: Id<StructureLab | StructureTerminal | StructureFactory>;
+  storeId?: Id<StructureLab | StructureTerminal | StructureFactory | StructureStorage>;
   /** 担当倉庫 */
   mineralType?: ResourceConstant;
   /** 配送先 */

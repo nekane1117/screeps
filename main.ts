@@ -4,6 +4,7 @@ import { roomBehavior } from "./room";
 import structures from "./structures";
 import { filterBodiesByCost, getCreepsInRoom, toColor } from "./util.creep";
 import { findMyStructures, isHighway, logUsage } from "./utils";
+import { ObjectKeys } from "./utils.common";
 
 module.exports.loop = function () {
   console.log(`start ${Game.time}`);
@@ -128,6 +129,20 @@ module.exports.loop = function () {
   logUsage("delete room find memoery", () => {
     Object.values(Memory.rooms).forEach((mem) => {
       delete mem.find;
+    });
+  });
+  logUsage("delete factories memoery", () => {
+    ObjectKeys(Memory.factories).forEach((id: Id<StructureFactory>) => {
+      if (!Game.getObjectById(id)) {
+        delete Memory.factories[id];
+      }
+    });
+  });
+  logUsage("delete terminals memoery", () => {
+    ObjectKeys(Memory.terminals).forEach((id) => {
+      if (!Game.getObjectById(id)) {
+        delete Memory.terminals[id];
+      }
     });
   });
   console.log(`end ${Game.time} usage : ${Game.cpu.getUsed()}`);

@@ -140,10 +140,17 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // 要求に応じてターミナルに取りに行く
   if (!creep.memory.storeId) {
-    const req = requesting.find((r) => r.memory.expectedType && terminal.store[r.memory.expectedType] + creep.store.getCapacity(r.memory.expectedType) > 0);
-    if (req) {
-      creep.memory.storeId = creep.room.terminal?.id;
-      creep.memory.mineralType = req.memory.expectedType;
+    const { factory } = findMyStructures(creep.room);
+    const storages = _.compact([creep.room.terminal, factory, creep.room.storage]);
+
+    for (const req of requesting) {
+      const s = _(storages)
+        .filter((s) => s.store.getUsedCapacity(req.memory.expectedType) > 0)
+        .max((s) => s.store.getUsedCapacity(req.memory.expectedType));
+      if (s) {
+        creep.memory.storeId = s?.id;
+        creep.memory.mineralType = req.memory.expectedType;
+      }
     }
   }
 
@@ -163,7 +170,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       if (creep.pos.isNearTo(store)) {
         creep.memory.worked = ((creep: LabManager) => {
           // ターミナルの時
-          if (store.structureType === STRUCTURE_TERMINAL) {
+          if (store.structureType === STRUCTURE_TERMINAL || store.structureType === STRUCTURE_STORAGE) {
             // 原料の指定があるとき
             if (creep.memory.mineralType) {
               // 取り出す
@@ -256,7 +263,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     // 化合物(完成品) or リクエストが見つからなかった原料はターミナルにしまっておく
     if (!creep.memory.transferId) {
-      creep.memory.transferId = terminal.id;
+      creep.memory.transferId = _([terminal, creep.room.storage, factory]).min((s) => s?.store.getUsedCapacity(currentType))?.id;
     }
   }
 

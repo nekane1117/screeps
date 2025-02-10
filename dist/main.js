@@ -1720,10 +1720,14 @@ var behavior10 = (creep) => {
     creep.memory.storeId = (_b = _(completed).first()) == null ? void 0 : _b.id;
   }
   if (!creep.memory.storeId) {
-    const req = requesting.find((r) => r.memory.expectedType && terminal.store[r.memory.expectedType] + creep.store.getCapacity(r.memory.expectedType) > 0);
-    if (req) {
-      creep.memory.storeId = (_c = creep.room.terminal) == null ? void 0 : _c.id;
-      creep.memory.mineralType = req.memory.expectedType;
+    const { factory: factory2 } = findMyStructures(creep.room);
+    const storages = _.compact([creep.room.terminal, factory2, creep.room.storage]);
+    for (const req of requesting) {
+      const s = _(storages).filter((s2) => s2.store.getUsedCapacity(req.memory.expectedType) > 0).max((s2) => s2.store.getUsedCapacity(req.memory.expectedType));
+      if (s) {
+        creep.memory.storeId = s == null ? void 0 : s.id;
+        creep.memory.mineralType = req.memory.expectedType;
+      }
     }
   }
   if (creep.memory.mineralType && pickUpAll(creep, creep.memory.mineralType) === OK) {
@@ -1737,7 +1741,7 @@ var behavior10 = (creep) => {
       }
       if (creep.pos.isNearTo(store)) {
         creep.memory.worked = ((creep2) => {
-          if (store.structureType === STRUCTURE_TERMINAL) {
+          if (store.structureType === STRUCTURE_TERMINAL || store.structureType === STRUCTURE_STORAGE) {
             if (creep2.memory.mineralType) {
               return creep2.withdraw(store, creep2.memory.mineralType);
             } else {
@@ -1798,7 +1802,7 @@ var behavior10 = (creep) => {
       }
     }
   }
-  const currentType = (_d = Object.entries(creep.store).find(([_type, amount]) => amount)) == null ? void 0 : _d[0];
+  const currentType = (_c = Object.entries(creep.store).find(([_type, amount]) => amount)) == null ? void 0 : _c[0];
   if (creep.memory.transferId) {
     const store = Game.getObjectById(creep.memory.transferId);
     if (store && "store" in store && store.store.getFreeCapacity(currentType) === 0) {
@@ -1810,10 +1814,10 @@ var behavior10 = (creep) => {
       return ERR_NOT_ENOUGH_RESOURCES;
     }
     if (!creep.memory.transferId) {
-      creep.memory.transferId = (_e = requesting.find((lab) => lab.memory.expectedType === currentType)) == null ? void 0 : _e.id;
+      creep.memory.transferId = (_d = requesting.find((lab) => lab.memory.expectedType === currentType)) == null ? void 0 : _d.id;
     }
     if (!creep.memory.transferId) {
-      creep.memory.transferId = terminal.id;
+      creep.memory.transferId = (_e = _([terminal, creep.room.storage, factory]).min((s) => s == null ? void 0 : s.store.getUsedCapacity(currentType))) == null ? void 0 : _e.id;
     }
   }
   if (creep.memory.transferId && creep.memory.mode === "\u{1F69B}") {
@@ -3544,6 +3548,20 @@ module.exports.loop = function() {
   logUsage("delete room find memoery", () => {
     Object.values(Memory.rooms).forEach((mem) => {
       delete mem.find;
+    });
+  });
+  logUsage("delete factories memoery", () => {
+    ObjectKeys(Memory.factories).forEach((id) => {
+      if (!Game.getObjectById(id)) {
+        delete Memory.factories[id];
+      }
+    });
+  });
+  logUsage("delete terminals memoery", () => {
+    ObjectKeys(Memory.terminals).forEach((id) => {
+      if (!Game.getObjectById(id)) {
+        delete Memory.terminals[id];
+      }
     });
   });
   console.log(`end ${Game.time} usage : ${Game.cpu.getUsed()}`);
