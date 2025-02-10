@@ -92,28 +92,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       filter: (c: StructureLink | StructureContainer) => {
         return c.store.energy > 0 && c.room.controller?.pos.inRangeTo(c, 3);
       },
-    })?.id) ||
-    (creep.memory.storeId = (() => {
-      if (creep.room.energyAvailable < creep.room.energyCapacityAvailable) {
-        return undefined;
-      } else {
-        return controller.pos.findClosestByRange(
-          _.compact([
-            ...links,
-            ...container,
-            ..._([creep.room.storage, creep.room.terminal])
-              .compact()
-              .filter((s) => s?.store.energy > creep.room.energyCapacityAvailable)
-              .value(),
-          ]),
-          {
-            filter: (s: StructureLink | StructureContainer | StructureStorage | StructureTerminal) => {
-              return s.store.energy > 0;
-            },
-          },
-        );
-      }
-    })()?.id)
+    })?.id)
   ) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
