@@ -322,7 +322,18 @@ export function pickUpAll(creep: Creep, resourceType: ResourceConstant = RESOURC
     });
 
   // 通りがかりの墓から拾う
-  [...creep.pos.findInRange(FIND_TOMBSTONES, 1), ...creep.pos.findInRange(FIND_RUINS, 1)].forEach((tombstone) => {
+  [
+    ...creep.pos.findInRange(FIND_TOMBSTONES, 1, {
+      filter(s: Tombstone) {
+        return s.store.getUsedCapacity() > 0;
+      },
+    }),
+    ...creep.pos.findInRange(FIND_RUINS, 1, {
+      filter(s: Ruin) {
+        return s.store.getUsedCapacity() > 0;
+      },
+    }),
+  ].forEach((tombstone) => {
     if (creep.withdraw(tombstone, resourceType)) {
       result = OK;
     }
