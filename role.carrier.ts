@@ -224,8 +224,15 @@ export function findTransferTarget(room: Room) {
     console.log(room.name, "center not found");
     return null;
   }
-  const { extension, spawn, tower, container, factory } = findMyStructures(room);
-  const controllerContaeiner = room.controller && _(room.controller.pos.findInRange(container, 3)).first();
+  const { extension, spawn, tower, container, factory, link } = findMyStructures(room);
+  const controllerContaeiner =
+    room.controller &&
+    _(
+      room.controller.pos.findInRange(container, 3, {
+        // linkが回りにあるときは無視
+        filter: (s: StructureContainer) => !s.pos.findInRange(link, 3),
+      }),
+    ).first();
   //spawnかextension
   return (
     _([...extension, ...spawn])

@@ -937,8 +937,13 @@ function findTransferTarget(room) {
     console.log(room.name, "center not found");
     return null;
   }
-  const { extension, spawn, tower, container, factory } = findMyStructures(room);
-  const controllerContaeiner = room.controller && _(room.controller.pos.findInRange(container, 3)).first();
+  const { extension, spawn, tower, container, factory, link } = findMyStructures(room);
+  const controllerContaeiner = room.controller && _(
+    room.controller.pos.findInRange(container, 3, {
+      // linkが回りにあるときは無視
+      filter: (s) => !s.pos.findInRange(link, 3)
+    })
+  ).first();
   return _([...extension, ...spawn]).filter(
     (s) => s.store.getFreeCapacity(RESOURCE_ENERGY) && !_(Object.values(getCreepsInRoom(room))).flatten().find((c) => c.memory && "transferId" in c.memory && c.memory.transferId === s.id)
   ).sortBy((e) => {
