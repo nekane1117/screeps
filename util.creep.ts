@@ -190,16 +190,10 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
     MOVE,
   ],
   mineralHarvester: [
-    // 最小構成
-    WORK,
-    MOVE,
-    CARRY,
-    CARRY,
-    // 作業効率
     ..._(
-      _.range(23).map(() => {
+      _.range(50 / 4).map(() => {
         // あとはMoveとCarryの繰り返し
-        return [WORK, MOVE];
+        return [WORK, MOVE, CARRY, MOVE];
       }),
     )
       .flatten<BodyPartConstant>()
@@ -457,10 +451,15 @@ export function getRepairPower(creep: Creeps) {
     .sum();
 }
 
-type BoostMethods = "repair" | "build";
+type BoostMethods = "repair" | "build" | "harvest";
 
 // boost逆引きオブジェクト
 export const REVERSE_BOOSTS: Record<BoostMethods, Partial<Record<ResourceConstant, number>>> = {
+  harvest: {
+    [RESOURCE_UTRIUM_OXIDE]: BOOSTS.work[RESOURCE_UTRIUM_OXIDE].harvest,
+    [RESOURCE_UTRIUM_ALKALIDE]: BOOSTS.work[RESOURCE_UTRIUM_ALKALIDE].harvest,
+    [RESOURCE_CATALYZED_UTRIUM_ALKALIDE]: BOOSTS.work[RESOURCE_CATALYZED_UTRIUM_ALKALIDE].harvest,
+  },
   repair: {
     [RESOURCE_LEMERGIUM_ACID]: BOOSTS.work[RESOURCE_LEMERGIUM_ACID].repair,
     [RESOURCE_LEMERGIUM_HYDRIDE]: BOOSTS.work[RESOURCE_LEMERGIUM_HYDRIDE].repair,

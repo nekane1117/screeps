@@ -79,7 +79,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // つっかえるので中央のリンクは最優先
   if (!creep.memory.storeId) {
-    creep.memory.storeId = link.find((l) => getCapacityRate(l) > 0 && center.pos.inRangeTo(l, 3))?.id;
+    creep.memory.storeId = link.find((l) => getCapacityRate(l) > 0.5 && center.pos.inRangeTo(l, 3))?.id;
   }
 
   if (!creep.memory.storeId) {
@@ -224,15 +224,8 @@ export function findTransferTarget(room: Room) {
     console.log(room.name, "center not found");
     return null;
   }
-  const { extension, spawn, tower, container, factory, link } = findMyStructures(room);
-  const controllerContaeiner =
-    room.controller &&
-    _(
-      room.controller.pos.findInRange(container, 3, {
-        // linkが回りにあるときは無視
-        filter: (s: StructureContainer) => !s.pos.findInRange(link, 3),
-      }),
-    ).first();
+  const { extension, spawn, tower, container, factory } = findMyStructures(room);
+  const controllerContaeiner = room.controller && _(room.controller.pos.findInRange(container, 3)).first();
   //spawnかextension
   return (
     _([...extension, ...spawn])
@@ -263,12 +256,10 @@ export function findTransferTarget(room: Room) {
     ((room.storage?.store.energy || 0) < room.energyCapacityAvailable ? room.storage : null) ||
     // コントローラー強化
     (controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : null) ||
-    // storageにキャッシュ
-    ((factory?.store.energy || 0) < room.energyCapacityAvailable ? factory : null) ||
     // 貯蓄
-    _([room.storage, room.terminal])
+    _([room.storage, room.terminal, factory])
       .compact()
-      .filter((s) => s.store.energy < TERMINAL_LIMIT)
+      .filter((s) => s.structureType === "storage" || s.store.energy < TERMINAL_LIMIT)
       .sortBy((s) => s.store.energy)
       .first()
   );

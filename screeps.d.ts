@@ -274,7 +274,9 @@ declare interface MineralHarvester extends Creep {
 }
 
 declare interface MineralHarvesterMemory extends CreepMemory {
+  mode: "🛒" | "🚛";
   role: "mineralHarvester";
+  pickUpId: Id<Resource> | undefined;
   targetId: Id<Mineral>;
   storeId?: Id<Parameters<Creep["transfer"]>[0]>;
 }
