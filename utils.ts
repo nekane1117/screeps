@@ -140,12 +140,11 @@ export function getSpawnsWithDistance(src: RoomPosition | _HasRoomPosition) {
 
 export function isCompound(resource: ResourceConstant) {
   // 2文字以上で大文字で始まるやつ
-  return !!(resource.length >= 2 && /^[A-Z]/.exec(resource));
+  return !!(resource === RESOURCE_GHODIUM || (resource.length >= 2 && /^[A-Z]/.exec(resource)));
 }
 
 export function getLabs(room: Room) {
   const lab = findMyStructures(room).lab;
-  // 自分の周囲にあるラボの数が少ない順
   return _(lab).map((lab) => {
     return Object.assign(lab, {
       memory: room.memory.labs[lab.id],

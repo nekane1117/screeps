@@ -1,5 +1,6 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, REVERSE_BOOSTS, customMove } from "./util.creep";
+import { getLabs } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isM(creep)) {
@@ -10,6 +11,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return creep.say("NO STORAGE");
   }
 
+  if (boost(creep) !== OK) {
+    return;
+  }
   // harvest
   const mineral = Game.getObjectById(creep.memory.targetId);
   if (!mineral) {
@@ -143,4 +147,43 @@ function delivery(creep: MineralHarvester) {
     });
   }
   return returns.find((r) => r !== OK) || OK;
+}
+// ブースト優先度順
+const BOOSTS = [RESOURCE_CATALYZED_UTRIUM_ALKALIDE, RESOURCE_UTRIUM_ALKALIDE, RESOURCE_UTRIUM_OXIDE];
+
+function boost(creep: MineralHarvester) {
+  const minBoosted = _(creep.body.filter((b) => b.type === WORK)).min((b) => (b.boost || "").length).boost;
+
+  // 完全にboostされてるときは無視
+  if (minBoosted === RESOURCE_CATALYZED_UTRIUM_ALKALIDE || minBoosted === RESOURCE_UTRIUM_ALKALIDE) {
+    return OK;
+  }
+
+  const labs = getLabs(creep.room);
+  const target = labs
+    // 型が正しくて容量があるやつだけにする
+    .filter((l) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return l.memory.expectedType && BOOSTS.includes(l.memory.expectedType as any) && l.store.getUsedCapacity(l.memory.expectedType) > LAB_BOOST_MINERAL;
+    })
+    // 優先順で一番優先のやつ
+    .sort((l) => {
+      const idx = (l.memory.expectedType && BOOSTS.findIndex((b) => b === l.memory.expectedType)) || -1;
+      if (idx > 0) {
+        return idx;
+      } else {
+        return Infinity;
+      }
+    })
+    .run()?.[0];
+
+  if (!target) {
+    return OK;
+  }
+
+  const result = target.boostCreep(creep);
+  if (result === ERR_NOT_IN_RANGE) {
+    customMove(creep, target);
+  }
+  return result;
 }

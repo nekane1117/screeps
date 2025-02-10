@@ -43,7 +43,7 @@ module.exports.loop = function () {
         });
     });
     // Creepの動き
-    logUsage("creep", () => {
+    logUsage(`creep(${Object.values(Game.creeps).length})`, () => {
       Object.values(Game.creeps).map((c) => {
         return logUsage(
           c.name,
@@ -72,7 +72,7 @@ module.exports.loop = function () {
               cost: Game.cpu.getUsed() - startUsage,
             };
           },
-          1,
+          0.3,
         );
       });
     });
