@@ -108,12 +108,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
               }
             }
           } else {
-            if (structure.memory.expectedType.length >= 2) {
-              // 化合物待ち中は正しい
-              mapping.noProblem.push(structure);
-            } else {
-              // 原料待ち中は要求中
+            // mineralTypeがないやつは空のはずなので要求中
+            if (structure.memory.expectedType) {
               mapping.requesting.push(structure);
+            } else {
+              mapping.completed.push(structure);
             }
           }
         }

@@ -1,6 +1,6 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, getMainSpawn, pickUpAll } from "./util.creep";
-import { findMyStructures, getCapacityRate, getSitesInRoom } from "./utils";
+import { findMyStructures, getCapacityRate, getLabs, getSitesInRoom } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
@@ -17,6 +17,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return creep.suicide();
   }
 
+  if (boost(creep) !== OK) {
+    return;
+  }
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
     changeMode(creep, "💪");
   } else if (creep.store.energy === 0) {
@@ -158,3 +161,43 @@ const changeMode = (creep: Upgrader, mode: UpgraderMemory["mode"]) => {
     creep.memory.mode = mode;
   }
 };
+
+// ブースト優先度順
+const BOOSTS = [RESOURCE_CATALYZED_GHODIUM_ACID, RESOURCE_GHODIUM_ACID, RESOURCE_GHODIUM_OXIDE];
+
+function boost(creep: Upgrader) {
+  const minBoosted = _(creep.body.filter((b) => b.type === WORK)).min((b) => (b.boost || "").length).boost;
+
+  // 完全にboostされてるときは無視
+  if (minBoosted === RESOURCE_CATALYZED_GHODIUM_ACID || minBoosted === RESOURCE_GHODIUM_ACID) {
+    return OK;
+  }
+
+  const labs = getLabs(creep.room);
+  const target = labs
+    // 型が正しくて容量があるやつだけにする
+    .filter((l) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return l.memory.expectedType && BOOSTS.includes(l.memory.expectedType as any) && l.store.getUsedCapacity(l.memory.expectedType) > LAB_BOOST_MINERAL;
+    })
+    // 優先順で一番優先のやつ
+    .sort((l) => {
+      const idx = (l.memory.expectedType && BOOSTS.findIndex((b) => b === l.memory.expectedType)) || -1;
+      if (idx > 0) {
+        return idx;
+      } else {
+        return Infinity;
+      }
+    })
+    .run()?.[0];
+
+  if (!target) {
+    return OK;
+  }
+
+  const result = target.boostCreep(creep);
+  if (result === ERR_NOT_IN_RANGE) {
+    customMove(creep, target);
+  }
+  return result;
+}

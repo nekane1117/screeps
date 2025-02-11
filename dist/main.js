@@ -1665,10 +1665,10 @@ var behavior10 = (creep) => {
             }
           }
         } else {
-          if (structure.memory.expectedType.length >= 2) {
-            mapping.noProblem.push(structure);
-          } else {
+          if (structure.memory.expectedType) {
             mapping.requesting.push(structure);
+          } else {
+            mapping.completed.push(structure);
           }
         }
       }
@@ -2550,6 +2550,9 @@ var behavior16 = (creep) => {
   if (!controller) {
     return creep.suicide();
   }
+  if (boost3(creep) !== OK) {
+    return;
+  }
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
     changeMode(creep, "\u{1F4AA}");
   } else if (creep.store.energy === 0) {
@@ -2662,6 +2665,33 @@ var changeMode = (creep, mode) => {
     creep.memory.mode = mode;
   }
 };
+var BOOSTS3 = [RESOURCE_CATALYZED_GHODIUM_ACID, RESOURCE_GHODIUM_ACID, RESOURCE_GHODIUM_OXIDE];
+function boost3(creep) {
+  var _a;
+  const minBoosted = _(creep.body.filter((b) => b.type === WORK)).min((b) => (b.boost || "").length).boost;
+  if (minBoosted === RESOURCE_CATALYZED_GHODIUM_ACID || minBoosted === RESOURCE_GHODIUM_ACID) {
+    return OK;
+  }
+  const labs = getLabs(creep.room);
+  const target = (_a = labs.filter((l) => {
+    return l.memory.expectedType && BOOSTS3.includes(l.memory.expectedType) && l.store.getUsedCapacity(l.memory.expectedType) > LAB_BOOST_MINERAL;
+  }).sort((l) => {
+    const idx = l.memory.expectedType && BOOSTS3.findIndex((b) => b === l.memory.expectedType) || -1;
+    if (idx > 0) {
+      return idx;
+    } else {
+      return Infinity;
+    }
+  }).run()) == null ? void 0 : _a[0];
+  if (!target) {
+    return OK;
+  }
+  const result = target.boostCreep(creep);
+  if (result === ERR_NOT_IN_RANGE) {
+    customMove(creep, target);
+  }
+  return result;
+}
 
 // roles.ts
 var behaviors = {
@@ -2769,7 +2799,7 @@ function checkMode(room) {
   }
 }
 function isUnBoosted(creeps) {
-  return creeps.find(
+  return !(creeps.length === 0 || creeps.every(
     (c) => c.body.find((b) => {
       if (b.type !== WORK) {
         return false;
@@ -2785,7 +2815,7 @@ function isUnBoosted(creeps) {
           return false;
       }
     })
-  );
+  ));
 }
 function generateStrategy(room, strategy) {
   const roomResouces = getRoomResouces(room);

@@ -134,22 +134,28 @@ function checkMode(room: Room) {
 }
 
 function isUnBoosted(creeps: Creeps[]) {
-  return creeps.find((c) =>
-    c.body.find((b) => {
-      if (b.type !== WORK) {
-        return false;
-      }
-      switch (c.memory.role) {
-        case "builder":
-          return b.boost === RESOURCE_CATALYZED_LEMERGIUM_ACID || b.boost === RESOURCE_LEMERGIUM_ACID;
-        case "mineralHarvester":
-          return b.boost === RESOURCE_CATALYZED_UTRIUM_ALKALIDE || b.boost === RESOURCE_UTRIUM_ALKALIDE;
-        case "upgrader":
-          return b.boost === RESOURCE_CATALYZED_GHODIUM_ACID || b.boost === RESOURCE_GHODIUM_ACID;
-        default:
+  // ブースト済み条件の否定
+  // いない or
+  // すべてのWORKが何かしらブースト済み
+  return !(
+    creeps.length === 0 ||
+    creeps.every((c) =>
+      c.body.find((b) => {
+        if (b.type !== WORK) {
           return false;
-      }
-    }),
+        }
+        switch (c.memory.role) {
+          case "builder":
+            return b.boost === RESOURCE_CATALYZED_LEMERGIUM_ACID || b.boost === RESOURCE_LEMERGIUM_ACID;
+          case "mineralHarvester":
+            return b.boost === RESOURCE_CATALYZED_UTRIUM_ALKALIDE || b.boost === RESOURCE_UTRIUM_ALKALIDE;
+          case "upgrader":
+            return b.boost === RESOURCE_CATALYZED_GHODIUM_ACID || b.boost === RESOURCE_GHODIUM_ACID;
+          default:
+            return false;
+        }
+      }),
+    )
   );
 }
 
