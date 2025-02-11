@@ -87,17 +87,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     const allTargets = _([...link, ...container, storage, factory, terminal]).compact();
 
     // 一番あるやつ
-    const max =
-      allTargets
-        .map((s) => {
-          if (s.structureType === STRUCTURE_STORAGE || s.structureType === STRUCTURE_FACTORY || s.structureType === STRUCTURE_TERMINAL) {
-            return s.store.energy - s.room.energyAvailable;
-          } else {
-            return s.store.energy;
-          }
-        })
-        .max() || Infinity;
-    creep.memory.storeId = creep.pos.findClosestByPath(allTargets.filter((t) => t.store.energy === max).run())?.id;
+    creep.memory.storeId = allTargets.max((s) => {
+      if (s.structureType === STRUCTURE_STORAGE || s.structureType === STRUCTURE_FACTORY || s.structureType === STRUCTURE_TERMINAL) {
+        return s.store.energy - s.room.energyAvailable;
+      } else {
+        return s.store.energy;
+      }
+    })?.id;
   }
   //#endregion
   // region 取り出し処理###############################################################################################

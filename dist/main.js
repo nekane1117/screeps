@@ -784,14 +784,13 @@ var behavior4 = (creep) => {
   }
   if (!creep.memory.storeId) {
     const allTargets = _([...link, ...container, storage, factory, terminal]).compact();
-    const max = allTargets.map((s) => {
+    creep.memory.storeId = (_b = allTargets.max((s) => {
       if (s.structureType === STRUCTURE_STORAGE || s.structureType === STRUCTURE_FACTORY || s.structureType === STRUCTURE_TERMINAL) {
         return s.store.energy - s.room.energyAvailable;
       } else {
         return s.store.energy;
       }
-    }).max() || Infinity;
-    creep.memory.storeId = (_b = creep.pos.findClosestByPath(allTargets.filter((t) => t.store.energy === max).run())) == null ? void 0 : _b.id;
+    })) == null ? void 0 : _b.id;
   }
   if (creep.memory.storeId && creep.memory.mode === "\u{1F6D2}") {
     const store = Game.getObjectById(creep.memory.storeId);
