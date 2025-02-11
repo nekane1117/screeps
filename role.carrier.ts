@@ -84,20 +84,20 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   if (!creep.memory.storeId) {
     // 連結する
-    const allTargets = _([...link, ...container, storage]).compact();
+    const allTargets = _([...link, ...container, storage, factory, terminal]).compact();
 
     // 一番あるやつ
     const max =
       allTargets
         .map((s) => {
-          if (s.structureType === STRUCTURE_STORAGE) {
+          if (s.structureType === STRUCTURE_STORAGE || s.structureType === STRUCTURE_FACTORY || s.structureType === STRUCTURE_TERMINAL) {
             return s.store.energy - s.room.energyAvailable;
           } else {
             return s.store.energy;
           }
         })
         .max() || Infinity;
-    creep.memory.storeId = (creep.pos.findClosestByPath(allTargets.filter((t) => t.store.energy === max).run()) || factory || terminal || storage)?.id;
+    creep.memory.storeId = creep.pos.findClosestByPath(allTargets.filter((t) => t.store.energy === max).run())?.id;
   }
   //#endregion
   // region 取り出し処理###############################################################################################
