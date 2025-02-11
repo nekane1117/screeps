@@ -82,11 +82,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     // 応急修理する
     if (creep.memory.firstAidId) {
-      // boostされてない場合
-      if (!isBoosted(creep) && boost(creep) !== null) {
-        return;
-      }
-
       const target = Game.getObjectById(creep.memory.firstAidId);
       if (target) {
         return _(creep.repair(target))

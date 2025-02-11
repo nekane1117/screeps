@@ -69,6 +69,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     })
     .reduce(
       (mapping, structure) => {
+        if (!structure.memory.expectedType) {
+          return mapping;
+        }
         if (structure.structureType === STRUCTURE_FACTORY) {
           if (structure.memory.outputType) {
             mapping.completed.push(structure);
@@ -150,6 +153,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       if (s) {
         creep.memory.storeId = s?.id;
         creep.memory.mineralType = req.memory.expectedType;
+        break;
       }
     }
   }

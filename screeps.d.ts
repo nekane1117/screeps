@@ -1,10 +1,4 @@
 /// <reference types="screeps" />
-
-declare interface SourceMemory {
-  /** 使える場所の数 */
-  positions: number;
-}
-
 declare type ROLES =
   | "harvester"
   | "carrier"
@@ -145,6 +139,8 @@ declare interface RoomMemory {
 
   /** 固定で道路を置くところの配列 */
   staticRoad: { x: number; y: number }[];
+
+  labMode: ROLES;
 }
 
 declare type CreepsCache = Partial<{
@@ -165,8 +161,10 @@ declare type CreepsCache = Partial<{
   timestamp: number;
 };
 
+declare type AllMinerals = MineralConstant | MineralCompoundConstant;
+
 declare interface LabMemory {
-  expectedType: MineralConstant | MineralCompoundConstant;
+  expectedType: AllMinerals | undefined;
 }
 
 declare interface Upgrader extends Creep {

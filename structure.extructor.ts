@@ -1,4 +1,3 @@
-import { TERMINAL_LIMIT } from "./constants";
 import { filterBodiesByCost, getCreepsInRoom } from "./util.creep";
 import { getSpawnsOrderdByRange } from "./utils";
 
@@ -12,10 +11,10 @@ export default function behavior(extractor: Structure) {
     return ERR_NOT_FOUND;
   }
 
-  if (extractor.room.terminal.store[mineral.mineralType] > TERMINAL_LIMIT * 2) {
-    // とりあえずいっぱいあるときはいい
-    return;
-  }
+  // if (extractor.room.terminal.store[mineral.mineralType] > TERMINAL_LIMIT * 2) {
+  //   // とりあえずいっぱいあるときはいい
+  //   return;
+  // }
 
   const { mineralHarvester = [] } = getCreepsInRoom(mineral.room);
 
