@@ -783,8 +783,14 @@ var behavior4 = (creep) => {
     creep.memory.storeId = (_a = link.find((l) => getCapacityRate(l) > 0.5 && center.pos.inRangeTo(l, 3))) == null ? void 0 : _a.id;
   }
   if (!creep.memory.storeId) {
-    const allTargets = _([link, container, storage]).flatten().compact();
-    const max = allTargets.map((s) => s.store.energy).max() || Infinity;
+    const allTargets = _([...link, ...container, storage]).compact();
+    const max = allTargets.map((s) => {
+      if (s.structureType === STRUCTURE_STORAGE) {
+        return s.store.energy - s.room.energyAvailable;
+      } else {
+        return s.store.energy;
+      }
+    }).max() || Infinity;
     creep.memory.storeId = (_b = creep.pos.findClosestByPath(allTargets.filter((t) => t.store.energy === max).run()) || factory || terminal || storage) == null ? void 0 : _b.id;
   }
   if (creep.memory.storeId && creep.memory.mode === "\u{1F6D2}") {
