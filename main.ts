@@ -72,7 +72,7 @@ module.exports.loop = function () {
               cost: Game.cpu.getUsed() - startUsage,
             };
           },
-          0.3,
+          0.5,
         );
       });
     });

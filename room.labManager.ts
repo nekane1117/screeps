@@ -1,6 +1,6 @@
 import { LAB_STRATEGY, REVERSE_REACTIONS } from "./constants";
 import { filterBodiesByCost, getCreepsInRoom } from "./util.creep";
-import { findMyStructures, getSpawnsInRoom, isCompound } from "./utils";
+import { findMyStructures, getLabs, getSpawnsInRoom, isCompound } from "./utils";
 
 export default function behavior(labs: StructureLab[], mineral: Mineral) {
   const firstLab = _.first(labs);
@@ -44,32 +44,37 @@ export default function behavior(labs: StructureLab[], mineral: Mineral) {
     }
   }
 
-  // モードチェック
-  room.memory.labMode = checkMode(room);
-
-  const finalProducts = _.clone(LAB_STRATEGY[room.memory.labMode]);
-  if (!finalProducts) {
-    console.log("strategy is not defined: " + room.memory.labMode);
-    return ERR_INVALID_ARGS;
-  }
-
-  const strategy = generateStrategy(room, [finalProducts]).reverse();
-
   // メモリを埋め込んだLABの情報を作る
-  const labWithMemory = labs.map((lab, i) => {
-    const expectedType = strategy[i];
+  const labWithMemory = labs.map((lab) => {
     // メモリの取得ついでに初期化
-    const memory = lab.room.memory.labs[lab.id] || (lab.room.memory.labs[lab.id] = { expectedType });
-
-    // 破壊、再建を考慮して上書きする
-    // (変わった時えらいことになるが一旦仕方ない)
-    memory.expectedType = expectedType;
+    const memory = lab.room.memory.labs[lab.id] || (lab.room.memory.labs[lab.id] = { expectedType: undefined });
 
     // 続きの処理のために埋め込む
     return Object.assign(lab, { memory }) as StructureLab & { memory: LabMemory };
   });
+  // モードチェック
+  const newMode = checkMode(room);
 
-  // 計画の長さの分だけ処理する
+  // モードが違うときと5tickに1回くらい更新する
+  if (room.memory.labMode !== newMode || Game.time % 5 === 0) {
+    room.memory.labMode = newMode;
+    const finalProducts = _.clone(LAB_STRATEGY[room.memory.labMode]);
+    if (!finalProducts) {
+      console.log("strategy is not defined: " + room.memory.labMode);
+      return ERR_INVALID_ARGS;
+    }
+
+    const strategy = generateStrategy(room, [finalProducts]).reverse();
+
+    // メモリを埋め込んだLABの情報を作る
+    labWithMemory.forEach((lab, i) => {
+      // 破壊、再建を考慮して上書きする
+      // (変わった時えらいことになるが一旦仕方ない)
+      lab.memory.expectedType = strategy[i];
+    });
+  }
+
+  // labの長さの分だけ処理する
   labWithMemory.map((lab) => {
     lab.memory.expectedType &&
       lab.room.visual.text(lab.memory.expectedType, lab.pos.x, lab.pos.y, {
@@ -118,9 +123,9 @@ function getRoomResouces(room: Room) {
   };
 
   const { factory } = findMyStructures(room);
-  for (const storage of _.compact([room.storage, room.terminal, factory])) {
+  for (const storage of _.compact([room.storage, room.terminal, factory, ...getLabs(room).run()])) {
     for (const resource of RESOURCES_ALL) {
-      roomResouces[resource] = (roomResouces[resource] || 0) + storage.store.getUsedCapacity(resource);
+      roomResouces[resource] = (roomResouces[resource] || 0) + (storage.store.getUsedCapacity(resource) ?? 0);
     }
   }
   return roomResouces;

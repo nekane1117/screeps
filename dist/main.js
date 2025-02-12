@@ -2609,19 +2609,23 @@ function behavior16(labs, mineral) {
       });
     }
   }
-  room.memory.labMode = checkMode(room);
-  const finalProducts = _.clone(LAB_STRATEGY[room.memory.labMode]);
-  if (!finalProducts) {
-    console.log("strategy is not defined: " + room.memory.labMode);
-    return ERR_INVALID_ARGS;
-  }
-  const strategy = generateStrategy(room, [finalProducts]).reverse();
-  const labWithMemory = labs.map((lab, i) => {
-    const expectedType = strategy[i];
-    const memory = lab.room.memory.labs[lab.id] || (lab.room.memory.labs[lab.id] = { expectedType });
-    memory.expectedType = expectedType;
+  const labWithMemory = labs.map((lab) => {
+    const memory = lab.room.memory.labs[lab.id] || (lab.room.memory.labs[lab.id] = { expectedType: void 0 });
     return Object.assign(lab, { memory });
   });
+  const newMode = checkMode(room);
+  if (room.memory.labMode !== newMode || Game.time % 5 === 0) {
+    room.memory.labMode = newMode;
+    const finalProducts = _.clone(LAB_STRATEGY[room.memory.labMode]);
+    if (!finalProducts) {
+      console.log("strategy is not defined: " + room.memory.labMode);
+      return ERR_INVALID_ARGS;
+    }
+    const strategy = generateStrategy(room, [finalProducts]).reverse();
+    labWithMemory.forEach((lab, i) => {
+      lab.memory.expectedType = strategy[i];
+    });
+  }
   labWithMemory.map((lab) => {
     lab.memory.expectedType && lab.room.visual.text(lab.memory.expectedType, lab.pos.x, lab.pos.y, {
       color: "#008800",
@@ -2643,6 +2647,7 @@ function behavior16(labs, mineral) {
 }
 var allResouces = {};
 function getRoomResouces(room) {
+  var _a;
   allResouces = allResouces || {};
   let roomResouces = allResouces[room.name];
   if (roomResouces && roomResouces.timestamp === Game.time) {
@@ -2652,9 +2657,9 @@ function getRoomResouces(room) {
     timestamp: Game.time
   };
   const { factory } = findMyStructures(room);
-  for (const storage of _.compact([room.storage, room.terminal, factory])) {
+  for (const storage of _.compact([room.storage, room.terminal, factory, ...getLabs(room).run()])) {
     for (const resource of RESOURCES_ALL) {
-      roomResouces[resource] = (roomResouces[resource] || 0) + storage.store.getUsedCapacity(resource);
+      roomResouces[resource] = (roomResouces[resource] || 0) + ((_a = storage.store.getUsedCapacity(resource)) != null ? _a : 0);
     }
   }
   return roomResouces;
@@ -3426,7 +3431,7 @@ module.exports.loop = function() {
               cost: Game.cpu.getUsed() - startUsage
             };
           },
-          0.3
+          0.5
         );
       });
     });
