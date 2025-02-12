@@ -7,7 +7,6 @@ declare type ROLES =
   | "upgrader"
   | "claimer"
   | "mineralHarvester"
-  | "mineralCarrier"
   | "defender"
   | "labManager"
   | "reserver"
@@ -42,7 +41,6 @@ declare type Creeps =
   | Carrier
   | Claimer
   | MineralHarvester
-  | MineralCarrier
   | Defender
   | LabManager
   | Reserver
@@ -151,7 +149,6 @@ declare type CreepsCache = Partial<{
   gatherer: Gatherer[];
   harvester: Harvester[];
   labManager: LabManager[];
-  mineralCarrier: MineralCarrier[];
   mineralHarvester: MineralHarvester[];
   remoteCarrier: RemoteCarrier[];
   remoteHarvester: RemoteHarvester[];
@@ -241,23 +238,6 @@ declare interface GathererMemory extends CreepMemory {
   /** 資源をもらいに行く先 */
   storeId?: Ruin["id"] | Tombstone["id"] | null;
 }
-declare interface MineralCarrier extends Creep {
-  memory: MineralCarrierMemory;
-}
-
-declare interface MineralCarrierMemory extends CreepMemory {
-  role: "mineralCarrier";
-  /** 今何してるか
-   * 🚛 : 輸送中
-   * 🛒 : 資源取得中
-   */
-  mode: "🚛" | "🛒";
-  /** 担当倉庫 */
-  storeId?: Id<Parameters<Creeps["withdraw"]>[0] | Creep>;
-  /** 配送先 */
-  transferId?: Id<StructureContainer | StructureLab | StructureTerminal>;
-}
-
 declare interface Claimer extends Creep {
   memory: ClaimerMemory;
 }

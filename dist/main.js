@@ -416,13 +416,6 @@ var IDEAL_BODY = Object.freeze({
     MOVE,
     CARRY
   ],
-  mineralCarrier: [
-    ..._(
-      _.range(25).map(() => {
-        return [MOVE, CARRY];
-      })
-    ).flatten().run()
-  ],
   harvester: [
     // 最小構成
     WORK,
@@ -624,7 +617,6 @@ var DEFAULT_CREEP_RANGE = {
   gatherer: 1,
   harvester: 1,
   labManager: 1,
-  mineralCarrier: 1,
   mineralHarvester: 1,
   remoteHarvester: 1,
   remoteCarrier: 1,
@@ -1276,7 +1268,7 @@ var behavior7 = (creep) => {
     ...opt
   });
   if (!isD(creep)) {
-    return console.log(`${creep.name} is not MineralCarrier`);
+    return console.log(`${creep.name} is not Defender`);
   }
   if (creep.room.name !== creep.memory.baseRoom) {
     const controller = (_a = Game.rooms[creep.memory.baseRoom]) == null ? void 0 : _a.controller;
@@ -1825,173 +1817,8 @@ function isLabManager(creep) {
   return creep.memory.role === "labManager";
 }
 
-// role.mineralCarrier.ts
-var behavior11 = (creep) => {
-  var _a, _b, _c;
-  const moveMeTo = (target, opt) => {
-    return customMove(creep, target, {
-      ...opt
-    });
-  };
-  if (!isMc(creep)) {
-    return console.log(`${creep.name} is not MineralCarrier`);
-  }
-  const mineral = creep.room.find(FIND_MINERALS)[0];
-  function checkMode2() {
-    var _a2;
-    if (!isMc(creep)) {
-      return console.log(`${creep.name} is not MineralCarrier`);
-    }
-    const newMode = ((c) => {
-      if (c.memory.mode === "\u{1F69B}" && creep.store.getUsedCapacity() === 0) {
-        return "\u{1F6D2}";
-      }
-      if (c.memory.mode === "\u{1F6D2}" && creep.store.getUsedCapacity() >= CARRY_CAPACITY) {
-        return "\u{1F69B}";
-      }
-      return c.memory.mode;
-    })(creep);
-    if (creep.memory.mode !== newMode) {
-      creep.say(newMode);
-      creep.memory.mode = newMode;
-      if (newMode === "\u{1F6D2}") {
-        creep.memory.storeId = void 0;
-      }
-      creep.memory.transferId = void 0;
-      if (newMode === "\u{1F69B}") {
-        (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).mineralCarrier = ((((_a2 = creep.room.memory.carrySize) == null ? void 0 : _a2.mineralCarrier) || 100) * 100 + creep.store.getUsedCapacity()) / 101;
-      }
-    }
-  }
-  checkMode2();
-  if (!mineral) {
-    return creep.suicide();
-  }
-  if (creep.memory.storeId) {
-    const store = Game.getObjectById(creep.memory.storeId);
-    if (store && "store" in store && store.store.energy === 0) {
-      creep.memory.storeId = void 0;
-    }
-  }
-  const { container } = findMyStructures(creep.room);
-  const mineralHarvester = getCreepsInRoom(creep.room).mineralHarvester || [];
-  if (!creep.memory.storeId) {
-    creep.memory.storeId = (_a = mineral.pos.findClosestByRange([...container], {
-      filter: (s) => {
-        return s.store[mineral.mineralType] > 0;
-      }
-    })) == null ? void 0 : _a.id;
-  }
-  if (!creep.memory.storeId) {
-    creep.memory.storeId = (_b = mineral.pos.findClosestByRange(mineralHarvester, {
-      filter: (s) => {
-        return s.store[mineral.mineralType] > CARRY_CAPACITY;
-      }
-    })) == null ? void 0 : _b.id;
-  }
-  if (creep.memory.storeId && creep.memory.mode === "\u{1F6D2}") {
-    const store = Game.getObjectById(creep.memory.storeId);
-    if (store) {
-      if (!creep.pos.isNearTo(store)) {
-        moveMeTo(store);
-      }
-      if (creep.pos.isNearTo(store)) {
-        creep.memory.worked = "name" in store ? store.transfer(creep, mineral.mineralType) : creep.withdraw(store, mineral.mineralType);
-        switch (creep.memory.worked) {
-          // 空の時
-          case ERR_NOT_ENOUGH_RESOURCES:
-            creep.memory.storeId = void 0;
-            checkMode2();
-            break;
-          // お腹いっぱい
-          case ERR_FULL:
-            checkMode2();
-            break;
-          // 有りえない系
-          case ERR_NOT_IN_RANGE:
-          //先に判定してるのでないはず
-          case ERR_NOT_OWNER:
-          case ERR_INVALID_TARGET:
-          case ERR_INVALID_ARGS:
-            console.log(`${creep.name} withdraw returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
-            creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
-            break;
-          // 問題ない系
-          case OK:
-          case ERR_BUSY:
-          default:
-            creep.memory.storeId = void 0;
-            checkMode2();
-            break;
-        }
-      }
-    }
-  }
-  if (creep.memory.transferId) {
-    const store = Game.getObjectById(creep.memory.transferId);
-    if (store && "store" in store && store.store.getFreeCapacity(mineral.mineralType) === 0) {
-      creep.memory.transferId = void 0;
-    }
-  }
-  if (!creep.memory.transferId) {
-    creep.memory.transferId = (_c = creep.room.terminal) == null ? void 0 : _c.id;
-  }
-  if (!creep.memory.transferId) {
-    return ERR_NOT_FOUND;
-  }
-  if (creep.memory.transferId && creep.memory.mode === "\u{1F69B}") {
-    const transferTarget = Game.getObjectById(creep.memory.transferId);
-    if (transferTarget) {
-      if (!creep.pos.isNearTo(transferTarget)) {
-        moveMeTo(transferTarget);
-      }
-      if (creep.pos.isNearTo(transferTarget)) {
-        Object.keys(creep.store).forEach((type) => {
-          const returnVal = creep.transfer(transferTarget, type);
-          switch (returnVal) {
-            // 手持ちがない
-            case ERR_NOT_ENOUGH_RESOURCES:
-              checkMode2();
-              break;
-            // 対象が変
-            case ERR_INVALID_TARGET:
-            // 対象が変
-            case ERR_FULL:
-              creep.memory.transferId = void 0;
-              break;
-            // 有りえない系
-            case ERR_NOT_IN_RANGE:
-            //先に判定してるのでないはず
-            case ERR_NOT_OWNER:
-            // 自creepじゃない
-            case ERR_INVALID_ARGS:
-              console.log(`${creep.name} transfer returns ${RETURN_CODE_DECODER[returnVal.toString()]}`);
-              creep.say(RETURN_CODE_DECODER[returnVal.toString()]);
-              break;
-            // 問題ない系
-            case OK:
-            case ERR_BUSY:
-            // spawining
-            default:
-              if (getCapacityRate(transferTarget) > 0.9) {
-                creep.memory.transferId = void 0;
-              }
-              break;
-          }
-        });
-      }
-    }
-  }
-  withdrawBy(creep, ["mineralHarvester"], mineral.mineralType);
-  pickUpAll(creep, mineral.mineralType);
-};
-var role_mineralCarrier_default = behavior11;
-function isMc(creep) {
-  return creep.memory.role === "mineralCarrier";
-}
-
 // role.mineralHarvester.ts
-var behavior12 = (creep) => {
+var behavior11 = (creep) => {
   if (!isM(creep)) {
     return console.log(`${creep.name} is not MineralHarvester`);
   }
@@ -2038,7 +1865,7 @@ var behavior12 = (creep) => {
     work(creep);
   }
 };
-var role_mineralHarvester_default = behavior12;
+var role_mineralHarvester_default = behavior11;
 function isM(c) {
   return c.memory.role === "mineralHarvester";
 }
@@ -2144,7 +1971,7 @@ function boost2(creep) {
 }
 
 // role.remoteCarrier.ts
-var behavior13 = (creep) => {
+var behavior12 = (creep) => {
   var _a, _b, _c, _d, _e, _f;
   if (!isRemoteCarrier(creep)) {
     return console.log(`${creep.name} is not RemoteCarrier`);
@@ -2292,13 +2119,13 @@ var behavior13 = (creep) => {
   }
   pickUpAll(creep);
 };
-var role_remoteCarrier_default = behavior13;
+var role_remoteCarrier_default = behavior12;
 function isRemoteCarrier(creep) {
   return creep.memory.role === "remoteCarrier";
 }
 
 // role.remoteHarvester.ts
-var behavior14 = (creep) => {
+var behavior13 = (creep) => {
   var _a;
   if (!isRemoteHarvester(creep)) {
     return console.log(`${creep.name} is not RemoteHarvester`);
@@ -2420,7 +2247,7 @@ var behavior14 = (creep) => {
   }
   pickUpAll(creep);
 };
-var role_remoteHarvester_default = behavior14;
+var role_remoteHarvester_default = behavior13;
 function isRemoteHarvester(creep) {
   return creep.memory.role === "remoteHarvester";
 }
@@ -2430,7 +2257,7 @@ function findHarvestTarget(creep, targetRoom) {
 }
 
 // role.reserver.ts
-var behavior15 = (creep) => {
+var behavior14 = (creep) => {
   var _a, _b;
   if (!isReserver(creep)) {
     return console.log(`${creep.name} is not Builder`);
@@ -2520,13 +2347,13 @@ var behavior15 = (creep) => {
     }
   }
 };
-var role_reserver_default = behavior15;
+var role_reserver_default = behavior14;
 function isReserver(creep) {
   return creep.memory.role === "reserver";
 }
 
 // role.upgrader.ts
-var behavior16 = (creep) => {
+var behavior15 = (creep) => {
   var _a, _b, _c, _d;
   const moveMeTo = (target, opt) => customMove(creep, target, {
     ...opt
@@ -2642,7 +2469,7 @@ var behavior16 = (creep) => {
   }
   pickUpAll(creep);
 };
-var role_upgrader_default = behavior16;
+var role_upgrader_default = behavior15;
 function isUpgrader(creep) {
   return creep.memory.role === "upgrader";
 }
@@ -2690,7 +2517,6 @@ var behaviors = {
   defender: role_defender_default,
   harvester: role_harvester_default,
   labManager: role_labManager_default,
-  mineralCarrier: role_mineralCarrier_default,
   mineralHarvester: role_mineralHarvester_default,
   remoteCarrier: role_remoteCarrier_default,
   remoteHarvester: role_remoteHarvester_default,
@@ -2699,7 +2525,7 @@ var behaviors = {
 };
 
 // room.labManager.ts
-function behavior17(labs, mineral) {
+function behavior16(labs, mineral) {
   var _a;
   const firstLab = _.first(labs);
   const room = firstLab == null ? void 0 : firstLab.room;
@@ -2817,71 +2643,8 @@ function generateStrategy(room, strategy) {
   }
 }
 
-// room.source.ts
-function behavior18(source) {
-  const harvesters = getCreepsInRoom(source.room).harvester || [];
-  const myH = harvesters.filter((h) => {
-    var _a;
-    return ((_a = h.memory) == null ? void 0 : _a.harvestTargetId) === source.id;
-  });
-  if (myH.length < 2 && _(myH).map((h) => h.getActiveBodyparts(WORK)).sum() < 5) {
-    const spawn = (() => {
-      const spawns = getSpawnsInRoom(source.room);
-      if (spawns.length > 0) {
-        return source.pos.findClosestByRange(spawns.filter((s) => !s.spawning));
-      } else {
-        return _(Object.values(Game.spawns)).map((spawn2) => {
-          return {
-            spawn: spawn2,
-            cost: PathFinder.search(source.pos, spawn2.pos).cost
-          };
-        }).min((v) => v.cost).spawn;
-      }
-    })();
-    if (!spawn) {
-      console.log(`source ${source.id} can't find spawn`);
-      return ERR_NOT_FOUND;
-    }
-    if (spawn.room.energyAvailable >= 300) {
-      const name = `H_${source.room.name}_${Game.time}`;
-      const spawned = spawn.spawnCreep(
-        filterBodiesByCost("harvester", spawn.room.energyAvailable, {
-          acrossRoom: spawn.room.name !== source.room.name
-        }).bodies,
-        name,
-        {
-          memory: {
-            role: "harvester",
-            baseRoom: source.room.name,
-            harvestTargetId: source.id
-          }
-        }
-      );
-      return spawned;
-    }
-  }
-  if (source.pos.findInRange(
-    [
-      ...findMyStructures(source.room).container,
-      ...Object.values(Game.constructionSites).filter((s) => s.pos.roomName === source.pos.roomName && s.structureType === STRUCTURE_CONTAINER)
-    ],
-    1
-  ).length === 0) {
-    const spawn = getMainSpawn(source.room);
-    if (spawn) {
-      const pos = _(
-        source.pos.findPathTo(spawn, {
-          ignoreCreeps: true
-        })
-      ).first();
-      pos && source.room.createConstructionSite(pos.x, pos.y, STRUCTURE_CONTAINER);
-    }
-  }
-  return OK;
-}
-
 // structure.links.ts
-function behavior19(links) {
+function behavior17(links) {
   var _a;
   const room = (_a = _.first(links)) == null ? void 0 : _a.room;
   const center = room && (room.storage || getMainSpawn(room));
@@ -2918,7 +2681,6 @@ function roomBehavior(room) {
       defender: 100,
       harvester: 100,
       labManager: 100,
-      mineralCarrier: 100,
       mineralHarvester: 100,
       remoteHarvester: 100,
       reserver: 100,
@@ -2998,16 +2760,15 @@ function roomBehavior(room) {
     }).run();
   });
   updateRoadMap(room);
-  const { lab, source } = findMyStructures(room);
-  source.forEach((s) => behavior18(s));
+  const { lab } = findMyStructures(room);
   const mineral = _(room.find(FIND_MINERALS)).first();
   if (mineral) {
-    behavior17(lab, mineral);
+    behavior16(lab, mineral);
   }
   if (room.name === "sim" || Game.time % 100 === 0) {
     createStructures(room);
   }
-  behavior19(findMyStructures(room).link);
+  behavior17(findMyStructures(room).link);
   const carrierBodies = getCarrierBody(room, "carrier");
   if (harvester.length === 0) {
     return ERR_NOT_FOUND;
@@ -3206,7 +2967,7 @@ function checkSpawnBuilder(room) {
 }
 
 // structure.controller.ts
-var behavior20 = (controller) => {
+var behavior18 = (controller) => {
   var _a;
   if (!isC(controller)) {
     return console.log("type is invalid", controller);
@@ -3254,7 +3015,7 @@ var behavior20 = (controller) => {
     }
   }
 };
-var structure_controller_default = behavior20;
+var structure_controller_default = behavior18;
 function isC(s) {
   return s.structureType === STRUCTURE_CONTROLLER;
 }
@@ -3301,7 +3062,7 @@ function getUpgraderBody(room) {
 }
 
 // structure.extructor.ts
-function behavior21(extractor) {
+function behavior19(extractor) {
   if (!isE(extractor)) {
     return console.log("type is invalid", JSON.stringify(extractor));
   }
@@ -3498,7 +3259,7 @@ function isTower(s) {
 // structures.ts
 var structures = {
   controller: structure_controller_default,
-  extractor: behavior21,
+  extractor: behavior19,
   factory: behaviors2,
   terminal: behaviors3,
   tower: behaviors4

@@ -1,5 +1,4 @@
 import labManager from "./room.labManager";
-import { behavior } from "./room.source";
 import linkBehavior from "./structure.links";
 import { RETURN_CODE_DECODER, filterBodiesByCost, getCarrierBody, getCreepsInRoom, getMainSpawn } from "./util.creep";
 import { findMyStructures, getSitesInRoom, getSpawnsInRoom } from "./utils";
@@ -20,7 +19,6 @@ export function roomBehavior(room: Room) {
       defender: 100,
       harvester: 100,
       labManager: 100,
-      mineralCarrier: 100,
       mineralHarvester: 100,
       remoteHarvester: 100,
       reserver: 100,
@@ -112,8 +110,7 @@ export function roomBehavior(room: Room) {
   // ロードマップを更新する
   updateRoadMap(room);
 
-  const { lab, source } = findMyStructures(room);
-  source.forEach((s) => behavior(s));
+  const { lab } = findMyStructures(room);
 
   const mineral = _(room.find(FIND_MINERALS)).first();
   if (mineral) {
