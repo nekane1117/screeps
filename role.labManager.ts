@@ -28,18 +28,18 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     if (!isLabManager(creep)) {
       return console.log(`${creep.name} is not LabManager`);
     }
-    const newMode = creep.store.getUsedCapacity() === 0 ? "🛒" : "🚛";
+    const newMode = creep.store.getUsedCapacity() === 0 ? "gathering" : "delivering";
 
     if (creep.memory.mode !== newMode) {
       creep.say(newMode);
       creep.memory.mode = newMode;
-      if (newMode === "🛒") {
+      if (newMode === "gathering") {
         creep.memory.storeId = undefined;
         creep.memory.mineralType = undefined;
       }
       creep.memory.transferId = undefined;
       // 運搬モードに切り替えたときの容量を記憶する
-      if (newMode === "🚛") {
+      if (newMode === "delivering") {
         (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).labManager =
           ((creep.room.memory.carrySize?.labManager || 100) * 100 + creep.store.getUsedCapacity()) / 101;
       }
@@ -173,7 +173,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // 取り出し処理###############################################################################################
-  if (creep.memory.storeId && creep.memory.mode === "🛒") {
+  if (creep.memory.storeId && creep.memory.mode === "gathering") {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
       if (!creep.pos.isNearTo(store)) {
@@ -255,7 +255,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   //#endregion###############################################################################################
   //#region 輸送処理###############################################################################################
-  if (creep.memory.transferId && creep.memory.mode === "🚛") {
+  if (creep.memory.transferId && creep.memory.mode === "delivering") {
     const transferTarget = Game.getObjectById(creep.memory.transferId);
     if (transferTarget) {
       if (!creep.pos.isNearTo(transferTarget)) {

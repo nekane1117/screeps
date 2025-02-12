@@ -20,13 +20,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   //#region モードチェック
   if (creep.store.energy < CARRY_CAPACITY) {
     // なくなったら収集モード
-    creep.memory.mode = "🛒";
+    creep.memory.mode = "gathering";
   } else if (creep.room.name !== memory.baseRoom && creep.getActiveBodyparts(WORK) > 0 && getSitesInRoom(creep.room).length > 0) {
     // エネルギーがあって現場ある時は建築モード
     creep.memory.mode = "👷";
   } else {
     // それ以外は運搬モード
-    creep.memory.mode = "🚛";
+    creep.memory.mode = "delivering";
     // キャリーサイズ記録
     (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).remoteCarrier =
       ((creep.room.memory.carrySize?.remoteCarrier || 100) * 100 + creep.store.energy) / 101;
@@ -39,7 +39,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   //#endregion
 
-  if (memory.mode === "🚛") {
+  if (memory.mode === "delivering") {
     const baseRoom = Game.rooms[memory.baseRoom];
 
     if (baseRoom) {
@@ -98,7 +98,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   } else if (memory.mode === "👷") {
     //#region 建設 ##########################################################################
     if (creep.getActiveBodyparts(WORK) === 0) {
-      return (creep.memory.mode = "🚛");
+      return (creep.memory.mode = "delivering");
     }
     const sites = getSitesInRoom(creep.room);
     // 終わってれば初期化
@@ -195,7 +195,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
   //#region 道を敷く
   if (
-    creep.memory.mode === "🚛" &&
+    creep.memory.mode === "delivering" &&
     creep.pos.roomName !== creep.memory.baseRoom &&
     getSitesInRoom(creep.room).length === 0 &&
     !isHighway(creep.room) &&

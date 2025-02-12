@@ -1,6 +1,7 @@
 import { CreepBehavior } from "./roles";
+import { complexOrder } from "./util.array";
 
-import { RETURN_CODE_DECODER, customMove, moveRoom, pickUpAll } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, moveRoom } from "./util.creep";
 import { findMyStructures } from "./utils";
 
 /**
@@ -18,41 +19,125 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return moveRoom(creep, creep.room.name, creep.memory.baseRoom);
   }
 
-  // harvest
-  const source = Game.getObjectById(creep.memory.harvestTargetId);
-  if (!source) {
-    // sourceがないことは無いので型チェック用
-    // 本当に起こったはとりあえず死ぬ
-    return creep.suicide();
-  }
-  creep.memory.worked = creep.harvest(source);
-
-  switch (creep.memory.worked) {
-    case ERR_NOT_IN_RANGE:
-      customMove(creep, source, {
-        range: 1,
-      });
-      break;
-    // 来ないはずのやつ
-    case ERR_INVALID_TARGET: // 対象が変
-    case ERR_NOT_OWNER: // 自creepじゃない
-    case ERR_NOT_FOUND: // mineralは対象外
-    case ERR_NO_BODYPART: // WORKが無い
-      // とりあえずログを出して終わる
-      console.log(`${creep.name} harvest returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
-      creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
-      break;
-    // 大丈夫なやつ
-    case OK: // OK
-    case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
-      break;
-    case ERR_TIRED: // 疲れた
-    case ERR_BUSY: // spawning
-    default:
-      creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
-      break;
+  // モード切替
+  if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+    creep.memory.mode = "delivering";
+  } else if (creep.store.energy === 0) {
+    creep.memory.mode = "harvesting";
   }
 
+  const { container = [], link = [], spawn = [], extension = [], storage, factory, terminal } = findMyStructures(creep.room);
+
+  //#region 収穫元設定処理 #####################################################################################
+  if (!creep.memory.harvestTargetId) {
+    creep.memory.harvestTargetId = complexOrder(creep.room.find(FIND_SOURCES), [
+      // エネルギー降順
+      (v) => -v.energy,
+      // 再生までが一番早いやつ
+      (v) => v.ticksToRegeneration,
+    ]).first()?.id;
+  }
+
+  if (!creep.memory.harvestTargetId) {
+    return ERR_NOT_FOUND;
+  }
+  //#endregion 収穫元設定処理 ##################################################################################
+
+  if (creep.memory.mode === "delivering") {
+    //#region 運搬処理 #####################################################################################
+    // 輸送先が満タンになってたら消す
+    if (creep.memory.transferId) {
+      const store = Game.getObjectById(creep.memory.transferId);
+      if (store && "store" in store && store.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+        creep.memory.transferId = undefined;
+      }
+    }
+
+    // 適当に一番近い容量があるやつに向かう
+    creep.memory.transferId =
+      creep.memory.transferId ||
+      creep.pos.findClosestByPath(_.compact([...spawn, ...extension, storage, factory, terminal]).filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY)))?.id;
+    const store = creep.memory.transferId && Game.getObjectById(creep.memory.transferId);
+    if (!store) {
+      // それでも見つからなければとりあえず終わる
+      creep.memory.transferId = undefined;
+      return;
+    }
+
+    const returnVal = creep.transfer(store, RESOURCE_ENERGY);
+    switch (returnVal) {
+      // 対象が変
+      case ERR_INVALID_TARGET: // 対象が変
+      case ERR_FULL: // 満タン
+        creep.memory.transferId = undefined;
+        break;
+
+      case ERR_NOT_IN_RANGE:
+        customMove(creep, store);
+        break;
+      // 有りえない系
+      case ERR_NOT_OWNER: // 自creepじゃない
+      case ERR_INVALID_ARGS: // 引数が変
+        console.log(`${creep.name} transfer returns ${RETURN_CODE_DECODER[returnVal.toString()]}`);
+        creep.say(RETURN_CODE_DECODER[returnVal.toString()]);
+        break;
+
+      // 問題ない系
+      case OK:
+      case ERR_NOT_ENOUGH_RESOURCES: // 値を指定しないから多分発生しない
+      case ERR_BUSY: // spawining
+      default:
+        break;
+    }
+    //#endregion 運搬処理 ##################################################################################
+  } else {
+    //#region 収穫処理 #####################################################################################
+    // harvest
+    const source = Game.getObjectById(creep.memory.harvestTargetId);
+    if (!source) {
+      creep.memory.harvestTargetId = undefined;
+      return;
+    }
+    creep.memory.worked = creep.harvest(source);
+
+    if (!creep.pos.isNearTo(source)) {
+      customMove(creep, source);
+    }
+
+    switch (creep.memory.worked) {
+      case ERR_NOT_IN_RANGE:
+        customMove(creep, source, {
+          range: 1,
+        });
+        break;
+      // 来ないはずのやつ
+      case ERR_INVALID_TARGET: // 対象が変
+      case ERR_NOT_OWNER: // 自creepじゃない
+      case ERR_NOT_FOUND: // mineralは対象外
+      case ERR_NO_BODYPART: // WORKが無い
+        // とりあえずログを出して終わる
+        console.log(`${creep.name} harvest returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
+        creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
+        break;
+      // 大丈夫なやつ
+      case OK: // OK
+        break;
+      case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
+        creep.memory.harvestTargetId = undefined;
+        break;
+      case ERR_TIRED: // 疲れた
+      case ERR_BUSY: // spawning
+      default:
+        creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
+        break;
+    }
+
+    // 周囲にコンテナもリンクもなければコンテナを立てる
+    if (creep.memory.worked === OK && source.pos.findInRange([...container, ...link], 1).length === 0) {
+      creep.pos.createConstructionSite(STRUCTURE_CONTAINER);
+    }
+    //#endregion 収穫処理 ##################################################################################
+  }
   let built: (CreepActionReturnCode | ERR_NOT_ENOUGH_RESOURCES | ERR_RCL_NOT_ENOUGH)[] = [];
 
   // build
@@ -71,47 +156,32 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     })
     .run();
 
-  // 周りのものを拾う
-  pickUpAll(creep);
-
+  // 周囲のものに適当に投げる
   if (built.length === 0 && creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5 && repaired.length === 0) {
-    // 周りの建物に投げる
-    const { container: containers, link: links } = findMyStructures(creep.room);
-
-    const link = source.pos.findClosestByRange(links, {
-      filter: (s: StructureLink) => s.pos.inRangeTo(source, 2),
-    });
-    if (link) {
-      // リンクがあるときは周囲のコンテナから吸う
-      creep.pos.findInRange(containers, 2).forEach((c) => {
-        if (creep.withdraw(c, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE && creep.store.energy > 10) {
-          customMove(creep, c);
-        }
-      });
-
-      // 分配処理
-      switch (creep.transfer(link, RESOURCE_ENERGY)) {
-        // 遠いときは近づく
-        case ERR_NOT_IN_RANGE:
-          if (creep.store.energy > 10) {
-            customMove(creep, link);
+    if (creep.memory.mode === "harvesting") {
+      const source = creep.memory.harvestTargetId && Game.getObjectById(creep.memory.harvestTargetId);
+      if (source) {
+        const store =
+          source.pos.findClosestByRange(link, {
+            filter: (s: StructureLink | StructureContainer) => s.store.getFreeCapacity(RESOURCE_ENERGY) && s.pos.inRangeTo(source, 2),
+          }) ||
+          source.pos.findClosestByRange(container, {
+            filter: (s: StructureLink | StructureContainer) => s.store.getFreeCapacity(RESOURCE_ENERGY) && s.pos.inRangeTo(source, 2),
+          });
+        if (store) {
+          if (creep.transfer(store, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+            customMove(creep, store);
           }
-          break;
-
-        // 満タンなら現在地の隣接コンテナに突っ込む
-        case ERR_FULL:
-          creep.pos.findInRange(containers, 2).forEach((c) => creep.transfer(c, RESOURCE_ENERGY));
-          break;
-        default:
-          break;
+        }
       }
     } else {
-      const container = creep.pos.findClosestByRange(containers);
-      if (container) {
-        if (creep.transfer(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-          customMove(creep, container);
-        }
-      }
+      creep.pos
+        .findInRange(FIND_STRUCTURES, 1, {
+          filter: (s) => "store" in s && s.store.getFreeCapacity(RESOURCE_ENERGY),
+        })
+        .forEach((store) => {
+          creep.transfer(store, RESOURCE_ENERGY);
+        });
     }
   }
 };

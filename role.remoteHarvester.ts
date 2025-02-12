@@ -54,18 +54,18 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // #region モードチェック ###############################################################################
   if (creep.memory.targetRoomName !== creep.pos.roomName) {
     // 部屋にいないときはとにかく向かう
-    creep.memory.mode = "🌾";
-  } else if (creep.memory.mode === "🌾" && creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0 && getSitesInRoom(creep.room).length) {
+    creep.memory.mode = "harvesting";
+  } else if (creep.memory.mode === "harvesting" && creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0 && getSitesInRoom(creep.room).length) {
     // 収穫モードで満タン持っててサイトがあるときは建てる
     creep.memory.mode = "👷";
   } else if (creep.store.energy === 0 || getSitesInRoom(creep.room).length === 0) {
     // 部屋にいないときはとにかく向かう
-    creep.memory.mode = "🌾";
+    creep.memory.mode = "harvesting";
   }
 
   //#endregion
 
-  if (creep.memory.mode === "🌾") {
+  if (creep.memory.mode === "harvesting") {
     // #region harvest ###############################################################################
     // 対象設定処理(1体にするつもりなので排他とかしない)
     creep.memory.harvestTargetId = creep.memory.harvestTargetId || findHarvestTarget(creep, targetRoom)?.id;

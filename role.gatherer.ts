@@ -25,18 +25,18 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       return console.log(`${creep.name} is not Gatherer`);
     }
     const newMode = ((c: Gatherer) => {
-      if (c.memory.mode === "🚛" && creep.store.getUsedCapacity() === 0) {
+      if (c.memory.mode === "delivering" && creep.store.getUsedCapacity() === 0) {
         // 作業モードで空になったら収集モードにする
-        return "🛒";
+        return "gathering";
       }
 
       if (
-        c.memory.mode === "🛒" &&
+        c.memory.mode === "gathering" &&
         creep.store.getUsedCapacity() >=
           Math.min(creep.store.getCapacity(RESOURCE_ENERGY), creep.room.controller ? EXTENSION_ENERGY_CAPACITY[creep.room.controller.level] : CARRY_CAPACITY)
       ) {
         // 収集モードで半分超えたら作業モードにする
-        return "🚛";
+        return "delivering";
       }
 
       // そのまま
@@ -46,12 +46,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     if (creep.memory.mode !== newMode) {
       creep.say(newMode);
       creep.memory.mode = newMode;
-      if (newMode === "🛒") {
+      if (newMode === "gathering") {
         creep.memory.storeId = undefined;
       }
 
       // 運搬モードに切り替えたときの容量を記憶する
-      if (newMode === "🚛") {
+      if (newMode === "delivering") {
         (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).gatherer =
           ((creep.room.memory.carrySize?.gatherer || 100) * 100 + creep.store.energy) / 101;
       }
@@ -97,7 +97,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return spawn?.recycleCreep(creep) === ERR_NOT_IN_RANGE && customMove(creep, spawn.pos);
   }
   // 取り出し処理###############################################################################################
-  if (creep.memory.storeId && creep.memory.mode === "🛒") {
+  if (creep.memory.storeId && creep.memory.mode === "gathering") {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
       if (!creep.pos.isNearTo(store)) {
@@ -143,7 +143,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
-  if (creep.memory.mode === "🚛") {
+  if (creep.memory.mode === "delivering") {
     if (!creep.pos.isNearTo(creep.room.storage)) {
       moveMeTo(creep.room.storage, { range: 1 });
     }

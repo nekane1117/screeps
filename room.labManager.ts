@@ -37,7 +37,7 @@ export default function behavior(labs: StructureLab[], mineral: Mineral) {
       spawn.spawnCreep(bodies, `Lm_${firstLab.room.name}_${Game.time}`, {
         memory: {
           baseRoom: firstLab.room.name,
-          mode: "🛒",
+          mode: "gathering",
           role: "labManager",
         } as LabManagerMemory,
       });
