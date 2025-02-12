@@ -47,7 +47,7 @@ declare type Creeps =
   | RemoteHarvester
   | RemoteCarrier;
 
-declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink | StructureTerminal;
+declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink | StructureTerminal | StructureFactory;
 
 declare type HasStore =
   | StructureExtension
@@ -69,16 +69,12 @@ declare interface Harvester extends Creep {
 declare interface HarvesterMemory extends CreepMemory {
   role: "harvester";
   /** 今何してるか
-   * 🚛 : 資源を持ってきてるところ
-   * 🌾 : 収集中
+   * delivering : 資源を持ってきてるところ
+   * harvesting : 収集中
    */
-  mode: "🚛" | "🌾";
-  harvestTargetId: Source["id"];
-  storeId?: StoreTarget["id"] | null;
-  harvested?: {
-    tick: number;
-    result: ReturnType<Creep["harvest"]>;
-  };
+  mode: "delivering" | "harvesting";
+  harvestTargetId?: Source["id"];
+  transferId?: StoreTarget["id"] | null;
 }
 
 declare type MyStructureCache = {
@@ -174,7 +170,7 @@ declare interface UpgraderMemory extends CreepMemory {
    * working    : 作業中
    * collecting : 資源取得中
    */
-  mode: "💪" | "🛒";
+  mode: "💪" | "gathering";
   /** 資源をもらいに行く先 */
   storeId?: StoreTarget["id"] | null;
 
@@ -189,9 +185,9 @@ declare interface BuilderMemory extends CreepMemory {
   role: "builder";
   /** 今何してるか
    * 👷 : 作業中
-   * 🛒 : 資源取得中
+   * gathering : 資源取得中
    */
-  mode: "👷" | "🛒";
+  mode: "👷" | "gathering";
   /** 今建てたいもの */
   buildingId?: ConstructionSite["id"] | null;
   transferId?: AnyStoreStructure["id"] | null;
@@ -216,7 +212,7 @@ declare interface CarrierMemory extends CreepMemory {
    * collecting : 資源取得中
    * harvesting : 自力で収集中
    */
-  mode: "🚛" | "🛒";
+  mode: "delivering" | "gathering";
   /** 担当倉庫 */
   storeId?: Id<StructureLink | StructureContainer | StructureStorage | StructureTerminal | StructureFactory>;
   /** 配送先 */
@@ -233,7 +229,7 @@ declare interface GathererMemory extends CreepMemory {
    * collecting : 資源取得中
    * harvesting : 自力で収集中
    */
-  mode: "🚛" | "🛒";
+  mode: "delivering" | "gathering";
 
   /** 資源をもらいに行く先 */
   storeId?: Ruin["id"] | Tombstone["id"] | null;
@@ -252,7 +248,7 @@ declare interface MineralHarvester extends Creep {
 }
 
 declare interface MineralHarvesterMemory extends CreepMemory {
-  mode: "🛒" | "🚛";
+  mode: "gathering" | "delivering";
   role: "mineralHarvester";
   pickUpId: Id<Resource> | undefined;
   targetId: Id<Mineral>;
@@ -277,7 +273,7 @@ declare interface LabManagerMemory extends CreepMemory {
    * working    : 作業中
    * collecting : 資源取得中
    */
-  mode: "🚛" | "🛒";
+  mode: "delivering" | "gathering";
   /** 担当倉庫 */
   storeId?: Id<StructureLab | StructureTerminal | StructureFactory | StructureStorage>;
   /** 担当倉庫 */
@@ -303,11 +299,11 @@ declare interface RemoteHarvester extends Creep {
 declare interface RemoteHarvesterMemory extends CreepMemory {
   role: "remoteHarvester";
   /** 今何してるか
-   * 🚛 : 資源を持ってきてるところ
-   * 🌾 : 収集中
+   * delivering : 資源を持ってきてるところ
+   * harvesting : 収集中
    * 👷 : 建築中
    */
-  mode: "🌾" | "👷";
+  mode: "harvesting" | "👷";
   targetRoomName: string;
   harvestTargetId?: Source["id"] | null;
 }
@@ -317,7 +313,7 @@ declare interface RemoteCarrier extends Creep {
 
 declare interface RemoteCarrierMemory extends CreepMemory {
   role: "remoteCarrier";
-  mode: "🛒" | "🚛" | "👷";
+  mode: "gathering" | "delivering" | "👷";
   targetRoomName: string;
   siteId?: ConstructionSite["id"] | null;
   storeId?: Id<StructureContainer> | null;

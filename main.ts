@@ -99,7 +99,7 @@ module.exports.loop = function () {
             if (spawn) {
               spawn.spawnCreep(filterBodiesByCost("builder", spawn.room.energyCapacityAvailable).bodies, `B_${site.room.name}_${Game.time}`, {
                 memory: {
-                  mode: "🛒",
+                  mode: "gathering",
                   baseRoom: site.room.name,
                   role: "builder",
                 } as BuilderMemory,

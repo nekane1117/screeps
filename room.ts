@@ -34,6 +34,66 @@ export function roomBehavior(room: Room) {
     });
   }
 
+  const sources = room.find(FIND_SOURCES);
+  // sourceがあるとき
+  if (sources.length > 0) {
+    if (harvester.filter((h) => (h.ticksToLive || Infinity) > h.body.length * CREEP_SPAWN_TIME).length === 0) {
+      const spawn = (() => {
+        const spawns = getSpawnsInRoom(room);
+        // 部屋にある時は部屋のだけ
+        if (spawns.length > 0) {
+          return spawns.find((s) => !s.spawning);
+        } else {
+          return _(Object.values(Game.spawns))
+            .map((spawn) => {
+              return {
+                spawn,
+                cost: PathFinder.search(sources[0].pos, spawn.pos).cost,
+              };
+            })
+            .min((v) => v.cost).spawn;
+        }
+      })();
+
+      if (!spawn) {
+        console.log(`${room.name} can't find spawn`);
+        return ERR_NOT_FOUND;
+      }
+
+      if (spawn.room.energyAvailable >= 300) {
+        const name = `H_${room.name}_${Game.time}`;
+        let total = 0;
+        const bodies = (
+          sources.length === 1 || room.energyCapacityAvailable < dynamicMinCost
+            ? [WORK, MOVE, CARRY, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE, MOVE]
+            : (_(_.range(50 / 3))
+                .map(() => [WORK, MOVE, CARRY])
+                .flatten()
+                .run() as BodyPartConstant[])
+        )
+          .slice(0, 50)
+          .map((body) => {
+            return {
+              body,
+              total: (total += BODYPART_COST[body]),
+            };
+          })
+          .filter((v) => v.total <= room.energyAvailable)
+          .map((v) => v.body);
+
+        const spawned = spawn.spawnCreep(bodies, name, {
+          memory: {
+            role: "harvester",
+            mode: "harvesting",
+            baseRoom: room.name,
+          } as HarvesterMemory,
+        });
+        if (spawned !== OK) {
+          console.log(`spawn ${spawn.name}:${RETURN_CODE_DECODER[spawned]}`);
+        }
+      }
+    }
+  }
   //#region remote #########################################################################
   room.memory.remote?.forEach((targetRoomName) => {
     // エネルギー満タンの時以外無視する
@@ -72,7 +132,7 @@ export function roomBehavior(room: Room) {
         const spawned = spawn.spawnCreep(bodies, `Rh_${room.name}_${targetRoomName}_${Game.time}`, {
           memory: {
             baseRoom: room.name,
-            mode: "🌾",
+            mode: "harvesting",
             role: "remoteHarvester",
             targetRoomName,
           } as RemoteHarvesterMemory,
@@ -94,7 +154,7 @@ export function roomBehavior(room: Room) {
                 baseRoom: room.name,
                 role: "remoteCarrier",
                 targetRoomName,
-                mode: "🛒",
+                mode: "gathering",
               } as RemoteCarrierMemory,
             });
             if (spawned !== OK) {
@@ -143,7 +203,7 @@ export function roomBehavior(room: Room) {
     if (spawn && !spawn.spawning && room.energyAvailable > 200) {
       spawn.spawnCreep(carrierBodies, name, {
         memory: {
-          mode: "🛒",
+          mode: "gathering",
           baseRoom: spawn.room.name,
           role: "carrier",
         } as CarrierMemory,
@@ -194,7 +254,7 @@ export function roomBehavior(room: Room) {
     if (spawn && spawn.room.energyAvailable === spawn.room.energyCapacityAvailable) {
       spawn.spawnCreep(filterBodiesByCost("builder", spawn.room.energyCapacityAvailable).bodies, `B_${room.name}_${Game.time}`, {
         memory: {
-          mode: "🛒",
+          mode: "gathering",
           baseRoom: spawn.room.name,
           role: "builder",
         } as BuilderMemory,
@@ -217,7 +277,7 @@ export function roomBehavior(room: Room) {
         memory: {
           role: "gatherer",
           baseRoom: room.name,
-          mode: "🛒",
+          mode: "gathering",
         } as GathererMemory,
       });
     }
@@ -406,3 +466,5 @@ function checkSpawnBuilder(room: Room) {
     }).length < 1
   );
 }
+
+const dynamicMinCost = 1000;
