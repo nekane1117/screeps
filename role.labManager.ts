@@ -1,5 +1,5 @@
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, pickUpAll } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove } from "./util.creep";
 import { findMyStructures, getLabs, isCompound } from "./utils";
 
 const TRANSFER_THRESHOLD = 1000;
@@ -65,7 +65,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // ラボの情報を整理する
   const { wrong, requesting, completed } = labs
     .sortBy((l) => {
-      return l.memory.expectedType;
+      if (l.memory.expectedType) {
+        return l.store[l.memory.expectedType];
+      } else {
+        return Infinity;
+      }
     })
     .reduce(
       (mapping, structure) => {
@@ -146,20 +150,38 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     const storages = _.compact([creep.room.terminal, factory, creep.room.storage]);
 
     for (const req of requesting) {
-      const s = _(storages)
-        .filter((s) => s.store.getUsedCapacity(req.memory.expectedType) > 0)
-        .max((s) => s.store.getUsedCapacity(req.memory.expectedType));
-      if (s) {
-        creep.memory.storeId = s?.id;
-        creep.memory.mineralType = req.memory.expectedType;
-        break;
+      if (req.memory.expectedType) {
+        const s = _(storages)
+          .filter((s) => (req.memory.expectedType && s.store[req.memory.expectedType]) || 0 > 0)
+          .sortBy((s) => (req.memory.expectedType && s.store[req.memory.expectedType]) || 0)
+          .last();
+        if (s) {
+          creep.memory.storeId = s?.id;
+          creep.memory.mineralType = req.memory.expectedType;
+          break;
+        }
       }
     }
   }
 
-  // 落っこちてるものを拾う
-  if (creep.memory.mineralType && pickUpAll(creep, creep.memory.mineralType) === OK) {
-    return;
+  if (!creep.memory.storeId) {
+    const storages = _([creep.room.terminal, factory, creep.room.storage]).compact();
+    const largestStorage = _(RESOURCES_ALL)
+      .map((resourceType) => {
+        return {
+          resourceType,
+          storage: storages.sortBy((s) => s.store.getUsedCapacity(resourceType)).last(),
+        };
+      })
+      .sortBy((s) => {
+        return s.storage.store.getUsedCapacity(s.resourceType);
+      })
+      .last();
+
+    if (largestStorage) {
+      creep.memory.storeId = largestStorage.storage.id;
+      creep.memory.mineralType = largestStorage.resourceType;
+    }
   }
 
   // 取り出し処理###############################################################################################
@@ -266,7 +288,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     // 化合物(完成品) or リクエストが見つからなかった原料はターミナルにしまっておく
     if (!creep.memory.transferId) {
-      creep.memory.transferId = _([terminal, creep.room.storage, factory]).min((s) => s?.store.getUsedCapacity(currentType))?.id;
+      creep.memory.transferId = _([terminal, creep.room.storage, factory])
+        .compact()
+        .min((s) => s.store.getUsedCapacity(currentType))?.id;
     }
   }
 

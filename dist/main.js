@@ -1632,7 +1632,11 @@ var behavior10 = (creep) => {
     }
   }
   const { wrong, requesting, completed } = labs.sortBy((l) => {
-    return l.memory.expectedType;
+    if (l.memory.expectedType) {
+      return l.store[l.memory.expectedType];
+    } else {
+      return Infinity;
+    }
   }).reduce(
     (mapping, structure) => {
       if (!structure.memory.expectedType) {
@@ -1691,16 +1695,30 @@ var behavior10 = (creep) => {
     const { factory: factory2 } = findMyStructures(creep.room);
     const storages = _.compact([creep.room.terminal, factory2, creep.room.storage]);
     for (const req of requesting) {
-      const s = _(storages).filter((s2) => s2.store.getUsedCapacity(req.memory.expectedType) > 0).max((s2) => s2.store.getUsedCapacity(req.memory.expectedType));
-      if (s) {
-        creep.memory.storeId = s == null ? void 0 : s.id;
-        creep.memory.mineralType = req.memory.expectedType;
-        break;
+      if (req.memory.expectedType) {
+        const s = _(storages).filter((s2) => req.memory.expectedType && s2.store[req.memory.expectedType] || 0 > 0).sortBy((s2) => req.memory.expectedType && s2.store[req.memory.expectedType] || 0).last();
+        if (s) {
+          creep.memory.storeId = s == null ? void 0 : s.id;
+          creep.memory.mineralType = req.memory.expectedType;
+          break;
+        }
       }
     }
   }
-  if (creep.memory.mineralType && pickUpAll(creep, creep.memory.mineralType) === OK) {
-    return;
+  if (!creep.memory.storeId) {
+    const storages = _([creep.room.terminal, factory, creep.room.storage]).compact();
+    const largestStorage = _(RESOURCES_ALL).map((resourceType) => {
+      return {
+        resourceType,
+        storage: storages.sortBy((s) => s.store.getUsedCapacity(resourceType)).last()
+      };
+    }).sortBy((s) => {
+      return s.storage.store.getUsedCapacity(s.resourceType);
+    }).last();
+    if (largestStorage) {
+      creep.memory.storeId = largestStorage.storage.id;
+      creep.memory.mineralType = largestStorage.resourceType;
+    }
   }
   if (creep.memory.storeId && creep.memory.mode === "\u{1F6D2}") {
     const store = Game.getObjectById(creep.memory.storeId);
@@ -1786,7 +1804,7 @@ var behavior10 = (creep) => {
       creep.memory.transferId = (_d = requesting.find((lab) => lab.memory.expectedType === currentType)) == null ? void 0 : _d.id;
     }
     if (!creep.memory.transferId) {
-      creep.memory.transferId = (_e = _([terminal, creep.room.storage, factory]).min((s) => s == null ? void 0 : s.store.getUsedCapacity(currentType))) == null ? void 0 : _e.id;
+      creep.memory.transferId = (_e = _([terminal, creep.room.storage, factory]).compact().min((s) => s.store.getUsedCapacity(currentType))) == null ? void 0 : _e.id;
     }
   }
   if (creep.memory.transferId && creep.memory.mode === "\u{1F69B}") {
@@ -2745,9 +2763,9 @@ function behavior17(labs, mineral) {
     console.log("strategy is not defined: " + room.memory.labMode);
     return ERR_INVALID_ARGS;
   }
-  const strategy = generateStrategy(room, [finalProducts]);
+  const strategy = generateStrategy(room, [finalProducts]).reverse();
   const labWithMemory = labs.map((lab, i) => {
-    const expectedType = strategy[strategy.length - labs.length + i];
+    const expectedType = strategy[i];
     const memory = lab.room.memory.labs[lab.id] || (lab.room.memory.labs[lab.id] = { expectedType });
     memory.expectedType = expectedType;
     return Object.assign(lab, { memory });
@@ -2774,12 +2792,13 @@ function behavior17(labs, mineral) {
 var allResouces = {};
 function getRoomResouces(room) {
   allResouces = allResouces || {};
-  const roomResouces = allResouces[room.name] = allResouces[room.name] || {
-    timestamp: Game.time
-  };
-  if (roomResouces.timestamp === Game.time) {
+  let roomResouces = allResouces[room.name];
+  if (roomResouces && roomResouces.timestamp === Game.time) {
     return roomResouces;
   }
+  roomResouces = allResouces[room.name] = {
+    timestamp: Game.time
+  };
   const { factory } = findMyStructures(room);
   for (const storage of _.compact([room.storage, room.terminal, factory])) {
     for (const resource of RESOURCES_ALL) {
@@ -2792,7 +2811,7 @@ function checkMode(room) {
   const { builder = [], mineralHarvester = [] } = getCreepsInRoom(room);
   if (isUnBoosted(mineralHarvester)) {
     return "mineralHarvester";
-  } else if (getSitesInRoom(room).length > 0 && isUnBoosted(builder)) {
+  } else if (isUnBoosted(builder)) {
     return "builder";
   } else {
     return "upgrader";
@@ -2800,21 +2819,9 @@ function checkMode(room) {
 }
 function isUnBoosted(creeps) {
   return !(creeps.length === 0 || creeps.every(
-    (c) => c.body.find((b) => {
-      if (b.type !== WORK) {
-        return false;
-      }
-      switch (c.memory.role) {
-        case "builder":
-          return b.boost === RESOURCE_CATALYZED_LEMERGIUM_ACID || b.boost === RESOURCE_LEMERGIUM_ACID;
-        case "mineralHarvester":
-          return b.boost === RESOURCE_CATALYZED_UTRIUM_ALKALIDE || b.boost === RESOURCE_UTRIUM_ALKALIDE;
-        case "upgrader":
-          return b.boost === RESOURCE_CATALYZED_GHODIUM_ACID || b.boost === RESOURCE_GHODIUM_ACID;
-        default:
-          return false;
-      }
-    })
+    (c) => c.body.filter((b) => {
+      b.type === WORK;
+    }).every((b) => b.boost)
   ));
 }
 function generateStrategy(room, strategy) {
@@ -3631,35 +3638,27 @@ module.exports.loop = function() {
       }
     }).run();
   });
-  logUsage("delete creep memoery", () => {
+  logUsage("delete", () => {
     Object.keys(Memory.creeps).forEach((name) => {
       if (!Game.creeps[name]) {
         delete Memory.creeps[name];
         console.log("Clearing non-existing creep memory:", name);
       }
     });
-  });
-  logUsage("delete rooms memoery", () => {
     Object.keys(Memory.rooms).forEach((name) => {
       var _a, _b;
       if (!((_b = (_a = Game.rooms[name]) == null ? void 0 : _a.controller) == null ? void 0 : _b.my)) {
         delete Memory.rooms[name];
       }
     });
-  });
-  logUsage("delete room find memoery", () => {
     Object.values(Memory.rooms).forEach((mem) => {
       delete mem.find;
     });
-  });
-  logUsage("delete factories memoery", () => {
     ObjectKeys(Memory.factories).forEach((id) => {
       if (!Game.getObjectById(id)) {
         delete Memory.factories[id];
       }
     });
-  });
-  logUsage("delete terminals memoery", () => {
     ObjectKeys(Memory.terminals).forEach((id) => {
       if (!Game.getObjectById(id)) {
         delete Memory.terminals[id];

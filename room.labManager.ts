@@ -1,6 +1,6 @@
 import { LAB_STRATEGY, REVERSE_REACTIONS } from "./constants";
 import { filterBodiesByCost, getCreepsInRoom } from "./util.creep";
-import { findMyStructures, getSitesInRoom, getSpawnsInRoom, isCompound } from "./utils";
+import { findMyStructures, getSpawnsInRoom, isCompound } from "./utils";
 
 export default function behavior(labs: StructureLab[], mineral: Mineral) {
   const firstLab = _.first(labs);
@@ -53,10 +53,11 @@ export default function behavior(labs: StructureLab[], mineral: Mineral) {
     return ERR_INVALID_ARGS;
   }
 
-  const strategy = generateStrategy(room, [finalProducts]);
+  const strategy = generateStrategy(room, [finalProducts]).reverse();
+
   // メモリを埋め込んだLABの情報を作る
   const labWithMemory = labs.map((lab, i) => {
-    const expectedType = strategy[strategy.length - labs.length + i];
+    const expectedType = strategy[i];
     // メモリの取得ついでに初期化
     const memory = lab.room.memory.labs[lab.id] || (lab.room.memory.labs[lab.id] = { expectedType });
 
@@ -105,13 +106,17 @@ let allResouces: Partial<
 
 function getRoomResouces(room: Room) {
   allResouces = allResouces || {};
-  const roomResouces = (allResouces[room.name] = allResouces[room.name] || {
-    timestamp: Game.time,
-  });
 
-  if (roomResouces.timestamp === Game.time) {
+  let roomResouces = allResouces[room.name];
+
+  if (roomResouces && roomResouces.timestamp === Game.time) {
     return roomResouces;
   }
+
+  roomResouces = allResouces[room.name] = {
+    timestamp: Game.time,
+  };
+
   const { factory } = findMyStructures(room);
   for (const storage of _.compact([room.storage, room.terminal, factory])) {
     for (const resource of RESOURCES_ALL) {
@@ -126,7 +131,7 @@ function checkMode(room: Room) {
 
   if (isUnBoosted(mineralHarvester)) {
     return "mineralHarvester";
-  } else if (getSitesInRoom(room).length > 0 && isUnBoosted(builder)) {
+  } else if (isUnBoosted(builder)) {
     return "builder";
   } else {
     return "upgrader";
@@ -140,21 +145,11 @@ function isUnBoosted(creeps: Creeps[]) {
   return !(
     creeps.length === 0 ||
     creeps.every((c) =>
-      c.body.find((b) => {
-        if (b.type !== WORK) {
-          return false;
-        }
-        switch (c.memory.role) {
-          case "builder":
-            return b.boost === RESOURCE_CATALYZED_LEMERGIUM_ACID || b.boost === RESOURCE_LEMERGIUM_ACID;
-          case "mineralHarvester":
-            return b.boost === RESOURCE_CATALYZED_UTRIUM_ALKALIDE || b.boost === RESOURCE_UTRIUM_ALKALIDE;
-          case "upgrader":
-            return b.boost === RESOURCE_CATALYZED_GHODIUM_ACID || b.boost === RESOURCE_GHODIUM_ACID;
-          default:
-            return false;
-        }
-      }),
+      c.body
+        .filter((b) => {
+          b.type === WORK;
+        })
+        .every((b) => b.boost),
     )
   );
 }

@@ -111,34 +111,26 @@ module.exports.loop = function () {
       .run();
   });
   //死んだcreepは削除する
-  logUsage("delete creep memoery", () => {
+  logUsage("delete", () => {
     Object.keys(Memory.creeps).forEach((name) => {
       if (!Game.creeps[name]) {
         delete Memory.creeps[name];
         console.log("Clearing non-existing creep memory:", name);
       }
     });
-  });
-  logUsage("delete rooms memoery", () => {
     Object.keys(Memory.rooms).forEach((name) => {
       if (!Game.rooms[name]?.controller?.my) {
         delete Memory.rooms[name];
       }
     });
-  });
-  logUsage("delete room find memoery", () => {
     Object.values(Memory.rooms).forEach((mem) => {
       delete mem.find;
     });
-  });
-  logUsage("delete factories memoery", () => {
     ObjectKeys(Memory.factories).forEach((id: Id<StructureFactory>) => {
       if (!Game.getObjectById(id)) {
         delete Memory.factories[id];
       }
     });
-  });
-  logUsage("delete terminals memoery", () => {
     ObjectKeys(Memory.terminals).forEach((id) => {
       if (!Game.getObjectById(id)) {
         delete Memory.terminals[id];
