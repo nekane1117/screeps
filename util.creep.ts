@@ -166,16 +166,6 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
     MOVE,
     CARRY,
   ],
-  mineralCarrier: [
-    ..._(
-      _.range(25).map(() => {
-        // あとはMoveとCarryの繰り返し
-        return [MOVE, CARRY];
-      }),
-    )
-      .flatten<BodyPartConstant>()
-      .run(),
-  ],
   harvester: [
     // 最小構成
     WORK,
@@ -434,7 +424,6 @@ const DEFAULT_CREEP_RANGE: Record<ROLES, number> = {
   gatherer: 1,
   harvester: 1,
   labManager: 1,
-  mineralCarrier: 1,
   mineralHarvester: 1,
   remoteHarvester: 1,
   remoteCarrier: 1,

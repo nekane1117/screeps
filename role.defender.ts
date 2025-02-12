@@ -8,7 +8,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     });
 
   if (!isD(creep)) {
-    return console.log(`${creep.name} is not MineralCarrier`);
+    return console.log(`${creep.name} is not Defender`);
   }
 
   if (creep.room.name !== creep.memory.baseRoom) {
