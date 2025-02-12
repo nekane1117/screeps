@@ -1589,7 +1589,7 @@ function isHarvester(c) {
 // role.labManager.ts
 var TRANSFER_THRESHOLD = 1e3;
 var behavior10 = (creep) => {
-  var _a, _b, _c, _d, _e;
+  var _a, _b, _c;
   const { room } = creep;
   const terminal = room.terminal;
   if (!terminal) {
@@ -1624,7 +1624,7 @@ var behavior10 = (creep) => {
   }
   checkMode2();
   const { factory } = findMyStructures(creep.room);
-  const labs = _([factory && Object.assign(factory, factory && { memory: Memory.factories[factory.id] }), ...getLabs(room).value()]).compact();
+  const labs = getLabs(room);
   if (creep.memory.storeId) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store && "store" in store && store.store.energy < CARRY_CAPACITY) {
@@ -1642,38 +1642,29 @@ var behavior10 = (creep) => {
       if (!structure.memory.expectedType) {
         return mapping;
       }
-      if (structure.structureType === STRUCTURE_FACTORY) {
-        if (structure.memory.outputType) {
-          mapping.completed.push(structure);
-        }
-        if (structure.memory.expectedType) {
-          mapping.requesting.push(structure);
-        }
-      } else {
-        if (structure.mineralType) {
-          if (structure.mineralType !== structure.memory.expectedType) {
-            mapping.wrong.push(structure);
-          } else if (isCompound(structure.mineralType)) {
-            if (structure.store[structure.mineralType] > TRANSFER_THRESHOLD * 2) {
-              mapping.completed.push(structure);
-            } else if (structure.store[structure.mineralType] <= TRANSFER_THRESHOLD) {
-              mapping.requesting.push(structure);
-            } else {
-              mapping.noProblem.push(structure);
-            }
-          } else {
-            if (structure.store.getFreeCapacity(structure.mineralType) > 1e3) {
-              mapping.requesting.push(structure);
-            } else {
-              mapping.noProblem.push(structure);
-            }
-          }
-        } else {
-          if (structure.memory.expectedType) {
+      if (structure.mineralType) {
+        if (structure.mineralType !== structure.memory.expectedType) {
+          mapping.wrong.push(structure);
+        } else if (isCompound(structure.mineralType)) {
+          if (structure.store[structure.mineralType] > TRANSFER_THRESHOLD * 2) {
+            mapping.completed.push(structure);
+          } else if (structure.store[structure.mineralType] <= TRANSFER_THRESHOLD) {
             mapping.requesting.push(structure);
           } else {
-            mapping.completed.push(structure);
+            mapping.noProblem.push(structure);
           }
+        } else {
+          if (structure.store.getFreeCapacity(structure.mineralType) > 1e3) {
+            mapping.requesting.push(structure);
+          } else {
+            mapping.noProblem.push(structure);
+          }
+        }
+      } else {
+        if (structure.memory.expectedType) {
+          mapping.requesting.push(structure);
+        } else {
+          mapping.completed.push(structure);
         }
       }
       return mapping;
@@ -1686,17 +1677,20 @@ var behavior10 = (creep) => {
     }
   );
   if (!creep.memory.storeId && wrong.length > 0) {
-    creep.memory.storeId = (_a = _(wrong).first()) == null ? void 0 : _a.id;
+    const store = _(wrong).first();
+    creep.memory.storeId = store == null ? void 0 : store.id;
+    creep.memory.mineralType = (store == null ? void 0 : store.mineralType) || void 0;
   }
   if (!creep.memory.storeId) {
-    creep.memory.storeId = (_b = _(completed).first()) == null ? void 0 : _b.id;
+    const store = _(completed).first();
+    creep.memory.storeId = store == null ? void 0 : store.id;
+    creep.memory.mineralType = (store == null ? void 0 : store.mineralType) || void 0;
   }
+  const storages = _([creep.room.terminal, factory, creep.room.storage]).compact();
   if (!creep.memory.storeId) {
-    const { factory: factory2 } = findMyStructures(creep.room);
-    const storages = _.compact([creep.room.terminal, factory2, creep.room.storage]);
     for (const req of requesting) {
       if (req.memory.expectedType) {
-        const s = _(storages).filter((s2) => req.memory.expectedType && s2.store[req.memory.expectedType] || 0 > 0).sortBy((s2) => req.memory.expectedType && s2.store[req.memory.expectedType] || 0).last();
+        const s = storages.filter((s2) => req.memory.expectedType && s2.store[req.memory.expectedType] || 0 > 0).sortBy((s2) => req.memory.expectedType && s2.store[req.memory.expectedType] || 0).last();
         if (s) {
           creep.memory.storeId = s == null ? void 0 : s.id;
           creep.memory.mineralType = req.memory.expectedType;
@@ -1706,7 +1700,6 @@ var behavior10 = (creep) => {
     }
   }
   if (!creep.memory.storeId) {
-    const storages = _([creep.room.terminal, factory, creep.room.storage]).compact();
     const largestStorage = _(RESOURCES_ALL).map((resourceType) => {
       return {
         resourceType,
@@ -1728,35 +1721,12 @@ var behavior10 = (creep) => {
       }
       if (creep.pos.isNearTo(store)) {
         creep.memory.worked = ((creep2) => {
-          if (store.structureType === STRUCTURE_TERMINAL || store.structureType === STRUCTURE_STORAGE) {
-            if (creep2.memory.mineralType) {
-              return creep2.withdraw(store, creep2.memory.mineralType);
-            } else {
-              creep2.memory.storeId = void 0;
-              creep2.memory.mineralType = void 0;
-              return ERR_INVALID_ARGS;
-            }
-          } else if (store.structureType === STRUCTURE_FACTORY) {
-            const memory = Memory.factories[store.id];
-            if (memory.outputType) {
-              return creep2.withdraw(
-                store,
-                memory.outputType,
-                Math.min(creep2.store.getCapacity(memory.outputType), Math.max(0, store.store[memory.outputType] - TRANSFER_THRESHOLD * 2))
-              );
-            } else {
-              creep2.memory.storeId = void 0;
-              creep2.memory.mineralType = void 0;
-              return ERR_INVALID_ARGS;
-            }
+          if (creep2.memory.mineralType) {
+            return creep2.withdraw(store, creep2.memory.mineralType);
           } else {
-            if (store.mineralType) {
-              return creep2.withdraw(store, store.mineralType, Math.min(creep2.store.getCapacity(store.mineralType), store.store[store.mineralType]));
-            } else {
-              creep2.memory.storeId = void 0;
-              creep2.memory.mineralType = void 0;
-              return ERR_INVALID_ARGS;
-            }
+            creep2.memory.storeId = void 0;
+            creep2.memory.mineralType = void 0;
+            return ERR_INVALID_ARGS;
           }
         })(creep);
         switch (creep.memory.worked) {
@@ -1789,7 +1759,7 @@ var behavior10 = (creep) => {
       }
     }
   }
-  const currentType = (_c = Object.entries(creep.store).find(([_type, amount]) => amount)) == null ? void 0 : _c[0];
+  const currentType = (_a = Object.entries(creep.store).find(([_type, amount]) => amount)) == null ? void 0 : _a[0];
   if (creep.memory.transferId) {
     const store = Game.getObjectById(creep.memory.transferId);
     if (store && "store" in store && store.store.getFreeCapacity(currentType) === 0) {
@@ -1801,10 +1771,10 @@ var behavior10 = (creep) => {
       return ERR_NOT_ENOUGH_RESOURCES;
     }
     if (!creep.memory.transferId) {
-      creep.memory.transferId = (_d = requesting.find((lab) => lab.memory.expectedType === currentType)) == null ? void 0 : _d.id;
+      creep.memory.transferId = (_b = requesting.find((lab) => lab.memory.expectedType === currentType)) == null ? void 0 : _b.id;
     }
     if (!creep.memory.transferId) {
-      creep.memory.transferId = (_e = _([terminal, creep.room.storage, factory]).compact().min((s) => s.store.getUsedCapacity(currentType))) == null ? void 0 : _e.id;
+      creep.memory.transferId = (_c = _([terminal, creep.room.storage, factory]).compact().min((s) => s.store.getUsedCapacity(currentType))) == null ? void 0 : _c.id;
     }
   }
   if (creep.memory.transferId && creep.memory.mode === "\u{1F69B}") {
@@ -3388,16 +3358,6 @@ function behaviors2(factory) {
       factory.produce(commodity[0]);
       memory.lastProduced = commodity[0];
     }
-    memory.outputType = RESOURCES_ALL.find((type) => {
-      if (!factory.room.terminal) {
-        return false;
-      }
-      return !INGREDIENTS.includes(type) && factory.store[type] > THRESHOLD && factory.room.terminal.store[type] < THRESHOLD * 2;
-    });
-    memory.expectedType = RESOURCES_ALL.find((resourceType) => {
-      var _a;
-      return (((_a = factory.room.terminal) == null ? void 0 : _a.store[resourceType]) || 0) >= THRESHOLD * 1 && factory.store[resourceType] < THRESHOLD;
-    });
   });
 }
 function isFactory(s) {

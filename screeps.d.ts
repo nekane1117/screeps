@@ -351,8 +351,6 @@ declare interface Memory {
 }
 
 declare interface FactoryMemory {
-  outputType?: ResourceConstant;
-  expectedType?: ResourceConstant;
   lastProduced?: ResourceConstant;
 }
 

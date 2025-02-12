@@ -39,17 +39,6 @@ export default function behaviors(factory: Structure) {
       factory.produce(commodity[0]);
       memory.lastProduced = commodity[0];
     }
-
-    memory.outputType = RESOURCES_ALL.find((type) => {
-      if (!factory.room.terminal) {
-        return false;
-      }
-      return !INGREDIENTS.includes(type as ResourceConstant) && factory.store[type] > THRESHOLD && factory.room.terminal.store[type] < THRESHOLD * 2;
-    });
-
-    memory.expectedType = RESOURCES_ALL.find((resourceType) => {
-      return (factory.room.terminal?.store[resourceType] || 0) >= THRESHOLD * 1 && factory.store[resourceType] < THRESHOLD;
-    });
   });
 }
 
