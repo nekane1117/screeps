@@ -1296,7 +1296,7 @@ var behavior7 = (creep) => {
             })[_.random(2)]
           );
         } else {
-          moveMeTo(target, { range: 2 });
+          moveMeTo(target, { range: 3 });
         }
       }
       if (target) {
@@ -3396,43 +3396,49 @@ module.exports.loop = function() {
         return (_b = (_a = flags_default)[flag.color]) == null ? void 0 : _b.call(_a, flag);
       });
     });
+    const creeps = Object.values(Game.creeps).reduce(
+      (mapping, creep) => {
+        mapping[creep.memory.baseRoom] = (mapping[creep.memory.baseRoom] || []).concat(creep);
+        return mapping;
+      },
+      {}
+    );
     logUsage("rooms", () => {
       Object.values(Game.rooms).filter((room) => {
         var _a;
         return !isHighway(room) && ((_a = room.controller) == null ? void 0 : _a.my);
       }).forEach((room) => {
-        roomBehavior(room);
-        findMyStructures(room).all.forEach((s) => {
-          var _a, _b;
-          return (_b = (_a = structures_default)[s.structureType]) == null ? void 0 : _b.call(_a, s);
-        });
-      });
-    });
-    logUsage(`creep(${Object.values(Game.creeps).length})`, () => {
-      Object.values(Game.creeps).map((c) => {
-        return logUsage(
-          c.name,
-          () => {
-            var _a, _b;
-            if (c.spawning) {
-              return;
-            }
-            const startUsage = Game.cpu.getUsed();
-            c.memory.moved = void 0;
-            c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
-              color: toColor(c)
+        logUsage(room.name, () => {
+          var _a;
+          roomBehavior(room);
+          findMyStructures(room).all.forEach((s) => {
+            var _a2, _b;
+            return (_b = (_a2 = structures_default)[s.structureType]) == null ? void 0 : _b.call(_a2, s);
+          });
+          logUsage(`creep(${(_a = creeps[room.name]) == null ? void 0 : _a.length})`, () => {
+            var _a2;
+            (_a2 = creeps[room.name]) == null ? void 0 : _a2.map((c) => {
+              return logUsage(
+                c.name,
+                () => {
+                  var _a3, _b;
+                  if (c.spawning) {
+                    return;
+                  }
+                  c.memory.moved = void 0;
+                  c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
+                    color: toColor(c)
+                  });
+                  (_b = (_a3 = behaviors)[c.memory.role]) == null ? void 0 : _b.call(_a3, c);
+                  c.getActiveBodyparts(WORK) && c.pos.lookFor(LOOK_STRUCTURES).filter((s) => [STRUCTURE_CONTAINER, STRUCTURE_ROAD].includes(s.structureType) && s.hits < s.hitsMax).forEach((s) => c.repair(s));
+                  c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
+                  c.memory.moved === OK && (c.memory.__avoidCreep = false);
+                },
+                0.5
+              );
             });
-            (_b = (_a = behaviors)[c.memory.role]) == null ? void 0 : _b.call(_a, c);
-            c.getActiveBodyparts(WORK) && c.pos.lookFor(LOOK_STRUCTURES).filter((s) => [STRUCTURE_CONTAINER, STRUCTURE_ROAD].includes(s.structureType) && s.hits < s.hitsMax).forEach((s) => c.repair(s));
-            c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
-            c.memory.moved === OK && (c.memory.__avoidCreep = false);
-            return {
-              name: c.name,
-              cost: Game.cpu.getUsed() - startUsage
-            };
-          },
-          0.5
-        );
+          });
+        });
       });
     });
   });

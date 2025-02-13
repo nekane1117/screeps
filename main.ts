@@ -33,48 +33,52 @@ module.exports.loop = function () {
       Object.values(Game.flags).forEach((flag) => flags[flag.color]?.(flag));
     });
 
+    const creeps = Object.values(Game.creeps).reduce(
+      (mapping, creep) => {
+        mapping[creep.memory.baseRoom] = (mapping[creep.memory.baseRoom] || []).concat(creep);
+        return mapping;
+      },
+      {} as Partial<Record<string, Creep[]>>,
+    );
+
     logUsage("rooms", () => {
       Object.values(Game.rooms)
         .filter((room) => !isHighway(room) && room.controller?.my)
         .forEach((room) => {
-          roomBehavior(room);
-          // 構造物の動き
-          findMyStructures(room).all.forEach((s) => structures[s.structureType]?.(s));
-        });
-    });
-    // Creepの動き
-    logUsage(`creep(${Object.values(Game.creeps).length})`, () => {
-      Object.values(Game.creeps).map((c) => {
-        return logUsage(
-          c.name,
-          () => {
-            if (c.spawning) {
-              return;
-            }
-            const startUsage = Game.cpu.getUsed();
-            c.memory.moved = undefined;
-            c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
-              color: toColor(c),
+          logUsage(room.name, () => {
+            roomBehavior(room);
+            // 構造物の動き
+            findMyStructures(room).all.forEach((s) => structures[s.structureType]?.(s));
+            // Creepの動き
+            logUsage(`creep(${creeps[room.name]?.length})`, () => {
+              creeps[room.name]?.map((c) => {
+                return logUsage(
+                  c.name,
+                  () => {
+                    if (c.spawning) {
+                      return;
+                    }
+                    c.memory.moved = undefined;
+                    c.room.visual.text(c.name.split("_")[0], c.pos.x, c.pos.y, {
+                      color: toColor(c),
+                    });
+                    behaviors[c.memory.role]?.(c);
+                    // 通った場所はみんなで直す
+                    c.getActiveBodyparts(WORK) &&
+                      c.pos
+                        .lookFor(LOOK_STRUCTURES)
+                        .filter((s) => ([STRUCTURE_CONTAINER, STRUCTURE_ROAD] as StructureConstant[]).includes(s.structureType) && s.hits < s.hitsMax)
+                        .forEach((s) => c.repair(s));
+                    // 現在地の履歴を更新する
+                    c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
+                    c.memory.moved === OK && (c.memory.__avoidCreep = false);
+                  },
+                  0.5,
+                );
+              });
             });
-            behaviors[c.memory.role]?.(c);
-            // 通った場所はみんなで直す
-            c.getActiveBodyparts(WORK) &&
-              c.pos
-                .lookFor(LOOK_STRUCTURES)
-                .filter((s) => ([STRUCTURE_CONTAINER, STRUCTURE_ROAD] as StructureConstant[]).includes(s.structureType) && s.hits < s.hitsMax)
-                .forEach((s) => c.repair(s));
-            // 現在地の履歴を更新する
-            c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
-            c.memory.moved === OK && (c.memory.__avoidCreep = false);
-
-            return {
-              name: c.name,
-              cost: Game.cpu.getUsed() - startUsage,
-            };
-          },
-          0.5,
-        );
-      });
+          });
+        });
     });
   });
   logUsage("constructionSites", () => {

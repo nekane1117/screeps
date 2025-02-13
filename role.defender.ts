@@ -50,7 +50,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             })[_.random(2)],
           );
         } else {
-          moveMeTo(target, { range: 2 });
+          moveMeTo(target, { range: 3 });
         }
       }
 
