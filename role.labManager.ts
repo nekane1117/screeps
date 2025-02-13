@@ -154,21 +154,38 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   if (!creep.memory.storeId) {
-    const largestStorage = _(RESOURCES_ALL)
+    const maxdiff = _(RESOURCES_ALL)
       .map((resourceType) => {
-        return {
-          resourceType,
-          storage: storages.sortBy((s) => s.store.getUsedCapacity(resourceType)).last(),
-        };
+        return storages
+          .map((from) => {
+            return storages
+              .map((to) => {
+                return {
+                  resourceType,
+                  from,
+                  to,
+                  amount: from.store[resourceType] - to.store[resourceType],
+                };
+              })
+              .run();
+          })
+          .run();
       })
-      .sortBy((s) => {
-        return s.storage.store.getUsedCapacity(s.resourceType);
+      .flattenDeep<{
+        resourceType: ResourceConstant;
+        from: StructureStorage | StructureTerminal | StructureFactory;
+        to: StructureStorage | StructureTerminal | StructureFactory;
+        amount: number;
+      }>()
+      .filter((v) => {
+        return v.amount > 1000;
       })
+      .sortBy((v) => v.amount)
       .last();
 
-    if (largestStorage) {
-      creep.memory.storeId = largestStorage.storage.id;
-      creep.memory.mineralType = largestStorage.resourceType;
+    if (maxdiff) {
+      creep.memory.storeId = maxdiff.from.id;
+      creep.memory.mineralType = maxdiff.resourceType;
     }
   }
 

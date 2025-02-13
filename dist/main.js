@@ -1748,17 +1748,23 @@ var behavior10 = (creep) => {
     }
   }
   if (!creep.memory.storeId) {
-    const largestStorage = _(RESOURCES_ALL).map((resourceType) => {
-      return {
-        resourceType,
-        storage: storages.sortBy((s) => s.store.getUsedCapacity(resourceType)).last()
-      };
-    }).sortBy((s) => {
-      return s.storage.store.getUsedCapacity(s.resourceType);
-    }).last();
-    if (largestStorage) {
-      creep.memory.storeId = largestStorage.storage.id;
-      creep.memory.mineralType = largestStorage.resourceType;
+    const maxdiff = _(RESOURCES_ALL).map((resourceType) => {
+      return storages.map((from) => {
+        return storages.map((to) => {
+          return {
+            resourceType,
+            from,
+            to,
+            amount: from.store[resourceType] - to.store[resourceType]
+          };
+        }).run();
+      }).run();
+    }).flattenDeep().filter((v) => {
+      return v.amount > 1e3;
+    }).sortBy((v) => v.amount).last();
+    if (maxdiff) {
+      creep.memory.storeId = maxdiff.from.id;
+      creep.memory.mineralType = maxdiff.resourceType;
     }
   }
   if (creep.memory.storeId && creep.memory.mode === "gathering") {
@@ -2665,10 +2671,8 @@ function getRoomResouces(room) {
   return roomResouces;
 }
 function checkMode(room) {
-  const { builder = [], mineralHarvester = [] } = getCreepsInRoom(room);
-  if (isUnBoosted(mineralHarvester)) {
-    return "mineralHarvester";
-  } else if (isUnBoosted(builder)) {
+  const { builder = [] } = getCreepsInRoom(room);
+  if (isUnBoosted(builder)) {
     return "builder";
   } else {
     return "upgrader";

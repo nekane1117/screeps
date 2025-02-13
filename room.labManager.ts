@@ -132,11 +132,12 @@ function getRoomResouces(room: Room) {
 }
 
 function checkMode(room: Room) {
-  const { builder = [], mineralHarvester = [] } = getCreepsInRoom(room);
+  const { builder = [] } = getCreepsInRoom(room);
 
-  if (isUnBoosted(mineralHarvester)) {
-    return "mineralHarvester";
-  } else if (isUnBoosted(builder)) {
+  // if (isUnBoosted(mineralHarvester)) {
+  //   return "mineralHarvester";
+  // } else
+  if (isUnBoosted(builder)) {
     return "builder";
   } else {
     return "upgrader";
