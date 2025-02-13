@@ -6,7 +6,7 @@ export default function behaviors(tower: Structure) {
   }
 
   // https://docs.screeps.com/simultaneous-actions.html
-  const target = _(tower.room.find(FIND_HOSTILE_CREEPS))
+  const target = _(tower.pos.findInRange(FIND_HOSTILE_CREEPS, 5))
     .sort((c) => c.getActiveBodyparts(HEAL))
     .reverse()
     .first();

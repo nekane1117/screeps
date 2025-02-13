@@ -334,7 +334,7 @@ function createStructures(room: Room) {
     }
   });
 
-  for (const structureType of [STRUCTURE_OBSERVER, STRUCTURE_TOWER, STRUCTURE_EXTENSION]) {
+  for (const structureType of [STRUCTURE_OBSERVER, STRUCTURE_EXTENSION]) {
     const structures = _([findMyStructures(room)[structureType]])
       .flatten()
       .value();

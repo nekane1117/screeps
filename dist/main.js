@@ -2973,7 +2973,7 @@ function createStructures(room) {
       }
     }
   });
-  for (const structureType of [STRUCTURE_OBSERVER, STRUCTURE_TOWER, STRUCTURE_EXTENSION]) {
+  for (const structureType of [STRUCTURE_OBSERVER, STRUCTURE_EXTENSION]) {
     const structures2 = _([findMyStructures(room)[structureType]]).flatten().value();
     const sites = getSitesInRoom(room).filter((s) => s.structureType === structureType);
     if (structures2.length + sites.length < CONTROLLER_STRUCTURES[structureType][room.controller.level]) {
@@ -3312,7 +3312,7 @@ function behaviors4(tower) {
   if (!isTower(tower)) {
     return console.log(`${tower.id} is not tower`);
   }
-  const target = _(tower.room.find(FIND_HOSTILE_CREEPS)).sort((c) => c.getActiveBodyparts(HEAL)).reverse().first();
+  const target = _(tower.pos.findInRange(FIND_HOSTILE_CREEPS, 5)).sort((c) => c.getActiveBodyparts(HEAL)).reverse().first();
   if (target) {
     tower.attack(target);
   }
