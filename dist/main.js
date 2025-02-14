@@ -2329,19 +2329,21 @@ function roomBehavior(room) {
   if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) == null ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
     (_b = room.controller) == null ? void 0 : _b.activateSafeMode();
   }
-  if (!room.memory.carrySize) {
-    room.memory.carrySize = {
-      builder: 100,
-      carrier: 100,
-      claimer: 100,
-      defender: 100,
-      harvester: 100,
-      labManager: 100,
-      mineralHarvester: 100,
-      upgrader: 100
-    };
-  }
-  const { carrier: carriers = [], harvester = [], gatherer = [] } = getCreepsInRoom(room);
+  logUsage("check carrysize", () => {
+    if (!room.memory.carrySize) {
+      room.memory.carrySize = {
+        builder: 100,
+        carrier: 100,
+        claimer: 100,
+        defender: 100,
+        harvester: 100,
+        labManager: 100,
+        mineralHarvester: 100,
+        upgrader: 100
+      };
+    }
+  });
+  const { carrier: carriers = [], harvester = [], gatherer = [] } = logUsage("getCreepsInRoom", () => getCreepsInRoom(room));
   if (room.storage) {
     room.visual.text(room.storage.store.energy.toString(), room.storage.pos.x, room.storage.pos.y, {
       font: 0.25
@@ -2355,12 +2357,15 @@ function roomBehavior(room) {
         if (spawns.length > 0) {
           return spawns.find((s) => !s.spawning);
         } else {
-          return _(Object.values(Game.spawns)).map((spawn2) => {
-            return {
-              spawn: spawn2,
-              cost: PathFinder.search(sources[0].pos, spawn2.pos).cost
-            };
-          }).min((v) => v.cost).spawn;
+          return logUsage(
+            "find spawn",
+            () => _(Object.values(Game.spawns)).filter((s) => s.room.energyAvailable === s.room.energyCapacityAvailable).map((spawn2) => {
+              return {
+                spawn: spawn2,
+                cost: PathFinder.search(sources[0].pos, spawn2.pos).cost
+              };
+            }).min((v) => v.cost).spawn
+          );
         }
       })();
       if (!spawn) {
@@ -2370,12 +2375,12 @@ function roomBehavior(room) {
       if (spawn.room.energyAvailable >= 300) {
         const name = `H_${room.name}_${Game.time}`;
         let total = 0;
-        const bodies = (sources.length === 1 || room.energyCapacityAvailable < dynamicMinCost ? [WORK, MOVE, CARRY, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE, MOVE] : _(_.range(50 / 3)).map(() => [WORK, MOVE, CARRY]).flatten().run()).slice(0, 50).map((body) => {
+        const bodies = (sources.length === 1 || spawn.room.energyCapacityAvailable < dynamicMinCost ? [WORK, MOVE, CARRY, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE, MOVE] : _(_.range(50 / 3)).map(() => [WORK, MOVE, CARRY]).flatten().run()).slice(0, 50).map((body) => {
           return {
             body,
             total: total += BODYPART_COST[body]
           };
-        }).filter((v) => v.total <= room.energyAvailable).map((v) => v.body);
+        }).filter((v) => v.total <= spawn.room.energyAvailable).map((v) => v.body);
         const spawned = spawn.spawnCreep(bodies, name, {
           memory: {
             role: "harvester",
@@ -2384,20 +2389,24 @@ function roomBehavior(room) {
           }
         });
         if (spawned !== OK) {
-          console.log(`spawn ${spawn.name}:${RETURN_CODE_DECODER[spawned]}`);
+          console.log(`spawn ${spawn.name}:${RETURN_CODE_DECODER[spawned]}: ${JSON.stringify(bodies)}`);
         }
       }
     }
   }
   updateRoadMap(room);
-  const { lab } = findMyStructures(room);
-  const mineral = _(room.find(FIND_MINERALS)).first();
-  if (mineral) {
-    behavior13(lab, mineral);
-  }
-  if (room.name === "sim" || Game.time % 100 === 0) {
-    createStructures(room);
-  }
+  logUsage("labManager", () => {
+    const { lab } = findMyStructures(room);
+    const mineral = _(room.find(FIND_MINERALS)).first();
+    if (mineral) {
+      behavior13(lab, mineral);
+    }
+  });
+  logUsage("createStructures", () => {
+    if (room.name === "sim" || Game.time % 100 === 0) {
+      createStructures(room);
+    }
+  });
   behavior14(findMyStructures(room).link);
   const carrierBodies = getCarrierBody(room, "carrier");
   if (harvester.length === 0) {
@@ -2456,18 +2465,20 @@ function roomBehavior(room) {
       });
     }
   }
-  if (gatherer.length === 0 && room.storage && room.energyCapacityAvailable >= 300 && room.find(FIND_RUINS, { filter: (r) => r.store.getUsedCapacity() > 0 }).length > 0) {
-    const spawn = getSpawnsInRoom(room).find((s) => !s.spawning);
-    if (spawn) {
-      spawn.spawnCreep(filterBodiesByCost("gatherer", room.energyCapacityAvailable).bodies, `G_${room.name}_${Game.time}`, {
-        memory: {
-          role: "gatherer",
-          baseRoom: room.name,
-          mode: "gathering"
-        }
-      });
+  logUsage("gatherer", () => {
+    if (gatherer.length === 0 && room.storage && room.energyCapacityAvailable >= 300 && room.find(FIND_RUINS, { filter: (r) => r.store.getUsedCapacity() > 0 }).length > 0) {
+      const spawn = getSpawnsInRoom(room).find((s) => !s.spawning);
+      if (spawn) {
+        spawn.spawnCreep(filterBodiesByCost("gatherer", room.energyCapacityAvailable).bodies, `G_${room.name}_${Game.time}`, {
+          memory: {
+            role: "gatherer",
+            baseRoom: room.name,
+            mode: "gathering"
+          }
+        });
+      }
     }
-  }
+  });
 }
 function createStructures(room) {
   const mainSpawn = getMainSpawn(room);

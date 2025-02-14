@@ -1,7 +1,7 @@
 import labManager from "./room.labManager";
 import linkBehavior from "./structure.links";
 import { RETURN_CODE_DECODER, filterBodiesByCost, getCarrierBody, getCreepsInRoom, getMainSpawn } from "./util.creep";
-import { findMyStructures, getSitesInRoom, getSpawnsInRoom } from "./utils";
+import { findMyStructures, getSitesInRoom, getSpawnsInRoom, logUsage } from "./utils";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
@@ -9,22 +9,23 @@ export function roomBehavior(room: Room) {
   if (room.find(FIND_HOSTILE_CREEPS).length && !room.controller?.safeMode && room.energyAvailable > SAFE_MODE_COST) {
     room.controller?.activateSafeMode();
   }
+  logUsage("check carrysize", () => {
+    // 初回用初期化処理
+    if (!room.memory.carrySize) {
+      room.memory.carrySize = {
+        builder: 100,
+        carrier: 100,
+        claimer: 100,
+        defender: 100,
+        harvester: 100,
+        labManager: 100,
+        mineralHarvester: 100,
+        upgrader: 100,
+      };
+    }
+  });
 
-  // 初回用初期化処理
-  if (!room.memory.carrySize) {
-    room.memory.carrySize = {
-      builder: 100,
-      carrier: 100,
-      claimer: 100,
-      defender: 100,
-      harvester: 100,
-      labManager: 100,
-      mineralHarvester: 100,
-      upgrader: 100,
-    };
-  }
-
-  const { carrier: carriers = [], harvester = [], gatherer = [] } = getCreepsInRoom(room);
+  const { carrier: carriers = [], harvester = [], gatherer = [] } = logUsage("getCreepsInRoom", () => getCreepsInRoom(room));
 
   if (room.storage) {
     room.visual.text(room.storage.store.energy.toString(), room.storage.pos.x, room.storage.pos.y, {
@@ -42,14 +43,19 @@ export function roomBehavior(room: Room) {
         if (spawns.length > 0) {
           return spawns.find((s) => !s.spawning);
         } else {
-          return _(Object.values(Game.spawns))
-            .map((spawn) => {
-              return {
-                spawn,
-                cost: PathFinder.search(sources[0].pos, spawn.pos).cost,
-              };
-            })
-            .min((v) => v.cost).spawn;
+          return logUsage(
+            "find spawn",
+            () =>
+              _(Object.values(Game.spawns))
+                .filter((s) => s.room.energyAvailable === s.room.energyCapacityAvailable)
+                .map((spawn) => {
+                  return {
+                    spawn,
+                    cost: PathFinder.search(sources[0].pos, spawn.pos).cost,
+                  };
+                })
+                .min((v) => v.cost).spawn,
+          );
         }
       })();
 
@@ -62,7 +68,7 @@ export function roomBehavior(room: Room) {
         const name = `H_${room.name}_${Game.time}`;
         let total = 0;
         const bodies = (
-          sources.length === 1 || room.energyCapacityAvailable < dynamicMinCost
+          sources.length === 1 || spawn.room.energyCapacityAvailable < dynamicMinCost
             ? [WORK, MOVE, CARRY, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE, MOVE]
             : (_(_.range(50 / 3))
                 .map(() => [WORK, MOVE, CARRY])
@@ -76,7 +82,7 @@ export function roomBehavior(room: Room) {
               total: (total += BODYPART_COST[body]),
             };
           })
-          .filter((v) => v.total <= room.energyAvailable)
+          .filter((v) => v.total <= spawn.room.energyAvailable)
           .map((v) => v.body);
 
         const spawned = spawn.spawnCreep(bodies, name, {
@@ -87,7 +93,7 @@ export function roomBehavior(room: Room) {
           } as HarvesterMemory,
         });
         if (spawned !== OK) {
-          console.log(`spawn ${spawn.name}:${RETURN_CODE_DECODER[spawned]}`);
+          console.log(`spawn ${spawn.name}:${RETURN_CODE_DECODER[spawned]}: ${JSON.stringify(bodies)}`);
         }
       }
     }
@@ -95,17 +101,24 @@ export function roomBehavior(room: Room) {
   // ロードマップを更新する
   updateRoadMap(room);
 
-  const { lab } = findMyStructures(room);
+  //#region labManager
+  logUsage("labManager", () => {
+    const { lab } = findMyStructures(room);
+    const mineral = _(room.find(FIND_MINERALS)).first();
+    if (mineral) {
+      labManager(lab, mineral);
+    }
+  });
+  //#endregion
 
-  const mineral = _(room.find(FIND_MINERALS)).first();
-  if (mineral) {
-    labManager(lab, mineral);
-  }
-
-  // 部屋ごとの色々を建てる
-  if (room.name === "sim" || Game.time % 100 === 0) {
-    createStructures(room);
-  }
+  //#region createStructures
+  logUsage("createStructures", () => {
+    // 部屋ごとの色々を建てる
+    if (room.name === "sim" || Game.time % 100 === 0) {
+      createStructures(room);
+    }
+  });
+  //#endregion
 
   // linkの挙動
   linkBehavior(findMyStructures(room).link);
@@ -188,25 +201,27 @@ export function roomBehavior(room: Room) {
   }
 
   //#region gatherer
-
-  // 容量のある廃墟がある時
-  if (
-    gatherer.length === 0 &&
-    room.storage &&
-    room.energyCapacityAvailable >= 300 &&
-    room.find(FIND_RUINS, { filter: (r) => r.store.getUsedCapacity() > 0 }).length > 0
-  ) {
-    const spawn = getSpawnsInRoom(room).find((s) => !s.spawning);
-    if (spawn) {
-      spawn.spawnCreep(filterBodiesByCost("gatherer", room.energyCapacityAvailable).bodies, `G_${room.name}_${Game.time}`, {
-        memory: {
-          role: "gatherer",
-          baseRoom: room.name,
-          mode: "gathering",
-        } as GathererMemory,
-      });
+  logUsage("gatherer", () => {
+    // 容量のある廃墟がある時
+    if (
+      gatherer.length === 0 &&
+      room.storage &&
+      room.energyCapacityAvailable >= 300 &&
+      room.find(FIND_RUINS, { filter: (r) => r.store.getUsedCapacity() > 0 }).length > 0
+    ) {
+      const spawn = getSpawnsInRoom(room).find((s) => !s.spawning);
+      if (spawn) {
+        spawn.spawnCreep(filterBodiesByCost("gatherer", room.energyCapacityAvailable).bodies, `G_${room.name}_${Game.time}`, {
+          memory: {
+            role: "gatherer",
+            baseRoom: room.name,
+            mode: "gathering",
+          } as GathererMemory,
+        });
+      }
     }
-  }
+  });
+
   //#endregion
 }
 
