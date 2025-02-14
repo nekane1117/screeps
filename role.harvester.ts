@@ -133,7 +133,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
 
     // 周囲にコンテナもリンクもなければコンテナを立てる
-    if (creep.memory.worked === OK && source.pos.findInRange([...container, ...link], 1).length === 0) {
+    if (
+      creep.memory.worked === OK &&
+      source.pos.findInRange(
+        [...source.room.find(FIND_CONSTRUCTION_SITES, { filter: (s) => s.structureType === STRUCTURE_CONTAINER }), ...container, ...link],
+        1,
+      ).length === 0
+    ) {
       creep.pos.createConstructionSite(STRUCTURE_CONTAINER);
     }
     //#endregion 収穫処理 ##################################################################################

@@ -84,30 +84,6 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
     return b[i % b.length];
   }),
   claimer: [CLAIM, MOVE],
-  reserver: [CLAIM, MOVE, CLAIM, MOVE, RANGED_ATTACK, MOVE, RANGED_ATTACK, MOVE, HEAL, MOVE],
-  remoteHarvester: _.range(50).map((i) => {
-    const b = [
-      // 最低構成
-      CARRY,
-      MOVE,
-      WORK,
-      MOVE,
-      WORK,
-      MOVE,
-      WORK,
-      MOVE,
-      WORK,
-      MOVE,
-      WORK,
-      MOVE,
-      // 最低武装
-      RANGED_ATTACK,
-      MOVE,
-      ATTACK,
-      MOVE,
-    ];
-    return b[i % b.length];
-  }),
   carrier: [],
   labManager: [MOVE, CARRY, CARRY],
   defender: _.range(50).map((i) => {
@@ -190,7 +166,6 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       .run(),
   ],
   upgrader: [WORK, MOVE, CARRY, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE],
-  remoteCarrier: [],
 });
 
 export const RETURN_CODE_DECODER = Object.freeze({
@@ -425,9 +400,6 @@ const DEFAULT_CREEP_RANGE: Record<ROLES, number> = {
   harvester: 1,
   labManager: 1,
   mineralHarvester: 1,
-  remoteHarvester: 1,
-  remoteCarrier: 1,
-  reserver: 1,
   upgrader: 1,
 };
 

@@ -1,22 +1,12 @@
 import { findTransferTarget } from "./role.carrier";
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getRepairPower, moveRoom, pickUpAll, toColor, withdrawBy } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, getRepairPower, moveRoom, pickUpAll, toColor, withdrawBy } from "./util.creep";
 import { findMyStructures, getDecayAmount, getLabs, getSitesInRoom } from "./utils";
 // import { findMyStructures } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isBuilder(creep)) {
     return console.log(`${creep.name} is not Builder`);
-  }
-
-  const mySite = _(Game.constructionSites)
-    .values<ConstructionSite>()
-    .filter((c) => c.room?.name === creep.memory.baseRoom)
-    .run();
-
-  // 自室の建設があるときはすぐ行く
-  if (creep.pos.roomName !== creep.memory.baseRoom && mySite.length > 0) {
-    return moveRoom(creep, creep.pos.roomName, creep.memory.baseRoom);
   }
 
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
@@ -54,6 +44,17 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   };
   checkMode();
+
+  const mySite = _(Game.constructionSites)
+    .values<ConstructionSite>()
+    .filter((c) => c.room?.name === creep.memory.baseRoom)
+    .run();
+
+  // 自室の建設があるときはすぐ行く
+  if (creep.memory.mode === "👷" && creep.pos.roomName !== creep.memory.baseRoom && mySite.length > 0) {
+    return moveRoom(creep, creep.pos.roomName, creep.memory.baseRoom);
+  }
+
   const { road, rampart, container, link } = findMyStructures(creep.room);
 
   // https://docs.screeps.com/simultaneous-actions.html
@@ -259,10 +260,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     creep.memory.storeId = creep.memory.storeId || creep.room.storage?.id;
 
     if (!creep.memory.storeId && container.length === 0) {
-      const { harvester = [] } = getCreepsInRoom(creep.room);
-      const h = creep.pos.findClosestByRange(harvester);
-      if (h?.transfer(creep, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-        moveMeTo(h);
+      const source = creep.pos.findClosestByRange(FIND_SOURCES_ACTIVE);
+      if (source) {
+        if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
+          moveMeTo(source);
+        }
       }
     }
 
@@ -304,7 +306,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // #endregion
   }
   // withdraw
-  withdrawBy(creep, ["harvester", "upgrader", "remoteHarvester"]);
+  withdrawBy(creep, ["harvester", "upgrader"]);
 
   // 落っこちてるものを拾う
   pickUpAll(creep);

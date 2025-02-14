@@ -20,13 +20,11 @@ export function roomBehavior(room: Room) {
       harvester: 100,
       labManager: 100,
       mineralHarvester: 100,
-      remoteHarvester: 100,
-      reserver: 100,
       upgrader: 100,
     };
   }
 
-  const { carrier: carriers = [], harvester = [], remoteCarrier = [], remoteHarvester = [], reserver = [], gatherer = [] } = getCreepsInRoom(room);
+  const { carrier: carriers = [], harvester = [], gatherer = [] } = getCreepsInRoom(room);
 
   if (room.storage) {
     room.visual.text(room.storage.store.energy.toString(), room.storage.pos.x, room.storage.pos.y, {
@@ -94,79 +92,6 @@ export function roomBehavior(room: Room) {
       }
     }
   }
-  //#region remote #########################################################################
-  room.memory.remote?.forEach((targetRoomName) => {
-    // エネルギー満タンの時以外無視する
-    if (room.energyAvailable < Math.max(600, room.energyCapacityAvailable)) {
-      return;
-    }
-    const filterThisRemote = (c: RemoteCarrier | RemoteHarvester | Reserver) => c?.memory?.targetRoomName === targetRoomName;
-
-    const { roomRemoteCarrier, roomRemoteHarvester, roomReserver } = {
-      roomReserver: reserver.filter(filterThisRemote),
-      roomRemoteCarrier: remoteCarrier.filter(filterThisRemote),
-      roomRemoteHarvester: remoteHarvester.filter(filterThisRemote),
-    };
-
-    // reserverがいないときは作る
-    if (roomReserver.length === 0) {
-      const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
-      if (spawn) {
-        const spawned = spawn.spawnCreep(filterBodiesByCost("reserver", room.energyAvailable).bodies, `V_${room.name}_${targetRoomName}_${Game.time}`, {
-          memory: {
-            baseRoom: room.name,
-            role: "reserver",
-            targetRoomName,
-          } as ReserverMemory,
-        });
-        if (spawned !== OK) {
-          console.log("crete reserver", RETURN_CODE_DECODER[spawned.toString()]);
-        }
-      }
-    }
-    // harvesterがいないときは作る
-    const { bodies } = filterBodiesByCost("remoteHarvester", room.energyAvailable);
-    if (roomRemoteHarvester.length < 1) {
-      const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
-      if (spawn) {
-        const spawned = spawn.spawnCreep(bodies, `Rh_${room.name}_${targetRoomName}_${Game.time}`, {
-          memory: {
-            baseRoom: room.name,
-            mode: "harvesting",
-            role: "remoteHarvester",
-            targetRoomName,
-          } as RemoteHarvesterMemory,
-        });
-        if (spawned !== OK) {
-          console.log("create remotehaervester", RETURN_CODE_DECODER[spawned.toString()]);
-        }
-      }
-    }
-
-    _(getCarrierBody(room, "remoteCarrier"))
-      .tap((body) => {
-        //harvesterが居るのにcarrierが居ないとき
-        if (roomRemoteHarvester.length > 0 && roomRemoteCarrier.length < 1) {
-          const spawn = getSpawnsInRoom(room)?.find((s) => !s.spawning);
-          if (spawn) {
-            const spawned = spawn.spawnCreep(body, `Rc_${room.name}_${targetRoomName}_${Game.time}`, {
-              memory: {
-                baseRoom: room.name,
-                role: "remoteCarrier",
-                targetRoomName,
-                mode: "gathering",
-              } as RemoteCarrierMemory,
-            });
-            if (spawned !== OK) {
-              console.log("create remotehaervester", RETURN_CODE_DECODER[spawned.toString()]);
-            }
-          }
-        }
-      })
-      .run();
-  });
-  //#endregion remote ######################################################################
-
   // ロードマップを更新する
   updateRoadMap(room);
 
@@ -451,9 +376,9 @@ const STATIC_STRUCTURES = [
 ];
 
 function checkSpawnBuilder(room: Room) {
-  const { builder = [] } = getCreepsInRoom(room);
-  // 満タンじゃないときはfalse
-  if (room.energyAvailable < room.energyCapacityAvailable) {
+  const { builder = [], harvester = [] } = getCreepsInRoom(room);
+  // harvesterいないとき or 満タンじゃないときはfalse
+  if (harvester.length === 0 || room.energyAvailable < room.energyCapacityAvailable) {
     return false;
   }
   const { bodies: builderBodies } = filterBodiesByCost("builder", room.energyCapacityAvailable);

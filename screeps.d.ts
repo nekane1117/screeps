@@ -1,17 +1,5 @@
 /// <reference types="screeps" />
-declare type ROLES =
-  | "harvester"
-  | "carrier"
-  | "gatherer"
-  | "builder"
-  | "upgrader"
-  | "claimer"
-  | "mineralHarvester"
-  | "defender"
-  | "labManager"
-  | "reserver"
-  | "remoteHarvester"
-  | "remoteCarrier";
+declare type ROLES = "harvester" | "carrier" | "gatherer" | "builder" | "upgrader" | "claimer" | "mineralHarvester" | "defender" | "labManager";
 declare interface CreepMemory {
   role: ROLES;
   baseRoom: string;
@@ -33,19 +21,7 @@ declare interface CreepMemory {
 }
 
 /** 全部のCreepの型 */
-declare type Creeps =
-  | Creep
-  | Harvester
-  | Upgrader
-  | Builder
-  | Carrier
-  | Claimer
-  | MineralHarvester
-  | Defender
-  | LabManager
-  | Reserver
-  | RemoteHarvester
-  | RemoteCarrier;
+declare type Creeps = Creep | Harvester | Upgrader | Builder | Carrier | Claimer | MineralHarvester | Defender | LabManager;
 
 declare type StoreTarget = StructureContainer | StructureSpawn | StructureExtension | StructureStorage | StructureLink | StructureTerminal | StructureFactory;
 
@@ -122,9 +98,6 @@ declare interface RoomMemory {
 
   labs: Partial<Record<Id<StructureLab>, LabMemory>>;
 
-  /** room names for remote harvest */
-  remote?: string[];
-
   /** Measure carry size */
   carrySize?: Partial<{
     [r in ROLES]: number;
@@ -146,9 +119,6 @@ declare type CreepsCache = Partial<{
   harvester: Harvester[];
   labManager: LabManager[];
   mineralHarvester: MineralHarvester[];
-  remoteCarrier: RemoteCarrier[];
-  remoteHarvester: RemoteHarvester[];
-  reserver: Reserver[];
   upgrader: Upgrader[];
 }> & {
   timestamp: number;
@@ -281,45 +251,6 @@ declare interface LabManagerMemory extends CreepMemory {
   /** 配送先 */
   transferId?: Id<Parameters<Creep["transfer"]>[0]>;
 }
-
-declare interface Reserver extends Creep {
-  memory: ReserverMemory;
-}
-
-declare interface ReserverMemory extends CreepMemory {
-  role: "reserver";
-  targetRoomName: string;
-  route?: ReturnType<(typeof Game)["map"]["findRoute"]>;
-  exit?: RoomPosition | null;
-}
-declare interface RemoteHarvester extends Creep {
-  memory: RemoteHarvesterMemory;
-}
-
-declare interface RemoteHarvesterMemory extends CreepMemory {
-  role: "remoteHarvester";
-  /** 今何してるか
-   * delivering : 資源を持ってきてるところ
-   * harvesting : 収集中
-   * 👷 : 建築中
-   */
-  mode: "harvesting" | "👷";
-  targetRoomName: string;
-  harvestTargetId?: Source["id"] | null;
-}
-declare interface RemoteCarrier extends Creep {
-  memory: RemoteCarrierMemory;
-}
-
-declare interface RemoteCarrierMemory extends CreepMemory {
-  role: "remoteCarrier";
-  mode: "gathering" | "delivering" | "👷";
-  targetRoomName: string;
-  siteId?: ConstructionSite["id"] | null;
-  storeId?: Id<StructureContainer> | null;
-  transferId?: StoreTarget["id"] | null;
-}
-
 declare interface Memory {
   factories: Record<Id<StructureFactory>, FactoryMemory>;
   terminals: Record<Id<StructureTerminal>, TerminalMemory>;

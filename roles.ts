@@ -6,9 +6,6 @@ import gatherer from "./role.gatherer";
 import harvester from "./role.harvester";
 import labManager from "./role.labManager";
 import mineralHarvester from "./role.mineralHarvester";
-import remoteCarrier from "./role.remoteCarrier";
-import remoteHarvester from "./role.remoteHarvester";
-import reserver from "./role.reserver";
 import upgrader from "./role.upgrader";
 export type CreepBehavior = (creep: Creeps) => void;
 
@@ -21,8 +18,5 @@ export const behaviors: Record<ROLES, CreepBehavior> = {
   harvester,
   labManager,
   mineralHarvester,
-  remoteCarrier,
-  remoteHarvester,
-  reserver,
   upgrader,
 };
