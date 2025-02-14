@@ -30,8 +30,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
       if (
         c.memory.mode === "gathering" &&
-        creep.store.energy >=
-          Math.min(creep.store.getCapacity(RESOURCE_ENERGY), creep.room.controller ? EXTENSION_ENERGY_CAPACITY[creep.room.controller.level] : CARRY_CAPACITY)
+        creep.store.energy >= Math.max(creep.store.getCapacity(RESOURCE_ENERGY) / 2, EXTENSION_ENERGY_CAPACITY[creep.room.controller?.level || 0])
       ) {
         // 収集モードで半分超えたら作業モードにする
         return "delivering";
@@ -235,9 +234,7 @@ export function findTransferTarget(room: Room) {
       .filter(
         (s) =>
           s.store.getFreeCapacity(RESOURCE_ENERGY) &&
-          !_(Object.values(getCreepsInRoom(room)))
-            .flatten<Creeps>()
-            .find((c) => c.memory && "transferId" in c.memory && c.memory.transferId === s.id),
+          !_(getCreepsInRoom(room).carrier || []).find((c) => c.memory && "transferId" in c.memory && c.memory.transferId === s.id),
       )
       .sortBy((e) => {
         return Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x);

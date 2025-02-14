@@ -98,8 +98,9 @@ export function roomBehavior(room: Room) {
       }
     }
   }
-  // ロードマップを更新する
-  updateRoadMap(room);
+  //#region updateRoadMap
+  logUsage("updateRoadMap", () => updateRoadMap(room));
+  //#endregion
 
   //#region labManager
   logUsage("labManager", () => {
@@ -173,7 +174,7 @@ export function roomBehavior(room: Room) {
   if (checkSpawnBuilder(room)) {
     const spawn = (() => {
       const spawns = getSpawnsInRoom(room);
-      if (spawns.length > 0) {
+      if ((room.controller?.level || 0) < 2 && spawns.length > 0) {
         // 自室の時は使えるやつを返す
         return spawns.find((s) => !s.spawning && s.room.energyAvailable === s.room.energyCapacityAvailable);
       } else {
@@ -193,7 +194,7 @@ export function roomBehavior(room: Room) {
       spawn.spawnCreep(filterBodiesByCost("builder", spawn.room.energyCapacityAvailable).bodies, `B_${room.name}_${Game.time}`, {
         memory: {
           mode: "gathering",
-          baseRoom: spawn.room.name,
+          baseRoom: room.name,
           role: "builder",
         } as BuilderMemory,
       });

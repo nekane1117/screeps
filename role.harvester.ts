@@ -58,37 +58,37 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.memory.transferId ||
       creep.pos.findClosestByPath(_.compact([...spawn, ...extension, storage, factory, terminal]).filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY)))?.id;
     const store = creep.memory.transferId && Game.getObjectById(creep.memory.transferId);
-    if (!store) {
+    if (store) {
+      const returnVal = creep.transfer(store, RESOURCE_ENERGY);
+      switch (returnVal) {
+        // 対象が変
+        case ERR_INVALID_TARGET: // 対象が変
+        case ERR_FULL: // 満タン
+          creep.memory.transferId = undefined;
+          break;
+
+        case ERR_NOT_IN_RANGE:
+          customMove(creep, store);
+          break;
+        // 有りえない系
+        case ERR_NOT_OWNER: // 自creepじゃない
+        case ERR_INVALID_ARGS: // 引数が変
+          console.log(`${creep.name} transfer returns ${RETURN_CODE_DECODER[returnVal.toString()]}`);
+          creep.say(RETURN_CODE_DECODER[returnVal.toString()]);
+          break;
+
+        // 問題ない系
+        case OK:
+        case ERR_NOT_ENOUGH_RESOURCES: // 値を指定しないから多分発生しない
+        case ERR_BUSY: // spawining
+        default:
+          break;
+      }
+    } else {
       // それでも見つからなければとりあえず終わる
       creep.memory.transferId = undefined;
-      return;
     }
 
-    const returnVal = creep.transfer(store, RESOURCE_ENERGY);
-    switch (returnVal) {
-      // 対象が変
-      case ERR_INVALID_TARGET: // 対象が変
-      case ERR_FULL: // 満タン
-        creep.memory.transferId = undefined;
-        break;
-
-      case ERR_NOT_IN_RANGE:
-        customMove(creep, store);
-        break;
-      // 有りえない系
-      case ERR_NOT_OWNER: // 自creepじゃない
-      case ERR_INVALID_ARGS: // 引数が変
-        console.log(`${creep.name} transfer returns ${RETURN_CODE_DECODER[returnVal.toString()]}`);
-        creep.say(RETURN_CODE_DECODER[returnVal.toString()]);
-        break;
-
-      // 問題ない系
-      case OK:
-      case ERR_NOT_ENOUGH_RESOURCES: // 値を指定しないから多分発生しない
-      case ERR_BUSY: // spawining
-      default:
-        break;
-    }
     //#endregion 運搬処理 ##################################################################################
   } else {
     //#region 収穫処理 #####################################################################################
@@ -167,13 +167,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     if (creep.memory.mode === "harvesting") {
       const source = creep.memory.harvestTargetId && Game.getObjectById(creep.memory.harvestTargetId);
       if (source) {
-        const store =
-          source.pos.findClosestByRange(link, {
-            filter: (s: StructureLink | StructureContainer) => s.store.getFreeCapacity(RESOURCE_ENERGY) && s.pos.inRangeTo(source, 2),
-          }) ||
-          source.pos.findClosestByRange(container, {
-            filter: (s: StructureLink | StructureContainer) => s.store.getFreeCapacity(RESOURCE_ENERGY) && s.pos.inRangeTo(source, 2),
-          });
+        let stores: AnyStoreStructure[] = source.pos.findInRange(link, 2);
+        if (stores.length === 0) {
+          stores = source.pos.findInRange(container, 2);
+        }
+
+        const store = creep.pos.findClosestByRange(stores);
+
         if (store) {
           if (creep.transfer(store, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
             customMove(creep, store);

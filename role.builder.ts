@@ -9,6 +9,16 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return console.log(`${creep.name} is not Builder`);
   }
 
+  const mySite = _(Game.constructionSites)
+    .values<ConstructionSite>()
+    .filter((c) => c.room?.name === creep.memory.baseRoom)
+    .run();
+
+  // 自室の建設があるときはすぐ行く
+  if (creep.pos.roomName !== creep.memory.baseRoom && mySite.length > 0) {
+    return moveRoom(creep, creep.pos.roomName, creep.memory.baseRoom);
+  }
+
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
     const pos = "pos" in target ? target.pos : target;
     Game.rooms[pos.roomName]?.visual.text("x", pos, {
@@ -44,16 +54,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   };
   checkMode();
-
-  const mySite = _(Game.constructionSites)
-    .values<ConstructionSite>()
-    .filter((c) => c.room?.name === creep.memory.baseRoom)
-    .run();
-
-  // 自室の建設があるときはすぐ行く
-  if (creep.memory.mode === "👷" && creep.pos.roomName !== creep.memory.baseRoom && mySite.length > 0) {
-    return moveRoom(creep, creep.pos.roomName, creep.memory.baseRoom);
-  }
 
   const { road, rampart, container, link } = findMyStructures(creep.room);
 
@@ -259,12 +259,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     creep.memory.storeId = creep.memory.storeId || creep.room.storage?.id;
 
-    if (!creep.memory.storeId && container.length === 0) {
+    if (!creep.memory.storeId && container.filter((c) => c.store.energy > 0).length === 0) {
       const source = creep.pos.findClosestByRange(FIND_SOURCES_ACTIVE);
       if (source) {
         if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
           moveMeTo(source);
         }
+        return;
       }
     }
 

@@ -711,10 +711,11 @@ var behavior4 = (creep) => {
       return console.log(`${creep.name} is not Carrier`);
     }
     const newMode = ((c) => {
+      var _a3;
       if (c.memory.mode === "delivering" && creep.store.energy === 0) {
         return "gathering";
       }
-      if (c.memory.mode === "gathering" && creep.store.energy >= Math.min(creep.store.getCapacity(RESOURCE_ENERGY), creep.room.controller ? EXTENSION_ENERGY_CAPACITY[creep.room.controller.level] : CARRY_CAPACITY)) {
+      if (c.memory.mode === "gathering" && creep.store.energy >= Math.max(creep.store.getCapacity(RESOURCE_ENERGY) / 2, EXTENSION_ENERGY_CAPACITY[((_a3 = creep.room.controller) == null ? void 0 : _a3.level) || 0])) {
         return "delivering";
       }
       return c.memory.mode;
@@ -871,7 +872,7 @@ function findTransferTarget(room) {
   const { extension, spawn, tower, container, factory } = findMyStructures(room);
   const controllerContaeiner = room.controller && _(room.controller.pos.findInRange(container, 3)).first();
   return _([...extension, ...spawn]).filter(
-    (s) => s.store.getFreeCapacity(RESOURCE_ENERGY) && !_(Object.values(getCreepsInRoom(room))).flatten().find((c) => c.memory && "transferId" in c.memory && c.memory.transferId === s.id)
+    (s) => s.store.getFreeCapacity(RESOURCE_ENERGY) && !_(getCreepsInRoom(room).carrier || []).find((c) => c.memory && "transferId" in c.memory && c.memory.transferId === s.id)
   ).sortBy((e) => {
     return Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x);
   }).first() || // タワーに入れて防衛
@@ -891,6 +892,13 @@ var behavior5 = (creep) => {
   var _a, _b, _c, _d;
   if (!isBuilder(creep)) {
     return console.log(`${creep.name} is not Builder`);
+  }
+  const mySite = _(Game.constructionSites).values().filter((c) => {
+    var _a2;
+    return ((_a2 = c.room) == null ? void 0 : _a2.name) === creep.memory.baseRoom;
+  }).run();
+  if (creep.pos.roomName !== creep.memory.baseRoom && mySite.length > 0) {
+    return moveRoom(creep, creep.pos.roomName, creep.memory.baseRoom);
   }
   const moveMeTo = (target, opt) => {
     var _a2;
@@ -922,13 +930,6 @@ var behavior5 = (creep) => {
     }
   };
   checkMode2();
-  const mySite = _(Game.constructionSites).values().filter((c) => {
-    var _a2;
-    return ((_a2 = c.room) == null ? void 0 : _a2.name) === creep.memory.baseRoom;
-  }).run();
-  if (creep.memory.mode === "\u{1F477}" && creep.pos.roomName !== creep.memory.baseRoom && mySite.length > 0) {
-    return moveRoom(creep, creep.pos.roomName, creep.memory.baseRoom);
-  }
   const { road, rampart, container, link } = findMyStructures(creep.room);
   if (creep.memory.mode === "\u{1F477}") {
     if (creep.memory.firstAidId) {
@@ -1066,12 +1067,13 @@ var behavior5 = (creep) => {
       )) == null ? void 0 : _c.id;
     }
     creep.memory.storeId = creep.memory.storeId || ((_d = creep.room.storage) == null ? void 0 : _d.id);
-    if (!creep.memory.storeId && container.length === 0) {
+    if (!creep.memory.storeId && container.filter((c) => c.store.energy > 0).length === 0) {
       const source = creep.pos.findClosestByRange(FIND_SOURCES_ACTIVE);
       if (source) {
         if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
           moveMeTo(source);
         }
+        return;
       }
     }
     const store = creep.memory.storeId && Game.getObjectById(creep.memory.storeId);
@@ -1495,36 +1497,36 @@ var behavior9 = (creep) => {
     }
     creep.memory.transferId = creep.memory.transferId || ((_b = creep.pos.findClosestByPath(_.compact([...spawn, ...extension, storage, factory, terminal]).filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY)))) == null ? void 0 : _b.id);
     const store = creep.memory.transferId && Game.getObjectById(creep.memory.transferId);
-    if (!store) {
+    if (store) {
+      const returnVal = creep.transfer(store, RESOURCE_ENERGY);
+      switch (returnVal) {
+        // 対象が変
+        case ERR_INVALID_TARGET:
+        // 対象が変
+        case ERR_FULL:
+          creep.memory.transferId = void 0;
+          break;
+        case ERR_NOT_IN_RANGE:
+          customMove(creep, store);
+          break;
+        // 有りえない系
+        case ERR_NOT_OWNER:
+        // 自creepじゃない
+        case ERR_INVALID_ARGS:
+          console.log(`${creep.name} transfer returns ${RETURN_CODE_DECODER[returnVal.toString()]}`);
+          creep.say(RETURN_CODE_DECODER[returnVal.toString()]);
+          break;
+        // 問題ない系
+        case OK:
+        case ERR_NOT_ENOUGH_RESOURCES:
+        // 値を指定しないから多分発生しない
+        case ERR_BUSY:
+        // spawining
+        default:
+          break;
+      }
+    } else {
       creep.memory.transferId = void 0;
-      return;
-    }
-    const returnVal = creep.transfer(store, RESOURCE_ENERGY);
-    switch (returnVal) {
-      // 対象が変
-      case ERR_INVALID_TARGET:
-      // 対象が変
-      case ERR_FULL:
-        creep.memory.transferId = void 0;
-        break;
-      case ERR_NOT_IN_RANGE:
-        customMove(creep, store);
-        break;
-      // 有りえない系
-      case ERR_NOT_OWNER:
-      // 自creepじゃない
-      case ERR_INVALID_ARGS:
-        console.log(`${creep.name} transfer returns ${RETURN_CODE_DECODER[returnVal.toString()]}`);
-        creep.say(RETURN_CODE_DECODER[returnVal.toString()]);
-        break;
-      // 問題ない系
-      case OK:
-      case ERR_NOT_ENOUGH_RESOURCES:
-      // 値を指定しないから多分発生しない
-      case ERR_BUSY:
-      // spawining
-      default:
-        break;
     }
   } else {
     const source = Game.getObjectById(creep.memory.harvestTargetId);
@@ -1585,11 +1587,11 @@ var behavior9 = (creep) => {
     if (creep.memory.mode === "harvesting") {
       const source = creep.memory.harvestTargetId && Game.getObjectById(creep.memory.harvestTargetId);
       if (source) {
-        const store = source.pos.findClosestByRange(link, {
-          filter: (s) => s.store.getFreeCapacity(RESOURCE_ENERGY) && s.pos.inRangeTo(source, 2)
-        }) || source.pos.findClosestByRange(container, {
-          filter: (s) => s.store.getFreeCapacity(RESOURCE_ENERGY) && s.pos.inRangeTo(source, 2)
-        });
+        let stores = source.pos.findInRange(link, 2);
+        if (stores.length === 0) {
+          stores = source.pos.findInRange(container, 2);
+        }
+        const store = creep.pos.findClosestByRange(stores);
         if (store) {
           if (creep.transfer(store, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
             customMove(creep, store);
@@ -1723,24 +1725,26 @@ var behavior10 = (creep) => {
       }
     }
   }
-  if (!creep.memory.storeId) {
-    const maxdiff = _(RESOURCES_ALL).map((resourceType) => {
-      return storages.map((from) => {
-        return storages.map((to) => {
-          return {
-            resourceType,
-            from,
-            to,
-            amount: from.store[resourceType] - to.store[resourceType]
-          };
+  if (Game.cpu.bucket > 500) {
+    if (!creep.memory.storeId) {
+      const maxdiff = _(RESOURCES_ALL).map((resourceType) => {
+        return storages.map((from) => {
+          return storages.map((to) => {
+            return {
+              resourceType,
+              from,
+              to,
+              amount: from.store[resourceType] - to.store[resourceType]
+            };
+          }).run();
         }).run();
-      }).run();
-    }).flattenDeep().filter((v) => {
-      return v.amount > 1e3;
-    }).sortBy((v) => v.amount).last();
-    if (maxdiff) {
-      creep.memory.storeId = maxdiff.from.id;
-      creep.memory.mineralType = maxdiff.resourceType;
+      }).flattenDeep().filter((v) => {
+        return v.amount > 1e3;
+      }).sortBy((v) => v.amount).last();
+      if (maxdiff) {
+        creep.memory.storeId = maxdiff.from.id;
+        creep.memory.mineralType = maxdiff.resourceType;
+      }
     }
   }
   if (creep.memory.storeId && creep.memory.mode === "gathering") {
@@ -2394,7 +2398,7 @@ function roomBehavior(room) {
       }
     }
   }
-  updateRoadMap(room);
+  logUsage("updateRoadMap", () => updateRoadMap(room));
   logUsage("labManager", () => {
     const { lab } = findMyStructures(room);
     const mineral = _(room.find(FIND_MINERALS)).first();
@@ -2443,8 +2447,9 @@ function roomBehavior(room) {
   }
   if (checkSpawnBuilder(room)) {
     const spawn = (() => {
+      var _a2;
       const spawns = getSpawnsInRoom(room);
-      if (spawns.length > 0) {
+      if ((((_a2 = room.controller) == null ? void 0 : _a2.level) || 0) < 2 && spawns.length > 0) {
         return spawns.find((s) => !s.spawning && s.room.energyAvailable === s.room.energyCapacityAvailable);
       } else {
         return _(Object.values(Game.spawns)).map((spawn2) => {
@@ -2459,7 +2464,7 @@ function roomBehavior(room) {
       spawn.spawnCreep(filterBodiesByCost("builder", spawn.room.energyCapacityAvailable).bodies, `B_${room.name}_${Game.time}`, {
         memory: {
           mode: "gathering",
-          baseRoom: spawn.room.name,
+          baseRoom: room.name,
           role: "builder"
         }
       });

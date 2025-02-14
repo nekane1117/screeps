@@ -152,40 +152,41 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       }
     }
   }
+  if (Game.cpu.bucket > 500) {
+    if (!creep.memory.storeId) {
+      const maxdiff = _(RESOURCES_ALL)
+        .map((resourceType) => {
+          return storages
+            .map((from) => {
+              return storages
+                .map((to) => {
+                  return {
+                    resourceType,
+                    from,
+                    to,
+                    amount: from.store[resourceType] - to.store[resourceType],
+                  };
+                })
+                .run();
+            })
+            .run();
+        })
+        .flattenDeep<{
+          resourceType: ResourceConstant;
+          from: StructureStorage | StructureTerminal | StructureFactory;
+          to: StructureStorage | StructureTerminal | StructureFactory;
+          amount: number;
+        }>()
+        .filter((v) => {
+          return v.amount > 1000;
+        })
+        .sortBy((v) => v.amount)
+        .last();
 
-  if (!creep.memory.storeId) {
-    const maxdiff = _(RESOURCES_ALL)
-      .map((resourceType) => {
-        return storages
-          .map((from) => {
-            return storages
-              .map((to) => {
-                return {
-                  resourceType,
-                  from,
-                  to,
-                  amount: from.store[resourceType] - to.store[resourceType],
-                };
-              })
-              .run();
-          })
-          .run();
-      })
-      .flattenDeep<{
-        resourceType: ResourceConstant;
-        from: StructureStorage | StructureTerminal | StructureFactory;
-        to: StructureStorage | StructureTerminal | StructureFactory;
-        amount: number;
-      }>()
-      .filter((v) => {
-        return v.amount > 1000;
-      })
-      .sortBy((v) => v.amount)
-      .last();
-
-    if (maxdiff) {
-      creep.memory.storeId = maxdiff.from.id;
-      creep.memory.mineralType = maxdiff.resourceType;
+      if (maxdiff) {
+        creep.memory.storeId = maxdiff.from.id;
+        creep.memory.mineralType = maxdiff.resourceType;
+      }
     }
   }
 
