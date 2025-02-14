@@ -228,39 +228,32 @@ export function findTransferTarget(room: Room) {
   }
   const { extension, spawn, tower, container, factory } = findMyStructures(room);
   const controllerContaeiner = room.controller && _(room.controller.pos.findInRange(container, 3)).first();
-  //spawnかextension
-  return (
-    _([...extension, ...spawn])
-      .filter(
-        (s) =>
-          s.store.getFreeCapacity(RESOURCE_ENERGY) &&
-          !_(getCreepsInRoom(room).carrier || []).find((c) => c.memory && "transferId" in c.memory && c.memory.transferId === s.id),
-      )
+  return _([
+    //spawnかextension
+    ..._([...extension, ...spawn])
+      .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY))
       .sortBy((e) => {
-        return Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x);
+        return (
+          Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x) +
+          (_(getCreepsInRoom(room).carrier || []).find((c) => c.memory && "transferId" in c.memory && c.memory.transferId === e.id) ? Math.PI * 2 : 0)
+        );
       })
-      .first() ||
+      .run(),
     // タワーに入れて防衛
-    canter.pos.findClosestByRange(tower, {
-      filter: (t: StructureTower) => {
-        return getCapacityRate(t) < 0.9;
-      },
-    }) ||
-    ((room.terminal?.store.energy || 0) < room.energyCapacityAvailable ? room.terminal : null) ||
-    // Labに入れておく
-    getLabs(room)
-      .filter((lab) => getCapacityRate(lab) < 0.8)
-      .sort((l1, l2) => l1.store.energy - l2.store.energy)
-      .first() ||
+    ...tower,
+    (room.terminal?.store.energy || 0) < room.energyCapacityAvailable ? room.terminal : null,
+    ...getLabs(room).run(),
     // storageにキャッシュ
-    ((room.storage?.store.energy || 0) < room.energyCapacityAvailable ? room.storage : null) ||
+    (room.storage?.store.energy || 0) < room.energyCapacityAvailable ? room.storage : null,
     // コントローラー強化
-    (controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : null) ||
-    // 貯蓄
-    _([room.storage, room.terminal, factory])
+    controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : null,
+    //貯蓄順
+    ..._([room.storage, room.terminal, factory])
       .compact()
       .filter((s) => s.structureType === "storage" || s.store.energy < TERMINAL_LIMIT)
       .sortBy((s) => s.store.energy)
-      .first()
-  );
+      .run(),
+  ])
+    .compact()
+    .first();
 }
