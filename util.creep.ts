@@ -373,7 +373,7 @@ export function moveRoom(creep: Creeps, fromRoom: string, toRoom: string) {
 export function getCarrierBody(room: Room, role: ROLES): BodyPartConstant[] {
   const safetyFactor = 2;
 
-  const bodyCycle: BodyPartConstant[] = [CARRY, MOVE, CARRY];
+  const bodyCycle: BodyPartConstant[] = [MOVE, CARRY, CARRY];
   let costTotal = 0;
   const avgSize = room.memory.carrySize?.[role] || 100;
   // 個数 (÷50の切り上げ)
@@ -382,7 +382,7 @@ export function getCarrierBody(room: Room, role: ROLES): BodyPartConstant[] {
   return _.range(Math.ceil(avgSize / 50) * safetyFactor * 3)
     .slice(0, 50)
     .map((i) => {
-      const parts = i === 0 ? WORK : bodyCycle[i % bodyCycle.length];
+      const parts = i === 1 ? WORK : bodyCycle[i % bodyCycle.length];
       costTotal += BODYPART_COST[parts];
       return { parts, costTotal };
     })

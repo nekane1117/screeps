@@ -575,11 +575,11 @@ function moveRoom(creep, fromRoom, toRoom) {
 function getCarrierBody(room, role) {
   var _a;
   const safetyFactor = 2;
-  const bodyCycle = [CARRY, MOVE, CARRY];
+  const bodyCycle = [MOVE, CARRY, CARRY];
   let costTotal = 0;
   const avgSize = ((_a = room.memory.carrySize) == null ? void 0 : _a[role]) || 100;
   return _.range(Math.ceil(avgSize / 50) * safetyFactor * 3).slice(0, 50).map((i) => {
-    const parts = i === 0 ? WORK : bodyCycle[i % bodyCycle.length];
+    const parts = i === 1 ? WORK : bodyCycle[i % bodyCycle.length];
     costTotal += BODYPART_COST[parts];
     return { parts, costTotal };
   }).filter((p) => p.costTotal <= room.energyAvailable).map((p) => p.parts);
@@ -1609,9 +1609,9 @@ function isHarvester(c) {
 }
 
 // role.labManager.ts
-var TRANSFER_THRESHOLD = 1e3;
+var TRANSFER_THRESHOLD = FACTORY_CAPACITY / RESOURCES_ALL.length;
 var behavior10 = (creep) => {
-  var _a, _b, _c;
+  var _a, _b, _c, _d;
   const { room } = creep;
   const terminal = room.terminal;
   if (!terminal) {
@@ -1708,11 +1708,12 @@ var behavior10 = (creep) => {
     creep.memory.storeId = store == null ? void 0 : store.id;
     creep.memory.mineralType = (store == null ? void 0 : store.mineralType) || void 0;
   }
-  const storages = _([creep.room.terminal, factory, creep.room.storage]).compact();
   if (!creep.memory.storeId) {
     for (const req of requesting) {
       if (req.memory.expectedType) {
-        const s = storages.filter((s2) => req.memory.expectedType && s2.store[req.memory.expectedType] || 0 > 0).sortBy((s2) => req.memory.expectedType && s2.store[req.memory.expectedType] || 0).last();
+        const s = creep.pos.findClosestByPath(_.compact([creep.room.terminal, factory, creep.room.storage]), {
+          filter: (s2) => s2.store.getUsedCapacity(req.memory.expectedType) > 0
+        });
         if (s) {
           creep.memory.storeId = s == null ? void 0 : s.id;
           creep.memory.mineralType = req.memory.expectedType;
@@ -1722,25 +1723,27 @@ var behavior10 = (creep) => {
     }
   }
   if (Game.cpu.bucket > 500) {
-    if (!creep.memory.storeId) {
-      const maxdiff = _(RESOURCES_ALL).map((resourceType) => {
-        return storages.map((from) => {
-          return storages.map((to) => {
+    const stores = _.compact([room.terminal, factory]);
+    const balanceTarget = _(RESOURCES_ALL).reduce(
+      (all, resourceType) => {
+        return all.concat(
+          ...stores.map((store) => {
             return {
               resourceType,
-              from,
-              to,
-              amount: from.store[resourceType] - to.store[resourceType]
+              store
             };
-          }).run();
-        }).run();
-      }).flattenDeep().filter((v) => {
-        return v.amount > 1e3;
-      }).sortBy((v) => v.amount).last();
-      if (maxdiff) {
-        creep.memory.storeId = maxdiff.from.id;
-        creep.memory.mineralType = maxdiff.resourceType;
-      }
+          })
+        );
+      },
+      _([])
+    ).filter((v) => {
+      return v.store.store.getUsedCapacity(v.resourceType) > TRANSFER_THRESHOLD;
+    }).sortBy((v) => {
+      return -v.store.store.getUsedCapacity(v.resourceType);
+    }).first();
+    if (balanceTarget) {
+      creep.memory.storeId = balanceTarget.store.id;
+      creep.memory.mineralType = balanceTarget.resourceType;
     }
   }
   if (creep.memory.storeId && creep.memory.mode === "gathering") {
@@ -1804,7 +1807,10 @@ var behavior10 = (creep) => {
       creep.memory.transferId = (_b = requesting.find((lab) => lab.memory.expectedType === currentType)) == null ? void 0 : _b.id;
     }
     if (!creep.memory.transferId) {
-      creep.memory.transferId = (_c = _([terminal, creep.room.storage, factory]).compact().min((s) => s.store.getUsedCapacity(currentType))) == null ? void 0 : _c.id;
+      creep.memory.transferId = (_c = _([terminal, factory]).compact().filter((s) => s.store.getUsedCapacity(currentType) < TRANSFER_THRESHOLD).min((s) => s.store.getUsedCapacity(currentType))) == null ? void 0 : _c.id;
+    }
+    if (!creep.memory.transferId) {
+      creep.memory.transferId = (_d = creep.room.storage) == null ? void 0 : _d.id;
     }
   }
   if (creep.memory.transferId && creep.memory.mode === "delivering") {

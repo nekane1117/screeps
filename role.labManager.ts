@@ -2,7 +2,7 @@ import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove } from "./util.creep";
 import { findMyStructures, getLabs, isCompound } from "./utils";
 
-const TRANSFER_THRESHOLD = 1000;
+const TRANSFER_THRESHOLD = FACTORY_CAPACITY / RESOURCES_ALL.length;
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const { room } = creep;
@@ -135,15 +135,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     creep.memory.mineralType = store?.mineralType || undefined;
   }
 
-  const storages = _([creep.room.terminal, factory, creep.room.storage]).compact();
   // 要求に応じてターミナルに取りに行く
   if (!creep.memory.storeId) {
     for (const req of requesting) {
       if (req.memory.expectedType) {
-        const s = storages
-          .filter((s) => (req.memory.expectedType && s.store[req.memory.expectedType]) || 0 > 0)
-          .sortBy((s) => (req.memory.expectedType && s.store[req.memory.expectedType]) || 0)
-          .last();
+        const s = creep.pos.findClosestByPath(_.compact([creep.room.terminal, factory, creep.room.storage]), {
+          filter: (s) => s.store.getUsedCapacity(req.memory.expectedType) > 0,
+        });
         if (s) {
           creep.memory.storeId = s?.id;
           creep.memory.mineralType = req.memory.expectedType;
@@ -152,41 +150,33 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       }
     }
   }
+  // bucketがいっぱいあるときは整理する
   if (Game.cpu.bucket > 500) {
-    if (!creep.memory.storeId) {
-      const maxdiff = _(RESOURCES_ALL)
-        .map((resourceType) => {
-          return storages
-            .map((from) => {
-              return storages
-                .map((to) => {
-                  return {
-                    resourceType,
-                    from,
-                    to,
-                    amount: from.store[resourceType] - to.store[resourceType],
-                  };
-                })
-                .run();
-            })
-            .run();
-        })
-        .flattenDeep<{
-          resourceType: ResourceConstant;
-          from: StructureStorage | StructureTerminal | StructureFactory;
-          to: StructureStorage | StructureTerminal | StructureFactory;
-          amount: number;
-        }>()
-        .filter((v) => {
-          return v.amount > 1000;
-        })
-        .sortBy((v) => v.amount)
-        .last();
-
-      if (maxdiff) {
-        creep.memory.storeId = maxdiff.from.id;
-        creep.memory.mineralType = maxdiff.resourceType;
-      }
+    const stores = _.compact([room.terminal, factory]);
+    const balanceTarget = _(RESOURCES_ALL)
+      .reduce(
+        (all, resourceType) => {
+          return all.concat(
+            ...stores.map((store) => {
+              return {
+                resourceType,
+                store,
+              };
+            }),
+          );
+        },
+        _([] as { resourceType: ResourceConstant; store: StructureFactory | StructureTerminal }[]),
+      )
+      .filter((v) => {
+        return v.store.store.getUsedCapacity(v.resourceType) > TRANSFER_THRESHOLD;
+      })
+      .sortBy((v) => {
+        return -v.store.store.getUsedCapacity(v.resourceType);
+      })
+      .first();
+    if (balanceTarget) {
+      creep.memory.storeId = balanceTarget.store.id;
+      creep.memory.mineralType = balanceTarget.resourceType;
     }
   }
 
@@ -265,9 +255,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     // 化合物(完成品) or リクエストが見つからなかった原料はターミナルにしまっておく
     if (!creep.memory.transferId) {
-      creep.memory.transferId = _([terminal, creep.room.storage, factory])
+      creep.memory.transferId = _([terminal, factory])
         .compact()
+        .filter((s) => s.store.getUsedCapacity(currentType) < TRANSFER_THRESHOLD)
         .min((s) => s.store.getUsedCapacity(currentType))?.id;
+    }
+    if (!creep.memory.transferId) {
+      creep.memory.transferId = creep.room.storage?.id;
     }
   }
 
