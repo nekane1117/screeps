@@ -235,24 +235,31 @@ export function findTransferTarget(room: Room) {
       .sortBy((e) => {
         return (
           Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x) +
-          (_(getCreepsInRoom(room).carrier || []).find((c) => c.memory && "transferId" in c.memory && c.memory.transferId === e.id) ? Math.PI * 2 : 0)
+          (_(Object.values(getCreepsInRoom(room)) || [])
+            .flatten<Creeps>()
+            .find((c) => c.memory && "transferId" in c.memory && c.memory.transferId === e.id)
+            ? Math.PI * 2
+            : 0)
         );
       })
       .run(),
     // タワーに入れて防衛
     ...tower.filter((t) => t.store.getFreeCapacity(RESOURCE_ENERGY) > 0),
     (room.terminal?.store.energy || 0) < room.energyCapacityAvailable ? room.terminal : null,
-    ...getLabs(room).run(),
+    ...getLabs(room)
+      .filter((l) => l.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
+      .run(),
     // storageにキャッシュ
     (room.storage?.store.energy || 0) < room.energyCapacityAvailable ? room.storage : null,
     // コントローラー強化
     controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : null,
     //貯蓄順
-    ..._([room.storage, room.terminal, factory])
+    ..._([room.terminal, factory])
       .compact()
-      .filter((s) => s.structureType === "storage" || s.store.energy < TERMINAL_LIMIT)
+      .filter((s) => s.store.energy < TERMINAL_LIMIT)
       .sortBy((s) => s.store.energy)
       .run(),
+    room.storage,
   ])
     .compact()
     .first();

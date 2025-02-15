@@ -874,18 +874,19 @@ function findTransferTarget(room) {
   return _([
     //spawnかextension
     ..._([...extension, ...spawn]).filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY)).sortBy((e) => {
-      return Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x) + (_(getCreepsInRoom(room).carrier || []).find((c) => c.memory && "transferId" in c.memory && c.memory.transferId === e.id) ? Math.PI * 2 : 0);
+      return Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x) + (_(Object.values(getCreepsInRoom(room)) || []).flatten().find((c) => c.memory && "transferId" in c.memory && c.memory.transferId === e.id) ? Math.PI * 2 : 0);
     }).run(),
     // タワーに入れて防衛
     ...tower.filter((t) => t.store.getFreeCapacity(RESOURCE_ENERGY) > 0),
     (((_a = room.terminal) == null ? void 0 : _a.store.energy) || 0) < room.energyCapacityAvailable ? room.terminal : null,
-    ...getLabs(room).run(),
+    ...getLabs(room).filter((l) => l.store.getFreeCapacity(RESOURCE_ENERGY) > 0).run(),
     // storageにキャッシュ
     (((_b = room.storage) == null ? void 0 : _b.store.energy) || 0) < room.energyCapacityAvailable ? room.storage : null,
     // コントローラー強化
     controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : null,
     //貯蓄順
-    ..._([room.storage, room.terminal, factory]).compact().filter((s) => s.structureType === "storage" || s.store.energy < TERMINAL_LIMIT).sortBy((s) => s.store.energy).run()
+    ..._([room.terminal, factory]).compact().filter((s) => s.store.energy < TERMINAL_LIMIT).sortBy((s) => s.store.energy).run(),
+    room.storage
   ]).compact().first();
 }
 
@@ -2262,7 +2263,7 @@ function getRoomResouces(room) {
     timestamp: Game.time
   };
   const { factory } = findMyStructures(room);
-  for (const storage of _.compact([room.storage, room.terminal, factory, ...getLabs(room).run()])) {
+  for (const storage of _.compact([room.storage, room.terminal, factory, ...getLabs(room).run(), ...getCreepsInRoom(room).labManager || []])) {
     for (const resource of RESOURCES_ALL) {
       roomResouces[resource] = (roomResouces[resource] || 0) + ((_a = storage.store.getUsedCapacity(resource)) != null ? _a : 0);
     }

@@ -123,7 +123,7 @@ function getRoomResouces(room: Room) {
   };
 
   const { factory } = findMyStructures(room);
-  for (const storage of _.compact([room.storage, room.terminal, factory, ...getLabs(room).run()])) {
+  for (const storage of _.compact([room.storage, room.terminal, factory, ...getLabs(room).run(), ...(getCreepsInRoom(room).labManager || [])])) {
     for (const resource of RESOURCES_ALL) {
       roomResouces[resource] = (roomResouces[resource] || 0) + (storage.store.getUsedCapacity(resource) ?? 0);
     }
