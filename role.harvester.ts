@@ -180,14 +180,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           }
         }
       }
-    } else {
-      creep.pos
-        .findInRange(FIND_STRUCTURES, 1, {
-          filter: (s) => "store" in s && s.store.getFreeCapacity(RESOURCE_ENERGY),
-        })
-        .forEach((store) => {
-          creep.transfer(store, RESOURCE_ENERGY);
-        });
     }
   }
 };

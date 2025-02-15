@@ -877,7 +877,7 @@ function findTransferTarget(room) {
       return Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x) + (_(getCreepsInRoom(room).carrier || []).find((c) => c.memory && "transferId" in c.memory && c.memory.transferId === e.id) ? Math.PI * 2 : 0);
     }).run(),
     // タワーに入れて防衛
-    ...tower,
+    ...tower.filter((t) => t.store.getFreeCapacity(RESOURCE_ENERGY) > 0),
     (((_a = room.terminal) == null ? void 0 : _a.store.energy) || 0) < room.energyCapacityAvailable ? room.terminal : null,
     ...getLabs(room).run(),
     // storageにキャッシュ
@@ -1600,12 +1600,6 @@ var behavior9 = (creep) => {
           }
         }
       }
-    } else {
-      creep.pos.findInRange(FIND_STRUCTURES, 1, {
-        filter: (s) => "store" in s && s.store.getFreeCapacity(RESOURCE_ENERGY)
-      }).forEach((store) => {
-        creep.transfer(store, RESOURCE_ENERGY);
-      });
     }
   }
 };

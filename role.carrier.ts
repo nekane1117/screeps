@@ -240,7 +240,7 @@ export function findTransferTarget(room: Room) {
       })
       .run(),
     // タワーに入れて防衛
-    ...tower,
+    ...tower.filter((t) => t.store.getFreeCapacity(RESOURCE_ENERGY) > 0),
     (room.terminal?.store.energy || 0) < room.energyCapacityAvailable ? room.terminal : null,
     ...getLabs(room).run(),
     // storageにキャッシュ
