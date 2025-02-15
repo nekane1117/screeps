@@ -2748,7 +2748,7 @@ function isE(s) {
 }
 
 // structure.factory.ts
-var THRESHOLD = 1e3;
+var THRESHOLD = FACTORY_CAPACITY / RESOURCES_ALL.length;
 function behaviors2(factory) {
   logUsage(`factory:${factory.room.name}`, () => {
     if (!isFactory(factory)) {

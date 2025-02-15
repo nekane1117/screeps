@@ -2,7 +2,7 @@ import { logUsage } from "./utils";
 import { ObjectEntries } from "./utils.common";
 
 /** 閾値 */
-const THRESHOLD = 1000;
+const THRESHOLD = FACTORY_CAPACITY / RESOURCES_ALL.length;
 export default function behaviors(factory: Structure) {
   logUsage(`factory:${factory.room.name}`, () => {
     if (!isFactory(factory)) {
