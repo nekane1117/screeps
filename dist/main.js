@@ -1591,7 +1591,9 @@ var behavior9 = (creep) => {
       if (source) {
         let stores = source.pos.findInRange(link, 2);
         if (stores.length === 0) {
-          stores = source.pos.findInRange(container, 2);
+          stores = source.pos.findInRange(container, 2, {
+            filter: (c) => c.store.getFreeCapacity(RESOURCE_ENERGY)
+          });
         }
         const store = creep.pos.findClosestByRange(stores);
         if (store) {
