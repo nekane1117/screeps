@@ -208,7 +208,8 @@ export function roomBehavior(room: Room) {
       gatherer.length === 0 &&
       room.storage &&
       room.energyCapacityAvailable >= 300 &&
-      room.find(FIND_RUINS, { filter: (r) => r.store.getUsedCapacity() > 0 }).length > 0
+      (room.find(FIND_RUINS, { filter: (r) => r.store.getUsedCapacity() - r.store.energy > 0 }).length > 0 ||
+        room.find(FIND_TOMBSTONES, { filter: (r) => r.store.getUsedCapacity() - r.store.energy > 0 }).length > 0)
     ) {
       const spawn = getSpawnsInRoom(room).find((s) => !s.spawning);
       if (spawn) {

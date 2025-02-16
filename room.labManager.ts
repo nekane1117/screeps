@@ -55,8 +55,8 @@ export default function behavior(labs: StructureLab[], mineral: Mineral) {
   // モードチェック
   const newMode = checkMode(room);
 
-  // モードが違うときと5tickに1回くらい更新する
-  if (room.memory.labMode !== newMode || Game.time % 5 === 0) {
+  // モードが違うときと1500tickに1回くらい更新する
+  if (room.memory.labMode !== newMode || Game.time % CREEP_LIFE_TIME === 0) {
     room.memory.labMode = newMode;
     const finalProducts = _.clone(LAB_STRATEGY[room.memory.labMode]);
     if (!finalProducts) {
@@ -153,7 +153,7 @@ function isUnBoosted(creeps: Creeps[]) {
     creeps.every((c) =>
       c.body
         .filter((b) => {
-          b.type === WORK;
+          return b.type === WORK;
         })
         .every((b) => b.boost),
     )

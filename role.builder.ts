@@ -1,6 +1,6 @@
 import { findTransferTarget } from "./role.carrier";
 import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, getRepairPower, moveRoom, pickUpAll, toColor, withdrawBy } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getRepairPower, moveRoom, pickUpAll, toColor, withdrawBy } from "./util.creep";
 import { findMyStructures, getDecayAmount, getLabs, getSitesInRoom } from "./utils";
 // import { findMyStructures } from "./utils";
 
@@ -101,10 +101,25 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     //#endregion ###########################################################################################
 
+    // #region boost ###########################################################################################
+
+    // boostされてない場合
+    if (!isBoosted(creep) && boost(creep) !== null) {
+      return;
+    }
+
+    //#endregion ###########################################################################################
+
     // #region エネルギー残量チェック ###########################################################################################
 
     // 建設以降の処理はエネルギーが十分溜まってるときだけやる
-    if ((creep.room.storage ? creep.room.storage.store.energy : creep.room.energyAvailable) >= creep.room.energyCapacityAvailable) {
+    if (
+      (creep.room.storage
+        ? _([creep.room.storage.store.energy, ...(getCreepsInRoom(creep.room).carrier || []).map((c) => c.store.energy)])
+            .compact()
+            .sum()
+        : creep.room.energyAvailable) >= creep.room.energyCapacityAvailable
+    ) {
       // #region 建設 ###########################################################################################
       // 不正な対象の時は初期化する
       if (creep.memory.buildingId) {
@@ -120,11 +135,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         // 可読性悪いので条件は関数化
         (creep.memory.buildingId = findBuildTarget(creep))
       ) {
-        // boostされてない場合
-        if (!isBoosted(creep) && boost(creep) !== null) {
-          return;
-        }
-
         const site = Game.getObjectById(creep.memory.buildingId);
         if (site) {
           return _((creep.memory.built = creep.build(site)))
@@ -203,12 +213,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       // #endregion
     } else {
       const preTarget = creep.memory.transferId && Game.getObjectById(creep.memory.transferId);
-      if (
-        !preTarget ||
-        preTarget.structureType === STRUCTURE_STORAGE ||
-        preTarget.structureType === STRUCTURE_TERMINAL ||
-        preTarget.store.getFreeCapacity(RESOURCE_ENERGY) === 0
-      ) {
+      if (!preTarget || preTarget.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
         creep.memory.transferId = undefined;
       }
 

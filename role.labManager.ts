@@ -3,7 +3,14 @@ import { RETURN_CODE_DECODER, customMove } from "./util.creep";
 import { findMyStructures, getLabs, isCompound } from "./utils";
 import { ObjectEntries, ObjectKeys } from "./utils.common";
 
-const TRANSFER_THRESHOLD = FACTORY_CAPACITY / RESOURCES_ALL.length;
+const COMMODITY_INGREDIENTS = _(ObjectEntries(COMMODITIES))
+  .map(([key, value]) => {
+    return [key, ...ObjectKeys(value.components)];
+  })
+  .flatten<ResourceConstant>()
+  .uniq();
+
+const TRANSFER_THRESHOLD = FACTORY_CAPACITY / COMMODITY_INGREDIENTS.size();
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const { room } = creep;
@@ -349,13 +356,6 @@ export default behavior;
 function isLabManager(creep: Creeps): creep is LabManager {
   return creep.memory.role === "labManager";
 }
-
-const COMMODITY_INGREDIENTS = _(ObjectEntries(COMMODITIES))
-  .map(([key, value]) => {
-    return [key, ...ObjectKeys(value.components)];
-  })
-  .flatten<ResourceConstant>()
-  .uniq();
 
 function isCommodityIngredients(r: ResourceConstant) {
   return COMMODITY_INGREDIENTS.include(r);

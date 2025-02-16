@@ -958,7 +958,10 @@ var behavior5 = (creep) => {
         }).run();
       }
     }
-    if ((creep.room.storage ? creep.room.storage.store.energy : creep.room.energyAvailable) >= creep.room.energyCapacityAvailable) {
+    if (!isBoosted(creep) && boost(creep) !== null) {
+      return;
+    }
+    if ((creep.room.storage ? _([creep.room.storage.store.energy, ...(getCreepsInRoom(creep.room).carrier || []).map((c) => c.store.energy)]).compact().sum() : creep.room.energyAvailable) >= creep.room.energyCapacityAvailable) {
       if (creep.memory.buildingId) {
         const target = Game.getObjectById(creep.memory.buildingId);
         if (!target) {
@@ -967,9 +970,6 @@ var behavior5 = (creep) => {
       }
       if (creep.memory.buildingId || // 可読性悪いので条件は関数化
       (creep.memory.buildingId = findBuildTarget(creep))) {
-        if (!isBoosted(creep) && boost(creep) !== null) {
-          return;
-        }
         const site = Game.getObjectById(creep.memory.buildingId);
         if (site) {
           return _(creep.memory.built = creep.build(site)).tap((built) => {
@@ -1032,7 +1032,7 @@ var behavior5 = (creep) => {
       }
     } else {
       const preTarget = creep.memory.transferId && Game.getObjectById(creep.memory.transferId);
-      if (!preTarget || preTarget.structureType === STRUCTURE_STORAGE || preTarget.structureType === STRUCTURE_TERMINAL || preTarget.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+      if (!preTarget || preTarget.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
         creep.memory.transferId = void 0;
       }
       const transferTarget = creep.memory.transferId ? Game.getObjectById(creep.memory.transferId) : findTransferTarget(creep.room);
@@ -1612,7 +1612,10 @@ function isHarvester(c) {
 }
 
 // role.labManager.ts
-var TRANSFER_THRESHOLD = FACTORY_CAPACITY / RESOURCES_ALL.length;
+var COMMODITY_INGREDIENTS = _(ObjectEntries(COMMODITIES)).map(([key, value]) => {
+  return [key, ...ObjectKeys(value.components)];
+}).flatten().uniq();
+var TRANSFER_THRESHOLD = FACTORY_CAPACITY / COMMODITY_INGREDIENTS.size();
 var behavior10 = (creep) => {
   var _a, _b, _c, _d, _e;
   const { room } = creep;
@@ -1887,9 +1890,6 @@ var role_labManager_default = behavior10;
 function isLabManager(creep) {
   return creep.memory.role === "labManager";
 }
-var COMMODITY_INGREDIENTS = _(ObjectEntries(COMMODITIES)).map(([key, value]) => {
-  return [key, ...ObjectKeys(value.components)];
-}).flatten().uniq();
 function isCommodityIngredients(r) {
   return COMMODITY_INGREDIENTS.include(r);
 }
@@ -2250,7 +2250,7 @@ function behavior13(labs, mineral) {
     return Object.assign(lab, { memory });
   });
   const newMode = checkMode(room);
-  if (room.memory.labMode !== newMode || Game.time % 5 === 0) {
+  if (room.memory.labMode !== newMode || Game.time % CREEP_LIFE_TIME === 0) {
     room.memory.labMode = newMode;
     const finalProducts = _.clone(LAB_STRATEGY[room.memory.labMode]);
     if (!finalProducts) {
@@ -2311,7 +2311,7 @@ function checkMode(room) {
 function isUnBoosted(creeps) {
   return !(creeps.length === 0 || creeps.every(
     (c) => c.body.filter((b) => {
-      b.type === WORK;
+      return b.type === WORK;
     }).every((b) => b.boost)
   ));
 }
@@ -2506,7 +2506,7 @@ function roomBehavior(room) {
     }
   }
   logUsage("gatherer", () => {
-    if (gatherer.length === 0 && room.storage && room.energyCapacityAvailable >= 300 && room.find(FIND_RUINS, { filter: (r) => r.store.getUsedCapacity() > 0 }).length > 0) {
+    if (gatherer.length === 0 && room.storage && room.energyCapacityAvailable >= 300 && (room.find(FIND_RUINS, { filter: (r) => r.store.getUsedCapacity() - r.store.energy > 0 }).length > 0 || room.find(FIND_TOMBSTONES, { filter: (r) => r.store.getUsedCapacity() - r.store.energy > 0 }).length > 0)) {
       const spawn = getSpawnsInRoom(room).find((s) => !s.spawning);
       if (spawn) {
         spawn.spawnCreep(filterBodiesByCost("gatherer", room.energyCapacityAvailable).bodies, `G_${room.name}_${Game.time}`, {
