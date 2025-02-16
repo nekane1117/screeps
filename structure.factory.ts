@@ -26,7 +26,7 @@ export default function behaviors(factory: Structure) {
         return (
           !INGREDIENTS.includes(type) &&
           (commodity.level || 0) <= (factory.level || 0) &&
-          factory.store[type] <= THRESHOLD * 2 &&
+          factory.store[type] <= THRESHOLD &&
           ObjectEntries(commodity.components).every(([resource, amount]) => factory.store[resource] >= amount)
         );
       })

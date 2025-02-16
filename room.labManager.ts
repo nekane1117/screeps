@@ -1,6 +1,7 @@
 import { LAB_STRATEGY, REVERSE_REACTIONS } from "./constants";
 import { filterBodiesByCost, getCreepsInRoom } from "./util.creep";
-import { findMyStructures, getLabs, getSpawnsInRoom, isCompound } from "./utils";
+import { getSpawnsInRoom, isCompound } from "./utils";
+import { getRoomResouces } from "./utils.common";
 
 export default function behavior(labs: StructureLab[], mineral: Mineral) {
   const firstLab = _.first(labs);
@@ -98,37 +99,6 @@ export default function behavior(labs: StructureLab[], mineral: Mineral) {
     }
     return;
   });
-}
-
-let allResouces: Partial<
-  Record<
-    string,
-    Partial<Record<ResourceConstant, number>> & {
-      timestamp: number;
-    }
-  >
-> = {};
-
-function getRoomResouces(room: Room) {
-  allResouces = allResouces || {};
-
-  let roomResouces = allResouces[room.name];
-
-  if (roomResouces && roomResouces.timestamp === Game.time) {
-    return roomResouces;
-  }
-
-  roomResouces = allResouces[room.name] = {
-    timestamp: Game.time,
-  };
-
-  const { factory } = findMyStructures(room);
-  for (const storage of _.compact([room.storage, room.terminal, factory, ...getLabs(room).run(), ...(getCreepsInRoom(room).labManager || [])])) {
-    for (const resource of RESOURCES_ALL) {
-      roomResouces[resource] = (roomResouces[resource] || 0) + (storage.store.getUsedCapacity(resource) ?? 0);
-    }
-  }
-  return roomResouces;
 }
 
 function checkMode(room: Room) {

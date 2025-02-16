@@ -22,10 +22,28 @@ function ObjectKeys(o) {
 function ObjectEntries(o) {
   return Object.entries(o);
 }
+var allResouces = {};
+function getRoomResouces(room) {
+  var _a;
+  allResouces = allResouces || {};
+  let roomResouces = allResouces[room.name];
+  if (roomResouces && roomResouces.timestamp === Game.time) {
+    return roomResouces;
+  }
+  roomResouces = allResouces[room.name] = {
+    timestamp: Game.time
+  };
+  const { factory } = findMyStructures(room);
+  for (const storage of _.compact([room.storage, room.terminal, factory, ...getLabs(room).run(), ...getCreepsInRoom(room).labManager || []])) {
+    for (const resource of RESOURCES_ALL) {
+      roomResouces[resource] = (roomResouces[resource] || 0) + ((_a = storage.store.getUsedCapacity(resource)) != null ? _a : 0);
+    }
+  }
+  return roomResouces;
+}
 
 // constants.ts
 var TERMINAL_LIMIT = 1e4;
-var TERMINAL_THRESHOLD = 1e3;
 var LAB_STRATEGY = {
   builder: RESOURCE_CATALYZED_LEMERGIUM_ACID,
   mineralHarvester: RESOURCE_CATALYZED_UTRIUM_ALKALIDE,
@@ -77,29 +95,6 @@ var REVERSE_REACTIONS = {
 var ALL_REACTIONS = _(ObjectKeys(REVERSE_REACTIONS)).sortBy((r) => r === "G" ? 0 : r.length);
 var ROAD_DECAY_AMOUNT_SWAMP = 500;
 var ROAD_DECAY_AMOUNT_WALL = 15e3;
-var DECOMPRESSING_COMMODITIES = [
-  RESOURCE_UTRIUM,
-  RESOURCE_LEMERGIUM,
-  RESOURCE_ZYNTHIUM,
-  RESOURCE_KEANIUM,
-  RESOURCE_GHODIUM,
-  RESOURCE_OXYGEN,
-  RESOURCE_HYDROGEN,
-  RESOURCE_CATALYST,
-  RESOURCE_ENERGY
-];
-var COMPRESSING_INGREDIENT = {
-  [RESOURCE_UTRIUM_BAR]: { type: RESOURCE_UTRIUM, rate: 5 },
-  [RESOURCE_LEMERGIUM_BAR]: { type: RESOURCE_LEMERGIUM, rate: 5 },
-  [RESOURCE_ZYNTHIUM_BAR]: { type: RESOURCE_ZYNTHIUM, rate: 5 },
-  [RESOURCE_KEANIUM_BAR]: { type: RESOURCE_KEANIUM, rate: 5 },
-  [RESOURCE_GHODIUM_MELT]: { type: RESOURCE_GHODIUM, rate: 5 },
-  [RESOURCE_OXIDANT]: { type: RESOURCE_OXYGEN, rate: 5 },
-  [RESOURCE_REDUCTANT]: { type: RESOURCE_HYDROGEN, rate: 5 },
-  [RESOURCE_PURIFIER]: { type: RESOURCE_CATALYST, rate: 5 }
-  // エネルギー量換算しないといけないので一旦スルー
-  // [RESOURCE_BATTERY]: { type: RESOURCE_ENERGY, rate: 12 },
-};
 
 // utils.ts
 function getCapacityRate(s, type = RESOURCE_ENERGY) {
@@ -1617,7 +1612,7 @@ var COMMODITY_INGREDIENTS = _(ObjectEntries(COMMODITIES)).map(([key, value]) => 
 }).flatten().uniq();
 var TRANSFER_THRESHOLD = FACTORY_CAPACITY / COMMODITY_INGREDIENTS.size();
 var behavior10 = (creep) => {
-  var _a, _b, _c, _d, _e;
+  var _a, _b, _c, _d;
   const { room } = creep;
   const terminal = room.terminal;
   if (!terminal) {
@@ -1837,10 +1832,13 @@ var behavior10 = (creep) => {
       creep.memory.transferId = (_c = requesting.find((lab) => lab.memory.expectedType === currentType)) == null ? void 0 : _c.id;
     }
     if (!creep.memory.transferId) {
-      creep.memory.transferId = (_d = _([terminal, factory]).compact().filter((s) => s.store.getUsedCapacity(currentType) <= _.floor(TRANSFER_THRESHOLD, -2)).min((s) => s.store.getUsedCapacity(currentType))) == null ? void 0 : _d.id;
-    }
-    if (!creep.memory.transferId) {
-      creep.memory.transferId = (_e = creep.room.storage) == null ? void 0 : _e.id;
+      if (terminal.store[currentType] < TRANSFER_THRESHOLD) {
+        creep.memory.transferId = terminal.id;
+      } else if (factory && factory.store[currentType] < TRANSFER_THRESHOLD) {
+        creep.memory.transferId = factory.id;
+      } else {
+        creep.memory.transferId = (_d = creep.room.storage) == null ? void 0 : _d.id;
+      }
     }
   }
   if (creep.memory.transferId && creep.memory.mode === "\u{1F69B}") {
@@ -2280,25 +2278,6 @@ function behavior13(labs, mineral) {
     }
     return;
   });
-}
-var allResouces = {};
-function getRoomResouces(room) {
-  var _a;
-  allResouces = allResouces || {};
-  let roomResouces = allResouces[room.name];
-  if (roomResouces && roomResouces.timestamp === Game.time) {
-    return roomResouces;
-  }
-  roomResouces = allResouces[room.name] = {
-    timestamp: Game.time
-  };
-  const { factory } = findMyStructures(room);
-  for (const storage of _.compact([room.storage, room.terminal, factory, ...getLabs(room).run(), ...getCreepsInRoom(room).labManager || []])) {
-    for (const resource of RESOURCES_ALL) {
-      roomResouces[resource] = (roomResouces[resource] || 0) + ((_a = storage.store.getUsedCapacity(resource)) != null ? _a : 0);
-    }
-  }
-  return roomResouces;
 }
 function checkMode(room) {
   const { builder = [] } = getCreepsInRoom(room);
@@ -2793,7 +2772,7 @@ function behaviors2(factory) {
       return;
     }
     const commodity = _(ObjectEntries(COMMODITIES)).filter(([type, commodity2]) => {
-      return !INGREDIENTS.includes(type) && (commodity2.level || 0) <= (factory.level || 0) && factory.store[type] <= THRESHOLD * 2 && ObjectEntries(commodity2.components).every(([resource, amount]) => factory.store[resource] >= amount);
+      return !INGREDIENTS.includes(type) && (commodity2.level || 0) <= (factory.level || 0) && factory.store[type] <= THRESHOLD && ObjectEntries(commodity2.components).every(([resource, amount]) => factory.store[resource] >= amount);
     }).sortBy(([_type, commodity2]) => {
       return -(commodity2.level || 0) * FACTORY_CAPACITY;
     }).first();
@@ -2827,7 +2806,6 @@ var INGREDIENTS = [
 var TRANSFER_THRESHOLD2 = 1e3;
 function behaviors3(terminal) {
   logUsage(`terminal:${terminal.room.name}`, () => {
-    var _a;
     if (!isTerminal(terminal)) {
       return console.log(`${terminal.id} is not terminal`);
     }
@@ -2844,37 +2822,6 @@ function behaviors3(terminal) {
         if (transferTarget) {
           if (terminal.send(resourceType, TRANSFER_THRESHOLD2 * 2, transferTarget.room.name) === OK) {
             break;
-          }
-        }
-      }
-    }
-    const freeTerminal = _(terminals).find((t) => !t.cooldown && t.id !== terminal.id);
-    if ((((_a = terminal.room.storage) == null ? void 0 : _a.store.energy) || 0) > terminal.room.energyCapacityAvailable && terminal.store.energy >= TERMINAL_THRESHOLD * 2 && freeTerminal && freeTerminal.store.energy >= TERMINAL_THRESHOLD * 2) {
-      const market = Game.market;
-      for (const commodity of ObjectKeys(COMMODITIES)) {
-        const ingredients = COMPRESSING_INGREDIENT[commodity];
-        if (DECOMPRESSING_COMMODITIES.includes(commodity) || // 逆変換
-        terminal.store[commodity] < TERMINAL_THRESHOLD * 2 || // 少ない
-        !ingredients || terminal.store[ingredients.type] > TERMINAL_THRESHOLD || // 材料がいっぱいある
-        !ingredients) {
-          continue;
-        }
-        const highestBuy = _(market.getAllOrders({ resourceType: commodity, type: ORDER_BUY })).sortBy((o) => o.price).last();
-        if (highestBuy) {
-          const cheapestSell = _(market.getAllOrders({ resourceType: ingredients.type, type: ORDER_SELL })).filter((o) => {
-            return o.price * ingredients.rate * 1.2 <= highestBuy.price;
-          }).sortBy((o) => o.price).first();
-          if (cheapestSell) {
-            const sellAmountMax = Math.min(terminal.store[commodity], highestBuy.remainingAmount, TERMINAL_THRESHOLD * 2);
-            const buyAmountMax = Math.min(cheapestSell.remainingAmount, sellAmountMax * highestBuy.price / cheapestSell.price, TERMINAL_THRESHOLD * 2);
-            const sellAmountActual = buyAmountMax * cheapestSell.price / highestBuy.price;
-            if (market.deal(highestBuy.id, Math.ceil(sellAmountActual), terminal.room.name) === OK) {
-              memory.lastTrade = highestBuy.resourceType;
-              if (market.deal(cheapestSell.id, Math.floor(buyAmountMax), freeTerminal.room.name) == OK) {
-                freeTerminal.memory.lastTrade = cheapestSell.resourceType;
-              }
-              break;
-            }
           }
         }
       }

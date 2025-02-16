@@ -294,13 +294,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     // 化合物(完成品) or リクエストが見つからなかった原料はターミナルにしまっておく
     if (!creep.memory.transferId) {
-      creep.memory.transferId = _([terminal, factory])
-        .compact()
-        .filter((s) => s.store.getUsedCapacity(currentType) <= _.floor(TRANSFER_THRESHOLD, -2))
-        .min((s) => s.store.getUsedCapacity(currentType))?.id;
-    }
-    if (!creep.memory.transferId) {
-      creep.memory.transferId = creep.room.storage?.id;
+      if (terminal.store[currentType] < TRANSFER_THRESHOLD) {
+        creep.memory.transferId = terminal.id;
+      } else if (factory && factory.store[currentType] < TRANSFER_THRESHOLD) {
+        creep.memory.transferId = factory.id;
+      } else {
+        creep.memory.transferId = creep.room.storage?.id;
+      }
     }
   }
 
