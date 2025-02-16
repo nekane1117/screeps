@@ -1,6 +1,7 @@
 import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove } from "./util.creep";
 import { findMyStructures, getLabs, isCompound } from "./utils";
+import { ObjectEntries, ObjectKeys } from "./utils.common";
 
 const TRANSFER_THRESHOLD = FACTORY_CAPACITY / RESOURCES_ALL.length;
 
@@ -150,33 +151,64 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       }
     }
   }
+
   // bucketがいっぱいあるときは整理する
   if (Game.cpu.bucket > 500) {
     const stores = _.compact([room.terminal, factory]);
-    const balanceTarget = _(RESOURCES_ALL)
-      .reduce(
-        (all, resourceType) => {
-          return all.concat(
-            ...stores.map((store) => {
-              return {
-                resourceType,
-                store,
-              };
-            }),
+    // 不足分を収集
+    if (!creep.memory.storeId) {
+      const shortage = _(RESOURCES_ALL)
+        .reduce(
+          (all, resourceType) => {
+            return all.concat(
+              ...stores.map((store) => {
+                return {
+                  resourceType,
+                  store,
+                };
+              }),
+            );
+          },
+          _([] as { resourceType: ResourceConstant; store: StructureFactory | StructureTerminal }[]),
+        )
+        .find((v) => {
+          return (
+            (v.store.structureType === "factory" ? isCommodityIngredients(v.resourceType) : true) &&
+            v.store.store.getUsedCapacity(v.resourceType) < _.floor(TRANSFER_THRESHOLD, -2) &&
+            room.storage?.store[v.resourceType]
           );
-        },
-        _([] as { resourceType: ResourceConstant; store: StructureFactory | StructureTerminal }[]),
-      )
-      .filter((v) => {
-        return v.store.store.getUsedCapacity(v.resourceType) > TRANSFER_THRESHOLD;
-      })
-      .sortBy((v) => {
-        return -v.store.store.getUsedCapacity(v.resourceType);
-      })
-      .first();
-    if (balanceTarget) {
-      creep.memory.storeId = balanceTarget.store.id;
-      creep.memory.mineralType = balanceTarget.resourceType;
+        });
+      if (shortage) {
+        creep.memory.storeId = room.storage?.id;
+        creep.memory.mineralType = shortage.resourceType;
+      }
+    }
+    if (!creep.memory.storeId) {
+      const balanceTarget = _(RESOURCES_ALL)
+        .reduce(
+          (all, resourceType) => {
+            return all.concat(
+              ...stores.map((store) => {
+                return {
+                  resourceType,
+                  store,
+                };
+              }),
+            );
+          },
+          _([] as { resourceType: ResourceConstant; store: StructureFactory | StructureTerminal }[]),
+        )
+        .filter((v) => {
+          return v.store.store.getUsedCapacity(v.resourceType) > _.ceil(TRANSFER_THRESHOLD, -2);
+        })
+        .sortBy((v) => {
+          return -v.store.store.getUsedCapacity(v.resourceType);
+        })
+        .first();
+      if (balanceTarget) {
+        creep.memory.storeId = balanceTarget.store.id;
+        creep.memory.mineralType = balanceTarget.resourceType;
+      }
     }
   }
 
@@ -257,7 +289,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     if (!creep.memory.transferId) {
       creep.memory.transferId = _([terminal, factory])
         .compact()
-        .filter((s) => s.store.getUsedCapacity(currentType) < TRANSFER_THRESHOLD)
+        .filter((s) => s.store.getUsedCapacity(currentType) <= _.floor(TRANSFER_THRESHOLD, -2))
         .min((s) => s.store.getUsedCapacity(currentType))?.id;
     }
     if (!creep.memory.transferId) {
@@ -316,4 +348,15 @@ export default behavior;
 
 function isLabManager(creep: Creeps): creep is LabManager {
   return creep.memory.role === "labManager";
+}
+
+const COMMODITY_INGREDIENTS = _(ObjectEntries(COMMODITIES))
+  .map(([key, value]) => {
+    return [key, ...ObjectKeys(value.components)];
+  })
+  .flatten<ResourceConstant>()
+  .uniq();
+
+function isCommodityIngredients(r: ResourceConstant) {
+  return COMMODITY_INGREDIENTS.include(r);
 }
