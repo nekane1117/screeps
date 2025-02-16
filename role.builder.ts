@@ -33,10 +33,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     const newMode: BuilderMemory["mode"] = ((c: Builder) => {
       if (c.memory.mode === "👷" && c.store.energy === 0) {
         // 作業モードで空になったら収集モードにする
-        return "gathering";
+        return "🛒";
       }
 
-      if (c.memory.mode === "gathering" && creep.store.energy >= CARRY_CAPACITY) {
+      if (c.memory.mode === "🛒" && creep.store.energy >= CARRY_CAPACITY) {
         // 収集モードで50超えたら作業モードにする
         return "👷";
       }

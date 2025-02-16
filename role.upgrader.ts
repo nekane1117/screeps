@@ -23,7 +23,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
     changeMode(creep, "💪");
   } else if (creep.store.energy === 0) {
-    changeMode(creep, "gathering");
+    changeMode(creep, "🛒");
   }
 
   const { link, container } = findMyStructures(creep.room);
@@ -62,7 +62,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     switch (creep.memory.worked) {
       // 資源不足
       case ERR_NOT_ENOUGH_RESOURCES:
-        changeMode(creep, "gathering");
+        changeMode(creep, "🛒");
         break;
       case ERR_NOT_IN_RANGE:
         if (creep.memory.mode === "💪") {
@@ -120,7 +120,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           changeMode(creep, "💪");
           break;
         case ERR_NOT_IN_RANGE:
-          if (creep.memory.mode === "gathering") {
+          if (creep.memory.mode === "🛒") {
             const moved = moveMeTo(store);
             if (moved !== OK) {
               console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`);

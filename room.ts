@@ -88,7 +88,7 @@ export function roomBehavior(room: Room) {
         const spawned = spawn.spawnCreep(bodies, name, {
           memory: {
             role: "harvester",
-            mode: "harvesting",
+            mode: "🌾",
             baseRoom: room.name,
           } as HarvesterMemory,
         });
@@ -142,7 +142,7 @@ export function roomBehavior(room: Room) {
     if (spawn && !spawn.spawning && room.energyAvailable > 200) {
       spawn.spawnCreep(carrierBodies, name, {
         memory: {
-          mode: "gathering",
+          mode: "🛒",
           baseRoom: spawn.room.name,
           role: "carrier",
         } as CarrierMemory,
@@ -193,7 +193,7 @@ export function roomBehavior(room: Room) {
     if (spawn && spawn.room.energyAvailable === spawn.room.energyCapacityAvailable) {
       spawn.spawnCreep(filterBodiesByCost("builder", spawn.room.energyCapacityAvailable).bodies, `B_${room.name}_${Game.time}`, {
         memory: {
-          mode: "gathering",
+          mode: "🛒",
           baseRoom: room.name,
           role: "builder",
         } as BuilderMemory,
@@ -216,7 +216,7 @@ export function roomBehavior(room: Room) {
           memory: {
             role: "gatherer",
             baseRoom: room.name,
-            mode: "gathering",
+            mode: "🛒",
           } as GathererMemory,
         });
       }

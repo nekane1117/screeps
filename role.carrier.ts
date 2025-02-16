@@ -23,17 +23,17 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       return console.log(`${creep.name} is not Carrier`);
     }
     const newMode = ((c: Carrier) => {
-      if (c.memory.mode === "delivering" && creep.store.energy === 0) {
+      if (c.memory.mode === "🚛" && creep.store.energy === 0) {
         // 作業モードで空になったら収集モードにする
-        return "gathering";
+        return "🛒";
       }
 
       if (
-        c.memory.mode === "gathering" &&
+        c.memory.mode === "🛒" &&
         creep.store.energy >= Math.max(creep.store.getCapacity(RESOURCE_ENERGY) / 2, EXTENSION_ENERGY_CAPACITY[creep.room.controller?.level || 0])
       ) {
         // 収集モードで半分超えたら作業モードにする
-        return "delivering";
+        return "🚛";
       }
 
       // そのまま
@@ -44,13 +44,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.say(newMode);
       creep.memory.mode = newMode;
       // モードが変わったら取得先・輸送先をリセットする
-      if (newMode === "gathering") {
+      if (newMode === "🛒") {
         creep.memory.storeId = undefined;
       }
       creep.memory.transferId = undefined;
 
       // 運搬モードに切り替えたときの容量を記憶する
-      if (newMode === "delivering") {
+      if (newMode === "🚛") {
         (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).carrier =
           ((creep.room.memory.carrySize?.carrier || 100) * 100 + creep.store.energy) / 101;
       }
@@ -96,7 +96,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
   //#endregion
   // region 取り出し処理###############################################################################################
-  if (creep.memory.storeId && creep.memory.mode === "gathering") {
+  if (creep.memory.storeId && creep.memory.mode === "🛒") {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
       if (!creep.pos.isNearTo(store)) {
@@ -152,7 +152,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   //#endregion 輸送先設定処理################################################
-  if (creep.memory.transferId && creep.memory.mode === "delivering") {
+  if (creep.memory.transferId && creep.memory.mode === "🚛") {
     const transferTarget = Game.getObjectById(creep.memory.transferId);
     if (transferTarget) {
       if (!creep.pos.isNearTo(transferTarget)) {

@@ -21,9 +21,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // モード切替
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-    creep.memory.mode = "delivering";
+    creep.memory.mode = "🚛";
   } else if (creep.store.energy === 0) {
-    creep.memory.mode = "harvesting";
+    creep.memory.mode = "🌾";
   }
 
   const { container = [], link = [], spawn = [], extension = [], storage, factory, terminal } = findMyStructures(creep.room);
@@ -43,7 +43,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
   //#endregion 収穫元設定処理 ##################################################################################
 
-  if (creep.memory.mode === "delivering") {
+  if (creep.memory.mode === "🚛") {
     //#region 運搬処理 #####################################################################################
     // 輸送先が満タンになってたら消す
     if (creep.memory.transferId) {
@@ -164,7 +164,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // 周囲のものに適当に投げる
   if (built.length === 0 && creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5 && repaired.length === 0) {
-    if (creep.memory.mode === "harvesting") {
+    if (creep.memory.mode === "🌾") {
       const source = creep.memory.harvestTargetId && Game.getObjectById(creep.memory.harvestTargetId);
       if (source) {
         let stores: AnyStoreStructure[] = source.pos.findInRange(link, 2);

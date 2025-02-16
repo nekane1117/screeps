@@ -24,17 +24,17 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   //#region モードチェック
   const checkMode = () => {
     const newMode: MineralHarvesterMemory["mode"] = ((c: MineralHarvester) => {
-      if (c.memory.mode !== "delivering" && c.memory.mode !== "gathering") {
-        return "gathering";
+      if (c.memory.mode !== "🚛" && c.memory.mode !== "🛒") {
+        return "🛒";
       }
 
-      if (c.memory.mode === "delivering" && c.store.getUsedCapacity() === 0) {
+      if (c.memory.mode === "🚛" && c.store.getUsedCapacity() === 0) {
         // 配送モードで空になったら収集モードにする
-        return "gathering";
+        return "🛒";
       }
 
       if (
-        c.memory.mode === "gathering" &&
+        c.memory.mode === "🛒" &&
         creep.store.getFreeCapacity(mineral.mineralType) <
           creep.body.reduce((total, b) => {
             if (b.type === WORK) {
@@ -44,7 +44,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           }, 0)
       ) {
         // 収集モードで容量不足になったら配送モードになる
-        return "delivering";
+        return "🚛";
       }
 
       // そのまま
@@ -59,7 +59,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   };
   checkMode();
 
-  if (creep.memory.mode === "delivering") {
+  if (creep.memory.mode === "🚛") {
     delivery(creep);
   } else {
     work(creep);

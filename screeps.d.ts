@@ -45,10 +45,10 @@ declare interface Harvester extends Creep {
 declare interface HarvesterMemory extends CreepMemory {
   role: "harvester";
   /** 今何してるか
-   * delivering : 資源を持ってきてるところ
-   * harvesting : 収集中
+   * 🚛 : 資源を持ってきてるところ
+   * 🌾 : 収集中
    */
-  mode: "delivering" | "harvesting";
+  mode: "🚛" | "🌾";
   harvestTargetId?: Source["id"];
   transferId?: StoreTarget["id"] | null;
 }
@@ -140,7 +140,7 @@ declare interface UpgraderMemory extends CreepMemory {
    * working    : 作業中
    * collecting : 資源取得中
    */
-  mode: "💪" | "gathering";
+  mode: "💪" | "🛒";
   /** 資源をもらいに行く先 */
   storeId?: StoreTarget["id"] | null;
 
@@ -155,9 +155,9 @@ declare interface BuilderMemory extends CreepMemory {
   role: "builder";
   /** 今何してるか
    * 👷 : 作業中
-   * gathering : 資源取得中
+   * 🛒 : 資源取得中
    */
-  mode: "👷" | "gathering";
+  mode: "👷" | "🛒";
   /** 今建てたいもの */
   buildingId?: ConstructionSite["id"] | null;
   transferId?: AnyStoreStructure["id"] | null;
@@ -180,9 +180,9 @@ declare interface CarrierMemory extends CreepMemory {
   /** 今何してるか
    * working    : 作業中
    * collecting : 資源取得中
-   * harvesting : 自力で収集中
+   * 🌾 : 自力で収集中
    */
-  mode: "delivering" | "gathering";
+  mode: "🚛" | "🛒";
   /** 担当倉庫 */
   storeId?: Id<StructureLink | StructureContainer | StructureStorage | StructureTerminal | StructureFactory>;
   /** 配送先 */
@@ -197,9 +197,9 @@ declare interface GathererMemory extends CreepMemory {
   /** 今何してるか
    * working    : 作業中
    * collecting : 資源取得中
-   * harvesting : 自力で収集中
+   * 🌾 : 自力で収集中
    */
-  mode: "delivering" | "gathering";
+  mode: "🚛" | "🛒";
 
   /** 資源をもらいに行く先 */
   storeId?: Ruin["id"] | Tombstone["id"] | null;
@@ -218,7 +218,7 @@ declare interface MineralHarvester extends Creep {
 }
 
 declare interface MineralHarvesterMemory extends CreepMemory {
-  mode: "gathering" | "delivering";
+  mode: "🛒" | "🚛";
   role: "mineralHarvester";
   pickUpId: Id<Resource> | undefined;
   targetId: Id<Mineral>;
@@ -243,7 +243,7 @@ declare interface LabManagerMemory extends CreepMemory {
    * working    : 作業中
    * collecting : 資源取得中
    */
-  mode: "delivering" | "gathering";
+  mode: "🚛" | "🛒";
   /** 担当倉庫 */
   storeId?: Id<StructureLab | StructureTerminal | StructureFactory | StructureStorage>;
   /** 担当倉庫 */
