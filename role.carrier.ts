@@ -1,5 +1,4 @@
-import { TERMINAL_LIMIT } from "./constants";
-import { CreepBehavior } from "./roles";
+import { TRANSFER_THRESHOLD } from "./constants";
 import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, pickUpAll, withdrawBy } from "./util.creep";
 import { findMyStructures, getCapacityRate, getLabs } from "./utils";
 
@@ -23,17 +22,17 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       return console.log(`${creep.name} is not Carrier`);
     }
     const newMode = ((c: Carrier) => {
-      if (c.memory.mode === "🚛" && creep.store.energy === 0) {
+      if (c.memory.mode === "D" && creep.store.energy === 0) {
         // 作業モードで空になったら収集モードにする
-        return "🛒";
+        return "G";
       }
 
       if (
-        c.memory.mode === "🛒" &&
+        c.memory.mode === "G" &&
         creep.store.energy >= Math.max(creep.store.getCapacity(RESOURCE_ENERGY) / 2, EXTENSION_ENERGY_CAPACITY[creep.room.controller?.level || 0])
       ) {
         // 収集モードで半分超えたら作業モードにする
-        return "🚛";
+        return "D";
       }
 
       // そのまま
@@ -44,13 +43,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.say(newMode);
       creep.memory.mode = newMode;
       // モードが変わったら取得先・輸送先をリセットする
-      if (newMode === "🛒") {
+      if (newMode === "G") {
         creep.memory.storeId = undefined;
       }
       creep.memory.transferId = undefined;
 
       // 運搬モードに切り替えたときの容量を記憶する
-      if (newMode === "🚛") {
+      if (newMode === "D") {
         (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).carrier =
           ((creep.room.memory.carrySize?.carrier || 100) * 100 + creep.store.energy) / 101;
       }
@@ -68,9 +67,21 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // 取得元が空になってたら消す
   if (creep.memory.storeId) {
     const store = Game.getObjectById(creep.memory.storeId);
-    if (store && "store" in store && store.store.energy < CARRY_CAPACITY) {
+    if (!store || ("store" in store && store.store.energy < CARRY_CAPACITY)) {
       creep.memory.storeId = undefined;
     }
+  }
+
+  if (!creep.memory.storeId) {
+    creep.memory.storeId = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES, {
+      filter: (d) => d.resourceType === RESOURCE_ENERGY && d.amount > 0,
+    })?.id;
+  }
+
+  if (!creep.memory.storeId) {
+    creep.memory.storeId = creep.pos.findClosestByPath(FIND_TOMBSTONES, {
+      filter: (d) => d.store.energy > 0,
+    })?.id;
   }
 
   // 取り出していいやつら
@@ -83,20 +94,23 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   if (!creep.memory.storeId) {
     // 連結する
-    const allTargets = _([...link, ...container, storage, factory, terminal]).compact();
+    const allTargets = _([...container, storage, factory, terminal]).compact();
 
     // 一番あるやつ
-    creep.memory.storeId = allTargets.max((s) => {
-      if (s.structureType === STRUCTURE_STORAGE || s.structureType === STRUCTURE_FACTORY || s.structureType === STRUCTURE_TERMINAL) {
-        return s.store.energy - s.room.energyAvailable;
-      } else {
-        return s.store.energy;
-      }
-    })?.id;
+    creep.memory.storeId = allTargets
+      .filter((s) => s.store.energy > 0)
+      .sortBy((s) => {
+        if (s.structureType === STRUCTURE_STORAGE || s.structureType === STRUCTURE_FACTORY || s.structureType === STRUCTURE_TERMINAL) {
+          return s.store.energy - s.room.energyAvailable;
+        } else {
+          return s.store.energy;
+        }
+      })
+      .last()?.id;
   }
   //#endregion
   // region 取り出し処理###############################################################################################
-  if (creep.memory.storeId && creep.memory.mode === "🛒") {
+  if (creep.memory.storeId && creep.memory.mode === "G") {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
       if (!creep.pos.isNearTo(store)) {
@@ -104,7 +118,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       }
 
       if (creep.pos.isNearTo(store)) {
-        creep.memory.worked = creep.withdraw(store, RESOURCE_ENERGY);
+        creep.memory.worked = "resourceType" in store ? creep.pickup(store) : creep.withdraw(store, RESOURCE_ENERGY);
         switch (creep.memory.worked) {
           // 空の時
           case ERR_NOT_ENOUGH_RESOURCES:
@@ -152,7 +166,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   //#endregion 輸送先設定処理################################################
-  if (creep.memory.transferId && creep.memory.mode === "🚛") {
+  if (creep.memory.transferId && creep.memory.mode === "D") {
     const transferTarget = Game.getObjectById(creep.memory.transferId);
     if (transferTarget) {
       if (!creep.pos.isNearTo(transferTarget)) {
@@ -245,22 +259,19 @@ export function findTransferTarget(room: Room) {
       .run(),
     // タワーに入れて防衛
     ...tower.filter((t) => t.store.getFreeCapacity(RESOURCE_ENERGY) > 0),
-    (room.terminal?.store.energy || 0) < room.energyCapacityAvailable ? room.terminal : null,
+    room.terminal?.my && (room.terminal?.store.energy || 0) <= _.floor(TRANSFER_THRESHOLD * 2, -2) ? room.terminal : null,
     ...getLabs(room)
       .filter((l) => l.store.getFreeCapacity(RESOURCE_ENERGY) > 0)
       .run(),
     // storageにキャッシュ
-    (room.storage?.store.energy || 0) < room.energyCapacityAvailable ? room.storage : null,
+    (room.storage?.store.energy || 0) < room.energyCapacityAvailable && room.storage?.my ? room.storage : null,
     // コントローラー強化
     controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : null,
     //貯蓄順
-    ..._([room.terminal, factory])
-      .compact()
-      .filter((s) => s.store.energy < TERMINAL_LIMIT)
-      .sortBy((s) => s.store.energy)
-      .run(),
+    (factory?.store.energy || 0) <= _.floor(TRANSFER_THRESHOLD, -2) ? factory : null,
     room.storage,
   ])
     .compact()
+    .filter((s) => !("my" in s) || s.my)
     .first();
 }

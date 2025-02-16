@@ -1,6 +1,5 @@
 import { findTransferTarget } from "./role.carrier";
-import { CreepBehavior } from "./roles";
-import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getRepairPower, moveRoom, pickUpAll, toColor, withdrawBy } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, getRepairPower, moveRoom, pickUpAll, toColor, withdrawBy } from "./util.creep";
 import { findMyStructures, getDecayAmount, getLabs, getSitesInRoom } from "./utils";
 // import { findMyStructures } from "./utils";
 
@@ -25,20 +24,21 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       color: toColor(creep),
     });
     return customMove(creep, target, {
+      maxRooms: 0,
       ...opt,
     });
   };
 
   const checkMode = () => {
     const newMode: BuilderMemory["mode"] = ((c: Builder) => {
-      if (c.memory.mode === "👷" && c.store.energy === 0) {
+      if (c.memory.mode === "W" && c.store.energy === 0) {
         // 作業モードで空になったら収集モードにする
-        return "🛒";
+        return "G";
       }
 
-      if (c.memory.mode === "🛒" && creep.store.energy >= CARRY_CAPACITY) {
+      if (c.memory.mode === "G" && creep.store.energy >= CARRY_CAPACITY) {
         // 収集モードで50超えたら作業モードにする
-        return "👷";
+        return "W";
       }
 
       // そのまま
@@ -58,7 +58,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   const { road, rampart, container, link } = findMyStructures(creep.room);
 
   // https://docs.screeps.com/simultaneous-actions.html
-  if (creep.memory.mode === "👷") {
+  if (creep.memory.mode === "W") {
     // 作業モードの時
 
     // #region 応急処置###########################################################################################
@@ -75,6 +75,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     if (!creep.memory.firstAidId) {
       creep.memory.firstAidId = _([...road, ...rampart, ...container])
         .filter((s: Structure) => {
+          if (s.structureType === STRUCTURE_ROAD && s.room.memory.roadMap[s.pos.y * 50 + s.pos.x] < 0) {
+            return false;
+          }
+
           return s.hits <= getDecayAmount(s) * 10;
         })
         .sortBy((s) => s.hits / (getDecayAmount(s) * 10))
@@ -89,7 +93,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           .tap((code) => {
             if (code === ERR_NOT_IN_RANGE) {
               // 作業モードの時は近寄る
-              if (creep.memory.mode === "👷") {
+              if (creep.memory.mode === "W") {
                 moveMeTo(target);
               }
             }
@@ -114,6 +118,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     // 建設以降の処理はエネルギーが十分溜まってるときだけやる
     if (
+      creep.room.find(FIND_HOSTILE_CREEPS).length > 0 ||
       (creep.room.storage
         ? _([creep.room.storage.store.energy, ...(getCreepsInRoom(creep.room).carrier || []).map((c) => c.store.energy)])
             .compact()
@@ -248,7 +253,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.memory.storeId = creep.pos.findClosestByRange(
         _.compact([
           ...container,
-          ...link.filter((l) => !l.cooldown && l.store.energy),
+          ...link.filter((l) => {
+            const main = getMainSpawn(l.room);
+            return main && l.pos.inRangeTo(main, 3);
+          }),
           ...[creep.room.terminal, creep.room.storage].filter(
             (t) => t && t.store.energy > t.room.energyCapacityAvailable + creep.store.getCapacity(RESOURCE_ENERGY),
           ),
@@ -338,12 +346,18 @@ function boost(creep: Builder) {
     });
 
   const labs = getLabs(creep.room);
+  const unBoostedBodies = creep.body.filter((b) => b.type === WORK && !b.boost);
 
   // 優先順でマッピングを作る
   const lab = boosts
     .map((mineralType) => {
       return {
-        lab: labs.find((l) => l.mineralType === mineralType && l.store[l.mineralType] >= LAB_BOOST_MINERAL && l.store.energy >= LAB_BOOST_ENERGY),
+        lab: labs.find(
+          (l) =>
+            l.mineralType === mineralType &&
+            l.store[l.mineralType] >= LAB_BOOST_MINERAL * unBoostedBodies.length &&
+            l.store.energy >= LAB_BOOST_ENERGY * unBoostedBodies.length,
+        ),
         mineralType,
       };
     })
@@ -376,10 +390,16 @@ function findBuildTarget(creep: Builder) {
             STRUCTURE_WALL,
             // とりあえず輸送
             STRUCTURE_ROAD,
-            // 防衛
-            STRUCTURE_TOWER,
+            // 仮倉庫
+            STRUCTURE_CONTAINER,
+            // 仮倉庫
+            STRUCTURE_SPAWN,
             // 輸送
             STRUCTURE_LINK,
+            // extension
+            STRUCTURE_EXTENSION,
+            // 防衛
+            STRUCTURE_TOWER,
             // 貯蔵
             STRUCTURE_STORAGE,
             // LAB
@@ -410,6 +430,10 @@ function findRepairTarget(creep: Builder) {
       // ダメージのある建物
       filter: (s) => {
         // 閾値
+        if (s.structureType === STRUCTURE_ROAD && s.room.memory.roadMap[s.pos.y * 50 + s.pos.x] < 0) {
+          return false;
+        }
+
         return s.hits < s.hitsMax - getRepairPower(creep);
       },
     }),

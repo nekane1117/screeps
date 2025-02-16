@@ -1,4 +1,3 @@
-import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, getMainSpawn } from "./util.creep";
 import { findMyStructures } from "./utils";
 
@@ -25,18 +24,18 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       return console.log(`${creep.name} is not Gatherer`);
     }
     const newMode = ((c: Gatherer) => {
-      if (c.memory.mode === "🚛" && creep.store.getUsedCapacity() === 0) {
+      if (c.memory.mode === "D" && creep.store.getUsedCapacity() === 0) {
         // 作業モードで空になったら収集モードにする
-        return "🛒";
+        return "G";
       }
 
       if (
-        c.memory.mode === "🛒" &&
+        c.memory.mode === "G" &&
         creep.store.getUsedCapacity() >=
           Math.min(creep.store.getCapacity(RESOURCE_ENERGY), creep.room.controller ? EXTENSION_ENERGY_CAPACITY[creep.room.controller.level] : CARRY_CAPACITY)
       ) {
         // 収集モードで半分超えたら作業モードにする
-        return "🚛";
+        return "D";
       }
 
       // そのまま
@@ -46,12 +45,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     if (creep.memory.mode !== newMode) {
       creep.say(newMode);
       creep.memory.mode = newMode;
-      if (newMode === "🛒") {
+      delete creep.memory.dismantleId;
+      if (newMode === "G") {
         creep.memory.storeId = undefined;
       }
 
       // 運搬モードに切り替えたときの容量を記憶する
-      if (newMode === "🚛") {
+      if (newMode === "D") {
         (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).gatherer =
           ((creep.room.memory.carrySize?.gatherer || 100) * 100 + creep.store.energy) / 101;
       }
@@ -82,6 +82,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     })?.id;
   }
 
+  if (!creep.memory.storeId) {
+    creep.memory.storeId = _(creep.room.find(FIND_HOSTILE_STRUCTURES).filter((s) => "store" in s))
+      .sortBy((s) => s.pos.getRangeTo(creep))
+      .first()?.id;
+  }
+
   // 今持ってるやつと同じタイプの資源を盛ってる廃墟
   if (!creep.memory.storeId) {
     creep.memory.storeId = creep.pos.findClosestByPath(FIND_RUINS, {
@@ -92,12 +98,26 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // 中身ある廃墟がなければリサイクル
-  if (!creep.memory.storeId) {
+  if (!creep.memory.storeId && creep.memory.mode === "G") {
     const spawn = creep.pos.findClosestByPath(findMyStructures(creep.room).spawn);
     return spawn?.recycleCreep(creep) === ERR_NOT_IN_RANGE && customMove(creep, spawn.pos);
   }
   // 取り出し処理###############################################################################################
-  if (creep.memory.storeId && creep.memory.mode === "🛒") {
+  if (creep.memory.storeId && creep.memory.mode === "G") {
+    // #region 解体###########################################################################################
+    const dismantle =
+      (creep.memory.dismantleId = creep.memory.dismantleId || creep.pos.findClosestByRange(FIND_HOSTILE_STRUCTURES)?.id) &&
+      Game.getObjectById(creep.memory.dismantleId);
+    if (dismantle) {
+      if (creep.dismantle(dismantle) === ERR_NOT_IN_RANGE) {
+        return moveMeTo(dismantle);
+      }
+    } else {
+      delete creep.memory.dismantleId;
+    }
+
+    //#endregion ###########################################################################################
+
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
       if (!creep.pos.isNearTo(store)) {
@@ -106,11 +126,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
       if (creep.pos.isNearTo(store)) {
         const target = _(RESOURCES_ALL)
-          .filter((r) => store.store.getUsedCapacity(r) > 0)
-          .sort((r1, r2) => store.store.getUsedCapacity(r1) - store.store.getUsedCapacity(r2))
+          .filter((r) => (store.store.getUsedCapacity(r) || 0) > 0)
+          .sort((r1, r2) => (store.store.getUsedCapacity(r1) || 0) - (store.store.getUsedCapacity(r2) || 0))
           .first();
 
-        creep.memory.worked = target && creep.withdraw(store, target, Math.min(store.store.getUsedCapacity(target), creep.store.getFreeCapacity(target)));
+        creep.memory.worked = target && creep.withdraw(store, target, Math.min(store.store.getUsedCapacity(target) || 0, creep.store.getFreeCapacity(target)));
         switch (creep.memory.worked) {
           // 空の時
           case ERR_NOT_ENOUGH_RESOURCES:
@@ -143,7 +163,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
-  if (creep.memory.mode === "🚛") {
+  if (creep.memory.mode === "D") {
     if (!creep.pos.isNearTo(creep.room.storage)) {
       moveMeTo(creep.room.storage, { range: 1 });
     }

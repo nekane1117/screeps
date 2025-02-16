@@ -1,7 +1,4 @@
-import { CreepBehavior } from "./roles";
-import { complexOrder } from "./util.array";
-
-import { RETURN_CODE_DECODER, customMove, moveRoom } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, getMainSpawn, moveRoom, toColor } from "./util.creep";
 import { findMyStructures } from "./utils";
 
 /**
@@ -19,23 +16,46 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return moveRoom(creep, creep.room.name, creep.memory.baseRoom);
   }
 
-  // モード切替
-  if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-    creep.memory.mode = "🚛";
-  } else if (creep.store.energy === 0) {
-    creep.memory.mode = "🌾";
-  }
+  const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
+    const pos = "pos" in target ? target.pos : target;
+    Game.rooms[pos.roomName]?.visual.text("x", pos, {
+      color: toColor(creep),
+    });
+    PathFinder.use(true);
+    const result = customMove(creep, target, {
+      maxRooms: 1,
+      ...opt,
+    });
+    PathFinder.use(false);
+    return result;
+  };
 
-  const { container = [], link = [], spawn = [], extension = [], storage, factory, terminal } = findMyStructures(creep.room);
+  // モード切替
+  const checkMode = () => {
+    let newMode: "D" | "H" = creep.memory.mode;
+    if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+      newMode = "D";
+    } else if (creep.store.energy === 0) {
+      newMode = "H";
+    }
+
+    if (creep.memory.mode !== newMode) {
+      creep.say(newMode);
+      creep.memory.mode = newMode;
+      delete creep.memory.transferId;
+      delete creep.memory.harvestTargetId;
+    }
+  };
+  checkMode();
+
+  const { container = [], link = [] } = findMyStructures(creep.room);
 
   //#region 収穫元設定処理 #####################################################################################
+  if (!creep.memory.harvestTargetId || Game.getObjectById(creep.memory.harvestTargetId)?.energy === 0) {
+    delete creep.memory.harvestTargetId;
+  }
   if (!creep.memory.harvestTargetId) {
-    creep.memory.harvestTargetId = complexOrder(creep.room.find(FIND_SOURCES), [
-      // エネルギー降順
-      (v) => -v.energy,
-      // 再生までが一番早いやつ
-      (v) => v.ticksToRegeneration,
-    ]).first()?.id;
+    creep.memory.harvestTargetId = (getMainSpawn(creep.room) || creep).pos.findClosestByPath(FIND_SOURCES_ACTIVE)?.id;
   }
 
   if (!creep.memory.harvestTargetId) {
@@ -43,7 +63,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
   //#endregion 収穫元設定処理 ##################################################################################
 
-  if (creep.memory.mode === "🚛") {
+  if (creep.memory.mode === "D") {
     //#region 運搬処理 #####################################################################################
     // 輸送先が満タンになってたら消す
     if (creep.memory.transferId) {
@@ -53,10 +73,21 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       }
     }
 
+    const mineral = _.first(creep.room.find(FIND_MINERALS));
     // 適当に一番近い容量があるやつに向かう
     creep.memory.transferId =
       creep.memory.transferId ||
-      creep.pos.findClosestByPath(_.compact([...spawn, ...extension, storage, factory, terminal]).filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY)))?.id;
+      creep.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (s: AnyStructure): s is HasStore => {
+          if ("store" in s) {
+            // ミネラル用のコンテナだけは避ける
+            const mineralContainer = container.filter((c) => !mineral || c.pos.inRangeTo(mineral, 3));
+
+            return s.store.getFreeCapacity(RESOURCE_ENERGY) > 0 && !mineralContainer.find((c) => c.id === s.id);
+          }
+          return false;
+        },
+      })?.id;
     const store = creep.memory.transferId && Game.getObjectById(creep.memory.transferId);
     if (store) {
       const returnVal = creep.transfer(store, RESOURCE_ENERGY);
@@ -68,7 +99,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           break;
 
         case ERR_NOT_IN_RANGE:
-          customMove(creep, store);
+          moveMeTo(store);
           break;
         // 有りえない系
         case ERR_NOT_OWNER: // 自creepじゃない
@@ -101,13 +132,16 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     creep.memory.worked = creep.harvest(source);
 
     if (!creep.pos.isNearTo(source)) {
-      customMove(creep, source);
+      moveMeTo(source, {
+        maxRooms: 0,
+      });
     }
 
     switch (creep.memory.worked) {
       case ERR_NOT_IN_RANGE:
-        customMove(creep, source, {
+        moveMeTo(source, {
           range: 1,
+          maxRooms: 0,
         });
         break;
       // 来ないはずのやつ
@@ -148,8 +182,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // build
   // 射程圏内の建設はとりあえずぜんぶ叩いておく
-  if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5) {
-    built = _(creep.pos.findInRange(Object.values(Game.constructionSites), 3))
+  if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * BUILD_POWER) {
+    built = _(
+      creep.pos.findInRange(
+        Object.values(Game.constructionSites).filter((s) => s.structureType === STRUCTURE_CONTAINER),
+        3,
+      ),
+    )
       .sortBy((s) => s.progress - s.progressTotal)
       .map((site) => creep.build(site))
       .run();
@@ -161,10 +200,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       return creep.repair(damaged);
     })
     .run();
-
   // 周囲のものに適当に投げる
-  if (built.length === 0 && creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * 5 && repaired.length === 0) {
-    if (creep.memory.mode === "🌾") {
+  if (built.length === 0 && creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * BUILD_POWER && repaired.length === 0) {
+    if (creep.memory.mode === "H") {
       const source = creep.memory.harvestTargetId && Game.getObjectById(creep.memory.harvestTargetId);
       if (source) {
         let stores: AnyStoreStructure[] = source.pos.findInRange(link, 2);
@@ -178,7 +216,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
         if (store) {
           if (creep.transfer(store, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-            customMove(creep, store);
+            moveMeTo(store, {
+              maxRooms: 0,
+            });
           }
         }
       }

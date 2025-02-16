@@ -1,3 +1,4 @@
+import { TRANSFER_THRESHOLD } from "./constants";
 import { getMainSpawn } from "./util.creep";
 import { findMyStructures, getCapacityRate } from "./utils";
 export default function behavior(links: StructureLink[]) {
@@ -8,13 +9,11 @@ export default function behavior(links: StructureLink[]) {
   }
 
   // コントローラー隣接リンク
-  const controllerLink = findMyStructures(room).link.find((l) => room.controller && l.pos.inRangeTo(room.controller.pos, 3));
+  const controllerLink = findMyStructures(room).link.find((l) => room.controller && l.pos.inRangeTo(room.controller.pos, 3) && !l.pos.inRangeTo(center, 3));
 
   // 中心地に近い順に並べ替える
   const [centerLink, ...tail] = _(links)
-    .filter((l) => {
-      return l.id !== controllerLink?.id;
-    })
+    .filter((l) => l.id !== controllerLink?.id)
     .sortBy((l) => {
       return l.pos.getRangeTo(center);
     })
@@ -26,7 +25,7 @@ export default function behavior(links: StructureLink[]) {
     }
   });
 
-  if (getCapacityRate(centerLink) > 0.5 && controllerLink) {
+  if (centerLink && (room.storage?.store.energy || 0) > TRANSFER_THRESHOLD * 2 && getCapacityRate(centerLink) > 0.5 && controllerLink) {
     centerLink.transferEnergy(controllerLink, _.floor(Math.min(centerLink.store.energy, controllerLink.store.getFreeCapacity(RESOURCE_ENERGY)), -2));
   }
 }

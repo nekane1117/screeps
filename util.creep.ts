@@ -163,6 +163,7 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       }),
     )
       .flatten<BodyPartConstant>()
+      .slice(0, 50)
       .run(),
   ],
   upgrader: [WORK, MOVE, CARRY, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE],
@@ -212,8 +213,8 @@ export const customMove: CustomMove = (creep, target, opt) => {
     };
 
     if (dx !== undefined && dy !== undefined && isInRange(creep.pos.x + dx) && isInRange(creep.pos.y + dy)) {
-      const blocker = creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + dx, creep.pos.y + dy)?.[0];
-      if (blocker && blocker.memory.moved !== OK) {
+      const blocker = _.first(creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + dx, creep.pos.y + dy));
+      if (blocker && blocker?.memory?.moved !== OK) {
         const pull = creep.pull(blocker);
         const move = blocker.move(creep);
         creep.memory._move = undefined;

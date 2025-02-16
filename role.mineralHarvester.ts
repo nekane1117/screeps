@@ -1,4 +1,3 @@
-import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, REVERSE_BOOSTS, customMove } from "./util.creep";
 import { getLabs } from "./utils";
 
@@ -24,17 +23,17 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   //#region モードチェック
   const checkMode = () => {
     const newMode: MineralHarvesterMemory["mode"] = ((c: MineralHarvester) => {
-      if (c.memory.mode !== "🚛" && c.memory.mode !== "🛒") {
-        return "🛒";
+      if (c.memory.mode !== "D" && c.memory.mode !== "G") {
+        return "G";
       }
 
-      if (c.memory.mode === "🚛" && c.store.getUsedCapacity() === 0) {
+      if (c.memory.mode === "D" && c.store.getUsedCapacity() === 0) {
         // 配送モードで空になったら収集モードにする
-        return "🛒";
+        return "G";
       }
 
       if (
-        c.memory.mode === "🛒" &&
+        c.memory.mode === "G" &&
         creep.store.getFreeCapacity(mineral.mineralType) <
           creep.body.reduce((total, b) => {
             if (b.type === WORK) {
@@ -44,7 +43,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           }, 0)
       ) {
         // 収集モードで容量不足になったら配送モードになる
-        return "🚛";
+        return "D";
       }
 
       // そのまま
@@ -59,7 +58,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   };
   checkMode();
 
-  if (creep.memory.mode === "🚛") {
+  if (creep.memory.mode === "D") {
     delivery(creep);
   } else {
     work(creep);
@@ -135,7 +134,7 @@ function work(creep: MineralHarvester) {
 }
 
 function delivery(creep: MineralHarvester) {
-  const storage = creep.room.storage;
+  const storage = creep.room.terminal || creep.room.storage;
   if (!storage) {
     return creep.say("NO STORAGE");
   }
@@ -152,10 +151,7 @@ function delivery(creep: MineralHarvester) {
 const BOOSTS = [RESOURCE_CATALYZED_UTRIUM_ALKALIDE, RESOURCE_UTRIUM_ALKALIDE, RESOURCE_UTRIUM_OXIDE];
 
 function boost(creep: MineralHarvester) {
-  const minBoosted = _(creep.body.filter((b) => b.type === WORK)).min((b) => (b.boost || "").length).boost;
-
-  // 完全にboostされてるときは無視
-  if (minBoosted === RESOURCE_CATALYZED_UTRIUM_ALKALIDE || minBoosted === RESOURCE_UTRIUM_ALKALIDE) {
+  if (creep.body.filter((b) => b.type === WORK && !b.boost).length === 0) {
     return OK;
   }
 
@@ -163,8 +159,12 @@ function boost(creep: MineralHarvester) {
   const target = labs
     // 型が正しくて容量があるやつだけにする
     .filter((l) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return l.memory.expectedType && BOOSTS.includes(l.memory.expectedType as any) && l.store.getUsedCapacity(l.memory.expectedType) > LAB_BOOST_MINERAL;
+      return (
+        l.memory.expectedType &&
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        BOOSTS.includes(l.memory.expectedType as any) &&
+        l.store.getUsedCapacity(l.memory.expectedType) >= LAB_BOOST_MINERAL * creep.body.filter((b) => b.type === WORK && !b.boost).length
+      );
     })
     // 優先順で一番優先のやつ
     .sort((l) => {

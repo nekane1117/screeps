@@ -44,7 +44,7 @@ const behavior: StructureBehavior = (controller: Structure) => {
           spawn.spawnCreep(upgraderBody, `U_${controller.room.name}_${Game.time}`, {
             memory: {
               baseRoom: controller.room.name,
-              mode: "🛒",
+              mode: "G",
               role: "upgrader",
             } as UpgraderMemory,
           });
