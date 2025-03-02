@@ -9,7 +9,8 @@
     "sync": "rsync -rv --delete dist/ /mnt/c/Users/takeshikoino/AppData/Local/Screeps/scripts/screeps.com/dist",
     "prepare": "husky",
     "format": "npx prettier --cache --write .",
-    "lint": "eslint --cache"
+    "lint": "eslint --cache",
+    "deps": "depcruise -T dot . > main.dot"
   },
   "author": "nekane1117",
   "license": "MIT",
@@ -19,6 +20,7 @@
     "@types/lodash": "3.10.1",
     "@types/node": "^20.12.7",
     "@types/screeps": "^3.3.8",
+    "dependency-cruiser": "^16.10.0",
     "esbuild": "^0.24.2",
     "eslint": "^9.0.0",
     "globals": "^15.0.0",

@@ -1,6 +1,7 @@
-import { LAB_STRATEGY, REVERSE_REACTIONS } from "./constants";
-import { filterBodiesByCost, getCreepsInRoom } from "./util.creep";
-import { findMyStructures, getLabs, getSpawnsInRoom, isCompound } from "./utils";
+import { LAB_STRATEGY, REVERSE_REACTIONS, TRANSFER_THRESHOLD } from "./constants";
+import { getCreepsInRoom } from "./util.creep";
+import { getLabs, getSpawnsInRoom, isCompound } from "./utils";
+import { getRoomResouces } from "./utils.common";
 
 export default function behavior(labs: StructureLab[], mineral: Mineral) {
   const firstLab = _.first(labs);
@@ -23,21 +24,19 @@ export default function behavior(labs: StructureLab[], mineral: Mineral) {
 
   const { labManager = [] } = getCreepsInRoom(firstLab.room);
 
-  const bodies = filterBodiesByCost("labManager", firstLab.room.energyAvailable).bodies;
-
   // 管理者を作る
   if (
     firstLab.room.terminal &&
-    firstLab.room.terminal.store.energy > firstLab.room.energyCapacityAvailable &&
+    firstLab.room.terminal.store.energy > TRANSFER_THRESHOLD &&
     firstLab.room.energyAvailable === firstLab.room.energyCapacityAvailable &&
     labManager.length === 0
   ) {
     const spawn = getSpawnsInRoom(firstLab.pos.roomName)?.find((s) => !s.spawning);
     if (spawn) {
-      spawn.spawnCreep(bodies, `Lm_${firstLab.room.name}_${Game.time}`, {
+      spawn.spawnCreep(getManagerBody(firstLab.room), `Lm_${firstLab.room.name}_${Game.time}`, {
         memory: {
           baseRoom: firstLab.room.name,
-          mode: "🛒",
+          mode: "G",
           role: "labManager",
         } as LabManagerMemory,
       });
@@ -52,24 +51,24 @@ export default function behavior(labs: StructureLab[], mineral: Mineral) {
     // 続きの処理のために埋め込む
     return Object.assign(lab, { memory }) as StructureLab & { memory: LabMemory };
   });
-  // モードチェック
-  const newMode = checkMode(room);
-
   // モードが違うときと1500tickに1回くらい更新する
-  if (room.memory.labMode !== newMode || Game.time % CREEP_LIFE_TIME === 0) {
-    room.memory.labMode = newMode;
+  if (Game.time % (CREEP_LIFE_TIME / 3) === 0) {
+    room.memory.labMode = checkMode(room);
     const finalProducts = _.clone(LAB_STRATEGY[room.memory.labMode]);
     if (!finalProducts) {
       console.log("strategy is not defined: " + room.memory.labMode);
       return ERR_INVALID_ARGS;
     }
 
-    const strategy = generateStrategy(room, [finalProducts]).reverse();
+    const strategy = _(generateStrategy(room, [finalProducts]).reverse())
+      .uniq()
+      .run();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (room.memory as any).labStrategy;
 
     // メモリを埋め込んだLABの情報を作る
     labWithMemory.forEach((lab, i) => {
-      // 破壊、再建を考慮して上書きする
-      // (変わった時えらいことになるが一旦仕方ない)
       lab.memory.expectedType = strategy[i];
     });
   }
@@ -78,8 +77,9 @@ export default function behavior(labs: StructureLab[], mineral: Mineral) {
   labWithMemory.map((lab) => {
     lab.memory.expectedType &&
       lab.room.visual.text(lab.memory.expectedType, lab.pos.x, lab.pos.y, {
-        color: "#008800",
-        font: 0.25,
+        color: "#ffff00",
+        font: 0.75,
+        strokeWidth: 2,
       });
 
     const ingredients = lab.memory.expectedType && REVERSE_REACTIONS[lab.memory.expectedType];
@@ -89,7 +89,7 @@ export default function behavior(labs: StructureLab[], mineral: Mineral) {
         return labWithMemory.find((l) => {
           // 素材を要求していて
           // 要求通りのタイプを持っている
-          return l.memory.expectedType === type && l.mineralType === l.memory.expectedType;
+          return l.mineralType === type && l.store[type] >= LAB_REACTION_AMOUNT;
         });
       });
       if (l1 && l2) {
@@ -100,74 +100,48 @@ export default function behavior(labs: StructureLab[], mineral: Mineral) {
   });
 }
 
-let allResouces: Partial<
-  Record<
-    string,
-    Partial<Record<ResourceConstant, number>> & {
-      timestamp: number;
-    }
-  >
-> = {};
-
-function getRoomResouces(room: Room) {
-  allResouces = allResouces || {};
-
-  let roomResouces = allResouces[room.name];
-
-  if (roomResouces && roomResouces.timestamp === Game.time) {
-    return roomResouces;
-  }
-
-  roomResouces = allResouces[room.name] = {
-    timestamp: Game.time,
-  };
-
-  const { factory } = findMyStructures(room);
-  for (const storage of _.compact([room.storage, room.terminal, factory, ...getLabs(room).run(), ...(getCreepsInRoom(room).labManager || [])])) {
-    for (const resource of RESOURCES_ALL) {
-      roomResouces[resource] = (roomResouces[resource] || 0) + (storage.store.getUsedCapacity(resource) ?? 0);
-    }
-  }
-  return roomResouces;
-}
-
 function checkMode(room: Room) {
-  const { builder = [] } = getCreepsInRoom(room);
+  const { builder = [], mineralHarvester = [] } = getCreepsInRoom(room);
 
-  // if (isUnBoosted(mineralHarvester)) {
-  //   return "mineralHarvester";
-  // } else
-  if (isUnBoosted(builder)) {
+  if (!isBoosted(mineralHarvester)) {
+    return "mineralHarvester";
+  } else if (!isBoosted(builder)) {
     return "builder";
   } else {
     return "upgrader";
   }
 }
 
-function isUnBoosted(creeps: Creeps[]) {
-  // ブースト済み条件の否定
+function isBoosted(creeps: Creeps[]) {
   // いない or
   // すべてのWORKが何かしらブースト済み
-  return !(
+  return (
     creeps.length === 0 ||
     creeps.every((c) =>
       c.body
         .filter((b) => {
           return b.type === WORK;
         })
-        .every((b) => b.boost),
+        .every((b) => !!b.boost),
     )
   );
 }
 
 function generateStrategy(room: Room, strategy: AllMinerals[]): AllMinerals[] {
-  const roomResouces = getRoomResouces(room);
   const last = _.last(strategy);
 
   // 末尾が取れないのはなんか変なのでいったん返す
   if (!last) {
     return strategy;
   }
+
+  const roomResouces = getRoomResouces(room);
+
+  // 足りてるときはそのまま返す
+  if ((roomResouces[last] || 0) > 1000) {
+    return strategy;
+  }
+
   const reverseReactions = REVERSE_REACTIONS[last];
 
   // 逆反応が取れないのは原料なのでそのまま返す
@@ -178,19 +152,34 @@ function generateStrategy(room: Room, strategy: AllMinerals[]): AllMinerals[] {
   const [left, right] = reverseReactions;
   if (!isCompound(left) && !isCompound(right)) {
     // 両方原料まで行っちゃったときはそれで終わる
-    return strategy.concat(left, right);
+    return strategy.concat(right, left);
+  }
+  const labs = getLabs(room);
+  // Gで3ラボが3この時はスタックしちゃうので特殊処理を入れる
+  if (labs.size() <= 3 && last === RESOURCE_GHODIUM && (roomResouces[left] || 0) >= 1000 && (roomResouces[right] || 0) < 1000) {
+    // 左が足りてて右が足らないとき左を足さない
+    return generateStrategy(room, strategy.concat(right));
   }
 
-  if ((roomResouces[left] || 0) < 1000) {
-    // 左側が足りないとき
-    // 左側を足して再起する
-    return generateStrategy(room, strategy.concat(left));
-  } else if ((roomResouces[right] || 0) < 1000) {
-    // 左が足りてるが右が足らないとき
-    // 左、右の順で足して再帰する
-    return generateStrategy(room, strategy.concat(left, right));
-  } else {
-    // 両方足りてるときはそれで終わる
-    return strategy.concat(left, right);
-  }
+  return generateStrategy(room, generateStrategy(room, strategy.concat(right)).concat(left));
+}
+
+export function getManagerBody(room: Room): BodyPartConstant[] {
+  const safetyFactor = 2;
+
+  const bodyCycle: BodyPartConstant[] = [MOVE, CARRY, CARRY];
+  let costTotal = 0;
+  const avgSize = room.memory.carrySize?.labManager || 100;
+  // 個数 (÷50の切り上げ)
+  // 安全係数
+  // の２倍(CARRY,MOVE)
+  return _.range(Math.ceil(avgSize / CARRY_CAPACITY) * safetyFactor * 3)
+    .slice(0, 50)
+    .map((i) => {
+      const parts = bodyCycle[i % bodyCycle.length];
+      costTotal += BODYPART_COST[parts];
+      return { parts, costTotal };
+    })
+    .filter((p) => p.costTotal <= room.energyAvailable)
+    .map((p) => p.parts);
 }

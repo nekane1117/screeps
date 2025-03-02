@@ -1,0 +1,113 @@
+strict digraph "dependency-cruiser output"{
+    rankdir="LR" splines="true" overlap="false" nodesep="0.16" ranksep="0.18" fontname="Helvetica-bold" fontsize="9" style="rounded,bold,filled" fillcolor="#ffffff" compound="true"
+    node [shape="box" style="rounded, filled" height="0.2" color="black" fillcolor="#ffffcc" fontcolor="black" fontname="Helvetica" fontsize="9"]
+    edge [arrowhead="normal" arrowsize="0.6" penwidth="2.0" color="#00000033" fontname="Helvetica" fontsize="9"]
+
+    "constants.ts" [label=<constants.ts> tooltip="constants.ts" URL="constants.ts" fillcolor="#ddfeff"]
+    "constants.ts" -> "utils.common.ts" [xlabel="no-circular" tooltip="no-circular" arrowhead="normalnoneodot" fontcolor="orange" color="orange"]
+    "flag.purple.ts" [label=<flag.purple.ts> tooltip="flag.purple.ts" URL="flag.purple.ts" fillcolor="#ddfeff"]
+    "flag.red.ts" [label=<flag.red.ts> tooltip="flag.red.ts" URL="flag.red.ts" fillcolor="#ddfeff"]
+    "flag.red.ts" -> "util.creep.ts"
+    "flag.red.ts" -> "utils.ts"
+    "flag.white.ts" [label=<flag.white.ts> tooltip="flag.white.ts" URL="flag.white.ts" fillcolor="#ddfeff"]
+    "flags.ts" [label=<flags.ts> tooltip="flags.ts" URL="flags.ts" fillcolor="#ddfeff"]
+    "flags.ts" -> "flag.purple.ts"
+    "flags.ts" -> "flag.red.ts"
+    "flags.ts" -> "flag.white.ts"
+    "global.d.ts" [label=<global.d.ts> tooltip="global.d.ts" URL="global.d.ts" fillcolor="#ddfeff"]
+    "global.d.ts" -> "lodash.d.ts"
+    "lodash.d.ts" [label=<lodash.d.ts> tooltip="lodash.d.ts" URL="lodash.d.ts" fillcolor="#ddfeff"]
+    "main.ts" [label=<main.ts> tooltip="main.ts" URL="main.ts" fillcolor="#ddfeff"]
+    "main.ts" -> "flags.ts"
+    "main.ts" -> "roles.ts"
+    "main.ts" -> "room.ts"
+    "main.ts" -> "structures.ts"
+    "main.ts" -> "util.creep.ts"
+    "main.ts" -> "utils.ts"
+    "main.ts" -> "utils.common.ts"
+    "role.builder.ts" [label=<role.builder.ts> tooltip="role.builder.ts" URL="role.builder.ts" fillcolor="#ddfeff"]
+    "role.builder.ts" -> "role.carrier.ts"
+    "role.builder.ts" -> "util.creep.ts"
+    "role.builder.ts" -> "utils.ts"
+    "role.carrier.ts" [label=<role.carrier.ts> tooltip="role.carrier.ts" URL="role.carrier.ts" fillcolor="#ddfeff"]
+    "role.carrier.ts" -> "constants.ts"
+    "role.carrier.ts" -> "util.creep.ts"
+    "role.carrier.ts" -> "utils.ts"
+    "role.claimer.ts" [label=<role.claimer.ts> tooltip="role.claimer.ts" URL="role.claimer.ts" fillcolor="#ddfeff"]
+    "role.claimer.ts" -> "util.creep.ts"
+    "role.claimer.ts" -> "utils.ts"
+    "role.defender.ts" [label=<role.defender.ts> tooltip="role.defender.ts" URL="role.defender.ts" fillcolor="#ddfeff"]
+    "role.defender.ts" -> "util.creep.ts"
+    "role.gatherer.ts" [label=<role.gatherer.ts> tooltip="role.gatherer.ts" URL="role.gatherer.ts" fillcolor="#ddfeff"]
+    "role.gatherer.ts" -> "util.creep.ts"
+    "role.gatherer.ts" -> "utils.ts"
+    "role.harvester.ts" [label=<role.harvester.ts> tooltip="role.harvester.ts" URL="role.harvester.ts" fillcolor="#ddfeff"]
+    "role.harvester.ts" -> "util.creep.ts"
+    "role.harvester.ts" -> "utils.ts"
+    "role.labManager.ts" [label=<role.labManager.ts> tooltip="role.labManager.ts" URL="role.labManager.ts" fillcolor="#ddfeff"]
+    "role.labManager.ts" -> "constants.ts"
+    "role.labManager.ts" -> "util.creep.ts"
+    "role.labManager.ts" -> "utils.ts"
+    "role.mineralHarvester.ts" [label=<role.mineralHarvester.ts> tooltip="role.mineralHarvester.ts" URL="role.mineralHarvester.ts" fillcolor="#ddfeff"]
+    "role.mineralHarvester.ts" -> "util.creep.ts"
+    "role.mineralHarvester.ts" -> "utils.ts"
+    "role.upgrader.ts" [label=<role.upgrader.ts> tooltip="role.upgrader.ts" URL="role.upgrader.ts" fillcolor="#ddfeff"]
+    "role.upgrader.ts" -> "util.creep.ts"
+    "role.upgrader.ts" -> "utils.ts"
+    "roles.ts" [label=<roles.ts> tooltip="roles.ts" URL="roles.ts" fillcolor="#ddfeff"]
+    "roles.ts" -> "role.builder.ts"
+    "roles.ts" -> "role.carrier.ts"
+    "roles.ts" -> "role.claimer.ts"
+    "roles.ts" -> "role.defender.ts"
+    "roles.ts" -> "role.gatherer.ts"
+    "roles.ts" -> "role.harvester.ts"
+    "roles.ts" -> "role.labManager.ts"
+    "roles.ts" -> "role.mineralHarvester.ts"
+    "roles.ts" -> "role.upgrader.ts"
+    "room.labManager.ts" [label=<room.labManager.ts> tooltip="room.labManager.ts" URL="room.labManager.ts" fillcolor="#ddfeff"]
+    "room.labManager.ts" -> "constants.ts"
+    "room.labManager.ts" -> "util.creep.ts"
+    "room.labManager.ts" -> "utils.ts"
+    "room.labManager.ts" -> "utils.common.ts"
+    "room.ts" [label=<room.ts> tooltip="room.ts" URL="room.ts" fillcolor="#ddfeff"]
+    "room.ts" -> "room.labManager.ts"
+    "room.ts" -> "structure.links.ts"
+    "room.ts" -> "util.creep.ts"
+    "room.ts" -> "utils.ts"
+    "screeps.d.ts" [label=<screeps.d.ts> tooltip="screeps.d.ts" URL="screeps.d.ts" fillcolor="#ddfeff"]
+    "structure.controller.ts" [label=<structure.controller.ts> tooltip="structure.controller.ts" URL="structure.controller.ts" fillcolor="#ddfeff"]
+    "structure.controller.ts" -> "structures.ts" [xlabel="no-circular" tooltip="no-circular" arrowhead="normalnoneodot" fontcolor="orange" color="orange"]
+    "structure.controller.ts" -> "util.creep.ts"
+    "structure.controller.ts" -> "utils.ts"
+    "structure.extructor.ts" [label=<structure.extructor.ts> tooltip="structure.extructor.ts" URL="structure.extructor.ts" fillcolor="#ddfeff"]
+    "structure.extructor.ts" -> "util.creep.ts"
+    "structure.extructor.ts" -> "utils.ts"
+    "structure.factory.ts" [label=<structure.factory.ts> tooltip="structure.factory.ts" URL="structure.factory.ts" fillcolor="#ddfeff"]
+    "structure.factory.ts" -> "utils.ts"
+    "structure.factory.ts" -> "utils.common.ts"
+    "structure.links.ts" [label=<structure.links.ts> tooltip="structure.links.ts" URL="structure.links.ts" fillcolor="#ddfeff"]
+    "structure.links.ts" -> "constants.ts"
+    "structure.links.ts" -> "util.creep.ts"
+    "structure.links.ts" -> "utils.ts"
+    "structure.terminal.ts" [label=<structure.terminal.ts> tooltip="structure.terminal.ts" URL="structure.terminal.ts" fillcolor="#ddfeff"]
+    "structure.terminal.ts" -> "constants.ts"
+    "structure.terminal.ts" -> "utils.ts"
+    "structure.terminal.ts" -> "utils.common.ts"
+    "structure.tower.ts" [label=<structure.tower.ts> tooltip="structure.tower.ts" URL="structure.tower.ts" fillcolor="#ddfeff"]
+    "structure.tower.ts" -> "constants.ts"
+    "structures.ts" [label=<structures.ts> tooltip="structures.ts" URL="structures.ts" fillcolor="#ddfeff"]
+    "structures.ts" -> "structure.controller.ts" [xlabel="no-circular" tooltip="no-circular" arrowhead="normalnoneodot" fontcolor="orange" color="orange"]
+    "structures.ts" -> "structure.extructor.ts"
+    "structures.ts" -> "structure.factory.ts"
+    "structures.ts" -> "structure.terminal.ts"
+    "structures.ts" -> "structure.tower.ts"
+    "util.array.ts" [label=<util.array.ts> tooltip="util.array.ts" URL="util.array.ts" fillcolor="#ddfeff"]
+    "util.creep.ts" [label=<util.creep.ts> tooltip="util.creep.ts" URL="util.creep.ts" fillcolor="#ddfeff"]
+    "util.creep.ts" -> "util.array.ts"
+    "util.creep.ts" -> "utils.ts" [xlabel="no-circular" tooltip="no-circular" arrowhead="normalnoneodot" fontcolor="orange" color="orange"]
+    "utils.common.ts" [label=<utils.common.ts> tooltip="utils.common.ts" URL="utils.common.ts" fillcolor="#ddfeff"]
+    "utils.common.ts" -> "util.creep.ts" [xlabel="no-circular" tooltip="no-circular" arrowhead="normalnoneodot" fontcolor="orange" color="orange"]
+    "utils.common.ts" -> "utils.ts" [xlabel="no-circular" tooltip="no-circular" arrowhead="normalnoneodot" fontcolor="orange" color="orange"]
+    "utils.ts" [label=<utils.ts> tooltip="utils.ts" URL="utils.ts" fillcolor="#ddfeff"]
+    "utils.ts" -> "constants.ts" [xlabel="no-circular" tooltip="no-circular" arrowhead="normalnoneodot" fontcolor="orange" color="orange"]
+}

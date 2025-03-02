@@ -1,4 +1,3 @@
-import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove } from "./util.creep";
 import { getSpawnsOrderdByRange } from "./utils";
 

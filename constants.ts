@@ -1,6 +1,15 @@
-import { ObjectKeys } from "./utils.common";
+import { ObjectEntries, ObjectKeys } from "./utils.common";
 
 export const TERMINAL_LIMIT = 10000;
+
+export const COMMODITY_INGREDIENTS = _(ObjectEntries(COMMODITIES))
+  .map(([key, value]) => {
+    return [key, ...ObjectKeys(value.components)];
+  })
+  .flatten<ResourceConstant>()
+  .uniq();
+
+export const TRANSFER_THRESHOLD = FACTORY_CAPACITY / COMMODITY_INGREDIENTS.size();
 
 export const TERMINAL_THRESHOLD = 1000;
 
@@ -36,10 +45,10 @@ export const REVERSE_REACTIONS: Record<AllMinerals, [AllMinerals, AllMinerals] |
   LHO2: ["LO", "OH"],
   UO: ["O", "U"],
   ZO: ["O", "Z"],
-  UH2O: ["OH", "UH"],
-  UHO2: ["OH", "UO"],
-  ZH2O: ["OH", "ZH"],
-  ZHO2: ["OH", "ZO"],
+  UH2O: ["UH", "OH"],
+  UHO2: ["UO", "OH"],
+  ZH2O: ["ZH", "OH"],
+  ZHO2: ["ZO", "OH"],
   XUH2O: ["UH2O", "X"],
   XUHO2: ["UHO2", "X"],
   G: ["UL", "ZK"],
@@ -58,42 +67,3 @@ export const ALL_REACTIONS = _(ObjectKeys(REVERSE_REACTIONS)).sortBy((r) => (r =
 
 export const ROAD_DECAY_AMOUNT_SWAMP = 500;
 export const ROAD_DECAY_AMOUNT_WALL = 15000;
-
-/**
- * 展開処理
- */
-export const DECOMPRESSING_COMMODITIES: ResourceConstant[] = [
-  RESOURCE_UTRIUM,
-  RESOURCE_LEMERGIUM,
-  RESOURCE_ZYNTHIUM,
-  RESOURCE_KEANIUM,
-  RESOURCE_GHODIUM,
-  RESOURCE_OXYGEN,
-  RESOURCE_HYDROGEN,
-  RESOURCE_CATALYST,
-  RESOURCE_ENERGY,
-];
-
-type CompressiongIngredient = Partial<
-  Record<
-    ResourceConstant,
-    {
-      type: ResourceConstant;
-      rate: number;
-    }
-  >
->;
-
-/** 原材料換算表 複数原材料があるやつはどうしようか */
-export const COMPRESSING_INGREDIENT: CompressiongIngredient = {
-  [RESOURCE_UTRIUM_BAR]: { type: RESOURCE_UTRIUM, rate: 5 },
-  [RESOURCE_LEMERGIUM_BAR]: { type: RESOURCE_LEMERGIUM, rate: 5 },
-  [RESOURCE_ZYNTHIUM_BAR]: { type: RESOURCE_ZYNTHIUM, rate: 5 },
-  [RESOURCE_KEANIUM_BAR]: { type: RESOURCE_KEANIUM, rate: 5 },
-  [RESOURCE_GHODIUM_MELT]: { type: RESOURCE_GHODIUM, rate: 5 },
-  [RESOURCE_OXIDANT]: { type: RESOURCE_OXYGEN, rate: 5 },
-  [RESOURCE_REDUCTANT]: { type: RESOURCE_HYDROGEN, rate: 5 },
-  [RESOURCE_PURIFIER]: { type: RESOURCE_CATALYST, rate: 5 },
-  // エネルギー量換算しないといけないので一旦スルー
-  // [RESOURCE_BATTERY]: { type: RESOURCE_ENERGY, rate: 12 },
-};

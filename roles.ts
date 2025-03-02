@@ -7,8 +7,6 @@ import harvester from "./role.harvester";
 import labManager from "./role.labManager";
 import mineralHarvester from "./role.mineralHarvester";
 import upgrader from "./role.upgrader";
-export type CreepBehavior = (creep: Creeps) => void;
-
 export const behaviors: Record<ROLES, CreepBehavior> = {
   builder,
   carrier,

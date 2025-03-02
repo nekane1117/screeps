@@ -21,6 +21,10 @@ export default function behaviors(tower: Structure) {
         if (s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL) {
           return s.hits < RAMPART_DECAY_AMOUNT * 10;
         } else if (s.structureType === STRUCTURE_ROAD) {
+          if (tower.room.memory.roadMap[s.pos.y * 50 + s.pos.x] < 0) {
+            return false;
+          }
+
           switch (_.first(s.pos.lookFor(LOOK_TERRAIN))) {
             case "plain":
               return s.hits < ROAD_DECAY_AMOUNT * 10;

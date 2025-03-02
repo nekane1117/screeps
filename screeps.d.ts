@@ -45,12 +45,12 @@ declare interface Harvester extends Creep {
 declare interface HarvesterMemory extends CreepMemory {
   role: "harvester";
   /** 今何してるか
-   * 🚛 : 資源を持ってきてるところ
-   * 🌾 : 収集中
+   * D : 資源を持ってきてるところ
+   * H : 収集中
    */
-  mode: "🚛" | "🌾";
+  mode: "D" | "H";
   harvestTargetId?: Source["id"];
-  transferId?: StoreTarget["id"] | null;
+  transferId?: Id<HasStore> | null;
 }
 
 declare type MyStructureCache = {
@@ -78,6 +78,11 @@ declare type MyStructureCache = {
   tower: StructureTower[];
   source: Source[];
 };
+
+declare interface ControllerMemory {
+  latch?: boolean;
+}
+
 declare interface RoomMemory {
   creeps?: CreepsCache;
 
@@ -108,6 +113,8 @@ declare interface RoomMemory {
   staticRoad: { x: number; y: number }[];
 
   labMode: ROLES;
+
+  controller: ControllerMemory;
 }
 
 declare type CreepsCache = Partial<{
@@ -140,7 +147,7 @@ declare interface UpgraderMemory extends CreepMemory {
    * working    : 作業中
    * collecting : 資源取得中
    */
-  mode: "💪" | "🛒";
+  mode: "W" | "G";
   /** 資源をもらいに行く先 */
   storeId?: StoreTarget["id"] | null;
 
@@ -154,10 +161,10 @@ declare interface Builder extends Creep {
 declare interface BuilderMemory extends CreepMemory {
   role: "builder";
   /** 今何してるか
-   * 👷 : 作業中
-   * 🛒 : 資源取得中
+   * W : 作業中
+   * G : 資源取得中
    */
-  mode: "👷" | "🛒";
+  mode: "W" | "G";
   /** 今建てたいもの */
   buildingId?: ConstructionSite["id"] | null;
   transferId?: AnyStoreStructure["id"] | null;
@@ -180,11 +187,11 @@ declare interface CarrierMemory extends CreepMemory {
   /** 今何してるか
    * working    : 作業中
    * collecting : 資源取得中
-   * 🌾 : 自力で収集中
+   * H : 自力で収集中
    */
-  mode: "🚛" | "🛒";
+  mode: "D" | "G";
   /** 担当倉庫 */
-  storeId?: Id<StructureLink | StructureContainer | StructureStorage | StructureTerminal | StructureFactory>;
+  storeId?: Id<StructureLink | StructureContainer | StructureStorage | StructureTerminal | StructureFactory | Resource | Tombstone>;
   /** 配送先 */
   transferId?: Id<Parameters<Creep["transfer"]>[0]>;
 }
@@ -197,12 +204,15 @@ declare interface GathererMemory extends CreepMemory {
   /** 今何してるか
    * working    : 作業中
    * collecting : 資源取得中
-   * 🌾 : 自力で収集中
+   * H : 自力で収集中
    */
-  mode: "🚛" | "🛒";
+  mode: "D" | "G";
 
   /** 資源をもらいに行く先 */
-  storeId?: Ruin["id"] | Tombstone["id"] | null;
+  storeId?: Ruin["id"] | Tombstone["id"] | Id<HasStore> | null;
+
+  /** 解体対象 */
+  dismantleId?: Id<Parameters<Creep["dismantle"]>[0]>;
 }
 declare interface Claimer extends Creep {
   memory: ClaimerMemory;
@@ -218,7 +228,7 @@ declare interface MineralHarvester extends Creep {
 }
 
 declare interface MineralHarvesterMemory extends CreepMemory {
-  mode: "🛒" | "🚛";
+  mode: "G" | "D";
   role: "mineralHarvester";
   pickUpId: Id<Resource> | undefined;
   targetId: Id<Mineral>;
@@ -243,13 +253,15 @@ declare interface LabManagerMemory extends CreepMemory {
    * working    : 作業中
    * collecting : 資源取得中
    */
-  mode: "🚛" | "🛒";
+  mode: "D" | "G";
   /** 担当倉庫 */
   storeId?: Id<StructureLab | StructureTerminal | StructureFactory | StructureStorage>;
   /** 担当倉庫 */
   mineralType?: ResourceConstant;
   /** 配送先 */
   transferId?: Id<Parameters<Creep["transfer"]>[0]>;
+
+  balancing?: boolean;
 }
 declare interface Memory {
   factories: Record<Id<StructureFactory>, FactoryMemory>;
@@ -263,4 +275,9 @@ declare interface FactoryMemory {
 
 declare interface TerminalMemory {
   lastTrade?: MarketResourceConstant;
+  lastTradeResult?: ScreepsReturnCode;
+  lastTradeTick?: number;
+  paritId?: Id<StructureTerminal>;
 }
+
+declare type CreepBehavior = (creep: Creeps) => void;

@@ -1,4 +1,3 @@
-import { CreepBehavior } from "./roles";
 import { RETURN_CODE_DECODER, customMove, getMainSpawn, pickUpAll } from "./util.creep";
 import { findMyStructures, getCapacityRate, getLabs, getSitesInRoom } from "./utils";
 
@@ -23,7 +22,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
     changeMode(creep, "💪");
   } else if (creep.store.energy === 0) {
-    changeMode(creep, "🛒");
+    changeMode(creep, "G");
   }
 
   const { link, container } = findMyStructures(creep.room);
@@ -62,7 +61,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     switch (creep.memory.worked) {
       // 資源不足
       case ERR_NOT_ENOUGH_RESOURCES:
-        changeMode(creep, "🛒");
+        changeMode(creep, "G");
         break;
       case ERR_NOT_IN_RANGE:
         if (creep.memory.mode === "💪") {
@@ -120,7 +119,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           changeMode(creep, "💪");
           break;
         case ERR_NOT_IN_RANGE:
-          if (creep.memory.mode === "🛒") {
+          if (creep.memory.mode === "G") {
             const moved = moveMeTo(store);
             if (moved !== OK) {
               console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`);
@@ -163,7 +162,7 @@ const changeMode = (creep: Upgrader, mode: UpgraderMemory["mode"]) => {
 };
 
 // ブースト優先度順
-const BOOSTS = [RESOURCE_CATALYZED_GHODIUM_ACID, RESOURCE_GHODIUM_ACID, RESOURCE_GHODIUM_OXIDE];
+const BOOSTS = [RESOURCE_CATALYZED_GHODIUM_ACID, RESOURCE_GHODIUM_ACID, RESOURCE_GHODIUM_HYDRIDE];
 
 function boost(creep: Upgrader) {
   const minBoosted = _(creep.body.filter((b) => b.type === WORK)).min((b) => (b.boost || "").length).boost;

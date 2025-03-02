@@ -1,4 +1,3 @@
-import { CreepBehavior } from "./roles";
 import { customMove } from "./util.creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {

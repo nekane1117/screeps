@@ -1,4 +1,4 @@
-import { filterBodiesByCost, getCreepsInRoom } from "./util.creep";
+import { filterBodiesByCost, getCreepsInRoom, RETURN_CODE_DECODER } from "./util.creep";
 import { getSpawnsOrderdByRange } from "./utils";
 
 export default function behavior(extractor: Structure) {
@@ -28,13 +28,18 @@ export default function behavior(extractor: Structure) {
 
     if (spawn.room.energyAvailable > 200) {
       const name = `Mh_${extractor.room.name}_${Game.time}`;
-      const spawned = spawn.spawnCreep(filterBodiesByCost("mineralHarvester", spawn.room.energyAvailable).bodies, name, {
+      const bodies = filterBodiesByCost("mineralHarvester", spawn.room.energyAvailable).bodies;
+      const spawned = spawn.spawnCreep(bodies, name, {
         memory: {
           role: "mineralHarvester",
           baseRoom: extractor.room.name,
           targetId: mineral.id,
         } as MineralHarvesterMemory,
       });
+      if (spawned !== OK) {
+        console.log(`MineralHarvester spawn is ${RETURN_CODE_DECODER[spawned]} : ${JSON.stringify(bodies)}`);
+      }
+
       return spawned;
     }
   }

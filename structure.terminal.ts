@@ -1,9 +1,6 @@
-import { COMPRESSING_INGREDIENT, DECOMPRESSING_COMMODITIES, TERMINAL_THRESHOLD } from "./constants";
+import { TRANSFER_THRESHOLD } from "./constants";
 import { getTerminals, logUsage } from "./utils";
-import { ObjectKeys } from "./utils.common";
-
-/** terminal間輸送閾値 */
-const TRANSFER_THRESHOLD = 1000;
+import { getRoomResouces, isCommodity, ObjectEntries } from "./utils.common";
 
 export default function behaviors(terminal: Structure) {
   logUsage(`terminal:${terminal.room.name}`, () => {
@@ -11,84 +8,134 @@ export default function behaviors(terminal: Structure) {
       return console.log(`${terminal.id} is not terminal`);
     }
 
+    if (terminal.cooldown > 0) {
+      return OK;
+    }
     const memory = ((Memory.terminals = Memory.terminals || {})[terminal.id] = Memory.terminals[terminal.id] || {});
 
     memory.lastTrade && terminal.room.visual.text(memory.lastTrade, terminal.pos.x, terminal.pos.y, { font: 0.25, color: "#ffff00" });
-    if (Game.cpu.bucket < 1000 || terminal.cooldown > 0) {
+    if (Game.cpu.bucket > 600 && terminal.cooldown > 0) {
       return;
     }
 
-    const { room } = terminal;
-
     // とにかくリソースを共有する
     const terminals = getTerminals();
-    for (const resourceType of RESOURCES_ALL) {
+
+    // ターミナルが2個以下の時は特に何もさせない
+    if (terminals.length < 2) {
+      return OK;
+    }
+
+    for (const resourceType of RESOURCES_ALL.filter((r) => !isCommodity(r) && r !== RESOURCE_ENERGY)) {
       // 閾値の2倍あるときは不足してるターミナルに送る
-      if (terminal.store[resourceType] > room.energyCapacityAvailable + TRANSFER_THRESHOLD * 2) {
-        const transferTarget = terminals.find((t) => t.store[resourceType] < TRANSFER_THRESHOLD * 2);
+      if (terminal.store[resourceType] > _.floor(TRANSFER_THRESHOLD * 2, -2)) {
+        const transferTarget = terminals.find((t) => t.store[resourceType] < TRANSFER_THRESHOLD);
         // 足らないターミナルを見つけたとき
         if (transferTarget) {
-          if (terminal.send(resourceType, TRANSFER_THRESHOLD * 2, transferTarget.room.name) === OK) {
-            break;
+          if (
+            terminal.send(
+              resourceType,
+              Math.min(terminal.store[resourceType] - _.floor(TRANSFER_THRESHOLD * 2, -2), TRANSFER_THRESHOLD),
+              transferTarget.room.name,
+            ) === OK
+          ) {
+            return;
           }
         }
       }
     }
 
-    const freeTerminal = _(terminals).find((t) => !t.cooldown && t.id !== terminal.id);
-    // 対象があってエネルギーが十分あるとき
-    if (
-      (terminal.room.storage?.store.energy || 0) > terminal.room.energyCapacityAvailable &&
-      terminal.store.energy >= TERMINAL_THRESHOLD * 2 &&
-      freeTerminal &&
-      freeTerminal.store.energy >= TERMINAL_THRESHOLD * 2
-    ) {
-      const market = Game.market;
-      for (const commodity of ObjectKeys(COMMODITIES)) {
-        const ingredients = COMPRESSING_INGREDIENT[commodity];
-        // 対象外条件
-        if (
-          DECOMPRESSING_COMMODITIES.includes(commodity) || // 逆変換
-          terminal.store[commodity] < TERMINAL_THRESHOLD * 2 || // 少ない
-          !ingredients ||
-          terminal.store[ingredients.type] > TERMINAL_THRESHOLD || // 材料がいっぱいある
-          !ingredients // 変換表がない
-        ) {
-          continue;
-        }
+    // 共有できない or 済んでるとき
 
-        // 一番高く買ってくれる注文
-        const highestBuy = _(market.getAllOrders({ resourceType: commodity, type: ORDER_BUY }))
-          .sortBy((o) => o.price)
-          .last() as Order | undefined;
+    // bucketが500を切ってるときは何もしない
+    if (Game.cpu.bucket < 500) {
+      return OK;
+    }
 
-        if (highestBuy) {
-          const cheapestSell = _(market.getAllOrders({ resourceType: ingredients.type, type: ORDER_SELL }))
-            .filter((o) => {
-              // 原材料の比率とマージンで1.2倍とってもまだ購入注文より安いやつ
-              return o.price * ingredients.rate * 1.2 <= highestBuy.price;
-            })
-            .sortBy((o) => o.price)
-            .first();
+    if (terminal.store.energy < _.floor(TRANSFER_THRESHOLD * 2, -2)) {
+      return ERR_NOT_ENOUGH_ENERGY;
+    }
 
-          if (cheapestSell) {
-            // 実際売れる最大量は持ってる量と買いたい量の少ないほうとエネルギー上限
-            const sellAmountMax = Math.min(terminal.store[commodity], highestBuy.remainingAmount, TERMINAL_THRESHOLD * 2);
-            // 買い戻せる量は売ってる量と最大売った時のお金で買えるだけとエネルギー上限
-            const buyAmountMax = Math.min(cheapestSell.remainingAmount, (sellAmountMax * highestBuy.price) / cheapestSell.price, TERMINAL_THRESHOLD * 2);
+    const product = getProducts(terminal.room);
+    if (!product || terminal.store[product] < _.floor(TRANSFER_THRESHOLD * 2, -2)) {
+      // そもそもないときは何もしないのでOK
+      return OK;
+    }
 
-            // 実際売るべき量 = 買い戻す量 * 買値 / 売値
-            const sellAmountActual = (buyAmountMax * cheapestSell.price) / highestBuy.price;
+    // 不足している基本ミネラル
+    const shortage = BASE_MINERALS.find((m) => terminal.store[m] < _.floor(TRANSFER_THRESHOLD / 2, -2));
 
-            if (market.deal(highestBuy.id, Math.ceil(sellAmountActual), terminal.room.name) === OK) {
-              memory.lastTrade = highestBuy.resourceType;
-              if (market.deal(cheapestSell.id, Math.floor(buyAmountMax), freeTerminal.room.name) == OK) {
-                freeTerminal.memory.lastTrade = cheapestSell.resourceType;
-              }
-              break;
-            }
-          }
-        }
+    if (!shortage) {
+      // 不足していないなら問題ないのでOK
+      return OK;
+    }
+
+    // 自分以外のエネルギーが一番多いターミナル
+    const freeTerminal = _(terminals)
+      .filter((t) => {
+        return t.id !== terminal.id && t.cooldown === 0 && t.store.energy > _.floor(TRANSFER_THRESHOLD * 2, -2);
+      })
+      .sortBy((t) => t.store.energy)
+      .last();
+
+    // 見つからなければエネルギー不足
+    if (!freeTerminal) {
+      return ERR_NOT_ENOUGH_ENERGY;
+    }
+
+    // 手持ち品の買い注文を探す
+    const buyOrder = _(
+      Game.market.getAllOrders({
+        resourceType: product,
+        type: ORDER_BUY,
+      }),
+    )
+      .sortBy((o) => o.price)
+      .last();
+
+    // 不足品の売り注文を探す
+    const sellOrder = _(
+      Game.market.getAllOrders({
+        resourceType: shortage,
+        type: ORDER_SELL,
+      }),
+    )
+      .sortBy((o) => o.price)
+      .first();
+
+    if (buyOrder && sellOrder) {
+      // まず売れるだけ売る
+
+      // 売れる最大量は分配上限か販売量の小さいほう
+      const sellAmountMax = Math.min(TRANSFER_THRESHOLD, buyOrder.remainingAmount);
+      // 買い戻せる最大金額
+      const returnPriceMax = buyOrder.price * sellAmountMax;
+
+      // 実際に買い戻す量は最大買える量と実際に売ってる量の小さいほう
+      const returnAmountActual = Math.min(Math.floor(returnPriceMax / sellOrder.price), sellOrder.remainingAmount);
+
+      // 実際に買い戻すのに必要な金額
+      const returnPriceActual = returnAmountActual * sellOrder.price;
+
+      // 実際に売る必要がある量
+      const sellAmountActual = Math.ceil(returnPriceActual / buyOrder.price);
+
+      // 買い戻す個数
+      if (returnPriceActual <= 0 || sellAmountActual <= 0) {
+        console.log(`購入情報見合わず:${JSON.stringify({ buyOrder, sellOrder })}`);
+        return ERR_INVALID_ARGS;
+      }
+
+      // 自分で売って、空きターミナルに買い戻す
+      const memory = Memory.terminals[terminal.id];
+      memory.lastTrade = buyOrder.resourceType;
+      memory.lastTradeTick = Game.time;
+      memory.paritId = freeTerminal.id;
+      if ((memory.lastTradeResult = Game.market.deal(buyOrder.id, sellAmountActual, terminal.room.name)) === OK) {
+        freeTerminal.memory.lastTrade = sellOrder.resourceType;
+        freeTerminal.memory.lastTradeResult = Game.market.deal(sellOrder.id, returnAmountActual, freeTerminal.room.name);
+        freeTerminal.memory.lastTradeTick = Game.time;
+        freeTerminal.memory.paritId = terminal.id;
       }
     }
   });
@@ -98,20 +145,51 @@ function isTerminal(s: Structure): s is StructureTerminal {
   return s.structureType === STRUCTURE_TERMINAL;
 }
 
-// function getSellOrderWithEffectivity(resourceType: ResourceConstant, terminal: StructureTerminal) {
-//   return _(
-//     Game.market.getAllOrders({ type: ORDER_SELL, resourceType }).map((order) => {
-//       // 今買える量(販売量、保有金額、輸送可能量)
-//       const amount = Math.min(order.remainingAmount, Game.market.credits / order.price, calcMaxTransferAmount(order, terminal));
+const BASE_MINERALS = [RESOURCE_HYDROGEN, RESOURCE_OXYGEN, RESOURCE_UTRIUM, RESOURCE_KEANIUM, RESOURCE_LEMERGIUM, RESOURCE_ZYNTHIUM, RESOURCE_CATALYST];
 
-//       // 実コスト
-//       const cost = order.roomName ? Game.market.calcTransactionCost(amount, order.roomName, terminal.room.name) : amount;
-//       return Object.assign(order, {
-//         amount,
-//         cost,
-//         actual: amount - cost,
-//         rate: amount / cost,
-//       });
-//     }),
-//   );
-// }
+function getProducts(room: Room) {
+  const roomResouces = getRoomResouces(room);
+
+  const all = ObjectEntries(Game.market.orders).reduce((mapping, [, order]) => {
+    mapping[order.resourceType].push(order);
+    return mapping;
+  }, defaultOrderMap);
+
+  const roomMineral = _.first(room.find(FIND_MINERALS));
+  // 売却対象の計算
+  return (
+    _(ObjectEntries(roomResouces))
+      // 部屋のミネラルかcommodityで上限の2倍以上あるやつ
+      .filter(([key]) => (key === roomMineral?.mineralType || isCommodity(key)) && (roomResouces[key] || 0) > _.floor(TRANSFER_THRESHOLD * 2, -2))
+      .map(([key, value]) => {
+        if (key === "timestamp") {
+          return undefined;
+        }
+        return {
+          key,
+          amount: value || 0,
+        };
+      })
+      .compact()
+      // 一番売却効率がよさそうな奴
+      .sortBy((v) => {
+        const h = _(all[v.key])
+          .sortBy((v) => -(v.price * v.remainingAmount))
+          .first();
+        return -((h?.price || 0) * (h?.remainingAmount || 0));
+      })
+      .first()?.key
+  );
+}
+
+const defaultOrderMap = Object.freeze(
+  RESOURCES_ALL.reduce(
+    (d, type) => {
+      return {
+        ...d,
+        [type]: [],
+      };
+    },
+    {} as Record<MarketResourceConstant, Order[]>,
+  ),
+);

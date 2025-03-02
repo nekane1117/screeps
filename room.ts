@@ -88,7 +88,7 @@ export function roomBehavior(room: Room) {
         const spawned = spawn.spawnCreep(bodies, name, {
           memory: {
             role: "harvester",
-            mode: "🌾",
+            mode: "H",
             baseRoom: room.name,
           } as HarvesterMemory,
         });
@@ -142,7 +142,7 @@ export function roomBehavior(room: Room) {
     if (spawn && !spawn.spawning && room.energyAvailable > 200) {
       spawn.spawnCreep(carrierBodies, name, {
         memory: {
-          mode: "🛒",
+          mode: "G",
           baseRoom: spawn.room.name,
           role: "carrier",
         } as CarrierMemory,
@@ -193,7 +193,7 @@ export function roomBehavior(room: Room) {
     if (spawn && spawn.room.energyAvailable === spawn.room.energyCapacityAvailable) {
       spawn.spawnCreep(filterBodiesByCost("builder", spawn.room.energyCapacityAvailable).bodies, `B_${room.name}_${Game.time}`, {
         memory: {
-          mode: "🛒",
+          mode: "G",
           baseRoom: room.name,
           role: "builder",
         } as BuilderMemory,
@@ -207,8 +207,10 @@ export function roomBehavior(room: Room) {
     if (
       gatherer.length === 0 &&
       room.storage &&
+      room.storage.my &&
       room.energyCapacityAvailable >= 300 &&
-      (room.find(FIND_RUINS, { filter: (r) => r.store.getUsedCapacity() - r.store.energy > 0 }).length > 0 ||
+      (room.find(FIND_HOSTILE_STRUCTURES, { filter: (s) => !("store" in s) || s.store.getUsedCapacity() === 0 }).length > 0 ||
+        room.find(FIND_RUINS, { filter: (r) => r.store.getUsedCapacity() - r.store.energy > 0 }).length > 0 ||
         room.find(FIND_TOMBSTONES, { filter: (r) => r.store.getUsedCapacity() - r.store.energy > 0 }).length > 0)
     ) {
       const spawn = getSpawnsInRoom(room).find((s) => !s.spawning);
@@ -217,7 +219,7 @@ export function roomBehavior(room: Room) {
           memory: {
             role: "gatherer",
             baseRoom: room.name,
-            mode: "🛒",
+            mode: "G",
           } as GathererMemory,
         });
       }
@@ -276,7 +278,7 @@ function createStructures(room: Room) {
     }
   });
 
-  for (const structureType of [STRUCTURE_OBSERVER, STRUCTURE_EXTENSION]) {
+  for (const structureType of [STRUCTURE_OBSERVER, STRUCTURE_EXTENSION, STRUCTURE_TOWER]) {
     const structures = _([findMyStructures(room)[structureType]])
       .flatten()
       .value();
@@ -316,6 +318,8 @@ function createStructures(room: Room) {
               })
             );
           },
+          plainCost: 1,
+          swampCost: 1,
         },
       );
       pos?.createConstructionSite(structureType);
@@ -345,10 +349,7 @@ function updateRoadMap(room: Room) {
           .flatten<Structure | ConstructionSite>()
           .compact()
           .find((s) => s.structureType === STRUCTURE_ROAD);
-        if (road && value < 0) {
-          // 道が使われてないとき
-          "remove" in road ? road.remove() : road.destroy();
-        } else if (!road && Math.ceil(value) >= 10 && pos.findInRange([...source, ...roads, ...spawn, ...room.find(FIND_MY_STRUCTURES)], 3).length > 0) {
+        if (!road && Math.ceil(value) >= 10 && pos.findInRange([...source, ...roads, ...spawn, ...room.find(FIND_MY_STRUCTURES)], 3).length > 0) {
           // 通るのに道がなくて、道かspawnにつながってるとき
           pos.createConstructionSite(STRUCTURE_ROAD);
         }
@@ -385,10 +386,10 @@ const STATIC_STRUCTURES = [
   { dy: 1, dx: 4, structureType: STRUCTURE_LAB },
   { dy: 1, dx: 5, structureType: undefined },
   { dy: 2, dx: -2, structureType: STRUCTURE_POWER_SPAWN },
+  { dy: 2, dx: -1, structureType: STRUCTURE_FACTORY },
   { dy: 2, dx: 0, structureType: STRUCTURE_LINK },
   { dy: 2, dx: 2, structureType: undefined },
   { dy: 2, dx: 4, structureType: undefined },
-  { dy: 3, dx: -1, structureType: STRUCTURE_FACTORY },
   { dy: 3, dx: 1, structureType: STRUCTURE_NUKER },
 ];
 
