@@ -273,7 +273,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     creep.memory.storeId = creep.memory.storeId || creep.room.storage?.id;
 
     if (!creep.memory.storeId && container.filter((c) => c.store.energy > 0).length === 0) {
-      const source = creep.pos.findClosestByRange(FIND_SOURCES_ACTIVE);
+      const source = creep.pos.findClosestByRange(FIND_SOURCES_ACTIVE, {
+        filter: (s) => s.room.name === creep.memory.baseRoom,
+      });
       if (source) {
         if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
           moveMeTo(source);

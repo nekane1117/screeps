@@ -50,8 +50,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
       // 運搬モードに切り替えたときの容量を記憶する
       if (newMode === "D") {
+        const alpha = 0.01;
         (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).carrier =
-          ((creep.room.memory.carrySize?.carrier || 100) * 100 + creep.store.energy) / 101;
+          (creep.room.memory.carrySize?.carrier || 100) * (1 - alpha) + creep.store.energy * alpha;
       }
     }
   }
@@ -91,10 +92,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!creep.memory.storeId) {
     creep.memory.storeId = link.find((l) => getCapacityRate(l) > 0.5 && center.pos.inRangeTo(l, 3))?.id;
   }
+  // コントローラー用コンテナ
+  const controllerContaeiner = creep.room.controller?.pos.findClosestByRange(container, {
+    filter: (c: StructureContainer) => creep.room.controller && c.pos.inRangeTo(creep.room.controller, 3),
+  });
 
   if (!creep.memory.storeId) {
     // 連結する
-    const allTargets = _([...container, storage, factory, terminal]).compact();
+    const allTargets = _([...container.filter((c) => c.id !== controllerContaeiner?.id), storage, factory, terminal]).compact();
 
     // 一番あるやつ
     creep.memory.storeId = allTargets
@@ -107,6 +112,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         }
       })
       .last()?.id;
+  }
+
+  if (!creep.memory.storeId) {
+    creep.memory.storeId = controllerContaeiner?.id;
   }
   //#endregion
   // region 取り出し処理###############################################################################################

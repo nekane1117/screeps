@@ -1,6 +1,6 @@
 import { TRANSFER_THRESHOLD } from "./constants";
 import { getTerminals, logUsage } from "./utils";
-import { getRoomResouces, isCommodity, ObjectEntries } from "./utils.common";
+import { getRoomResouces, isCommodity, ObjectEntries, ObjectKeys } from "./utils.common";
 
 export default function behaviors(terminal: Structure) {
   logUsage(`terminal:${terminal.room.name}`, () => {
@@ -48,7 +48,7 @@ export default function behaviors(terminal: Structure) {
     // 共有できない or 済んでるとき
 
     // bucketが500を切ってるときは何もしない
-    if (Game.cpu.bucket < 500) {
+    if (Game.cpu.bucket < 500 || Game.time % 10 === ObjectKeys(Memory.terminals).findIndex((t) => t === terminal.id)) {
       return OK;
     }
 

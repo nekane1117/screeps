@@ -695,7 +695,7 @@ var flags_default = {
 
 // role.carrier.ts
 var behavior4 = (creep) => {
-  var _a, _b, _c, _d, _e;
+  var _a, _b, _c, _d, _e, _f;
   const { room } = creep;
   const moveMeTo = (target, opt) => {
     customMove(creep, target, {
@@ -731,7 +731,8 @@ var behavior4 = (creep) => {
       }
       creep.memory.transferId = void 0;
       if (newMode === "D") {
-        (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).carrier = ((((_a2 = creep.room.memory.carrySize) == null ? void 0 : _a2.carrier) || 100) * 100 + creep.store.energy) / 101;
+        const alpha = 0.01;
+        (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).carrier = (((_a2 = creep.room.memory.carrySize) == null ? void 0 : _a2.carrier) || 100) * (1 - alpha) + creep.store.energy * alpha;
       }
     }
   }
@@ -760,15 +761,21 @@ var behavior4 = (creep) => {
   if (!creep.memory.storeId) {
     creep.memory.storeId = (_c = link.find((l) => getCapacityRate(l) > 0.5 && center.pos.inRangeTo(l, 3))) == null ? void 0 : _c.id;
   }
+  const controllerContaeiner = (_d = creep.room.controller) == null ? void 0 : _d.pos.findClosestByRange(container, {
+    filter: (c) => creep.room.controller && c.pos.inRangeTo(creep.room.controller, 3)
+  });
   if (!creep.memory.storeId) {
-    const allTargets = _([...container, storage, factory, terminal]).compact();
-    creep.memory.storeId = (_d = allTargets.filter((s) => s.store.energy > 0).sortBy((s) => {
+    const allTargets = _([...container.filter((c) => c.id !== (controllerContaeiner == null ? void 0 : controllerContaeiner.id)), storage, factory, terminal]).compact();
+    creep.memory.storeId = (_e = allTargets.filter((s) => s.store.energy > 0).sortBy((s) => {
       if (s.structureType === STRUCTURE_STORAGE || s.structureType === STRUCTURE_FACTORY || s.structureType === STRUCTURE_TERMINAL) {
         return s.store.energy - s.room.energyAvailable;
       } else {
         return s.store.energy;
       }
-    }).last()) == null ? void 0 : _d.id;
+    }).last()) == null ? void 0 : _e.id;
+  }
+  if (!creep.memory.storeId) {
+    creep.memory.storeId = controllerContaeiner == null ? void 0 : controllerContaeiner.id;
   }
   if (creep.memory.storeId && creep.memory.mode === "G") {
     const store = Game.getObjectById(creep.memory.storeId);
@@ -814,7 +821,7 @@ var behavior4 = (creep) => {
       creep.memory.transferId = void 0;
     }
   }
-  creep.memory.transferId = creep.memory.transferId || ((_e = findTransferTarget(creep.room)) == null ? void 0 : _e.id);
+  creep.memory.transferId = creep.memory.transferId || ((_f = findTransferTarget(creep.room)) == null ? void 0 : _f.id);
   if (!creep.memory.transferId) {
     return ERR_NOT_FOUND;
   }
@@ -1091,7 +1098,9 @@ var behavior5 = (creep) => {
     }
     creep.memory.storeId = creep.memory.storeId || ((_d = creep.room.storage) == null ? void 0 : _d.id);
     if (!creep.memory.storeId && container.filter((c) => c.store.energy > 0).length === 0) {
-      const source = creep.pos.findClosestByRange(FIND_SOURCES_ACTIVE);
+      const source = creep.pos.findClosestByRange(FIND_SOURCES_ACTIVE, {
+        filter: (s) => s.room.name === creep.memory.baseRoom
+      });
       if (source) {
         if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
           moveMeTo(source);
@@ -2694,7 +2703,7 @@ function updateRoadMap(room) {
     if (Game.time % 600 === 0) {
       const pos = room.getPositionAt(x, y);
       if (pos) {
-        const road = _([pos == null ? void 0 : pos.lookFor(LOOK_STRUCTURES), pos == null ? void 0 : pos.lookFor(LOOK_CONSTRUCTION_SITES)]).flatten().compact().find((s) => s.structureType === STRUCTURE_ROAD);
+        const road = _([...(pos == null ? void 0 : pos.lookFor(LOOK_STRUCTURES)) || [], ...(pos == null ? void 0 : pos.lookFor(LOOK_CONSTRUCTION_SITES)) || []]).compact().find((s) => s.structureType === STRUCTURE_ROAD);
         if (!road && Math.ceil(value) >= 10 && pos.findInRange([...source, ...roads, ...spawn, ...room.find(FIND_MY_STRUCTURES)], 3).length > 0) {
           pos.createConstructionSite(STRUCTURE_ROAD);
         }
@@ -2958,7 +2967,7 @@ function behaviors3(terminal) {
         }
       }
     }
-    if (Game.cpu.bucket < 500) {
+    if (Game.cpu.bucket < 500 || Game.time % 10 === ObjectKeys(Memory.terminals).findIndex((t) => t === terminal.id)) {
       return OK;
     }
     if (terminal.store.energy < _.floor(TRANSFER_THRESHOLD * 2, -2)) {

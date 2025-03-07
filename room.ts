@@ -345,8 +345,7 @@ function updateRoadMap(room: Room) {
     if (Game.time % 600 === 0) {
       const pos = room.getPositionAt(x, y);
       if (pos) {
-        const road = _([pos?.lookFor(LOOK_STRUCTURES), pos?.lookFor(LOOK_CONSTRUCTION_SITES)])
-          .flatten<Structure | ConstructionSite>()
+        const road = _([...(pos?.lookFor(LOOK_STRUCTURES) || []), ...(pos?.lookFor(LOOK_CONSTRUCTION_SITES) || [])])
           .compact()
           .find((s) => s.structureType === STRUCTURE_ROAD);
         if (!road && Math.ceil(value) >= 10 && pos.findInRange([...source, ...roads, ...spawn, ...room.find(FIND_MY_STRUCTURES)], 3).length > 0) {
