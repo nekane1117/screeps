@@ -12,8 +12,9 @@ export default function behaviors(terminal: Structure) {
       return OK;
     }
     const memory = ((Memory.terminals = Memory.terminals || {})[terminal.id] = Memory.terminals[terminal.id] || {});
-
-    memory.lastTrade && terminal.room.visual.text(memory.lastTrade, terminal.pos.x, terminal.pos.y, { font: 0.25, color: "#ffff00" });
+    if (memory.lastTrade) {
+      terminal.room.visual.text(memory.lastTrade, terminal.pos.x, terminal.pos.y, { font: 0.25, color: "#ffff00" });
+    }
     if (Game.cpu.bucket > 600 && terminal.cooldown > 0) {
       return;
     }

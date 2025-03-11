@@ -75,12 +75,13 @@ export default function behavior(labs: StructureLab[], mineral: Mineral) {
 
   // labの長さの分だけ処理する
   labWithMemory.map((lab) => {
-    lab.memory.expectedType &&
+    if (lab.memory.expectedType) {
       lab.room.visual.text(lab.memory.expectedType, lab.pos.x, lab.pos.y, {
         color: "#ffff00",
         font: 0.75,
         strokeWidth: 2,
       });
+    }
 
     const ingredients = lab.memory.expectedType && REVERSE_REACTIONS[lab.memory.expectedType];
     // 要求通りのタイプを持っていて素材リストを持っている

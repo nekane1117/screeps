@@ -57,7 +57,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       if (target) {
         creep.rangedAttack(target);
         if (creep.pos.isNearTo(target)) {
-          "structureType" in target && creep.dismantle(target);
+          if ("structureType" in target) {
+            creep.dismantle(target);
+          }
           creep.attack(target);
         }
       }

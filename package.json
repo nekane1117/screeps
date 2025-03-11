@@ -8,26 +8,26 @@
     "es": "yarn format && rm -rf dist/* && node build.js",
     "sync": "rsync -rv --delete dist/ /mnt/c/Users/takeshikoino/AppData/Local/Screeps/scripts/screeps.com/dist",
     "prepare": "husky",
-    "format": "npx prettier --cache --write .",
+    "format": "npx prettier --cache --write . && yarn lint --fix",
     "lint": "eslint --cache",
     "deps": "depcruise -T dot . > main.dot"
   },
   "author": "nekane1117",
   "license": "MIT",
   "devDependencies": {
-    "@eslint/js": "^9.0.0",
-    "@types/eslint__js": "^8.42.3",
+    "@eslint/js": "^9.22.0",
+    "@types/eslint__js": "^9.14.0",
     "@types/lodash": "3.10.1",
     "@types/node": "^20.12.7",
     "@types/screeps": "^3.3.8",
     "dependency-cruiser": "^16.10.0",
-    "esbuild": "^0.24.2",
-    "eslint": "^9.0.0",
-    "globals": "^15.0.0",
+    "esbuild": "^0.25.1",
+    "eslint": "^9.22.0",
+    "globals": "^16.0.0",
     "husky": ">=7",
     "lint-staged": ">=10",
-    "typescript": "^5.4.5",
-    "typescript-eslint": "^7.7.0"
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.1"
   },
   "lint-staged": {
     "*.{js,ts,mjs}": [

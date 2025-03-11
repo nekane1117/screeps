@@ -63,14 +63,19 @@ module.exports.loop = function () {
                   });
                   behaviors[c.memory.role]?.(c);
                   // 通った場所はみんなで直す
-                  c.getActiveBodyparts(WORK) &&
+                  if (c.getActiveBodyparts(WORK)) {
                     c.pos
                       .lookFor(LOOK_STRUCTURES)
                       .filter((s) => ([STRUCTURE_CONTAINER, STRUCTURE_ROAD] as StructureConstant[]).includes(s.structureType) && s.hits < s.hitsMax)
                       .forEach((s) => c.repair(s));
+                  }
                   // 現在地の履歴を更新する
-                  c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
-                  c.memory.moved === OK && (c.memory.__avoidCreep = false);
+                  if (c.memory.moved === OK) {
+                    if (c.room.memory.roadMap) {
+                      c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
+                    }
+                    c.memory.__avoidCreep = false;
+                  }
                 },
                 0.5,
               );

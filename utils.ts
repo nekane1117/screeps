@@ -177,7 +177,9 @@ export function logUsage<T = unknown>(title: string, func: () => T, threthold = 
   const value = func();
 
   const used = _.floor(Game.cpu.getUsed() - start, 2);
-  used >= threthold && console.log(`${" ".repeat(indent * 2)}${used} ${title}`);
+  if (used >= threthold) {
+    console.log(`${" ".repeat(indent * 2)}${used} ${title}`);
+  }
   indent = Math.max(indent - 1, 0);
   return value;
 }

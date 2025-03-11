@@ -131,7 +131,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         case ERR_NOT_OWNER:
         case ERR_INVALID_ARGS:
           console.log(`${creep.name} build returns ${creep.memory.worked && RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
-          creep.memory.worked && creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
+          if (creep.memory.worked) {
+            creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
+          }
           break;
         // 問題ない系
         case OK:

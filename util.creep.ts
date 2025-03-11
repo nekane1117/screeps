@@ -220,8 +220,9 @@ export const customMove: CustomMove = (creep, target, opt) => {
         creep.memory._move = undefined;
         blocker.memory._move = undefined;
         blocker.memory.__avoidCreep = true;
-        (pull || move) &&
+        if (pull || move) {
           console.log(JSON.stringify({ name: creep.name, pull: RETURN_CODE_DECODER[pull.toString()], move: RETURN_CODE_DECODER[move.toString()] }));
+        }
       }
     }
   }

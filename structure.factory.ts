@@ -10,11 +10,12 @@ export default function behaviors(factory: Structure) {
     }
 
     const memory: FactoryMemory = ((Memory.factories = Memory.factories || {})[factory.id] = Memory.factories[factory.id] || {});
-    memory.lastProduced &&
+    if (memory.lastProduced) {
       factory.room.visual.text(memory.lastProduced, factory.pos.x, factory.pos.y, {
         color: "white",
         font: 0.25,
       });
+    }
 
     if (factory.cooldown) {
       return;

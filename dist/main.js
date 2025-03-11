@@ -245,7 +245,9 @@ function logUsage(title, func, threthold = 0) {
   const start = Game.cpu.getUsed();
   const value = func();
   const used = _.floor(Game.cpu.getUsed() - start, 2);
-  used >= threthold && console.log(`${" ".repeat(indent * 2)}${used} ${title}`);
+  if (used >= threthold) {
+    console.log(`${" ".repeat(indent * 2)}${used} ${title}`);
+  }
   indent = Math.max(indent - 1, 0);
   return value;
 }
@@ -464,7 +466,9 @@ var customMove = (creep, target, opt) => {
         creep.memory._move = void 0;
         blocker.memory._move = void 0;
         blocker.memory.__avoidCreep = true;
-        (pull || move) && console.log(JSON.stringify({ name: creep.name, pull: RETURN_CODE_DECODER[pull.toString()], move: RETURN_CODE_DECODER[move.toString()] }));
+        if (pull || move) {
+          console.log(JSON.stringify({ name: creep.name, pull: RETURN_CODE_DECODER[pull.toString()], move: RETURN_CODE_DECODER[move.toString()] }));
+        }
       }
     }
   }
@@ -1323,7 +1327,9 @@ var behavior7 = (creep) => {
       if (target) {
         creep.rangedAttack(target);
         if (creep.pos.isNearTo(target)) {
-          "structureType" in target && creep.dismantle(target);
+          if ("structureType" in target) {
+            creep.dismantle(target);
+          }
           creep.attack(target);
         }
       }
@@ -2269,7 +2275,9 @@ var behavior12 = (creep) => {
         case ERR_NOT_OWNER:
         case ERR_INVALID_ARGS:
           console.log(`${creep.name} build returns ${creep.memory.worked && RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
-          creep.memory.worked && creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
+          if (creep.memory.worked) {
+            creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
+          }
           break;
         // 問題ない系
         case OK:
@@ -2381,11 +2389,13 @@ function behavior13(labs, mineral) {
     });
   }
   labWithMemory.map((lab) => {
-    lab.memory.expectedType && lab.room.visual.text(lab.memory.expectedType, lab.pos.x, lab.pos.y, {
-      color: "#ffff00",
-      font: 0.75,
-      strokeWidth: 2
-    });
+    if (lab.memory.expectedType) {
+      lab.room.visual.text(lab.memory.expectedType, lab.pos.x, lab.pos.y, {
+        color: "#ffff00",
+        font: 0.75,
+        strokeWidth: 2
+      });
+    }
     const ingredients = lab.memory.expectedType && REVERSE_REACTIONS[lab.memory.expectedType];
     if ((!lab.mineralType || lab.mineralType === lab.memory.expectedType) && ingredients) {
       const [l1, l2] = ingredients.map((type) => {
@@ -2903,10 +2913,12 @@ function behaviors2(factory) {
       return console.log(`${factory.id} is not factory`);
     }
     const memory = (Memory.factories = Memory.factories || {})[factory.id] = Memory.factories[factory.id] || {};
-    memory.lastProduced && factory.room.visual.text(memory.lastProduced, factory.pos.x, factory.pos.y, {
-      color: "white",
-      font: 0.25
-    });
+    if (memory.lastProduced) {
+      factory.room.visual.text(memory.lastProduced, factory.pos.x, factory.pos.y, {
+        color: "white",
+        font: 0.25
+      });
+    }
     if (factory.cooldown) {
       return;
     }
@@ -2952,7 +2964,9 @@ function behaviors3(terminal) {
       return OK;
     }
     const memory = (Memory.terminals = Memory.terminals || {})[terminal.id] = Memory.terminals[terminal.id] || {};
-    memory.lastTrade && terminal.room.visual.text(memory.lastTrade, terminal.pos.x, terminal.pos.y, { font: 0.25, color: "#ffff00" });
+    if (memory.lastTrade) {
+      terminal.room.visual.text(memory.lastTrade, terminal.pos.x, terminal.pos.y, { font: 0.25, color: "#ffff00" });
+    }
     if (Game.cpu.bucket > 600 && terminal.cooldown > 0) {
       return;
     }
@@ -3191,9 +3205,15 @@ module.exports.loop = function() {
                   color: toColor(c)
                 });
                 (_b = (_a3 = behaviors)[c.memory.role]) == null ? void 0 : _b.call(_a3, c);
-                c.getActiveBodyparts(WORK) && c.pos.lookFor(LOOK_STRUCTURES).filter((s) => [STRUCTURE_CONTAINER, STRUCTURE_ROAD].includes(s.structureType) && s.hits < s.hitsMax).forEach((s) => c.repair(s));
-                c.memory.moved === OK && c.room.memory.roadMap && c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
-                c.memory.moved === OK && (c.memory.__avoidCreep = false);
+                if (c.getActiveBodyparts(WORK)) {
+                  c.pos.lookFor(LOOK_STRUCTURES).filter((s) => [STRUCTURE_CONTAINER, STRUCTURE_ROAD].includes(s.structureType) && s.hits < s.hitsMax).forEach((s) => c.repair(s));
+                }
+                if (c.memory.moved === OK) {
+                  if (c.room.memory.roadMap) {
+                    c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
+                  }
+                  c.memory.__avoidCreep = false;
+                }
               },
               0.5
             );

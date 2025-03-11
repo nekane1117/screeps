@@ -1,4 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 require("esbuild").buildSync({
   entryPoints: ["main.ts"], // エントリーファイル
   bundle: true, // バンドル（単一ファイル化）
