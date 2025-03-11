@@ -47,13 +47,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         creep.memory.storeId = undefined;
       }
       creep.memory.transferId = undefined;
-
-      // 運搬モードに切り替えたときの容量を記憶する
-      if (newMode === "D") {
-        const alpha = 0.01;
-        (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).carrier =
-          (creep.room.memory.carrySize?.carrier || 100) * (1 - alpha) + creep.store.energy * alpha;
-      }
     }
   }
   checkMode();
@@ -155,6 +148,15 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
           // 問題ない系
           case OK:
+            // ストレージ以外から取り出したときの容量を記憶する
+            if (!("structureType" in store && store.structureType === STRUCTURE_STORAGE)) {
+              const alpha = 0.01;
+              (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).carrier =
+                (creep.room.memory.carrySize?.carrier || 100) * (1 - alpha) + creep.store.energy * alpha;
+            }
+            creep.memory.storeId = undefined;
+            checkMode();
+            break;
           case ERR_BUSY:
           default:
             creep.memory.storeId = undefined;
