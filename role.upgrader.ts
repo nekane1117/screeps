@@ -20,7 +20,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     return;
   }
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-    changeMode(creep, "💪");
+    changeMode(creep, "W");
   } else if (creep.store.energy === 0) {
     changeMode(creep, "G");
   }
@@ -64,8 +64,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
         changeMode(creep, "G");
         break;
       case ERR_NOT_IN_RANGE:
-        if (creep.memory.mode === "💪") {
-          moveMeTo(controller);
+        if (creep.memory.mode === "W") {
+          moveMeTo(controller, { range: 3 });
         }
         break;
       // 有りえない系
@@ -116,7 +116,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
         // 満タンまで取った
         case ERR_FULL:
-          changeMode(creep, "💪");
+          changeMode(creep, "W");
           break;
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "G") {

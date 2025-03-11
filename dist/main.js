@@ -695,12 +695,12 @@ var flags_default = {
 
 // role.carrier.ts
 var behavior4 = (creep) => {
-  var _a, _b, _c, _d, _e, _f;
+  var _a, _b, _c, _d, _e, _f, _g;
   const { room } = creep;
   const moveMeTo = (target, opt) => {
     customMove(creep, target, {
       plainCost: 2,
-      swampCost: 5,
+      swampCost: 2,
       ignoreCreeps: true,
       ...opt
     });
@@ -757,22 +757,27 @@ var behavior4 = (creep) => {
       filter: (d) => d.store.energy > 0
     })) == null ? void 0 : _b.id;
   }
+  if (!creep.memory.storeId) {
+    creep.memory.storeId = (_c = creep.pos.findClosestByPath(FIND_RUINS, {
+      filter: (d) => d.store.energy > 0
+    })) == null ? void 0 : _c.id;
+  }
   const { link, container, storage, terminal, factory } = findMyStructures(room);
   if (!creep.memory.storeId) {
-    creep.memory.storeId = (_c = link.find((l) => getCapacityRate(l) > 0.5 && center.pos.inRangeTo(l, 3))) == null ? void 0 : _c.id;
+    creep.memory.storeId = (_d = link.find((l) => getCapacityRate(l) > 0.5 && center.pos.inRangeTo(l, 3))) == null ? void 0 : _d.id;
   }
-  const controllerContaeiner = (_d = creep.room.controller) == null ? void 0 : _d.pos.findClosestByRange(container, {
+  const controllerContaeiner = (_e = creep.room.controller) == null ? void 0 : _e.pos.findClosestByRange(container, {
     filter: (c) => creep.room.controller && c.pos.inRangeTo(creep.room.controller, 3)
   });
   if (!creep.memory.storeId) {
     const allTargets = _([...container.filter((c) => c.id !== (controllerContaeiner == null ? void 0 : controllerContaeiner.id)), storage, factory, terminal]).compact();
-    creep.memory.storeId = (_e = allTargets.filter((s) => s.store.energy > 0).sortBy((s) => {
+    creep.memory.storeId = (_f = allTargets.filter((s) => s.store.energy > 0).sortBy((s) => {
       if (s.structureType === STRUCTURE_STORAGE || s.structureType === STRUCTURE_FACTORY || s.structureType === STRUCTURE_TERMINAL) {
         return s.store.energy - s.room.energyAvailable;
       } else {
         return s.store.energy;
       }
-    }).last()) == null ? void 0 : _e.id;
+    }).last()) == null ? void 0 : _f.id;
   }
   if (!creep.memory.storeId) {
     creep.memory.storeId = controllerContaeiner == null ? void 0 : controllerContaeiner.id;
@@ -821,7 +826,7 @@ var behavior4 = (creep) => {
       creep.memory.transferId = void 0;
     }
   }
-  creep.memory.transferId = creep.memory.transferId || ((_f = findTransferTarget(creep.room)) == null ? void 0 : _f.id);
+  creep.memory.transferId = creep.memory.transferId || ((_g = findTransferTarget(creep.room)) == null ? void 0 : _g.id);
   if (!creep.memory.transferId) {
     return ERR_NOT_FOUND;
   }
@@ -1222,14 +1227,11 @@ function findBuildTarget(creep) {
 function findRepairTarget(creep) {
   var _a;
   return (_a = _(
-    creep.room.find(FIND_STRUCTURES, {
-      // ダメージのある建物
-      filter: (s) => {
-        if (s.structureType === STRUCTURE_ROAD && s.room.memory.roadMap[s.pos.y * 50 + s.pos.x] < 0) {
-          return false;
-        }
-        return s.hits < s.hitsMax - getRepairPower(creep);
+    findMyStructures(creep.room).all.filter((s) => {
+      if (s.structureType === STRUCTURE_ROAD && s.room.memory.roadMap[s.pos.y * 50 + s.pos.x] < 0) {
+        return false;
       }
+      return s.hits < s.hitsMax - getRepairPower(creep);
     })
   ).sortBy((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME)).first()) == null ? void 0 : _a.id;
 }
@@ -1675,7 +1677,11 @@ var behavior9 = (creep) => {
       )
     ).sortBy((s) => s.progress - s.progressTotal).map((site) => creep.build(site)).run();
   }
-  const repaired = _(creep.pos.findInRange(FIND_STRUCTURES, 3, { filter: (s) => "ticksToDecay" in s && s.hits < Math.min(s.hitsMax, 3e3) })).map((damaged) => {
+  const repaired = _(
+    creep.pos.findInRange(FIND_STRUCTURES, 3, {
+      filter: (s) => s.structureType !== STRUCTURE_ROAD && "ticksToDecay" in s && s.hits < Math.min(s.hitsMax, 3e3)
+    })
+  ).map((damaged) => {
     return creep.repair(damaged);
   }).run();
   if (built.length === 0 && creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * BUILD_POWER && repaired.length === 0) {
@@ -2177,7 +2183,7 @@ var behavior12 = (creep) => {
     return;
   }
   if (creep.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
-    changeMode(creep, "\u{1F4AA}");
+    changeMode(creep, "W");
   } else if (creep.store.energy === 0) {
     changeMode(creep, "G");
   }
@@ -2207,8 +2213,8 @@ var behavior12 = (creep) => {
         changeMode(creep, "G");
         break;
       case ERR_NOT_IN_RANGE:
-        if (creep.memory.mode === "\u{1F4AA}") {
-          moveMeTo(controller);
+        if (creep.memory.mode === "W") {
+          moveMeTo(controller, { range: 3 });
         }
         break;
       // 有りえない系
@@ -2248,7 +2254,7 @@ var behavior12 = (creep) => {
           break;
         // 満タンまで取った
         case ERR_FULL:
-          changeMode(creep, "\u{1F4AA}");
+          changeMode(creep, "W");
           break;
         case ERR_NOT_IN_RANGE:
           if (creep.memory.mode === "G") {
@@ -2663,6 +2669,7 @@ function createStructures(room) {
     const sites = getSitesInRoom(room).filter((s) => s.structureType === structureType);
     if (structures2.length + sites.length < CONTROLLER_STRUCTURES[structureType][room.controller.level]) {
       const isOdd = !!((mainSpawn.pos.x + mainSpawn.pos.y) % 2);
+      PathFinder.use(true);
       const pos = (room.storage || mainSpawn).pos.findClosestByPath(
         // 全部の場所
         _(2500).range().filter((i) => {
@@ -2672,17 +2679,17 @@ function createStructures(room) {
           });
         }).map((i) => {
           return room.getPositionAt(i % 50, Math.floor(i / 50));
-        }).compact().value(),
+        }).compact().filter((p) => {
+          return _(p.lookFor(LOOK_TERRAIN)).first() !== "wall" && ![...p.lookFor(LOOK_STRUCTURES), ...p.lookFor(LOOK_CONSTRUCTION_SITES)].find((s) => {
+            return s.structureType !== STRUCTURE_ROAD;
+          });
+        }).value(),
         {
-          filter: (p) => {
-            return _(p.lookFor(LOOK_TERRAIN)).first() !== "wall" && ![...p.lookFor(LOOK_STRUCTURES), ...p.lookFor(LOOK_CONSTRUCTION_SITES)].find((s) => {
-              return s.structureType !== STRUCTURE_ROAD;
-            });
-          },
           plainCost: 1,
           swampCost: 1
         }
       );
+      PathFinder.use(false);
       pos == null ? void 0 : pos.createConstructionSite(structureType);
     }
   }
@@ -2992,15 +2999,15 @@ function behaviors3(terminal) {
         resourceType: product,
         type: ORDER_BUY
       })
-    ).sortBy((o) => o.price).last();
+    ).filter((o) => o.remainingAmount).sortBy((o) => o.price).last();
     const sellOrder = _(
       Game.market.getAllOrders({
         resourceType: shortage,
         type: ORDER_SELL
       })
-    ).sortBy((o) => o.price).first();
+    ).filter((o) => o.remainingAmount).sortBy((o) => o.price).first();
     if (buyOrder && sellOrder) {
-      const sellAmountMax = Math.min(TRANSFER_THRESHOLD, buyOrder.remainingAmount);
+      const sellAmountMax = Math.min(TRANSFER_THRESHOLD / 2, buyOrder.remainingAmount);
       const returnPriceMax = buyOrder.price * sellAmountMax;
       const returnAmountActual = Math.min(Math.floor(returnPriceMax / sellOrder.price), sellOrder.remainingAmount);
       const returnPriceActual = returnAmountActual * sellOrder.price;

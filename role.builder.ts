@@ -428,16 +428,13 @@ function findBuildTarget(creep: Builder) {
 
 function findRepairTarget(creep: Builder) {
   return _(
-    creep.room.find(FIND_STRUCTURES, {
-      // ダメージのある建物
-      filter: (s) => {
-        // 閾値
-        if (s.structureType === STRUCTURE_ROAD && s.room.memory.roadMap[s.pos.y * 50 + s.pos.x] < 0) {
-          return false;
-        }
+    findMyStructures(creep.room).all.filter((s) => {
+      // 閾値
+      if (s.structureType === STRUCTURE_ROAD && s.room.memory.roadMap[s.pos.y * 50 + s.pos.x] < 0) {
+        return false;
+      }
 
-        return s.hits < s.hitsMax - getRepairPower(creep);
-      },
+      return s.hits < s.hitsMax - getRepairPower(creep);
     }),
   )
     .sortBy((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME))

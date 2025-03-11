@@ -8,7 +8,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
     customMove(creep, target, {
       plainCost: 2,
-      swampCost: 5,
+      swampCost: 2,
       ignoreCreeps: true,
       ...opt,
     });
@@ -81,6 +81,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   if (!creep.memory.storeId) {
     creep.memory.storeId = creep.pos.findClosestByPath(FIND_TOMBSTONES, {
+      filter: (d) => d.store.energy > 0,
+    })?.id;
+  }
+
+  if (!creep.memory.storeId) {
+    creep.memory.storeId = creep.pos.findClosestByPath(FIND_RUINS, {
       filter: (d) => d.store.energy > 0,
     })?.id;
   }

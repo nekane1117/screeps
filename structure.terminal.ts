@@ -90,6 +90,7 @@ export default function behaviors(terminal: Structure) {
         type: ORDER_BUY,
       }),
     )
+      .filter((o) => o.remainingAmount)
       .sortBy((o) => o.price)
       .last();
 
@@ -100,6 +101,7 @@ export default function behaviors(terminal: Structure) {
         type: ORDER_SELL,
       }),
     )
+      .filter((o) => o.remainingAmount)
       .sortBy((o) => o.price)
       .first();
 
@@ -107,7 +109,7 @@ export default function behaviors(terminal: Structure) {
       // まず売れるだけ売る
 
       // 売れる最大量は分配上限か販売量の小さいほう
-      const sellAmountMax = Math.min(TRANSFER_THRESHOLD, buyOrder.remainingAmount);
+      const sellAmountMax = Math.min(TRANSFER_THRESHOLD / 2, buyOrder.remainingAmount);
       // 買い戻せる最大金額
       const returnPriceMax = buyOrder.price * sellAmountMax;
 

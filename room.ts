@@ -286,7 +286,7 @@ function createStructures(room: Room) {
     if (structures.length + sites.length < CONTROLLER_STRUCTURES[structureType][room.controller.level]) {
       // main spawnの位置が奇数か偶数か
       const isOdd = !!((mainSpawn.pos.x + mainSpawn.pos.y) % 2);
-
+      PathFinder.use(true);
       const pos = (room.storage || mainSpawn).pos.findClosestByPath(
         // 全部の場所
         _(2500)
@@ -307,21 +307,23 @@ function createStructures(room: Room) {
             return room.getPositionAt(i % 50, Math.floor(i / 50));
           })
           .compact()
-          .value(),
-        {
-          filter: (p) => {
+          .filter((p) => {
             // 建設可能な場所
+            // 壁以外、建物は道だけ許可
             return (
               _(p.lookFor(LOOK_TERRAIN)).first() !== "wall" &&
               ![...p.lookFor(LOOK_STRUCTURES), ...p.lookFor(LOOK_CONSTRUCTION_SITES)].find((s) => {
                 return s.structureType !== STRUCTURE_ROAD;
               })
             );
-          },
+          })
+          .value(),
+        {
           plainCost: 1,
           swampCost: 1,
         },
       );
+      PathFinder.use(false);
       pos?.createConstructionSite(structureType);
     }
   }

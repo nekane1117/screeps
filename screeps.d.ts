@@ -191,7 +191,7 @@ declare interface CarrierMemory extends CreepMemory {
    */
   mode: "D" | "G";
   /** 担当倉庫 */
-  storeId?: Id<StructureLink | StructureContainer | StructureStorage | StructureTerminal | StructureFactory | Resource | Tombstone>;
+  storeId?: Id<StructureLink | StructureContainer | StructureStorage | StructureTerminal | StructureFactory | Resource | Tombstone | Ruin>;
   /** 配送先 */
   transferId?: Id<Parameters<Creep["transfer"]>[0]>;
 }
