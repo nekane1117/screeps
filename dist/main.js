@@ -699,7 +699,7 @@ var flags_default = {
 
 // role.carrier.ts
 var behavior4 = (creep) => {
-  var _a, _b, _c, _d, _e, _f, _g;
+  var _a, _b, _c, _d, _e, _f, _g, _h;
   const { room } = creep;
   const moveMeTo = (target, opt) => {
     customMove(creep, target, {
@@ -713,16 +713,15 @@ var behavior4 = (creep) => {
     return console.log(`${creep.name} is not Carrier`);
   }
   function checkMode2() {
-    var _a2;
     if (!isCarrier(creep)) {
       return console.log(`${creep.name} is not Carrier`);
     }
     const newMode = ((c) => {
-      var _a3;
+      var _a2;
       if (c.memory.mode === "D" && creep.store.energy === 0) {
         return "G";
       }
-      if (c.memory.mode === "G" && creep.store.energy >= Math.max(creep.store.getCapacity(RESOURCE_ENERGY) / 2, EXTENSION_ENERGY_CAPACITY[((_a3 = creep.room.controller) == null ? void 0 : _a3.level) || 0])) {
+      if (c.memory.mode === "G" && creep.store.energy >= Math.max(creep.store.getCapacity(RESOURCE_ENERGY) / 2, EXTENSION_ENERGY_CAPACITY[((_a2 = creep.room.controller) == null ? void 0 : _a2.level) || 0])) {
         return "D";
       }
       return c.memory.mode;
@@ -734,10 +733,6 @@ var behavior4 = (creep) => {
         creep.memory.storeId = void 0;
       }
       creep.memory.transferId = void 0;
-      if (newMode === "D") {
-        const alpha = 0.01;
-        (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).carrier = (((_a2 = creep.room.memory.carrySize) == null ? void 0 : _a2.carrier) || 100) * (1 - alpha) + creep.store.energy * alpha;
-      }
     }
   }
   checkMode2();
@@ -815,6 +810,13 @@ var behavior4 = (creep) => {
             break;
           // 問題ない系
           case OK:
+            if (!("structureType" in store && store.structureType === STRUCTURE_STORAGE)) {
+              const alpha = 0.01;
+              (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).carrier = (((_g = creep.room.memory.carrySize) == null ? void 0 : _g.carrier) || 100) * (1 - alpha) + creep.store.energy * alpha;
+            }
+            creep.memory.storeId = void 0;
+            checkMode2();
+            break;
           case ERR_BUSY:
           default:
             creep.memory.storeId = void 0;
@@ -830,7 +832,7 @@ var behavior4 = (creep) => {
       creep.memory.transferId = void 0;
     }
   }
-  creep.memory.transferId = creep.memory.transferId || ((_g = findTransferTarget(creep.room)) == null ? void 0 : _g.id);
+  creep.memory.transferId = creep.memory.transferId || ((_h = findTransferTarget(creep.room)) == null ? void 0 : _h.id);
   if (!creep.memory.transferId) {
     return ERR_NOT_FOUND;
   }
@@ -2198,7 +2200,7 @@ var behavior12 = (creep) => {
     const s = getMainSpawn(creep.room);
     return !(s && l.pos.inRangeTo(s, 1));
   });
-  if (((_b = controller.sign) == null ? void 0 : _b.username) !== "Nekane" && ((_c = controller.sign) == null ? void 0 : _c.text) !== SIGN) {
+  if (((_b = controller.sign) == null ? void 0 : _b.username) !== "Nekane" || ((_c = controller.sign) == null ? void 0 : _c.text) !== SIGN) {
     const signed = creep.signController(controller, SIGN);
     if (signed === ERR_NOT_IN_RANGE) {
       moveMeTo(controller);
