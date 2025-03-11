@@ -34,8 +34,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // https://docs.screeps.com/simultaneous-actions.html
 
   // signController
-  if (controller.sign?.username !== "Nekane") {
-    const signed = creep.signController(controller, "Please teach me screeps");
+  if (controller.sign?.username !== "Nekane" && controller.sign?.text !== SIGN) {
+    const signed = creep.signController(controller, SIGN);
     if (signed === ERR_NOT_IN_RANGE) {
       moveMeTo(controller);
     } else {
@@ -202,3 +202,5 @@ function boost(creep: Upgrader) {
   }
   return result;
 }
+
+const SIGN = "Please see github nekane1117/screeps";

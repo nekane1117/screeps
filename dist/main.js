@@ -2174,7 +2174,7 @@ function boost2(creep) {
 
 // role.upgrader.ts
 var behavior12 = (creep) => {
-  var _a, _b, _c, _d;
+  var _a, _b, _c, _d, _e;
   const moveMeTo = (target, opt) => customMove(creep, target, {
     ...opt
   });
@@ -2198,8 +2198,8 @@ var behavior12 = (creep) => {
     const s = getMainSpawn(creep.room);
     return !(s && l.pos.inRangeTo(s, 1));
   });
-  if (((_b = controller.sign) == null ? void 0 : _b.username) !== "Nekane") {
-    const signed = creep.signController(controller, "Please teach me screeps");
+  if (((_b = controller.sign) == null ? void 0 : _b.username) !== "Nekane" && ((_c = controller.sign) == null ? void 0 : _c.text) !== SIGN) {
+    const signed = creep.signController(controller, SIGN);
     if (signed === ERR_NOT_IN_RANGE) {
       moveMeTo(controller);
     } else {
@@ -2237,10 +2237,10 @@ var behavior12 = (creep) => {
         break;
     }
   }
-  if (creep.memory.storeId && (((_c = Game.getObjectById(creep.memory.storeId)) == null ? void 0 : _c.store.energy) || 0) <= 0) {
+  if (creep.memory.storeId && (((_d = Game.getObjectById(creep.memory.storeId)) == null ? void 0 : _d.store.energy) || 0) <= 0) {
     creep.memory.storeId = void 0;
   }
-  if (creep.memory.storeId || (creep.memory.storeId = (_d = _([...links, ...container]).compact().filter((c) => {
+  if (creep.memory.storeId || (creep.memory.storeId = (_e = _([...links, ...container]).compact().filter((c) => {
     var _a2;
     return c.store.energy > 0 && ((_a2 = c.room.controller) == null ? void 0 : _a2.pos.inRangeTo(c, 3));
   }).sort((c) => {
@@ -2250,7 +2250,7 @@ var behavior12 = (creep) => {
       default:
         return 1;
     }
-  }).first()) == null ? void 0 : _d.id)) {
+  }).first()) == null ? void 0 : _e.id)) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
       creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);
@@ -2329,6 +2329,7 @@ function boost3(creep) {
   }
   return result;
 }
+var SIGN = "Please see github nekane1117/screeps";
 
 // roles.ts
 var behaviors = {
