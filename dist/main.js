@@ -2994,94 +2994,11 @@ function behaviors3(terminal) {
     if (Game.cpu.bucket < 500 || Game.time % 10 === ObjectKeys(Memory.terminals).findIndex((t) => t === terminal.id)) {
       return OK;
     }
-    if (terminal.store.energy < _.floor(TRANSFER_THRESHOLD * 2, -2)) {
-      return ERR_NOT_ENOUGH_ENERGY;
-    }
-    const product = getProducts(terminal.room);
-    if (!product || terminal.store[product] < _.floor(TRANSFER_THRESHOLD * 2, -2)) {
-      return OK;
-    }
-    const shortage = BASE_MINERALS.find((m) => terminal.store[m] < _.floor(TRANSFER_THRESHOLD / 2, -2));
-    if (!shortage) {
-      return OK;
-    }
-    const freeTerminal = _(terminals).filter((t) => {
-      return t.id !== terminal.id && t.cooldown === 0 && t.store.energy > _.floor(TRANSFER_THRESHOLD * 2, -2);
-    }).sortBy((t) => t.store.energy).last();
-    if (!freeTerminal) {
-      return ERR_NOT_ENOUGH_ENERGY;
-    }
-    const buyOrder = _(
-      Game.market.getAllOrders({
-        resourceType: product,
-        type: ORDER_BUY
-      })
-    ).filter((o) => o.remainingAmount).sortBy((o) => o.price).last();
-    const sellOrder = _(
-      Game.market.getAllOrders({
-        resourceType: shortage,
-        type: ORDER_SELL
-      })
-    ).filter((o) => o.remainingAmount).sortBy((o) => o.price).first();
-    if (buyOrder && sellOrder) {
-      const sellAmountMax = Math.min(TRANSFER_THRESHOLD / 2, buyOrder.remainingAmount);
-      const returnPriceMax = buyOrder.price * sellAmountMax;
-      const returnAmountActual = Math.min(Math.floor(returnPriceMax / sellOrder.price), sellOrder.remainingAmount);
-      const returnPriceActual = returnAmountActual * sellOrder.price;
-      const sellAmountActual = Math.ceil(returnPriceActual / buyOrder.price);
-      if (returnPriceActual <= 0 || sellAmountActual <= 0) {
-        console.log(`\u8CFC\u5165\u60C5\u5831\u898B\u5408\u308F\u305A:${JSON.stringify({ buyOrder, sellOrder })}`);
-        return ERR_INVALID_ARGS;
-      }
-      const memory2 = Memory.terminals[terminal.id];
-      memory2.lastTrade = buyOrder.resourceType;
-      memory2.lastTradeTick = Game.time;
-      memory2.paritId = freeTerminal.id;
-      if ((memory2.lastTradeResult = Game.market.deal(buyOrder.id, sellAmountActual, terminal.room.name)) === OK) {
-        freeTerminal.memory.lastTrade = sellOrder.resourceType;
-        freeTerminal.memory.lastTradeResult = Game.market.deal(sellOrder.id, returnAmountActual, freeTerminal.room.name);
-        freeTerminal.memory.lastTradeTick = Game.time;
-        freeTerminal.memory.paritId = terminal.id;
-      }
-    }
   });
 }
 function isTerminal(s) {
   return s.structureType === STRUCTURE_TERMINAL;
 }
-var BASE_MINERALS = [RESOURCE_HYDROGEN, RESOURCE_OXYGEN, RESOURCE_UTRIUM, RESOURCE_KEANIUM, RESOURCE_LEMERGIUM, RESOURCE_ZYNTHIUM, RESOURCE_CATALYST];
-function getProducts(room) {
-  var _a;
-  const roomResouces = getRoomResouces(room);
-  const all = ObjectEntries(Game.market.orders).reduce((mapping, [, order]) => {
-    mapping[order.resourceType].push(order);
-    return mapping;
-  }, defaultOrderMap);
-  const roomMineral = _.first(room.find(FIND_MINERALS));
-  return (_a = _(ObjectEntries(roomResouces)).filter(([key]) => (key === (roomMineral == null ? void 0 : roomMineral.mineralType) || isCommodity(key)) && (roomResouces[key] || 0) > _.floor(TRANSFER_THRESHOLD * 2, -2)).map(([key, value]) => {
-    if (key === "timestamp") {
-      return void 0;
-    }
-    return {
-      key,
-      amount: value || 0
-    };
-  }).compact().sortBy((v) => {
-    const h = _(all[v.key]).sortBy((v2) => -(v2.price * v2.remainingAmount)).first();
-    return -(((h == null ? void 0 : h.price) || 0) * ((h == null ? void 0 : h.remainingAmount) || 0));
-  }).first()) == null ? void 0 : _a.key;
-}
-var defaultOrderMap = Object.freeze(
-  RESOURCES_ALL.reduce(
-    (d, type) => {
-      return {
-        ...d,
-        [type]: []
-      };
-    },
-    {}
-  )
-);
 
 // structure.tower.ts
 function behaviors4(tower) {
