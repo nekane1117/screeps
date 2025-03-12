@@ -25,6 +25,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     });
     return customMove(creep, target, {
       maxRooms: 0,
+      swampCost: 2,
+      plainCost: 2,
       ...opt,
     });
   };
@@ -434,7 +436,7 @@ function findRepairTarget(creep: Builder) {
         return false;
       }
 
-      return s.hits < s.hitsMax - getRepairPower(creep);
+      return s.hits < Math.min(s.hitsMax, 3000000) - getRepairPower(creep);
     }),
   )
     .sortBy((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME))
