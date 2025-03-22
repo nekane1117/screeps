@@ -1,6 +1,6 @@
+import { RETURN_CODE_DECODER } from "util.creep";
 import { TRANSFER_THRESHOLD } from "./constants";
 import { getTerminals, logUsage } from "./utils";
-import { isCommodity, ObjectKeys } from "./utils.common";
 
 export default function behaviors(terminal: Structure) {
   logUsage(`terminal:${terminal.room.name}`, () => {
@@ -15,9 +15,6 @@ export default function behaviors(terminal: Structure) {
     if (memory.lastTrade) {
       terminal.room.visual.text(memory.lastTrade, terminal.pos.x, terminal.pos.y, { font: 0.25, color: "#ffff00" });
     }
-    if (Game.cpu.bucket > 600 && terminal.cooldown > 0) {
-      return;
-    }
 
     // とにかくリソースを共有する
     const terminals = getTerminals();
@@ -27,20 +24,24 @@ export default function behaviors(terminal: Structure) {
       return OK;
     }
 
-    for (const resourceType of RESOURCES_ALL.filter((r) => !isCommodity(r) && r !== RESOURCE_ENERGY)) {
+    for (const resourceType of RESOURCES_ALL.filter((r) => {
+      if ((terminal.room.controller?.level || 0) === 8) {
+        return true;
+      } else {
+        return r !== RESOURCE_ENERGY;
+      }
+    })) {
       // 閾値の2倍あるときは不足してるターミナルに送る
       if (terminal.store[resourceType] > _.floor(TRANSFER_THRESHOLD * 2, -2)) {
         const transferTarget = terminals.find((t) => t.store[resourceType] < TRANSFER_THRESHOLD);
         // 足らないターミナルを見つけたとき
         if (transferTarget) {
-          if (
-            terminal.send(
-              resourceType,
-              Math.min(terminal.store[resourceType] - _.floor(TRANSFER_THRESHOLD * 2, -2), TRANSFER_THRESHOLD),
-              transferTarget.room.name,
-            ) === OK
-          ) {
+          console.log(`terminal.send(${resourceType}, ${TRANSFER_THRESHOLD}, ${transferTarget.room.name})`);
+          const result = terminal.send(resourceType, TRANSFER_THRESHOLD, transferTarget.room.name);
+          if (result === OK) {
             return;
+          } else {
+            console.log(RETURN_CODE_DECODER[result]);
           }
         }
       }
@@ -49,7 +50,7 @@ export default function behaviors(terminal: Structure) {
     // 共有できない or 済んでるとき
 
     // bucketが500を切ってるときは何もしない
-    if (Game.cpu.bucket < 500 || Game.time % 10 === ObjectKeys(Memory.terminals).findIndex((t) => t === terminal.id)) {
+    if (Game.cpu.bucket < 500) {
       return OK;
     }
   });

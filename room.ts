@@ -9,23 +9,21 @@ export function roomBehavior(room: Room) {
   if (room.find(FIND_HOSTILE_CREEPS).length && !room.controller?.safeMode && room.energyAvailable > SAFE_MODE_COST) {
     room.controller?.activateSafeMode();
   }
-  logUsage("check carrysize", () => {
-    // 初回用初期化処理
-    if (!room.memory.carrySize) {
-      room.memory.carrySize = {
-        builder: 100,
-        carrier: 100,
-        claimer: 100,
-        defender: 100,
-        harvester: 100,
-        labManager: 100,
-        mineralHarvester: 100,
-        upgrader: 100,
-      };
-    }
-  });
+  // 初回用初期化処理
+  if (!room.memory.carrySize) {
+    room.memory.carrySize = {
+      builder: 100,
+      carrier: 100,
+      claimer: 100,
+      defender: 100,
+      harvester: 100,
+      labManager: 100,
+      mineralHarvester: 100,
+      upgrader: 100,
+    };
+  }
 
-  const { carrier: carriers = [], harvester = [], gatherer = [] } = logUsage("getCreepsInRoom", () => getCreepsInRoom(room));
+  const { carrier: carriers = [], harvester = [], gatherer = [] } = getCreepsInRoom(room);
 
   if (room.storage) {
     room.visual.text(room.storage.store.energy.toString(), room.storage.pos.x, room.storage.pos.y, {
@@ -202,29 +200,27 @@ export function roomBehavior(room: Room) {
   }
 
   //#region gatherer
-  logUsage("gatherer", () => {
-    // 容量のある廃墟がある時
-    if (
-      gatherer.length === 0 &&
-      room.storage &&
-      room.storage.my &&
-      room.energyCapacityAvailable >= 300 &&
-      (room.find(FIND_HOSTILE_STRUCTURES, { filter: (s) => !("store" in s) || s.store.getUsedCapacity() === 0 }).length > 0 ||
-        room.find(FIND_RUINS, { filter: (r) => r.store.getUsedCapacity() - r.store.energy > 0 }).length > 0 ||
-        room.find(FIND_TOMBSTONES, { filter: (r) => r.store.getUsedCapacity() - r.store.energy > 0 }).length > 0)
-    ) {
-      const spawn = getSpawnsInRoom(room).find((s) => !s.spawning);
-      if (spawn) {
-        spawn.spawnCreep(filterBodiesByCost("gatherer", room.energyCapacityAvailable).bodies, `G_${room.name}_${Game.time}`, {
-          memory: {
-            role: "gatherer",
-            baseRoom: room.name,
-            mode: "G",
-          } as GathererMemory,
-        });
-      }
+  // 容量のある廃墟がある時
+  if (
+    gatherer.length === 0 &&
+    room.storage &&
+    room.storage.my &&
+    room.energyCapacityAvailable >= 300 &&
+    (room.find(FIND_HOSTILE_STRUCTURES, { filter: (s) => !("store" in s) || s.store.getUsedCapacity() === 0 }).length > 0 ||
+      room.find(FIND_RUINS, { filter: (r) => r.store.getUsedCapacity() - r.store.energy > 0 }).length > 0 ||
+      room.find(FIND_TOMBSTONES, { filter: (r) => r.store.getUsedCapacity() - r.store.energy > 0 }).length > 0)
+  ) {
+    const spawn = getSpawnsInRoom(room).find((s) => !s.spawning);
+    if (spawn) {
+      spawn.spawnCreep(filterBodiesByCost("gatherer", room.energyCapacityAvailable).bodies, `G_${room.name}_${Game.time}`, {
+        memory: {
+          role: "gatherer",
+          baseRoom: room.name,
+          mode: "G",
+        } as GathererMemory,
+      });
     }
-  });
+  }
 
   //#endregion
 }
@@ -347,7 +343,12 @@ function updateRoadMap(room: Room) {
     if (Game.time % 600 === 0) {
       const pos = room.getPositionAt(x, y);
       if (pos) {
-        const road = _([...(pos?.lookFor(LOOK_STRUCTURES) || []), ...(pos?.lookFor(LOOK_CONSTRUCTION_SITES) || [])])
+        const road = _([
+          ...roads.filter((r) => r.pos.x === x && r.pos.y === y),
+          ...Object.values(Game.constructionSites).filter(
+            (s) => s.room?.name === room.name && s.structureType === STRUCTURE_ROAD && s.pos.x === x && s.pos.y === y,
+          ),
+        ])
           .compact()
           .find((s) => s.structureType === STRUCTURE_ROAD);
         if (!road && Math.ceil(value) >= 10 && pos.findInRange([...source, ...roads, ...spawn, ...room.find(FIND_MY_STRUCTURES)], 3).length > 0) {

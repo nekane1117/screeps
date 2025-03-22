@@ -49,6 +49,7 @@ strict digraph "dependency-cruiser output"{
     "role.labManager.ts" -> "util.creep.ts"
     "role.labManager.ts" -> "utils.ts"
     "role.mineralHarvester.ts" [label=<role.mineralHarvester.ts> tooltip="role.mineralHarvester.ts" URL="role.mineralHarvester.ts" fillcolor="#ddfeff"]
+    "role.mineralHarvester.ts" -> "constants.ts"
     "role.mineralHarvester.ts" -> "util.creep.ts"
     "role.mineralHarvester.ts" -> "utils.ts"
     "role.upgrader.ts" [label=<role.upgrader.ts> tooltip="role.upgrader.ts" URL="role.upgrader.ts" fillcolor="#ddfeff"]
@@ -92,7 +93,7 @@ strict digraph "dependency-cruiser output"{
     "structure.terminal.ts" [label=<structure.terminal.ts> tooltip="structure.terminal.ts" URL="structure.terminal.ts" fillcolor="#ddfeff"]
     "structure.terminal.ts" -> "constants.ts"
     "structure.terminal.ts" -> "utils.ts"
-    "structure.terminal.ts" -> "utils.common.ts"
+    "structure.terminal.ts" -> "util.creep.ts"
     "structure.tower.ts" [label=<structure.tower.ts> tooltip="structure.tower.ts" URL="structure.tower.ts" fillcolor="#ddfeff"]
     "structure.tower.ts" -> "constants.ts"
     "structures.ts" [label=<structures.ts> tooltip="structures.ts" URL="structures.ts" fillcolor="#ddfeff"]

@@ -39,10 +39,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
   checkMode();
+
+  const alpha = 1 / CREEP_LIFE_TIME;
   // 毎tick容量を更新
   (creep.room.memory.carrySize = creep.room.memory.carrySize || {}).labManager = Math.max(
     100,
-    ((creep.room.memory.carrySize?.labManager || 100) * CREEP_LIFE_TIME + creep.store.getUsedCapacity()) / (CREEP_LIFE_TIME + 1),
+    (creep.room.memory.carrySize?.labManager || 100) * (1 - alpha) + creep.store.getUsedCapacity() * alpha,
   );
   // https://docs.screeps.com/simultaneous-actions.html
 
@@ -293,9 +295,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     // 化合物(完成品) or リクエストが見つからなかった原料はターミナルにしまっておく
     if (!creep.memory.transferId) {
-      if (wrong.length > 0 || (creep.memory.storeId !== terminal.id && terminal.store[currentType] <= _.floor(TRANSFER_THRESHOLD * 2, -2))) {
+      if (wrong.length > 0 || (creep.memory.storeId !== terminal.id && terminal.store[currentType] < _.floor(TRANSFER_THRESHOLD * 2, -2))) {
         creep.memory.transferId = terminal.id;
-      } else if (factory && creep.memory.storeId !== factory.id && factory.store[currentType] <= _.floor(TRANSFER_THRESHOLD, -2)) {
+      } else if (factory && creep.memory.storeId !== factory.id && factory.store[currentType] < _.floor(TRANSFER_THRESHOLD, -2)) {
         creep.memory.transferId = factory.id;
       } else {
         creep.memory.transferId = creep.room.storage?.id;

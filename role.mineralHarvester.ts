@@ -1,5 +1,6 @@
+import { TRANSFER_THRESHOLD } from "./constants";
 import { RETURN_CODE_DECODER, REVERSE_BOOSTS, customMove } from "./util.creep";
-import { getLabs } from "./utils";
+import { findMyStructures, getLabs } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isM(creep)) {
@@ -134,7 +135,30 @@ function work(creep: MineralHarvester) {
 }
 
 function delivery(creep: MineralHarvester) {
-  const storage = creep.room.terminal || creep.room.storage;
+  if (!creep.room.storage) {
+    return ERR_NOT_FOUND;
+  }
+
+  const mineral = _.first(creep.room.find(FIND_MINERALS));
+
+  if (!mineral) {
+    return ERR_NOT_FOUND;
+  }
+
+  //#region 分配先設定
+  let storage: AnyStoreStructure | undefined = creep.room.storage;
+
+  // terminal
+  if (creep.room.terminal && creep.room.terminal.store[mineral.mineralType] < TRANSFER_THRESHOLD * 2) {
+    storage = creep.room.terminal;
+  }
+
+  // factory
+  const { factory } = findMyStructures(creep.room);
+  if (factory && factory.store[mineral.mineralType] < TRANSFER_THRESHOLD) {
+    storage = factory;
+  }
+
   if (!storage) {
     return creep.say("NO STORAGE");
   }
