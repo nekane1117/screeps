@@ -77,9 +77,9 @@ strict digraph "dependency-cruiser output"{
     "room.ts" -> "utils.ts"
     "screeps.d.ts" [label=<screeps.d.ts> tooltip="screeps.d.ts" URL="screeps.d.ts" fillcolor="#ddfeff"]
     "structure.controller.ts" [label=<structure.controller.ts> tooltip="structure.controller.ts" URL="structure.controller.ts" fillcolor="#ddfeff"]
-    "structure.controller.ts" -> "structures.ts" [xlabel="no-circular" tooltip="no-circular" arrowhead="normalnoneodot" fontcolor="orange" color="orange"]
     "structure.controller.ts" -> "util.creep.ts"
     "structure.controller.ts" -> "utils.ts"
+    "structure.controller.ts" -> "structure.util.ts"
     "structure.extructor.ts" [label=<structure.extructor.ts> tooltip="structure.extructor.ts" URL="structure.extructor.ts" fillcolor="#ddfeff"]
     "structure.extructor.ts" -> "util.creep.ts"
     "structure.extructor.ts" -> "utils.ts"
@@ -96,12 +96,14 @@ strict digraph "dependency-cruiser output"{
     "structure.terminal.ts" -> "util.creep.ts"
     "structure.tower.ts" [label=<structure.tower.ts> tooltip="structure.tower.ts" URL="structure.tower.ts" fillcolor="#ddfeff"]
     "structure.tower.ts" -> "constants.ts"
+    "structure.util.ts" [label=<structure.util.ts> tooltip="structure.util.ts" URL="structure.util.ts" fillcolor="#ddfeff"]
     "structures.ts" [label=<structures.ts> tooltip="structures.ts" URL="structures.ts" fillcolor="#ddfeff"]
-    "structures.ts" -> "structure.controller.ts" [xlabel="no-circular" tooltip="no-circular" arrowhead="normalnoneodot" fontcolor="orange" color="orange"]
+    "structures.ts" -> "structure.controller.ts"
     "structures.ts" -> "structure.extructor.ts"
     "structures.ts" -> "structure.factory.ts"
     "structures.ts" -> "structure.terminal.ts"
     "structures.ts" -> "structure.tower.ts"
+    "structures.ts" -> "structure.util.ts"
     "util.array.ts" [label=<util.array.ts> tooltip="util.array.ts" URL="util.array.ts" fillcolor="#ddfeff"]
     "util.creep.ts" [label=<util.creep.ts> tooltip="util.creep.ts" URL="util.creep.ts" fillcolor="#ddfeff"]
     "util.creep.ts" -> "util.array.ts"

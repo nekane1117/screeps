@@ -1,4 +1,4 @@
-import { StructureBehavior } from "./structures";
+import { StructureBehavior } from "structure.util";
 import { getCreepsInRoom, getMainSpawn } from "./util.creep";
 import { findMyStructures, getSitesInRoom, getSpawnsInRoom } from "./utils";
 
