@@ -9,9 +9,7 @@ export const COMMODITY_INGREDIENTS = _(ObjectEntries(COMMODITIES))
   .flatten<ResourceConstant>()
   .uniq();
 
-export const TRANSFER_THRESHOLD = FACTORY_CAPACITY / COMMODITY_INGREDIENTS.size();
-
-export const TERMINAL_THRESHOLD = 1000;
+export const TRANSFER_THRESHOLD = 1000;
 
 export const LAB_STRATEGY: Partial<Record<ROLES, AllMinerals>> = {
   builder: RESOURCE_CATALYZED_LEMERGIUM_ACID,
