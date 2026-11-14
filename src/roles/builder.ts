@@ -267,7 +267,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           ),
         ]),
         {
-          filter: (s: StructureContainer | StructureLink) => {
+          filter: (s: StructureContainer | StructureLink | StructureStorage | StructureTerminal) => {
             // いっぱいあるやつからだけ出す
             return s.store.energy >= capacityThreshold;
           },

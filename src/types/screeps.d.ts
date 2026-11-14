@@ -4,7 +4,7 @@ declare interface CreepMemory {
   role: ROLES;
   baseRoom: string;
   // 担当作業の作業結果
-  worked?: ScreepsReturnCode;
+  worked?: ScreepsReturnCode | ERR_ACCESS_DENIED;
   _move?: {
     dest: { x: number; y: number; room: string };
     time: typeof Game.time;

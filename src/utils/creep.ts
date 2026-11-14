@@ -185,6 +185,7 @@ export const RETURN_CODE_DECODER = Object.freeze({
   [ERR_NO_BODYPART.toString()]: "ERR_NO_BODYPART",
   [ERR_RCL_NOT_ENOUGH.toString()]: "ERR_RCL_NOT_ENOUGH",
   [ERR_GCL_NOT_ENOUGH.toString()]: "ERR_GCL_NOT_ENOUGH",
+  [ERR_ACCESS_DENIED.toString()]: "ERR_ACCESS_DENIED",
 });
 
 type CustomMove = (creep: Creep, target: RoomPosition | { pos: RoomPosition }, opt?: MoveToOpts) => ReturnType<Creep["moveTo"]>;
