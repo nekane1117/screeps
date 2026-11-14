@@ -28,8 +28,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     });
     return customMove(creep, target, {
       maxRooms: 0,
-      swampCost: 2,
-      plainCost: 2,
       ...opt,
     });
   };

@@ -7,8 +7,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
     customMove(creep, target, {
-      plainCost: 2,
-      swampCost: 2,
       ignoreCreeps: true,
       ...opt,
     });

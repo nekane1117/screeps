@@ -385,7 +385,7 @@ export function getCarrierBody(room: Room, role: ROLES): BodyPartConstant[] {
   return _.range(Math.ceil(avgSize / 50) * safetyFactor * 3)
     .slice(0, 50)
     .map((i) => {
-      const parts = i === 1 ? WORK : bodyCycle[i % bodyCycle.length];
+      const parts = i === 4 ? WORK : bodyCycle[i % bodyCycle.length];
       costTotal += BODYPART_COST[parts];
       return { parts, costTotal };
     })

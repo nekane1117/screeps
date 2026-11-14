@@ -573,7 +573,7 @@ function getCarrierBody(room, role) {
   let costTotal = 0;
   const avgSize = room.memory.carrySize?.[role] || 100;
   return _.range(Math.ceil(avgSize / 50) * safetyFactor * 3).slice(0, 50).map((i) => {
-    const parts = i === 1 ? WORK : bodyCycle[i % bodyCycle.length];
+    const parts = i === 4 ? WORK : bodyCycle[i % bodyCycle.length];
     costTotal += BODYPART_COST[parts];
     return { parts, costTotal };
   }).filter((p) => p.costTotal <= room.energyAvailable).map((p) => p.parts);
@@ -687,8 +687,6 @@ var behavior4 = (creep) => {
   const { room } = creep;
   const moveMeTo = (target, opt) => {
     customMove(creep, target, {
-      plainCost: 2,
-      swampCost: 2,
       ignoreCreeps: true,
       ...opt
     });
@@ -922,8 +920,6 @@ var behavior5 = (creep) => {
     });
     return customMove(creep, target, {
       maxRooms: 0,
-      swampCost: 2,
-      plainCost: 2,
       ...opt
     });
   };
