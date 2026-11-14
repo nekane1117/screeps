@@ -1,5 +1,5 @@
 import { RETURN_CODE_DECODER, customMove, getMainSpawn, pickUpAll } from "./util.creep";
-import { findMyStructures, getCapacityRate, getLabs, getSitesInRoom } from "./utils";
+import { findMyStructures, getLabs, getSitesInRoom } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
@@ -43,17 +43,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
-  const myContainer = controller.pos.findClosestByRange(container, {
-    filter: (c: StructureContainer) => {
-      return c.pos.inRangeTo(controller, 3);
-    },
-  });
-
   // 建設がないときかダウングレードしちゃいそうなとき
   if (
     controller.ticksToDowngrade < 1000 ||
-    getSitesInRoom(controller.room).length === 0 ||
-    (myContainer && getCapacityRate(myContainer, RESOURCE_ENERGY) > 0.5)
+    (getSitesInRoom(controller.room).filter((s) => s.structureType !== STRUCTURE_ROAD).length === 0 &&
+      creep.room.energyAvailable == creep.room.energyCapacityAvailable)
   ) {
     // upgradeController
     creep.memory.worked = creep.upgradeController(controller);
@@ -143,6 +137,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           break;
       }
     }
+  } else {
+    creep.say("NO STORE");
   }
 
   // withdraw

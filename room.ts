@@ -34,7 +34,12 @@ export function roomBehavior(room: Room) {
   const sources = room.find(FIND_SOURCES);
   // sourceがあるとき
   if (sources.length > 0) {
-    if (harvester.filter((h) => (h.ticksToLive || Infinity) > h.body.length * CREEP_SPAWN_TIME).length === 0) {
+    if (
+      harvester.length === 0 ||
+      (_.sum(harvester.filter((h) => (h.ticksToLive || Infinity) > h.body.length * CREEP_SPAWN_TIME).map((c) => c.body.filter((b) => b.type === WORK).length)) <
+        6 &&
+        harvester.length < 2)
+    ) {
       const spawn = (() => {
         const spawns = getSpawnsInRoom(room);
         // 部屋にある時は部屋のだけ
@@ -62,7 +67,7 @@ export function roomBehavior(room: Room) {
         return ERR_NOT_FOUND;
       }
 
-      if (spawn.room.energyAvailable >= 300) {
+      if (spawn.room.energyAvailable >= (harvester.length == 0 ? 300 : spawn.room.energyCapacityAvailable)) {
         const name = `H_${room.name}_${Game.time}`;
         let total = 0;
         const bodies = (
@@ -317,6 +322,10 @@ function createStructures(room: Room) {
         {
           plainCost: 1,
           swampCost: 1,
+          avoid: room
+            .find(FIND_STRUCTURES)
+            .filter((s) => s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL)
+            .map((r) => r.pos),
         },
       );
       PathFinder.use(false);

@@ -181,14 +181,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // 不足分を収集
     if (!creep.memory.storeId) {
       const shortage = _([
-        // ターミナルで分配上限2倍無いやつ
+        // ターミナルで分配上限無いやつ
         ...RESOURCES_ALL.map((resourceType) => {
           return {
             resourceType,
             store: room.terminal,
           };
         }).filter((v) => {
-          return (v.store?.store[v.resourceType] || 0) <= _.floor(TRANSFER_THRESHOLD * 2, -2) && (room.storage?.store[v.resourceType] || 0) > 0;
+          return (v.store?.store[v.resourceType] || 0) < TRANSFER_THRESHOLD && (room.storage?.store[v.resourceType] || 0) > 0;
         }),
         // ファクトリーで分配上限以上無いやつ
         ...(factory
@@ -198,7 +198,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
                 store: factory,
               };
             }).filter((v) => {
-              return (v.store?.store[v.resourceType] || 0) <= _.floor(TRANSFER_THRESHOLD, -2) && (room.storage?.store[v.resourceType] || 0) > 0;
+              return (v.store?.store[v.resourceType] || 0) < TRANSFER_THRESHOLD / 2 && (room.storage?.store[v.resourceType] || 0) > 0;
             })
           : []),
       ]).first();
@@ -224,16 +224,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           // 原料の指定があるとき
           if (creep.memory.mineralType) {
             // 取り出す
-            return creep.withdraw(
-              store,
-              creep.memory.mineralType,
-              creep.memory.balancing
-                ? Math.min(
-                    store.store[creep.memory.mineralType] - TRANSFER_THRESHOLD * (store.structureType === STRUCTURE_TERMINAL ? 2 : 1),
-                    creep.store.getFreeCapacity(creep.memory.mineralType),
-                  )
-                : undefined,
-            );
+            return creep.withdraw(store, creep.memory.mineralType, creep.memory.balancing ? 100 : undefined);
           } else {
             // 無いときはおかしいので初期化してエラーを返す
             creep.memory.storeId = undefined;
@@ -295,9 +286,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     // 化合物(完成品) or リクエストが見つからなかった原料はターミナルにしまっておく
     if (!creep.memory.transferId) {
-      if (wrong.length > 0 || (creep.memory.storeId !== terminal.id && terminal.store[currentType] < _.floor(TRANSFER_THRESHOLD * 2, -2))) {
+      if (wrong.length > 0 || (creep.memory.storeId !== terminal.id && terminal.store[currentType] < TRANSFER_THRESHOLD)) {
         creep.memory.transferId = terminal.id;
-      } else if (factory && creep.memory.storeId !== factory.id && factory.store[currentType] < _.floor(TRANSFER_THRESHOLD, -2)) {
+      } else if (factory && creep.memory.storeId !== factory.id && factory.store[currentType] < TRANSFER_THRESHOLD / 2) {
         creep.memory.transferId = factory.id;
       } else {
         creep.memory.transferId = creep.room.storage?.id;

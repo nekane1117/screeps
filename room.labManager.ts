@@ -102,15 +102,11 @@ export default function behavior(labs: StructureLab[], mineral: Mineral) {
 }
 
 function checkMode(room: Room) {
-  const {
-    builder = [],
-    // mineralHarvester = []
-  } = getCreepsInRoom(room);
+  const { builder = [], mineralHarvester = [] } = getCreepsInRoom(room);
 
-  // if (!isBoosted(mineralHarvester)) {
-  //   return "mineralHarvester";
-  // } else
-  if (!isBoosted(builder)) {
+  if (!isBoosted(mineralHarvester)) {
+    return "mineralHarvester";
+  } else if (!isBoosted(builder)) {
     return "builder";
   } else {
     return "upgrader";

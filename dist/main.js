@@ -17,7 +17,7 @@ function complexOrder(arr, evaluation) {
 
 // utils.common.ts
 function ObjectKeys(o) {
-  return Object.keys(o);
+  return Object.keys(o || {});
 }
 function ObjectEntries(o) {
   return Object.entries(o);
@@ -634,8 +634,9 @@ function behavior(flag) {
     return isC2(c) && c.memory.flagName === flag.name;
   })) {
     const spawn = getSpawnsOrderdByRange(flag).find((s) => {
-      var _a2, _b2;
-      return (_b2 = (_a2 = Game.rooms[s.room.name]) == null ? void 0 : _a2.controller) == null ? void 0 : _b2.level;
+      var _a2;
+      const room = Game.rooms[s.room.name];
+      return ((_a2 = room == null ? void 0 : room.controller) == null ? void 0 : _a2.level) && room.energyCapacityAvailable > 650;
     });
     if (spawn) {
       if (spawn.spawning) {
@@ -910,7 +911,10 @@ function findTransferTarget(room) {
     controllerContaeiner && getCapacityRate(controllerContaeiner) < 0.9 ? controllerContaeiner : null,
     //貯蓄順
     ((factory == null ? void 0 : factory.store.energy) || 0) <= _.floor(TRANSFER_THRESHOLD, -2) ? factory : null,
-    room.storage
+    room.storage,
+    ..._.flatten(Object.values(getCreepsInRoom(room)).filter((c) => typeof c !== "number")).filter(
+      (c) => (c.memory.role === "builder" || c.memory.role === "upgrader") && c.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+    )
   ]).compact().filter((s) => !("my" in s) || s.my).first();
 }
 
@@ -925,7 +929,10 @@ var behavior5 = (creep) => {
     return ((_a2 = c.room) == null ? void 0 : _a2.name) === creep.memory.baseRoom;
   }).run();
   if (creep.pos.roomName !== creep.memory.baseRoom && mySite.length > 0) {
-    return moveRoom(creep, creep.pos.roomName, creep.memory.baseRoom);
+    return customMove(
+      creep,
+      _.min(mySite, (s) => s.progressTotal - s.progress)
+    );
   }
   const moveMeTo = (target, opt) => {
     var _a2;
@@ -1530,7 +1537,14 @@ var behavior9 = (creep) => {
     return ERR_INVALID_TARGET;
   }
   if (creep.room.name !== creep.memory.baseRoom) {
-    return moveRoom(creep, creep.room.name, creep.memory.baseRoom);
+    const targetRoom = Game.rooms[creep.memory.baseRoom];
+    creep.say(targetRoom ? "GOTO " + targetRoom.name : "invisible room");
+    if (targetRoom) {
+      const source = targetRoom.controller || _.first(targetRoom.find(FIND_SOURCES)) || new RoomPosition(25, 25, targetRoom.name);
+      return customMove(creep, source);
+    } else {
+      return moveRoom(creep, creep.room.name, creep.memory.baseRoom);
+    }
   }
   const moveMeTo = (target, opt) => {
     var _a2;
@@ -1666,8 +1680,8 @@ var behavior9 = (creep) => {
     }
     if (creep.memory.worked === OK && source.pos.findInRange(
       [...source.room.find(FIND_CONSTRUCTION_SITES, { filter: (s) => s.structureType === STRUCTURE_CONTAINER }), ...container, ...link],
-      1
-    ).length === 0) {
+      2
+    ).length === 0 && creep.pos.roomName === creep.memory.baseRoom) {
       creep.pos.createConstructionSite(STRUCTURE_CONTAINER);
     }
   }
@@ -1861,7 +1875,7 @@ var behavior10 = (creep) => {
     }
     if (!creep.memory.storeId) {
       const shortage = _([
-        // ターミナルで分配上限2倍無いやつ
+        // ターミナルで分配上限無いやつ
         ...RESOURCES_ALL.map((resourceType) => {
           return {
             resourceType,
@@ -1869,7 +1883,7 @@ var behavior10 = (creep) => {
           };
         }).filter((v) => {
           var _a2, _b2;
-          return (((_a2 = v.store) == null ? void 0 : _a2.store[v.resourceType]) || 0) <= _.floor(TRANSFER_THRESHOLD * 2, -2) && (((_b2 = room.storage) == null ? void 0 : _b2.store[v.resourceType]) || 0) > 0;
+          return (((_a2 = v.store) == null ? void 0 : _a2.store[v.resourceType]) || 0) < TRANSFER_THRESHOLD && (((_b2 = room.storage) == null ? void 0 : _b2.store[v.resourceType]) || 0) > 0;
         }),
         // ファクトリーで分配上限以上無いやつ
         ...factory ? RESOURCES_ALL.map((resourceType) => {
@@ -1879,7 +1893,7 @@ var behavior10 = (creep) => {
           };
         }).filter((v) => {
           var _a2, _b2;
-          return (((_a2 = v.store) == null ? void 0 : _a2.store[v.resourceType]) || 0) <= _.floor(TRANSFER_THRESHOLD, -2) && (((_b2 = room.storage) == null ? void 0 : _b2.store[v.resourceType]) || 0) > 0;
+          return (((_a2 = v.store) == null ? void 0 : _a2.store[v.resourceType]) || 0) < TRANSFER_THRESHOLD / 2 && (((_b2 = room.storage) == null ? void 0 : _b2.store[v.resourceType]) || 0) > 0;
         }) : []
       ]).first();
       if (shortage) {
@@ -1898,14 +1912,7 @@ var behavior10 = (creep) => {
       if (creep.pos.isNearTo(store)) {
         creep.memory.worked = ((creep2) => {
           if (creep2.memory.mineralType) {
-            return creep2.withdraw(
-              store,
-              creep2.memory.mineralType,
-              creep2.memory.balancing ? Math.min(
-                store.store[creep2.memory.mineralType] - TRANSFER_THRESHOLD * (store.structureType === STRUCTURE_TERMINAL ? 2 : 1),
-                creep2.store.getFreeCapacity(creep2.memory.mineralType)
-              ) : void 0
-            );
+            return creep2.withdraw(store, creep2.memory.mineralType, creep2.memory.balancing ? 100 : void 0);
           } else {
             creep2.memory.storeId = void 0;
             creep2.memory.mineralType = void 0;
@@ -1957,9 +1964,9 @@ var behavior10 = (creep) => {
       creep.memory.transferId = (_e = requesting.find((lab) => lab.memory.expectedType === currentType)) == null ? void 0 : _e.id;
     }
     if (!creep.memory.transferId) {
-      if (wrong.length > 0 || creep.memory.storeId !== terminal.id && terminal.store[currentType] < _.floor(TRANSFER_THRESHOLD * 2, -2)) {
+      if (wrong.length > 0 || creep.memory.storeId !== terminal.id && terminal.store[currentType] < TRANSFER_THRESHOLD) {
         creep.memory.transferId = terminal.id;
-      } else if (factory && creep.memory.storeId !== factory.id && factory.store[currentType] < _.floor(TRANSFER_THRESHOLD, -2)) {
+      } else if (factory && creep.memory.storeId !== factory.id && factory.store[currentType] < TRANSFER_THRESHOLD / 2) {
         creep.memory.transferId = factory.id;
       } else {
         creep.memory.transferId = (_f = creep.room.storage) == null ? void 0 : _f.id;
@@ -2218,12 +2225,7 @@ var behavior12 = (creep) => {
       console.log(`${creep.name}:${RETURN_CODE_DECODER[signed.toString()]}`);
     }
   }
-  const myContainer = controller.pos.findClosestByRange(container, {
-    filter: (c) => {
-      return c.pos.inRangeTo(controller, 3);
-    }
-  });
-  if (controller.ticksToDowngrade < 1e3 || getSitesInRoom(controller.room).length === 0 || myContainer && getCapacityRate(myContainer, RESOURCE_ENERGY) > 0.5) {
+  if (controller.ticksToDowngrade < 1e3 || getSitesInRoom(controller.room).filter((s) => s.structureType !== STRUCTURE_ROAD).length === 0 && creep.room.energyAvailable == creep.room.energyCapacityAvailable) {
     creep.memory.worked = creep.upgradeController(controller);
     switch (creep.memory.worked) {
       // 資源不足
@@ -2300,6 +2302,8 @@ var behavior12 = (creep) => {
           break;
       }
     }
+  } else {
+    creep.say("NO STORE");
   }
   pickUpAll(creep);
 };
@@ -2424,11 +2428,10 @@ function behavior13(labs, mineral) {
   });
 }
 function checkMode(room) {
-  const {
-    builder = []
-    // mineralHarvester = []
-  } = getCreepsInRoom(room);
-  if (!isBoosted2(builder)) {
+  const { builder = [], mineralHarvester = [] } = getCreepsInRoom(room);
+  if (!isBoosted2(mineralHarvester)) {
+    return "mineralHarvester";
+  } else if (!isBoosted2(builder)) {
     return "builder";
   } else {
     return "upgrader";
@@ -2525,7 +2528,7 @@ function roomBehavior(room) {
   }
   const sources = room.find(FIND_SOURCES);
   if (sources.length > 0) {
-    if (harvester.filter((h) => (h.ticksToLive || Infinity) > h.body.length * CREEP_SPAWN_TIME).length === 0) {
+    if (harvester.length === 0 || _.sum(harvester.filter((h) => (h.ticksToLive || Infinity) > h.body.length * CREEP_SPAWN_TIME).map((c) => c.body.filter((b) => b.type === WORK).length)) < 6 && harvester.length < 2) {
       const spawn = (() => {
         const spawns = getSpawnsInRoom(room);
         if (spawns.length > 0) {
@@ -2546,7 +2549,7 @@ function roomBehavior(room) {
         console.log(`${room.name} can't find spawn`);
         return ERR_NOT_FOUND;
       }
-      if (spawn.room.energyAvailable >= 300) {
+      if (spawn.room.energyAvailable >= (harvester.length == 0 ? 300 : spawn.room.energyCapacityAvailable)) {
         const name = `H_${room.name}_${Game.time}`;
         let total = 0;
         const bodies = (sources.length === 1 || spawn.room.energyCapacityAvailable < dynamicMinCost ? [WORK, MOVE, CARRY, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE, MOVE] : _(_.range(50 / 3)).map(() => [WORK, MOVE, CARRY]).flatten().run()).slice(0, 50).map((body) => {
@@ -2706,7 +2709,8 @@ function createStructures(room) {
         }).value(),
         {
           plainCost: 1,
-          swampCost: 1
+          swampCost: 1,
+          avoid: room.find(FIND_STRUCTURES).filter((s) => s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL).map((r) => r.pos)
         }
       );
       PathFinder.use(false);
@@ -2923,75 +2927,27 @@ function isE(s) {
   return s.structureType === STRUCTURE_EXTRACTOR;
 }
 
-// structure.factory.ts
-var THRESHOLD = FACTORY_CAPACITY / RESOURCES_ALL.length;
-function behaviors2(factory) {
-  logUsage(`factory:${factory.room.name}`, () => {
-    if (!isFactory(factory)) {
-      return console.log(`${factory.id} is not factory`);
-    }
-    const memory = (Memory.factories = Memory.factories || {})[factory.id] = Memory.factories[factory.id] || {};
-    if (memory.lastProduced) {
-      factory.room.visual.text(memory.lastProduced, factory.pos.x, factory.pos.y, {
-        color: "white",
-        font: 0.25
-      });
-    }
-    if (factory.cooldown) {
-      return;
-    }
-    const commodity = _(ObjectEntries(COMMODITIES)).filter(([type, commodity2]) => {
-      return !INGREDIENTS.includes(type) && (commodity2.level || 0) <= (factory.level || 0) && factory.store[type] <= THRESHOLD && ObjectEntries(commodity2.components).every(([resource, amount]) => factory.store[resource] >= amount);
-    }).sortBy(([_type, commodity2]) => {
-      return -(commodity2.level || 0) * FACTORY_CAPACITY;
-    }).first();
-    if (commodity) {
-      factory.produce(commodity[0]);
-      memory.lastProduced = commodity[0];
-    }
-  });
-}
-function isFactory(s) {
-  return s.structureType === STRUCTURE_FACTORY;
-}
-var INGREDIENTS = [
-  RESOURCE_ENERGY,
-  RESOURCE_POWER,
-  RESOURCE_METAL,
-  RESOURCE_BIOMASS,
-  RESOURCE_SILICON,
-  RESOURCE_MIST,
-  RESOURCE_OPS,
-  RESOURCE_OXYGEN,
-  RESOURCE_HYDROGEN,
-  RESOURCE_ZYNTHIUM,
-  RESOURCE_LEMERGIUM,
-  RESOURCE_UTRIUM,
-  RESOURCE_KEANIUM,
-  RESOURCE_CATALYST,
-  RESOURCE_GHODIUM
-];
-
 // structure.terminal.ts
-function behaviors3(terminal) {
+function behaviors2(terminal) {
   logUsage(`terminal:${terminal.room.name}`, () => {
+    var _a, _b;
     if (!isTerminal(terminal)) {
       return console.log(`${terminal.id} is not terminal`);
     }
     if (terminal.cooldown > 0) {
-      return OK;
+      return ERR_BUSY;
     }
     const memory = (Memory.terminals = Memory.terminals || {})[terminal.id] = Memory.terminals[terminal.id] || {};
-    if (memory.lastTrade) {
-      terminal.room.visual.text(memory.lastTrade, terminal.pos.x, terminal.pos.y, { font: 0.25, color: "#ffff00" });
+    if (memory.cache) {
+      terminal.room.visual.text(memory.cache.toLocaleString(), terminal.pos.x, terminal.pos.y, { font: 0.25, color: "#ffff00" });
     }
     const terminals = getTerminals();
     if (terminals.length < 2) {
       return OK;
     }
     for (const resourceType of RESOURCES_ALL.filter((r) => {
-      var _a;
-      if ((((_a = terminal.room.controller) == null ? void 0 : _a.level) || 0) === 8) {
+      var _a2;
+      if ((((_a2 = terminal.room.controller) == null ? void 0 : _a2.level) || 0) === 8) {
         return true;
       } else {
         return r !== RESOURCE_ENERGY;
@@ -3010,17 +2966,133 @@ function behaviors3(terminal) {
         }
       }
     }
-    if (Game.cpu.bucket < 500) {
-      return OK;
+    if (memory.reserved) {
+      const allOrderHistory = [...Game.market.outgoingTransactions, ...Game.market.incomingTransactions];
+      if (memory.reserved.type === ORDER_SELL) {
+        const executed = allOrderHistory.find((t) => {
+          var _a2, _b2;
+          return t.time === ((_a2 = memory.reserved) == null ? void 0 : _a2.time) && ((_b2 = t.order) == null ? void 0 : _b2.id) === memory.reserved.orderId && t.from === terminal.room.name;
+        });
+        if (executed) {
+          memory.cache = (memory.cache || 0) + executed.amount * (((_a = executed.order) == null ? void 0 : _a.price) || 0);
+        }
+      } else {
+        const executed = allOrderHistory.find((t) => {
+          var _a2, _b2;
+          return t.time === ((_a2 = memory.reserved) == null ? void 0 : _a2.time) && ((_b2 = t.order) == null ? void 0 : _b2.id) === memory.reserved.orderId && t.to === terminal.room.name;
+        });
+        if (executed) {
+          memory.cache = (memory.cache || 0) - executed.amount * (((_b = executed.order) == null ? void 0 : _b.price) || 0);
+        }
+      }
+      memory.lastReserve = memory.reserved;
+      memory.reserved = void 0;
+    } else {
+      if (Game.cpu.bucket < 500) {
+        return OK;
+      }
+      if (memory.cache) {
+        const shortage = BUY_TARGET.find((t) => {
+          return getRoomResources(terminal.room)[t] < TRANSFER_THRESHOLD;
+        });
+        if (!shortage) {
+          return OK;
+        }
+        const sellOrderToBuy = _(
+          Game.market.getAllOrders({
+            resourceType: shortage,
+            type: ORDER_SELL
+          })
+        ).filter((o) => o.remainingAmount > 0).sortBy((o) => o.price).first();
+        if (!sellOrderToBuy) {
+          return ERR_NOT_FOUND;
+        }
+        if (memory.cache < sellOrderToBuy.price) {
+          memory.cache = void 0;
+          return ERR_NOT_ENOUGH_RESOURCES;
+        }
+        const dealResult = Game.market.deal(
+          sellOrderToBuy.id,
+          Math.min(TRANSFER_THRESHOLD, Math.floor((memory.cache || 0) / sellOrderToBuy.price), sellOrderToBuy.remainingAmount),
+          terminal.room.name
+        );
+        if (dealResult === OK) {
+          memory.reserved = {
+            orderId: sellOrderToBuy.id,
+            type: ORDER_BUY,
+            time: Game.time
+          };
+        }
+        return dealResult;
+      } else {
+        const target = _(SELL_TARGETS).filter((t) => terminal.store[t] >= TRANSFER_THRESHOLD * 2).sortBy((t) => {
+          return -(getRoomResources(terminal.room)[t] || 0);
+        }).first();
+        if (!target) {
+          return ERR_NOT_ENOUGH_RESOURCES;
+        }
+        const buyOrderToSell = _(
+          Game.market.getAllOrders({
+            type: ORDER_BUY,
+            resourceType: target
+          })
+        ).filter((o) => {
+          return o.remainingAmount > 0;
+        }).sortBy((o) => {
+          return -o.price;
+        }).first();
+        if (!buyOrderToSell) {
+          return ERR_NOT_FOUND;
+        }
+        const dealResult = Game.market.deal(buyOrderToSell.id, Math.min(TRANSFER_THRESHOLD, buyOrderToSell.remainingAmount), terminal.room.name);
+        if (dealResult === OK) {
+          memory.reserved = {
+            time: Game.time,
+            type: ORDER_SELL,
+            orderId: buyOrderToSell.id
+          };
+        }
+        return dealResult;
+      }
     }
   });
 }
 function isTerminal(s) {
   return s.structureType === STRUCTURE_TERMINAL;
 }
+function getRoomResources(room) {
+  const labs = getLabs(room);
+  const { labManager = [], mineralHarvester = [] } = getCreepsInRoom(room);
+  const targets = _([room.terminal, room.storage, ...labs.value(), ...labManager, ...mineralHarvester]).compact();
+  return RESOURCES_ALL.reduce(
+    (v, type) => {
+      return {
+        ...v,
+        [type]: targets.sum((s) => s.store[type])
+      };
+    },
+    {}
+  );
+}
+var BUY_TARGET = [RESOURCE_HYDROGEN, RESOURCE_OXYGEN, RESOURCE_LEMERGIUM, RESOURCE_UTRIUM, RESOURCE_KEANIUM, RESOURCE_ZYNTHIUM];
+var SELL_TARGETS = [
+  ...BUY_TARGET.filter((t) => t !== RESOURCE_HYDROGEN && t !== RESOURCE_OXYGEN),
+  RESOURCE_CATALYST,
+  // xxx_bar
+  RESOURCE_LEMERGIUM_BAR,
+  RESOURCE_UTRIUM_BAR,
+  RESOURCE_KEANIUM_BAR,
+  RESOURCE_ZYNTHIUM_BAR,
+  // factory生産物
+  ...Object.entries(COMMODITIES).filter(([_2, c]) => {
+    return "level" in c;
+  }).map(([key]) => {
+    return key;
+  })
+];
 
 // structure.tower.ts
-function behaviors4(tower) {
+function behaviors3(tower) {
   if (!isTower(tower)) {
     return console.log(`${tower.id} is not tower`);
   }
@@ -3079,9 +3151,9 @@ function isTower(s) {
 var structures = {
   controller: structure_controller_default,
   extractor: behavior16,
-  factory: behaviors2,
-  terminal: behaviors3,
-  tower: behaviors4
+  // factory,
+  terminal: behaviors2,
+  tower: behaviors3
 };
 var structures_default = structures;
 
@@ -3090,7 +3162,8 @@ module.exports.loop = function() {
   console.log(`start ${Game.time}`);
   if (Game.cpu.bucket === void 0 || Game.cpu.bucket > 200) {
     Memory.do = true;
-  } else if (Game.cpu.bucket < 100) {
+    delete Memory.pixelGenerated;
+  } else if (Game.cpu.bucket < 100 && !Memory.pixelGenerated) {
     Memory.do = false;
   }
   if (!Memory.do) {
@@ -3099,7 +3172,9 @@ module.exports.loop = function() {
   }
   logUsage("all", () => {
     if (Game.cpu.bucket === 1e4) {
-      Game.cpu.generatePixel();
+      if (Game.cpu.generatePixel() === OK) {
+        Memory.pixelGenerated = true;
+      }
     }
     if (Game.cpu.bucket < 100) {
       console.log(`bucket\u4E0D\u8DB3 :(${Game.cpu.bucket})`);

@@ -84,6 +84,7 @@ strict digraph "dependency-cruiser output"{
     "structure.extructor.ts" -> "util.creep.ts"
     "structure.extructor.ts" -> "utils.ts"
     "structure.factory.ts" [label=<structure.factory.ts> tooltip="structure.factory.ts" URL="structure.factory.ts" fillcolor="#ddfeff"]
+    "structure.factory.ts" -> "constants.ts"
     "structure.factory.ts" -> "utils.ts"
     "structure.factory.ts" -> "utils.common.ts"
     "structure.links.ts" [label=<structure.links.ts> tooltip="structure.links.ts" URL="structure.links.ts" fillcolor="#ddfeff"]
@@ -100,7 +101,6 @@ strict digraph "dependency-cruiser output"{
     "structures.ts" [label=<structures.ts> tooltip="structures.ts" URL="structures.ts" fillcolor="#ddfeff"]
     "structures.ts" -> "structure.controller.ts"
     "structures.ts" -> "structure.extructor.ts"
-    "structures.ts" -> "structure.factory.ts"
     "structures.ts" -> "structure.terminal.ts"
     "structures.ts" -> "structure.tower.ts"
     "structures.ts" -> "structure.util.ts"
