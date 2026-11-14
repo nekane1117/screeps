@@ -23,8 +23,7 @@ docs/              基地レイアウトと合成手順の図
 
 開発は WSL 上のローカル Node で行う。Node のバージョンは `.nvmrc`（24）に合わせる（`nvm use`）。Screeps の実行環境も 2026-04 から Node 24 なので、`build.js` の esbuild target は `node24` にしている。一方、ゲーム内の lodash は 3.10.1 のままなので、`@types/lodash` は 3.10.1 に固定している。
 
-- `yarn es` — format と lint 修正のあと、esbuild（`build.js`）で `src/main.ts` を `dist/main.js` にまとめる。実際に使うビルドはこれ。
-- `yarn build` — format のあと `tsc` で `dist/` に出力する。ファイルはまとめないので、主に型チェック用。
+- `yarn es` — 型チェック、format と lint 修正のあと、esbuild（`build.js`）で `src/main.ts` を `dist/main.js` にまとめる。実際に使うビルドはこれ。
 - `npx tsc --noEmit` — 型チェックだけ行う。
 - `yarn lint` / `yarn format` — ESLint / Prettier（format は `eslint --fix` も実行する）。
 - `yarn deps` — dependency-cruiser で `src/` の依存グラフ `main.dot` を作り直す。循環依存と未使用モジュールは警告になる（`npx depcruise src` で警告だけ確認できる）。

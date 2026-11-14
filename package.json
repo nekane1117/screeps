@@ -5,8 +5,7 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "build": "yarn format && rm -rf dist/* && tsc",
-    "es": "yarn format && rm -rf dist/* && node build.js",
+    "es": "npx tsc --noEmit && yarn format && rm -rf dist/* && node build.js",
     "sync": "rsync -rv --delete dist/ /mnt/c/Users/takeshikoino/AppData/Local/Screeps/scripts/screeps.com/dist",
     "prepare": "husky",
     "format": "prettier --cache --write . && yarn lint --fix",
@@ -27,7 +26,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^17",
     "prettier": "^3.10.1",
-    "typescript": "~5.9",
+    "typescript": "~6.0",
     "typescript-eslint": "^8"
   },
   "lint-staged": {
