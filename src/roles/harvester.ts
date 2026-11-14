@@ -1,5 +1,5 @@
-import { RETURN_CODE_DECODER, customMove, getMainSpawn, moveRoom, toColor } from "../utils/creep";
 import { findMyStructures } from "../utils";
+import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, moveRoom, pickUpAll, toColor } from "../utils/creep";
 
 /**
  * sourceにとりついて資源を取り続けるだけで移動しない
@@ -62,7 +62,23 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     delete creep.memory.harvestTargetId;
   }
   if (!creep.memory.harvestTargetId) {
-    creep.memory.harvestTargetId = (getMainSpawn(creep.room) || creep).pos.findClosestByPath(FIND_SOURCES_ACTIVE)?.id;
+    // sourceを探す
+    const self = getMainSpawn(creep.room) || creep;
+    // 自分以外
+    const others = (getCreepsInRoom(creep.room).harvester || []).filter((c) => c !== creep);
+    const { used, unused } = creep.room.find(FIND_SOURCES_ACTIVE).reduce(
+      (a, c) => {
+        if (others.some((o) => o.memory.harvestTargetId === c.id)) {
+          a.used.push(c);
+        } else {
+          a.unused.push(c);
+        }
+        return a;
+      },
+      { used: [] as Source[], unused: [] as Source[] },
+    );
+
+    creep.memory.harvestTargetId = (self.pos.findClosestByPath(unused) || self.pos.findClosestByPath(used))?.id;
   }
 
   if (!creep.memory.harvestTargetId) {
@@ -189,11 +205,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   let built: (CreepActionReturnCode | ERR_NOT_ENOUGH_RESOURCES | ERR_RCL_NOT_ENOUGH)[] = [];
 
   // build
-  // 射程圏内の建設はとりあえずぜんぶ叩いておく
-  if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * BUILD_POWER) {
+  // 射程圏内のコンテナ建設はとりあえず叩いておく
+  if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * BUILD_POWER * 2) {
     built = _(
       creep.pos.findInRange(
-        Object.values(Game.constructionSites).filter((s) => s.structureType === STRUCTURE_CONTAINER),
+        Object.values(Game.constructionSites).filter((s) => s.structureType === STRUCTURE_CONTAINER || s.structureType === STRUCTURE_LINK),
         3,
       ),
     )
@@ -217,11 +233,16 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     if (creep.memory.mode === "H") {
       const source = creep.memory.harvestTargetId && Game.getObjectById(creep.memory.harvestTargetId);
       if (source) {
-        let stores: AnyStoreStructure[] = source.pos.findInRange(link, 2);
+        let stores: (AnyStoreStructure | Creep)[] = source.pos.findInRange(link, 2);
         if (stores.length === 0) {
           stores = source.pos.findInRange(container, 2, {
             filter: (c: StructureContainer) => c.store.getFreeCapacity(RESOURCE_ENERGY),
           });
+        }
+
+        if (stores.length === 0) {
+          const { builder = [] } = getCreepsInRoom(creep.room);
+          stores = builder.filter((b) => creep.pos.isNearTo(b));
         }
 
         const store = creep.pos.findClosestByRange(stores);
@@ -236,6 +257,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       }
     }
   }
+
+  pickUpAll(creep);
 };
 
 export default behavior;

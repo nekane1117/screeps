@@ -10,8 +10,7 @@ module.exports.loop = function () {
   console.log(`start ${Game.time}`);
   if (Game.cpu.bucket === undefined || Game.cpu.bucket > 200) {
     Memory.do = true;
-    delete Memory.pixelGenerated;
-  } else if (Game.cpu.bucket < 100 && !Memory.pixelGenerated) {
+  } else if (Game.cpu.bucket < 100) {
     Memory.do = false;
   }
 
@@ -21,11 +20,6 @@ module.exports.loop = function () {
   }
 
   logUsage("all", () => {
-    if (Game.cpu.bucket === 10000) {
-      if (Game.cpu.generatePixel() === OK) {
-        Memory.pixelGenerated = true;
-      }
-    }
     if (Game.cpu.bucket < 100) {
       console.log(`bucket不足 :(${Game.cpu.bucket})`);
       return;
