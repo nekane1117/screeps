@@ -21,7 +21,10 @@ export default function behavior(flag: Flag) {
     })
   ) {
     // 最寄りのspawn
-    const spawn = getSpawnsOrderdByRange(flag).find((s) => Game.rooms[s.room.name]?.controller?.level);
+    const spawn = getSpawnsOrderdByRange(flag).find((s) => {
+      const room = Game.rooms[s.room.name];
+      return room?.controller?.level && room.energyCapacityAvailable > 650;
+    });
 
     // 作らせる
     if (spawn) {

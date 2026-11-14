@@ -1,8 +1,7 @@
+import { TRANSFER_THRESHOLD } from "./constants";
 import { logUsage } from "./utils";
 import { ObjectEntries } from "./utils.common";
 
-/** 閾値 */
-const THRESHOLD = FACTORY_CAPACITY / RESOURCES_ALL.length;
 export default function behaviors(factory: Structure) {
   logUsage(`factory:${factory.room.name}`, () => {
     if (!isFactory(factory)) {
@@ -27,7 +26,7 @@ export default function behaviors(factory: Structure) {
         return (
           !INGREDIENTS.includes(type) &&
           (commodity.level || 0) <= (factory.level || 0) &&
-          factory.store[type] <= THRESHOLD &&
+          factory.store[type] <= TRANSFER_THRESHOLD &&
           ObjectEntries(commodity.components).every(([resource, amount]) => factory.store[resource] >= amount)
         );
       })

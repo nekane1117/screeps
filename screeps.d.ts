@@ -149,7 +149,7 @@ declare interface UpgraderMemory extends CreepMemory {
    */
   mode: "W" | "G";
   /** 資源をもらいに行く先 */
-  storeId?: StoreTarget["id"] | null;
+  storeId?: AnyStoreStructure["id"] | null;
 
   collected?: ScreepsReturnCode;
 }
@@ -267,17 +267,24 @@ declare interface Memory {
   factories: Record<Id<StructureFactory>, FactoryMemory>;
   terminals: Record<Id<StructureTerminal>, TerminalMemory>;
   do: boolean;
+  pixelGenerated?: boolean;
 }
 
 declare interface FactoryMemory {
   lastProduced?: ResourceConstant;
 }
 
+declare interface Reserve {
+  type: ORDER_BUY | ORDER_SELL;
+  /** 処理予約前のクレジット */
+  time: Game["time"];
+  orderId: string;
+}
+
 declare interface TerminalMemory {
-  lastTrade?: MarketResourceConstant;
-  lastTradeResult?: ScreepsReturnCode;
-  lastTradeTick?: number;
-  paritId?: Id<StructureTerminal>;
+  reserved?: Reserve;
+  lastReserve?: Reserve;
+  cache?: number;
 }
 
 declare type CreepBehavior = (creep: Creeps) => void;

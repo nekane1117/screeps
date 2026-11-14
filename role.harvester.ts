@@ -13,7 +13,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // 違う部屋にいたらとりあえず目的の部屋に行く
   if (creep.room.name !== creep.memory.baseRoom) {
-    return moveRoom(creep, creep.room.name, creep.memory.baseRoom);
+    const targetRoom = Game.rooms[creep.memory.baseRoom];
+    creep.say(targetRoom ? "GOTO " + targetRoom.name : "invisible room");
+    if (targetRoom) {
+      const source = targetRoom.controller || _.first(targetRoom.find(FIND_SOURCES)) || new RoomPosition(25, 25, targetRoom.name);
+      return customMove(creep, source);
+    } else {
+      return moveRoom(creep, creep.room.name, creep.memory.baseRoom);
+    }
   }
 
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
@@ -171,8 +178,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       creep.memory.worked === OK &&
       source.pos.findInRange(
         [...source.room.find(FIND_CONSTRUCTION_SITES, { filter: (s) => s.structureType === STRUCTURE_CONTAINER }), ...container, ...link],
-        1,
-      ).length === 0
+        2,
+      ).length === 0 &&
+      creep.pos.roomName === creep.memory.baseRoom
     ) {
       creep.pos.createConstructionSite(STRUCTURE_CONTAINER);
     }

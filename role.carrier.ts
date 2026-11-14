@@ -285,6 +285,9 @@ export function findTransferTarget(room: Room) {
     //貯蓄順
     (factory?.store.energy || 0) <= _.floor(TRANSFER_THRESHOLD, -2) ? factory : null,
     room.storage,
+    ..._.flatten<Creeps>(Object.values(getCreepsInRoom(room)).filter((c) => typeof c !== "number")).filter(
+      (c) => (c.memory.role === "builder" || c.memory.role === "upgrader") && c.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
+    ),
   ])
     .compact()
     .filter((s) => !("my" in s) || s.my)

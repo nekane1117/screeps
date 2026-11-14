@@ -1,5 +1,5 @@
 import { findTransferTarget } from "./role.carrier";
-import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, getRepairPower, moveRoom, pickUpAll, toColor, withdrawBy } from "./util.creep";
+import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, getRepairPower, pickUpAll, toColor, withdrawBy } from "./util.creep";
 import { findMyStructures, getDecayAmount, getLabs, getSitesInRoom } from "./utils";
 // import { findMyStructures } from "./utils";
 
@@ -15,7 +15,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
   // 自室の建設があるときはすぐ行く
   if (creep.pos.roomName !== creep.memory.baseRoom && mySite.length > 0) {
-    return moveRoom(creep, creep.pos.roomName, creep.memory.baseRoom);
+    return customMove(
+      creep,
+      _.min(mySite, (s) => s.progressTotal - s.progress),
+    );
   }
 
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {

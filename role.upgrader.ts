@@ -1,5 +1,5 @@
-import { RETURN_CODE_DECODER, customMove, getMainSpawn, pickUpAll } from "./util.creep";
-import { findMyStructures, getCapacityRate, getLabs, getSitesInRoom } from "./utils";
+import { RETURN_CODE_DECODER, customMove, pickUpAll } from "./util.creep";
+import { getLabs, getSitesInRoom } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
@@ -25,14 +25,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     changeMode(creep, "G");
   }
 
-  const { link, container } = findMyStructures(creep.room);
-
-  const links = link.filter((l) => {
-    const s = getMainSpawn(creep.room);
-    return !(s && l.pos.inRangeTo(s, 1));
-  });
-  // https://docs.screeps.com/simultaneous-actions.html
-
   // signController
   if (controller.sign?.username !== "Nekane" || controller.sign?.text !== SIGN) {
     const signed = creep.signController(controller, SIGN);
@@ -43,17 +35,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
-  const myContainer = controller.pos.findClosestByRange(container, {
-    filter: (c: StructureContainer) => {
-      return c.pos.inRangeTo(controller, 3);
-    },
-  });
-
   // 建設がないときかダウングレードしちゃいそうなとき
   if (
     controller.ticksToDowngrade < 1000 ||
-    getSitesInRoom(controller.room).length === 0 ||
-    (myContainer && getCapacityRate(myContainer, RESOURCE_ENERGY) > 0.5)
+    (getSitesInRoom(controller.room).filter((s) => s.structureType !== STRUCTURE_ROAD).length === 0 &&
+      creep.room.energyAvailable == creep.room.energyCapacityAvailable)
   ) {
     // upgradeController
     creep.memory.worked = creep.upgradeController(controller);
@@ -90,21 +76,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // withdraw
   if (
     creep.memory.storeId ||
-    (creep.memory.storeId = _([...links, ...container])
-      .compact()
-      .filter((c: StructureLink | StructureContainer) => {
-        return c.store.energy > 0 && c.room.controller?.pos.inRangeTo(c, 3);
-      })
-      .sort((c) => {
-        switch (c.structureType) {
-          case "link":
-            return 0;
-
-          default:
-            return 1;
-        }
-      })
-      .first()?.id)
+    (creep.memory.storeId = controller.pos.findClosestByRange(FIND_STRUCTURES, {
+      filter: (c: AnyStructure): c is AnyStoreStructure => {
+        return "store" in c && c.store.energy > 0;
+      },
+    })?.id)
   ) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
@@ -143,6 +119,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           break;
       }
     }
+  } else {
+    creep.say("NO STORE");
   }
 
   // withdraw
