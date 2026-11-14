@@ -88,6 +88,11 @@ export default function behaviors(terminal: Structure) {
         if (!shortage) {
           return OK;
         }
+        const avgPrice = getAveragePrice(shortage);
+        // 相場がわからないときは買わない
+        if (avgPrice === undefined) {
+          return ERR_NOT_FOUND;
+        }
         const sellOrderToBuy = _(
           Game.market.getAllOrders({
             resourceType: shortage,
@@ -95,10 +100,14 @@ export default function behaviors(terminal: Structure) {
           }),
         )
           .filter((o) => o.remainingAmount > 0)
-          .sortBy((o) => o.price)
-          .first();
+          .map((o) => ({ order: o, effectivePrice: o.price + getEnergyCostPerUnit(o, terminal.room.name) }))
+          // 輸送費込みで相場より高すぎるものは買わない
+          .filter((o) => o.effectivePrice <= avgPrice * BUY_MAX_RATE)
+          .sortBy((o) => o.effectivePrice)
+          .first()?.order;
 
         if (!sellOrderToBuy) {
+          console.log(`terminal:${terminal.room.name} ${shortage}の手頃な売り注文なし(相場:${_.round(avgPrice, 3)})`);
           return ERR_NOT_FOUND;
         }
 
@@ -134,6 +143,11 @@ export default function behaviors(terminal: Structure) {
           return ERR_NOT_ENOUGH_RESOURCES;
         }
 
+        const avgPrice = getAveragePrice(target);
+        // 相場がわからないときは売らない
+        if (avgPrice === undefined) {
+          return ERR_NOT_FOUND;
+        }
         const buyOrderToSell = _(
           Game.market.getAllOrders({
             type: ORDER_BUY,
@@ -143,13 +157,17 @@ export default function behaviors(terminal: Structure) {
           .filter((o) => {
             return o.remainingAmount > 0;
           })
+          .map((o) => ({ order: o, effectivePrice: o.price - getEnergyCostPerUnit(o, terminal.room.name) }))
+          // 輸送費を引いて相場より安すぎるものには売らない
+          .filter((o) => o.effectivePrice >= avgPrice * SELL_MIN_RATE)
           .sortBy((o) => {
             // 一番高く売れるやつ
-            return -o.price;
+            return -o.effectivePrice;
           })
-          .first();
+          .first()?.order;
 
         if (!buyOrderToSell) {
+          console.log(`terminal:${terminal.room.name} ${target}の手頃な買い注文なし(相場:${_.round(avgPrice, 3)})`);
           return ERR_NOT_FOUND;
         }
         // 処理前のクレジット
@@ -187,6 +205,43 @@ function getRoomResources(room: Room) {
     },
     {} as Record<ResourceConstant, number>,
   );
+}
+
+/** 相場に対してこの倍率以上なら売る */
+const SELL_MIN_RATE = 0.9;
+/** 相場に対してこの倍率以下なら買う */
+const BUY_MAX_RATE = 1.1;
+/** 相場キャッシュの有効期間(tick) 履歴は日単位なので長めでいい */
+const PRICE_CACHE_TTL = 1000;
+
+// ヒープに置くキャッシュ(グローバルリセットで消えても再計算するだけ)
+const priceCache: Partial<Record<MarketResourceConstant, { time: number; price: number | undefined }>> = {};
+
+/**
+ * 直近の取引履歴から出来高加重の平均価格を返す
+ * 履歴が無いときはundefined
+ */
+function getAveragePrice(resourceType: MarketResourceConstant): number | undefined {
+  const cached = priceCache[resourceType];
+  if (cached && Game.time - cached.time < PRICE_CACHE_TTL) {
+    return cached.price;
+  }
+  const history = Game.market.getHistory(resourceType);
+  const volume = _.sum(history, (h) => h.volume);
+  const price = volume > 0 ? _.sum(history, (h) => h.avgPrice * h.volume) / volume : undefined;
+  priceCache[resourceType] = { time: Game.time, price };
+  return price;
+}
+
+/**
+ * 1単位あたりの輸送エネルギーをクレジット換算したもの
+ */
+function getEnergyCostPerUnit(order: Order, roomName: string) {
+  if (!order.roomName) {
+    return 0;
+  }
+  const energyPrice = getAveragePrice(RESOURCE_ENERGY) || 0;
+  return (Game.market.calcTransactionCost(TRANSFER_THRESHOLD, roomName, order.roomName) / TRANSFER_THRESHOLD) * energyPrice;
 }
 
 const BUY_TARGET = [RESOURCE_HYDROGEN, RESOURCE_OXYGEN, RESOURCE_LEMERGIUM, RESOURCE_UTRIUM, RESOURCE_KEANIUM, RESOURCE_ZYNTHIUM];
