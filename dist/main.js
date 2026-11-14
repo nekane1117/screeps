@@ -1079,7 +1079,7 @@ var behavior5 = (creep) => {
             ignoreCreeps: !creep.pos.inRangeTo(transferTarget, 2)
           });
         }
-        if (transferTarget.structureType !== STRUCTURE_STORAGE) {
+        if ("structureType" in transferTarget && transferTarget.structureType !== STRUCTURE_STORAGE) {
           creep.memory.transferId = transferTarget.id;
           creep.transfer(transferTarget, RESOURCE_ENERGY);
         }
@@ -2930,7 +2930,7 @@ function isE(s) {
 // structure.terminal.ts
 function behaviors2(terminal) {
   logUsage(`terminal:${terminal.room.name}`, () => {
-    var _a, _b;
+    var _a, _b, _c, _d;
     if (!isTerminal(terminal)) {
       return console.log(`${terminal.id} is not terminal`);
     }
@@ -2998,13 +2998,18 @@ function behaviors2(terminal) {
         if (!shortage) {
           return OK;
         }
-        const sellOrderToBuy = _(
+        const avgPrice = getAveragePrice(shortage);
+        if (avgPrice === void 0) {
+          return ERR_NOT_FOUND;
+        }
+        const sellOrderToBuy = (_c = _(
           Game.market.getAllOrders({
             resourceType: shortage,
             type: ORDER_SELL
           })
-        ).filter((o) => o.remainingAmount > 0).sortBy((o) => o.price).first();
+        ).filter((o) => o.remainingAmount > 0).map((o) => ({ order: o, effectivePrice: o.price + getEnergyCostPerUnit(o, terminal.room.name) })).filter((o) => o.effectivePrice <= avgPrice * BUY_MAX_RATE).sortBy((o) => o.effectivePrice).first()) == null ? void 0 : _c.order;
         if (!sellOrderToBuy) {
+          console.log(`terminal:${terminal.room.name} ${shortage}\u306E\u624B\u9803\u306A\u58F2\u308A\u6CE8\u6587\u306A\u3057(\u76F8\u5834:${_.round(avgPrice, 3)})`);
           return ERR_NOT_FOUND;
         }
         if (memory.cache < sellOrderToBuy.price) {
@@ -3031,17 +3036,22 @@ function behaviors2(terminal) {
         if (!target) {
           return ERR_NOT_ENOUGH_RESOURCES;
         }
-        const buyOrderToSell = _(
+        const avgPrice = getAveragePrice(target);
+        if (avgPrice === void 0) {
+          return ERR_NOT_FOUND;
+        }
+        const buyOrderToSell = (_d = _(
           Game.market.getAllOrders({
             type: ORDER_BUY,
             resourceType: target
           })
         ).filter((o) => {
           return o.remainingAmount > 0;
-        }).sortBy((o) => {
-          return -o.price;
-        }).first();
+        }).map((o) => ({ order: o, effectivePrice: o.price - getEnergyCostPerUnit(o, terminal.room.name) })).filter((o) => o.effectivePrice >= avgPrice * SELL_MIN_RATE).sortBy((o) => {
+          return -o.effectivePrice;
+        }).first()) == null ? void 0 : _d.order;
         if (!buyOrderToSell) {
+          console.log(`terminal:${terminal.room.name} ${target}\u306E\u624B\u9803\u306A\u8CB7\u3044\u6CE8\u6587\u306A\u3057(\u76F8\u5834:${_.round(avgPrice, 3)})`);
           return ERR_NOT_FOUND;
         }
         const dealResult = Game.market.deal(buyOrderToSell.id, Math.min(TRANSFER_THRESHOLD, buyOrderToSell.remainingAmount), terminal.room.name);
@@ -3073,6 +3083,28 @@ function getRoomResources(room) {
     },
     {}
   );
+}
+var SELL_MIN_RATE = 0.9;
+var BUY_MAX_RATE = 1.1;
+var PRICE_CACHE_TTL = 1e3;
+var priceCache = {};
+function getAveragePrice(resourceType) {
+  const cached = priceCache[resourceType];
+  if (cached && Game.time - cached.time < PRICE_CACHE_TTL) {
+    return cached.price;
+  }
+  const history = Game.market.getHistory(resourceType);
+  const volume = _.sum(history, (h) => h.volume);
+  const price = volume > 0 ? _.sum(history, (h) => h.avgPrice * h.volume) / volume : void 0;
+  priceCache[resourceType] = { time: Game.time, price };
+  return price;
+}
+function getEnergyCostPerUnit(order, roomName) {
+  if (!order.roomName) {
+    return 0;
+  }
+  const energyPrice = getAveragePrice(RESOURCE_ENERGY) || 0;
+  return Game.market.calcTransactionCost(TRANSFER_THRESHOLD, roomName, order.roomName) / TRANSFER_THRESHOLD * energyPrice;
 }
 var BUY_TARGET = [RESOURCE_HYDROGEN, RESOURCE_OXYGEN, RESOURCE_LEMERGIUM, RESOURCE_UTRIUM, RESOURCE_KEANIUM, RESOURCE_ZYNTHIUM];
 var SELL_TARGETS = [

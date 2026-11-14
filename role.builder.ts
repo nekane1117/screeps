@@ -235,7 +235,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
             ignoreCreeps: !creep.pos.inRangeTo(transferTarget, 2),
           });
         }
-        if (transferTarget.structureType !== STRUCTURE_STORAGE) {
+        if ("structureType" in transferTarget && transferTarget.structureType !== STRUCTURE_STORAGE) {
           creep.memory.transferId = transferTarget.id;
           creep.transfer(transferTarget, RESOURCE_ENERGY);
         }
