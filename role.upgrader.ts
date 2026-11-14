@@ -1,5 +1,5 @@
-import { RETURN_CODE_DECODER, customMove, pickUpAll } from "./util.creep";
-import { getLabs, getSitesInRoom } from "./utils";
+import { RETURN_CODE_DECODER, customMove, getMainSpawn, pickUpAll } from "./util.creep";
+import { findMyStructures, getLabs, getSitesInRoom } from "./utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>
@@ -24,6 +24,14 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   } else if (creep.store.energy === 0) {
     changeMode(creep, "G");
   }
+
+  const { link, container } = findMyStructures(creep.room);
+
+  const links = link.filter((l) => {
+    const s = getMainSpawn(creep.room);
+    return !(s && l.pos.inRangeTo(s, 1));
+  });
+  // https://docs.screeps.com/simultaneous-actions.html
 
   // signController
   if (controller.sign?.username !== "Nekane" || controller.sign?.text !== SIGN) {
@@ -76,11 +84,21 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   // withdraw
   if (
     creep.memory.storeId ||
-    (creep.memory.storeId = controller.pos.findClosestByRange(FIND_STRUCTURES, {
-      filter: (c: AnyStructure): c is AnyStoreStructure => {
-        return "store" in c && c.store.energy > 0;
-      },
-    })?.id)
+    (creep.memory.storeId = _([...links, ...container])
+      .compact()
+      .filter((c: StructureLink | StructureContainer) => {
+        return c.store.energy > 0 && c.room.controller?.pos.inRangeTo(c, 3);
+      })
+      .sort((c) => {
+        switch (c.structureType) {
+          case "link":
+            return 0;
+
+          default:
+            return 1;
+        }
+      })
+      .first()?.id)
   ) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {

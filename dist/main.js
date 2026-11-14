@@ -2212,6 +2212,11 @@ var behavior12 = (creep) => {
   } else if (creep.store.energy === 0) {
     changeMode(creep, "G");
   }
+  const { link, container } = findMyStructures(creep.room);
+  const links = link.filter((l) => {
+    const s = getMainSpawn(creep.room);
+    return !(s && l.pos.inRangeTo(s, 1));
+  });
   if (((_b = controller.sign) == null ? void 0 : _b.username) !== "Nekane" || ((_c = controller.sign) == null ? void 0 : _c.text) !== SIGN) {
     const signed = creep.signController(controller, SIGN);
     if (signed === ERR_NOT_IN_RANGE) {
@@ -2249,11 +2254,17 @@ var behavior12 = (creep) => {
   if (creep.memory.storeId && (((_d = Game.getObjectById(creep.memory.storeId)) == null ? void 0 : _d.store.energy) || 0) <= 0) {
     creep.memory.storeId = void 0;
   }
-  if (creep.memory.storeId || (creep.memory.storeId = (_e = controller.pos.findClosestByRange(FIND_STRUCTURES, {
-    filter: (c) => {
-      return "store" in c && c.store.energy > 0;
+  if (creep.memory.storeId || (creep.memory.storeId = (_e = _([...links, ...container]).compact().filter((c) => {
+    var _a2;
+    return c.store.energy > 0 && ((_a2 = c.room.controller) == null ? void 0 : _a2.pos.inRangeTo(c, 3));
+  }).sort((c) => {
+    switch (c.structureType) {
+      case "link":
+        return 0;
+      default:
+        return 1;
     }
-  })) == null ? void 0 : _e.id)) {
+  }).first()) == null ? void 0 : _e.id)) {
     const store = Game.getObjectById(creep.memory.storeId);
     if (store) {
       creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);
