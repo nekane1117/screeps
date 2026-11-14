@@ -1,5 +1,5 @@
-import { RETURN_CODE_DECODER, customMove, getMainSpawn, moveRoom, toColor } from "./util.creep";
-import { findMyStructures } from "./utils";
+import { RETURN_CODE_DECODER, customMove, getMainSpawn, moveRoom, toColor } from "../utils/creep";
+import { findMyStructures } from "../utils";
 
 /**
  * sourceにとりついて資源を取り続けるだけで移動しない

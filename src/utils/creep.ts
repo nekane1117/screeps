@@ -1,5 +1,5 @@
-import { complexOrder } from "./util.array";
-import { readonly } from "./utils";
+import { complexOrder } from "./array";
+import { readonly } from "./index";
 
 export function isStoreTarget(x: Structure): x is StoreTarget {
   return [STRUCTURE_CONTAINER, STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_STORAGE, STRUCTURE_LINK].some((t) => t === x.structureType);

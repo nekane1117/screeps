@@ -1,5 +1,5 @@
-import { filterBodiesByCost } from "./util.creep";
-import { getSpawnsOrderdByRange } from "./utils";
+import { filterBodiesByCost } from "../utils/creep";
+import { getSpawnsOrderdByRange } from "../utils";
 
 /**
  * 赤い旗

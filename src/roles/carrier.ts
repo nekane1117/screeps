@@ -1,6 +1,6 @@
-import { TRANSFER_THRESHOLD } from "./constants";
-import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, pickUpAll, withdrawBy } from "./util.creep";
-import { findMyStructures, getCapacityRate, getLabs } from "./utils";
+import { TRANSFER_THRESHOLD } from "../constants";
+import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, pickUpAll, withdrawBy } from "../utils/creep";
+import { findMyStructures, getCapacityRate, getLabs } from "../utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const { room } = creep;

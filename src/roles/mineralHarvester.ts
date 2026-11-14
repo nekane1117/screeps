@@ -1,6 +1,6 @@
-import { TRANSFER_THRESHOLD } from "./constants";
-import { RETURN_CODE_DECODER, REVERSE_BOOSTS, customMove } from "./util.creep";
-import { findMyStructures, getLabs } from "./utils";
+import { TRANSFER_THRESHOLD } from "../constants";
+import { RETURN_CODE_DECODER, REVERSE_BOOSTS, customMove } from "../utils/creep";
+import { findMyStructures, getLabs } from "../utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isM(creep)) {

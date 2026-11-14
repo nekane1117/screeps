@@ -1,7 +1,7 @@
-import { LAB_STRATEGY, REVERSE_REACTIONS, TRANSFER_THRESHOLD } from "./constants";
-import { getCreepsInRoom } from "./util.creep";
-import { getLabs, getSpawnsInRoom, isCompound } from "./utils";
-import { getRoomResouces } from "./utils.common";
+import { LAB_STRATEGY, REVERSE_REACTIONS, TRANSFER_THRESHOLD } from "../constants";
+import { getCreepsInRoom } from "../utils/creep";
+import { getLabs, getSpawnsInRoom, isCompound } from "../utils";
+import { getRoomResouces } from "../utils/common";
 
 export default function behavior(labs: StructureLab[], mineral: Mineral) {
   const firstLab = _.first(labs);

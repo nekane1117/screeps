@@ -1,6 +1,6 @@
-import { StructureBehavior } from "structure.util";
-import { getCreepsInRoom, getMainSpawn } from "./util.creep";
-import { findMyStructures, getSitesInRoom, getSpawnsInRoom } from "./utils";
+import { StructureBehavior } from "./util";
+import { getCreepsInRoom, getMainSpawn } from "../utils/creep";
+import { findMyStructures, getSitesInRoom, getSpawnsInRoom } from "../utils";
 
 const behavior: StructureBehavior = (controller: Structure) => {
   if (!isC(controller)) {

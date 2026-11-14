@@ -1,6 +1,6 @@
-import red from "./flag.red";
-import white from "./flag.white";
-import purple from "./flag.purple";
+import red from "./red";
+import white from "./white";
+import purple from "./purple";
 export default {
   [COLOR_RED]: red,
   [COLOR_WHITE]: white,

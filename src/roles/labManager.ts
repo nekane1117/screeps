@@ -1,6 +1,6 @@
-import { COMMODITY_INGREDIENTS, TRANSFER_THRESHOLD } from "./constants";
-import { RETURN_CODE_DECODER, customMove } from "./util.creep";
-import { findMyStructures, getLabs, isCompound } from "./utils";
+import { COMMODITY_INGREDIENTS, TRANSFER_THRESHOLD } from "../constants";
+import { RETURN_CODE_DECODER, customMove } from "../utils/creep";
+import { findMyStructures, getLabs, isCompound } from "../utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const { room } = creep;

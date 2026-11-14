@@ -10,7 +10,7 @@
     "prepare": "husky",
     "format": "npx prettier --cache --write . && yarn lint --fix",
     "lint": "eslint --cache",
-    "deps": "depcruise -T dot . > main.dot"
+    "deps": "depcruise -T dot src > main.dot"
   },
   "author": "nekane1117",
   "license": "MIT",

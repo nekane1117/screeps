@@ -1,5 +1,5 @@
-import { filterBodiesByCost, getCreepsInRoom, RETURN_CODE_DECODER } from "./util.creep";
-import { getSpawnsOrderdByRange } from "./utils";
+import { filterBodiesByCost, getCreepsInRoom, RETURN_CODE_DECODER } from "../utils/creep";
+import { getSpawnsOrderdByRange } from "../utils";
 
 export default function behavior(extractor: Structure) {
   if (!isE(extractor)) {

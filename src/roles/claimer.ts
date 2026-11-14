@@ -1,5 +1,5 @@
-import { RETURN_CODE_DECODER, customMove } from "./util.creep";
-import { getSpawnsOrderdByRange } from "./utils";
+import { RETURN_CODE_DECODER, customMove } from "../utils/creep";
+import { getSpawnsOrderdByRange } from "../utils";
 
 const behavior: CreepBehavior = (claimer: Creeps) => {
   if (!isClaimer(claimer)) {

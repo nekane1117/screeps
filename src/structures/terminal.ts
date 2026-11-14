@@ -1,6 +1,6 @@
-import { getCreepsInRoom, RETURN_CODE_DECODER } from "util.creep";
-import { TRANSFER_THRESHOLD } from "./constants";
-import { getLabs, getTerminals, logUsage } from "./utils";
+import { getCreepsInRoom, RETURN_CODE_DECODER } from "../utils/creep";
+import { TRANSFER_THRESHOLD } from "../constants";
+import { getLabs, getTerminals, logUsage } from "../utils";
 
 export default function behaviors(terminal: Structure) {
   logUsage(`terminal:${terminal.room.name}`, () => {

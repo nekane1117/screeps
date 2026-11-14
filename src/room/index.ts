@@ -1,7 +1,7 @@
-import labManager from "./room.labManager";
-import linkBehavior from "./structure.links";
-import { RETURN_CODE_DECODER, filterBodiesByCost, getCarrierBody, getCreepsInRoom, getMainSpawn } from "./util.creep";
-import { findMyStructures, getSitesInRoom, getSpawnsInRoom, logUsage } from "./utils";
+import labManager from "./labManager";
+import linkBehavior from "../structures/links";
+import { RETURN_CODE_DECODER, filterBodiesByCost, getCarrierBody, getCreepsInRoom, getMainSpawn } from "../utils/creep";
+import { findMyStructures, getSitesInRoom, getSpawnsInRoom, logUsage } from "../utils";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと

@@ -1,4 +1,4 @@
-import { customMove } from "./util.creep";
+import { customMove } from "../utils/creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>

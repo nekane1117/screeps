@@ -2,9 +2,9 @@ import flags from "./flags";
 import { behaviors } from "./roles";
 import { roomBehavior } from "./room";
 import structures from "./structures";
-import { toColor } from "./util.creep";
+import { toColor } from "./utils/creep";
 import { findMyStructures, isHighway, logUsage } from "./utils";
-import { ObjectKeys } from "./utils.common";
+import { ObjectKeys } from "./utils/common";
 
 module.exports.loop = function () {
   console.log(`start ${Game.time}`);

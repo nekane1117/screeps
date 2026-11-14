@@ -1,6 +1,6 @@
-import { TRANSFER_THRESHOLD } from "./constants";
-import { logUsage } from "./utils";
-import { ObjectEntries } from "./utils.common";
+import { TRANSFER_THRESHOLD } from "../constants";
+import { logUsage } from "../utils";
+import { ObjectEntries } from "../utils/common";
 
 export default function behaviors(factory: Structure) {
   logUsage(`factory:${factory.room.name}`, () => {

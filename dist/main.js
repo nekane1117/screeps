@@ -1,6 +1,6 @@
 "use strict";
 
-// util.array.ts
+// src/utils/array.ts
 function complexOrder(arr, evaluation) {
   return _(
     [...arr].sort((e1, e2) => {
@@ -15,7 +15,7 @@ function complexOrder(arr, evaluation) {
   );
 }
 
-// utils.common.ts
+// src/utils/common.ts
 function ObjectKeys(o) {
   return Object.keys(o || {});
 }
@@ -42,7 +42,7 @@ function getRoomResouces(room) {
   return roomResouces;
 }
 
-// constants.ts
+// src/constants.ts
 var COMMODITY_INGREDIENTS = _(ObjectEntries(COMMODITIES)).map(([key, value]) => {
   return [key, ...ObjectKeys(value.components)];
 }).flatten().uniq();
@@ -99,7 +99,7 @@ var ALL_REACTIONS = _(ObjectKeys(REVERSE_REACTIONS)).sortBy((r) => r === "G" ? 0
 var ROAD_DECAY_AMOUNT_SWAMP = 500;
 var ROAD_DECAY_AMOUNT_WALL = 15e3;
 
-// utils.ts
+// src/utils/index.ts
 function getCapacityRate(s, type = RESOURCE_ENERGY) {
   if ("store" in s) {
     return s.store.getUsedCapacity(type) / s.store.getCapacity(type);
@@ -273,7 +273,7 @@ function getDecayAmount(s) {
   }
 }
 
-// util.creep.ts
+// src/utils/creep.ts
 var squareDiff = Object.freeze([
   [-1, -1],
   [0, -1],
@@ -620,7 +620,7 @@ var REVERSE_BOOSTS = {
   }
 };
 
-// flag.red.ts
+// src/flags/red.ts
 function behavior(flag) {
   var _a, _b;
   if (flag.color !== COLOR_RED) {
@@ -663,13 +663,13 @@ function behavior(flag) {
   }
 }
 
-// flag.white.ts
+// src/flags/white.ts
 function behavior2(flag) {
   flag.pos.lookFor(LOOK_STRUCTURES).forEach((s) => s.destroy());
   flag.remove();
 }
 
-// flag.purple.ts
+// src/flags/purple.ts
 function behavior3(flag) {
   var _a;
   if (flag.color !== COLOR_PURPLE) {
@@ -686,14 +686,14 @@ function behavior3(flag) {
   flag.remove();
 }
 
-// flags.ts
+// src/flags/index.ts
 var flags_default = {
   [COLOR_RED]: behavior,
   [COLOR_WHITE]: behavior2,
   [COLOR_PURPLE]: behavior3
 };
 
-// role.carrier.ts
+// src/roles/carrier.ts
 var behavior4 = (creep) => {
   var _a, _b, _c, _d, _e, _f, _g;
   const { room } = creep;
@@ -883,7 +883,7 @@ var behavior4 = (creep) => {
   withdrawBy(creep, ["harvester"]);
   pickUpAll(creep);
 };
-var role_carrier_default = behavior4;
+var carrier_default = behavior4;
 function isCarrier(creep) {
   return creep.memory.role === "carrier";
 }
@@ -918,7 +918,7 @@ function findTransferTarget(room) {
   ]).compact().filter((s) => !("my" in s) || s.my).first();
 }
 
-// role.builder.ts
+// src/roles/builder.ts
 var behavior5 = (creep) => {
   var _a, _b, _c, _d;
   if (!isBuilder(creep)) {
@@ -1159,7 +1159,7 @@ var behavior5 = (creep) => {
   withdrawBy(creep, ["harvester", "upgrader"]);
   pickUpAll(creep);
 };
-var role_builder_default = behavior5;
+var builder_default = behavior5;
 function isBuilder(creep) {
   return creep.memory.role === "builder";
 }
@@ -1244,7 +1244,7 @@ function findRepairTarget(creep) {
   ).sortBy((s) => s.hits * ROAD_DECAY_TIME + ("ticksToDecay" in s ? s.ticksToDecay || 0 : ROAD_DECAY_TIME)).first()) == null ? void 0 : _a.id;
 }
 
-// role.claimer.ts
+// src/roles/claimer.ts
 var behavior6 = (claimer) => {
   var _a, _b, _c, _d;
   if (!isClaimer(claimer)) {
@@ -1285,12 +1285,12 @@ var behavior6 = (claimer) => {
     moveMeTo(target);
   }
 };
-var role_claimer_default = behavior6;
+var claimer_default = behavior6;
 function isClaimer(creep) {
   return creep.memory.role === "claimer";
 }
 
-// role.defender.ts
+// src/roles/defender.ts
 var behavior7 = (creep) => {
   var _a, _b, _c;
   const moveMeTo = (target, opt) => customMove(creep, target, {
@@ -1359,12 +1359,12 @@ var behavior7 = (creep) => {
     }
   }
 };
-var role_defender_default = behavior7;
+var defender_default = behavior7;
 function isD(creep) {
   return creep.memory.role === "defender";
 }
 
-// role.gatherer.ts
+// src/roles/gatherer.ts
 var behavior8 = (creep) => {
   var _a, _b, _c, _d;
   const { room } = creep;
@@ -1524,12 +1524,12 @@ var behavior8 = (creep) => {
     }
   }
 };
-var role_gatherer_default = behavior8;
+var gatherer_default = behavior8;
 function isGatherer(creep) {
   return creep.memory.role === "gatherer";
 }
 
-// role.harvester.ts
+// src/roles/harvester.ts
 var behavior9 = (creep) => {
   var _a, _b, _c;
   if (!isHarvester(creep)) {
@@ -1723,12 +1723,12 @@ var behavior9 = (creep) => {
     }
   }
 };
-var role_harvester_default = behavior9;
+var harvester_default = behavior9;
 function isHarvester(c) {
   return "role" in c.memory && c.memory.role === "harvester";
 }
 
-// role.labManager.ts
+// src/roles/labManager.ts
 var behavior10 = (creep) => {
   var _a, _b, _c, _d, _e, _f;
   const { room } = creep;
@@ -2016,7 +2016,7 @@ var behavior10 = (creep) => {
     }
   }
 };
-var role_labManager_default = behavior10;
+var labManager_default = behavior10;
 function isLabManager(creep) {
   return creep.memory.role === "labManager";
 }
@@ -2024,7 +2024,7 @@ function isCommodityIngredients(r) {
   return COMMODITY_INGREDIENTS.include(r);
 }
 
-// role.mineralHarvester.ts
+// src/roles/mineralHarvester.ts
 var behavior11 = (creep) => {
   if (!isM(creep)) {
     return console.log(`${creep.name} is not MineralHarvester`);
@@ -2072,7 +2072,7 @@ var behavior11 = (creep) => {
     work(creep);
   }
 };
-var role_mineralHarvester_default = behavior11;
+var mineralHarvester_default = behavior11;
 function isM(c) {
   return c.memory.role === "mineralHarvester";
 }
@@ -2191,7 +2191,7 @@ function boost2(creep) {
   return result;
 }
 
-// role.upgrader.ts
+// src/roles/upgrader.ts
 var behavior12 = (creep) => {
   var _a, _b, _c, _d, _e;
   const moveMeTo = (target, opt) => customMove(creep, target, {
@@ -2307,7 +2307,7 @@ var behavior12 = (creep) => {
   }
   pickUpAll(creep);
 };
-var role_upgrader_default = behavior12;
+var upgrader_default = behavior12;
 function isUpgrader(creep) {
   return creep.memory.role === "upgrader";
 }
@@ -2347,20 +2347,20 @@ function boost3(creep) {
 }
 var SIGN = "Please see github nekane1117/screeps";
 
-// roles.ts
+// src/roles/index.ts
 var behaviors = {
-  builder: role_builder_default,
-  carrier: role_carrier_default,
-  claimer: role_claimer_default,
-  gatherer: role_gatherer_default,
-  defender: role_defender_default,
-  harvester: role_harvester_default,
-  labManager: role_labManager_default,
-  mineralHarvester: role_mineralHarvester_default,
-  upgrader: role_upgrader_default
+  builder: builder_default,
+  carrier: carrier_default,
+  claimer: claimer_default,
+  gatherer: gatherer_default,
+  defender: defender_default,
+  harvester: harvester_default,
+  labManager: labManager_default,
+  mineralHarvester: mineralHarvester_default,
+  upgrader: upgrader_default
 };
 
-// room.labManager.ts
+// src/room/labManager.ts
 function behavior13(labs, mineral) {
   var _a;
   const firstLab = _.first(labs);
@@ -2480,7 +2480,7 @@ function getManagerBody(room) {
   }).filter((p) => p.costTotal <= room.energyAvailable).map((p) => p.parts);
 }
 
-// structure.links.ts
+// src/structures/links.ts
 function behavior14(links) {
   var _a, _b;
   const room = (_a = _.first(links)) == null ? void 0 : _a.room;
@@ -2502,7 +2502,7 @@ function behavior14(links) {
   }
 }
 
-// room.ts
+// src/room/index.ts
 function roomBehavior(room) {
   var _a, _b, _c;
   if (room.find(FIND_HOSTILE_CREEPS).length && !((_a = room.controller) == null ? void 0 : _a.safeMode) && room.energyAvailable > SAFE_MODE_COST) {
@@ -2794,7 +2794,7 @@ function checkSpawnBuilder(room) {
 }
 var dynamicMinCost = 1e3;
 
-// structure.controller.ts
+// src/structures/controller.ts
 var behavior15 = (controller) => {
   var _a;
   if (!isC(controller)) {
@@ -2843,7 +2843,7 @@ var behavior15 = (controller) => {
     }
   }
 };
-var structure_controller_default = behavior15;
+var controller_default = behavior15;
 function isC(s) {
   return s.structureType === STRUCTURE_CONTROLLER;
 }
@@ -2889,7 +2889,7 @@ function getUpgraderBody(room) {
   }
 }
 
-// structure.extructor.ts
+// src/structures/extractor.ts
 function behavior16(extractor) {
   if (!isE(extractor)) {
     return console.log("type is invalid", JSON.stringify(extractor));
@@ -2927,7 +2927,7 @@ function isE(s) {
   return s.structureType === STRUCTURE_EXTRACTOR;
 }
 
-// structure.terminal.ts
+// src/structures/terminal.ts
 function behaviors2(terminal) {
   logUsage(`terminal:${terminal.room.name}`, () => {
     var _a, _b, _c, _d;
@@ -3123,7 +3123,7 @@ var SELL_TARGETS = [
   })
 ];
 
-// structure.tower.ts
+// src/structures/tower.ts
 function behaviors3(tower) {
   if (!isTower(tower)) {
     return console.log(`${tower.id} is not tower`);
@@ -3179,9 +3179,9 @@ function isTower(s) {
   return s.structureType === STRUCTURE_TOWER;
 }
 
-// structures.ts
+// src/structures/index.ts
 var structures = {
-  controller: structure_controller_default,
+  controller: controller_default,
   extractor: behavior16,
   // factory,
   terminal: behaviors2,
@@ -3189,7 +3189,7 @@ var structures = {
 };
 var structures_default = structures;
 
-// main.ts
+// src/main.ts
 module.exports.loop = function() {
   console.log(`start ${Game.time}`);
   if (Game.cpu.bucket === void 0 || Game.cpu.bucket > 200) {

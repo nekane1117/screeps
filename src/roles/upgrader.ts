@@ -1,5 +1,5 @@
-import { RETURN_CODE_DECODER, customMove, getMainSpawn, pickUpAll } from "./util.creep";
-import { findMyStructures, getLabs, getSitesInRoom } from "./utils";
+import { RETURN_CODE_DECODER, customMove, getMainSpawn, pickUpAll } from "../utils/creep";
+import { findMyStructures, getLabs, getSitesInRoom } from "../utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) =>

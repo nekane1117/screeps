@@ -1,7 +1,7 @@
-import { findTransferTarget } from "./role.carrier";
-import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, getRepairPower, pickUpAll, toColor, withdrawBy } from "./util.creep";
-import { findMyStructures, getDecayAmount, getLabs, getSitesInRoom } from "./utils";
-// import { findMyStructures } from "./utils";
+import { findTransferTarget } from "./carrier";
+import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, getRepairPower, pickUpAll, toColor, withdrawBy } from "../utils/creep";
+import { findMyStructures, getDecayAmount, getLabs, getSitesInRoom } from "../utils";
+// import { findMyStructures } from "../utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   if (!isBuilder(creep)) {

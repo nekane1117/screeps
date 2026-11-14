@@ -1,4 +1,4 @@
-import { ROAD_DECAY_AMOUNT_SWAMP, ROAD_DECAY_AMOUNT_WALL } from "./constants";
+import { ROAD_DECAY_AMOUNT_SWAMP, ROAD_DECAY_AMOUNT_WALL } from "../constants";
 
 export default function behaviors(tower: Structure) {
   if (!isTower(tower)) {

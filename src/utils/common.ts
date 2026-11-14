@@ -1,5 +1,5 @@
-import { getCreepsInRoom } from "./util.creep";
-import { findMyStructures, getLabs } from "./utils";
+import { getCreepsInRoom } from "./creep";
+import { findMyStructures, getLabs } from "./index";
 
 export function defaultTo<T>(value: T | null | undefined, defaultValue: T) {
   if (value === undefined || value === null) {

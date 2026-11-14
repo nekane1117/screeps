@@ -1,4 +1,4 @@
-import { ObjectEntries, ObjectKeys } from "./utils.common";
+import { ObjectEntries, ObjectKeys } from "./utils/common";
 
 export const TERMINAL_LIMIT = 10000;
 

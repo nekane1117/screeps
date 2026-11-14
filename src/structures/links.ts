@@ -1,6 +1,6 @@
-import { TRANSFER_THRESHOLD } from "./constants";
-import { getMainSpawn } from "./util.creep";
-import { findMyStructures, getCapacityRate } from "./utils";
+import { TRANSFER_THRESHOLD } from "../constants";
+import { getMainSpawn } from "../utils/creep";
+import { findMyStructures, getCapacityRate } from "../utils";
 export default function behavior(links: StructureLink[]) {
   const room = _.first(links)?.room;
   const center = room && (room.storage || getMainSpawn(room));
