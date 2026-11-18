@@ -8,6 +8,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
     customMove(creep, target, {
       ignoreCreeps: true,
+      swampCost: 3,
+      plainCost: 2,
       ...opt,
     });
   };
@@ -71,18 +73,26 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
+  // とにかくまずstorageから配る
+  if (!creep.memory.storeId && creep.room.energyAvailable < creep.room.energyCapacityAvailable && (creep.room.storage?.store.energy || 0)) {
+    creep.memory.storeId = creep.room.storage?.id;
+  }
+
+  // 落ちてるものはすぐ消えるので集める
   if (!creep.memory.storeId) {
     creep.memory.storeId = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES, {
       filter: (d) => d.resourceType === RESOURCE_ENERGY && d.amount > 0,
     })?.id;
   }
 
+  // 墓も集める
   if (!creep.memory.storeId) {
     creep.memory.storeId = creep.pos.findClosestByPath(FIND_TOMBSTONES, {
       filter: (d) => d.store.energy > 0,
     })?.id;
   }
 
+  // 廃墟も集める
   if (!creep.memory.storeId) {
     creep.memory.storeId = creep.pos.findClosestByPath(FIND_RUINS, {
       filter: (d) => d.store.energy > 0,

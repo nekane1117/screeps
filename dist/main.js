@@ -688,6 +688,8 @@ var behavior4 = (creep) => {
   const moveMeTo = (target, opt) => {
     customMove(creep, target, {
       ignoreCreeps: true,
+      swampCost: 3,
+      plainCost: 2,
       ...opt
     });
   };
@@ -730,6 +732,9 @@ var behavior4 = (creep) => {
     if (!store || "store" in store && store.store.energy < CARRY_CAPACITY) {
       creep.memory.storeId = void 0;
     }
+  }
+  if (!creep.memory.storeId && creep.room.energyAvailable < creep.room.energyCapacityAvailable && (creep.room.storage?.store.energy || 0)) {
+    creep.memory.storeId = creep.room.storage?.id;
   }
   if (!creep.memory.storeId) {
     creep.memory.storeId = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES, {
@@ -920,6 +925,8 @@ var behavior5 = (creep) => {
     });
     return customMove(creep, target, {
       maxRooms: 0,
+      swampCost: 3,
+      plainCost: 2,
       ...opt
     });
   };
@@ -1075,7 +1082,8 @@ var behavior5 = (creep) => {
           }),
           ...[creep.room.terminal, creep.room.storage].filter(
             (t) => t && t.store.energy > t.room.energyCapacityAvailable + creep.store.getCapacity(RESOURCE_ENERGY)
-          )
+          ),
+          ...creep.room.find(FIND_RUINS, { filter: (r) => r.store.energy >= capacityThreshold })
         ]),
         {
           filter: (s) => {
@@ -1546,7 +1554,20 @@ var behavior9 = (creep) => {
     delete creep.memory.harvestTargetId;
   }
   if (!creep.memory.harvestTargetId) {
-    creep.memory.harvestTargetId = (getMainSpawn(creep.room) || creep).pos.findClosestByPath(FIND_SOURCES_ACTIVE)?.id;
+    const self = getMainSpawn(creep.room) || creep;
+    const others = (getCreepsInRoom(creep.room).harvester || []).filter((c) => c !== creep);
+    const { used, unused } = creep.room.find(FIND_SOURCES_ACTIVE).reduce(
+      (a, c) => {
+        if (others.some((o) => o.memory.harvestTargetId === c.id)) {
+          a.used.push(c);
+        } else {
+          a.unused.push(c);
+        }
+        return a;
+      },
+      { used: [], unused: [] }
+    );
+    creep.memory.harvestTargetId = (self.pos.findClosestByPath(unused) || self.pos.findClosestByPath(used))?.id;
   }
   if (!creep.memory.harvestTargetId) {
     return ERR_NOT_FOUND;
@@ -1652,10 +1673,10 @@ var behavior9 = (creep) => {
     }
   }
   let built = [];
-  if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * BUILD_POWER) {
+  if (creep.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.getActiveBodyparts(WORK) * BUILD_POWER * 2) {
     built = _(
       creep.pos.findInRange(
-        Object.values(Game.constructionSites).filter((s) => s.structureType === STRUCTURE_CONTAINER),
+        Object.values(Game.constructionSites).filter((s) => s.structureType === STRUCTURE_CONTAINER || s.structureType === STRUCTURE_LINK),
         3
       )
     ).sortBy((s) => s.progress - s.progressTotal).map((site) => creep.build(site)).run();
@@ -1677,6 +1698,10 @@ var behavior9 = (creep) => {
             filter: (c) => c.store.getFreeCapacity(RESOURCE_ENERGY)
           });
         }
+        if (stores.length === 0) {
+          const { builder = [] } = getCreepsInRoom(creep.room);
+          stores = builder.filter((b) => creep.pos.isNearTo(b));
+        }
         const store = creep.pos.findClosestByRange(stores);
         if (store) {
           if (creep.transfer(store, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
@@ -1688,6 +1713,7 @@ var behavior9 = (creep) => {
       }
     }
   }
+  pickUpAll(creep);
 };
 var harvester_default = behavior9;
 function isHarvester(c) {
@@ -2179,31 +2205,29 @@ var behavior12 = (creep) => {
       console.log(`${creep.name}:${RETURN_CODE_DECODER[signed.toString()]}`);
     }
   }
-  if (controller.ticksToDowngrade < 1e3 || getSitesInRoom(controller.room).filter((s) => s.structureType !== STRUCTURE_ROAD).length === 0 && creep.room.energyAvailable == creep.room.energyCapacityAvailable) {
-    creep.memory.worked = creep.upgradeController(controller);
-    switch (creep.memory.worked) {
-      // 資源不足
-      case ERR_NOT_ENOUGH_RESOURCES:
-        changeMode(creep, "G");
-        break;
-      case ERR_NOT_IN_RANGE:
-        if (creep.memory.mode === "W") {
-          moveMeTo(controller, { range: 3 });
-        }
-        break;
-      // 有りえない系
-      case ERR_NOT_OWNER:
-      case ERR_INVALID_TARGET:
-      case ERR_NO_BODYPART:
-        console.log(`${creep.name} upgradeController returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
-        creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
-        break;
-      // 問題ない系
-      case OK:
-      case ERR_BUSY:
-      default:
-        break;
-    }
+  creep.memory.worked = creep.upgradeController(controller);
+  switch (creep.memory.worked) {
+    // 資源不足
+    case ERR_NOT_ENOUGH_RESOURCES:
+      changeMode(creep, "G");
+      break;
+    case ERR_NOT_IN_RANGE:
+      if (creep.memory.mode === "W") {
+        moveMeTo(controller, { range: 3 });
+      }
+      break;
+    // 有りえない系
+    case ERR_NOT_OWNER:
+    case ERR_INVALID_TARGET:
+    case ERR_NO_BODYPART:
+      console.log(`${creep.name} upgradeController returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
+      creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
+      break;
+    // 問題ない系
+    case OK:
+    case ERR_BUSY:
+    default:
+      break;
   }
   if (creep.memory.storeId && (Game.getObjectById(creep.memory.storeId)?.store.energy || 0) <= 0) {
     creep.memory.storeId = void 0;
@@ -2255,10 +2279,21 @@ var behavior12 = (creep) => {
           break;
       }
     }
+    pickUpAll(creep);
   } else {
     creep.say("NO STORE");
+    const { upgrader = [] } = getCreepsInRoom(creep.room);
+    if (upgrader.length > 1 && creep === _(upgrader).filter((u) => u.store.energy === 0).min((u) => -(u.ticksToLive || 0))) {
+      const mainSpawn = getMainSpawn(creep.room);
+      if (mainSpawn) {
+        if (creep.pos.isNearTo(mainSpawn)) {
+          mainSpawn.recycleCreep(creep);
+        } else {
+          moveMeTo(mainSpawn);
+        }
+      }
+    }
   }
-  pickUpAll(creep);
 };
 var upgrader_default = behavior12;
 function isUpgrader(creep) {
@@ -2731,9 +2766,15 @@ function checkSpawnBuilder(room) {
     return false;
   }
   const { bodies: builderBodies } = filterBodiesByCost("builder", room.energyCapacityAvailable);
-  return builder.filter((g) => {
-    return builderBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || Infinity);
-  }).length < 1;
+  const requireWorkCount = getSitesInRoom(room).length === 0 ? 1 : Math.max(1, findMyStructures(room).source.length * 2);
+  return _.sum(
+    builder.filter((g) => {
+      return builderBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || Infinity);
+    }),
+    (b) => {
+      return b.getActiveBodyparts(WORK);
+    }
+  ) < requireWorkCount;
 }
 var dynamicMinCost = 1e3;
 
@@ -2745,7 +2786,7 @@ var behavior15 = (controller) => {
   const showSummary = (texts) => {
     texts.forEach((text, i) => {
       const center = getMainSpawn(controller.room) || controller;
-      controller.room.visual.text(text, Math.max(center.pos.x - 3, 1), Math.max(1, center.pos.y - 3 - texts.length + i), { align: "left" });
+      controller.room.visual.text(text, Math.max(center.pos.x - 3, 1), Math.max(1, center.pos.y - texts.length) + i, { align: "left" });
     });
   };
   showSummary([
@@ -2755,13 +2796,9 @@ var behavior15 = (controller) => {
   ]);
   updateUpgraderSize(controller.room);
   const { harvester = [], carrier = [] } = getCreepsInRoom(controller.room);
-  const { container } = findMyStructures(controller.room);
-  const containerSite = getSitesInRoom(controller.room).filter((s) => s.structureType === STRUCTURE_CONTAINER);
   const mainSpawn = getMainSpawn(controller.room);
   if (mainSpawn) {
-    const myContainer = controller.pos.findClosestByRange([...container, ...containerSite], {
-      filter: (s) => controller.pos.inRangeTo(s, 3)
-    });
+    const myContainer = getContollerContainer(controller);
     const upgraderBody = getUpgraderBody(controller.room);
     if (myContainer) {
       if (harvester.length > 0 && carrier.length > 0 && upgraderBody.length && controller.room.energyAvailable === controller.room.energyCapacityAvailable) {
@@ -2777,15 +2814,25 @@ var behavior15 = (controller) => {
         }
       }
     } else {
-      const terrain = controller.room.getTerrain();
-      const firstStep = controller.pos.findPathTo(mainSpawn).find((p) => terrain.get(p.x, p.y) !== TERRAIN_MASK_WALL);
-      if (firstStep) {
-        new RoomPosition(firstStep.x, firstStep.y, controller.room.name).createConstructionSite(STRUCTURE_CONTAINER);
-      }
+      findControllerContainerPos(controller, mainSpawn)?.createConstructionSite(STRUCTURE_CONTAINER);
     }
   }
 };
 var controller_default = behavior15;
+function findControllerContainerPos(controller, mainSpawn) {
+  const room = controller.room;
+  const terrain = room.getTerrain();
+  const isWalkable = (x, y) => {
+    return x > 0 && x < 49 && y > 0 && y < 49 && terrain.get(x, y) !== TERRAIN_MASK_WALL && !room.lookForAt(LOOK_STRUCTURES, x, y).some((s) => OBSTACLE_OBJECT_TYPES.includes(s.structureType));
+  };
+  const countSpace = (x, y) => {
+    return _.sum(_.range(-1, 2), (dy) => _.range(-1, 2).filter((dx) => (dx !== 0 || dy !== 0) && isWalkable(x + dx, y + dy)).length);
+  };
+  return _(_.range(-2, 3)).map((dy) => _.range(-2, 3).map((dx) => ({ x: controller.pos.x + dx, y: controller.pos.y + dy }))).flatten().filter(({ x, y }) => isWalkable(x, y)).map(({ x, y }) => {
+    const pos = new RoomPosition(x, y, room.name);
+    return { pos, space: countSpace(x, y), range: pos.getRangeTo(mainSpawn) };
+  }).sortBy((c) => -c.space * 100 + c.range).first()?.pos;
+}
 function isC(s) {
   return s.structureType === STRUCTURE_CONTROLLER;
 }
@@ -2800,34 +2847,44 @@ function updateUpgraderSize(room) {
   const border = CREEP_LIFE_TIME / 4;
   memory.carrySize.upgrader = (memory.carrySize.upgrader * border + _(room.getEventLog()).map((e) => e.event === EVENT_UPGRADE_CONTROLLER && e.data.energySpent).compact().sum()) / (border + 1);
 }
-var SIZE_FACTOR = 2;
 function getUpgraderBody(room) {
   const { upgrader = [] } = getCreepsInRoom(room);
-  if (room.controller?.level === 8 && upgrader.length === 0) {
-    return [MOVE, WORK, CARRY];
+  if (room.controller?.level === 8) {
+    return upgrader.length === 0 ? [MOVE, WORK, CARRY] : [];
   }
-  if (upgrader.length >= 1) {
+  if (upgrader.length === 0) {
+    return filterBodiesByCost("upgrader", room.energyAvailable).bodies;
+  }
+  if (getControllerStockRate(room.controller) < 0.8) {
     return [];
   }
-  const requestUnit = Math.min((room.memory.carrySize?.upgrader || 1) * SIZE_FACTOR, 20) / 3;
-  let totalCost = 0;
-  if (requestUnit <= 0) {
-    return [];
-  } else {
-    return _([CARRY, MOVE]).concat(
-      ..._.range(requestUnit).map(() => {
-        return [WORK, WORK, WORK, MOVE];
-      })
-    ).flatten().map((parts) => {
-      totalCost += BODYPART_COST[parts];
-      return {
-        parts,
-        totalCost
-      };
-    }).filter((p) => {
-      return p.totalCost <= room.energyAvailable;
-    }).map((p) => p.parts).value();
+  return filterBodiesByCost("upgrader", room.energyAvailable).bodies;
+}
+function getControllerStockRate(controller) {
+  if (!controller) {
+    return 0;
   }
+  const contollerContainer = getContollerContainer(controller);
+  const mainSpawn = getMainSpawn(controller.room);
+  const controllerLinks = findMyStructures(controller.room).link.filter((l) => {
+    return l.pos.inRangeTo(controller, 3) && !(mainSpawn && l.pos.inRangeTo(mainSpawn, 1));
+  });
+  const stores = _.compact([contollerContainer && !("progress" in contollerContainer) ? contollerContainer : void 0, ...controllerLinks]);
+  return _.max([0, ...stores.map((s) => s.store.energy / s.store.getCapacity(RESOURCE_ENERGY))]);
+}
+function getContollerContainer(controller) {
+  if (!controller) {
+    return void 0;
+  }
+  const { container } = findMyStructures(controller.room);
+  const containerSite = getSitesInRoom(controller.room).filter((s) => s.structureType === STRUCTURE_CONTAINER);
+  const mainSpawn = getMainSpawn(controller.room);
+  if (mainSpawn) {
+    return controller.pos.findClosestByRange([...container, ...containerSite], {
+      filter: (s) => controller.pos.inRangeTo(s, 3)
+    });
+  }
+  return void 0;
 }
 
 // src/structures/extractor.ts
@@ -3131,8 +3188,7 @@ module.exports.loop = function() {
   console.log(`start ${Game.time}`);
   if (Game.cpu.bucket === void 0 || Game.cpu.bucket > 200) {
     Memory.do = true;
-    delete Memory.pixelGenerated;
-  } else if (Game.cpu.bucket < 100 && !Memory.pixelGenerated) {
+  } else if (Game.cpu.bucket < 100) {
     Memory.do = false;
   }
   if (!Memory.do) {
@@ -3140,11 +3196,6 @@ module.exports.loop = function() {
     return;
   }
   logUsage("all", () => {
-    if (Game.cpu.bucket === 1e4) {
-      if (Game.cpu.generatePixel() === OK) {
-        Memory.pixelGenerated = true;
-      }
-    }
     if (Game.cpu.bucket < 100) {
       console.log(`bucket\u4E0D\u8DB3 :(${Game.cpu.bucket})`);
       return;

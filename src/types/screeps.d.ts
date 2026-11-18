@@ -175,7 +175,7 @@ declare interface BuilderMemory extends CreepMemory {
   firstAidId?: Id<Parameters<Creep["repair"]>[0]>;
   built?: ReturnType<Creeps["build"]>;
   /** 資源をもらいに行く先 */
-  storeId?: Id<AnyStoreStructure>;
+  storeId?: Id<AnyStoreStructure | Ruin>;
 }
 
 declare interface Carrier extends Creep {
@@ -267,7 +267,6 @@ declare interface Memory {
   factories: Record<Id<StructureFactory>, FactoryMemory>;
   terminals: Record<Id<StructureTerminal>, TerminalMemory>;
   do: boolean;
-  pixelGenerated?: boolean;
 }
 
 declare interface FactoryMemory {

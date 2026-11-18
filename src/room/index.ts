@@ -411,13 +411,25 @@ function checkSpawnBuilder(room: Room) {
     return false;
   }
   const { bodies: builderBodies } = filterBodiesByCost("builder", room.energyCapacityAvailable);
+
+  // 要求WORK数
+  // 建設地がないときは1(たぶん維持するのにいる)
+  // 建設地があるときは最大(ソース当たり２個)
+  // 0になっちゃわないように１を維持
+  const requireWorkCount = getSitesInRoom(room).length === 0 ? 1 : Math.max(1, findMyStructures(room).source.length * 2);
+
   /**
-   * ビルダーの数が1未満
+   * ビルダーの数が要求WORK数未満
    */
   return (
-    builder.filter((g) => {
-      return builderBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || Infinity);
-    }).length < 1
+    _.sum(
+      builder.filter((g) => {
+        return builderBodies.length * CREEP_SPAWN_TIME < (g.ticksToLive || Infinity);
+      }),
+      (b) => {
+        return b.getActiveBodyparts(WORK);
+      },
+    ) < requireWorkCount
   );
 }
 

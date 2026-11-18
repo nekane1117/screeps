@@ -1,6 +1,6 @@
-import { StructureBehavior } from "./util";
-import { getCreepsInRoom, getMainSpawn } from "../utils/creep";
 import { findMyStructures, getSitesInRoom, getSpawnsInRoom } from "../utils";
+import { filterBodiesByCost, getCreepsInRoom, getMainSpawn } from "../utils/creep";
+import { StructureBehavior } from "./util";
 
 const behavior: StructureBehavior = (controller: Structure) => {
   if (!isC(controller)) {
@@ -10,7 +10,7 @@ const behavior: StructureBehavior = (controller: Structure) => {
   const showSummary = (texts: string[]) => {
     texts.forEach((text, i) => {
       const center = getMainSpawn(controller.room) || controller;
-      controller.room.visual.text(text, Math.max(center.pos.x - 3, 1), Math.max(1, center.pos.y - 3 - texts.length + i), { align: "left" });
+      controller.room.visual.text(text, Math.max(center.pos.x - 3, 1), Math.max(1, center.pos.y - texts.length) + i, { align: "left" });
     });
   };
 
@@ -24,15 +24,11 @@ const behavior: StructureBehavior = (controller: Structure) => {
   updateUpgraderSize(controller.room);
 
   const { harvester = [], carrier = [] } = getCreepsInRoom(controller.room);
-  const { container } = findMyStructures(controller.room);
-  const containerSite = getSitesInRoom(controller.room).filter((s) => s.structureType === STRUCTURE_CONTAINER);
   // 中心地がある
   const mainSpawn = getMainSpawn(controller.room);
   if (mainSpawn) {
     // コントローラ用コンテナ(建設中含む)
-    const myContainer = controller.pos.findClosestByRange([...container, ...containerSite], {
-      filter: (s: StructureContainer | ConstructionSite) => controller.pos.inRangeTo(s, 3),
-    });
+    const myContainer = getContollerContainer(controller);
 
     const upgraderBody = getUpgraderBody(controller.room);
 
@@ -52,16 +48,54 @@ const behavior: StructureBehavior = (controller: Structure) => {
       }
     } else {
       // コンテナがなければ建てる
-      const terrain = controller.room.getTerrain();
-      const firstStep = controller.pos.findPathTo(mainSpawn).find((p) => terrain.get(p.x, p.y) !== TERRAIN_MASK_WALL);
-      if (firstStep) {
-        new RoomPosition(firstStep.x, firstStep.y, controller.room.name).createConstructionSite(STRUCTURE_CONTAINER);
-      }
+      findControllerContainerPos(controller, mainSpawn)?.createConstructionSite(STRUCTURE_CONTAINER);
     }
   }
 };
 
 export default behavior;
+
+/**
+ * コントローラー用コンテナを建てる場所を探す
+ * コントローラーから2マス以内に置けば周りのマスは全部upgradeできる範囲(3マス)に入るので、
+ * その中で周りに立てるマスが一番多い(upgraderが並べる)場所を選ぶ
+ * 同じ広さならメインスポーンに近い方(運搬が楽)
+ */
+function findControllerContainerPos(controller: StructureController, mainSpawn: StructureSpawn) {
+  const room = controller.room;
+  const terrain = room.getTerrain();
+
+  // 人が立てるマスか(部屋の端・壁・通れない建物はダメ)
+  const isWalkable = (x: number, y: number) => {
+    return (
+      x > 0 &&
+      x < 49 &&
+      y > 0 &&
+      y < 49 &&
+      terrain.get(x, y) !== TERRAIN_MASK_WALL &&
+      !room.lookForAt(LOOK_STRUCTURES, x, y).some((s) => (OBSTACLE_OBJECT_TYPES as string[]).includes(s.structureType))
+    );
+  };
+
+  // 周囲8マスのうち立てるマスの数
+  const countSpace = (x: number, y: number) => {
+    return _.sum(_.range(-1, 2), (dy) => _.range(-1, 2).filter((dx) => (dx !== 0 || dy !== 0) && isWalkable(x + dx, y + dy)).length);
+  };
+
+  return (
+    _(_.range(-2, 3))
+      .map((dy) => _.range(-2, 3).map((dx) => ({ x: controller.pos.x + dx, y: controller.pos.y + dy })))
+      .flatten<{ x: number; y: number }>()
+      .filter(({ x, y }) => isWalkable(x, y))
+      .map(({ x, y }) => {
+        const pos = new RoomPosition(x, y, room.name);
+        return { pos, space: countSpace(x, y), range: pos.getRangeTo(mainSpawn) };
+      })
+      // 広さ優先、同じならspawnに近い方
+      .sortBy((c) => -c.space * 100 + c.range)
+      .first()?.pos
+  );
+}
 function isC(s: Structure): s is StructureController {
   return s.structureType === STRUCTURE_CONTROLLER;
 }
@@ -87,46 +121,58 @@ function updateUpgraderSize(room: Room) {
     (border + 1);
 }
 
-const SIZE_FACTOR = 2;
-
 function getUpgraderBody(room: Room): BodyPartConstant[] {
   const { upgrader = [] } = getCreepsInRoom(room);
 
-  // lveel 8の時は維持だけできればいいので特別に小さいのを出す
-  if (room.controller?.level === 8 && upgrader.length === 0) {
-    return [MOVE, WORK, CARRY];
+  // level 8の時は維持だけできればいいので特別に小さいのを1体だけ
+  if (room.controller?.level === 8) {
+    return upgrader.length === 0 ? [MOVE, WORK, CARRY] : [];
   }
 
-  if (upgrader.length >= 1) {
+  // 0体の時はコンテナに関係なく最低1体(ダウングレード防止)
+  if (upgrader.length === 0) {
+    return filterBodiesByCost("upgrader", room.energyAvailable).bodies;
+  }
+
+  if (getControllerStockRate(room.controller) < 0.8) {
     return [];
   }
 
-  // 実際に欲しいサイズ[((実効値 * 係数)) / 個数単位]
-  const requestUnit = Math.min((room.memory.carrySize?.upgrader || 1) * SIZE_FACTOR, 20) / 3;
+  return filterBodiesByCost("upgrader", room.energyAvailable).bodies;
+}
 
-  let totalCost = 0;
-  // 要求サイズが0以下の時は返さない
-  if (requestUnit <= 0) {
-    return [];
-  } else {
-    return _([CARRY, MOVE])
-      .concat(
-        ..._.range(requestUnit).map(() => {
-          return [WORK, WORK, WORK, MOVE];
-        }),
-      )
-      .flatten<BodyPartConstant>()
-      .map((parts) => {
-        totalCost += BODYPART_COST[parts];
-        return {
-          parts,
-          totalCost,
-        };
-      })
-      .filter((p) => {
-        return p.totalCost <= room.energyAvailable;
-      })
-      .map((p) => p.parts)
-      .value();
+/**
+ * コントローラー用の置き場(コンテナ・リンク)にどれくらい溜まってるか
+ * 溜まってる = 運搬がupgraderの消費を上回ってる
+ * コンテナはcarrier、リンクは中央リンクと供給元が別なので、合計せずに一番溜まってるものの割合を返す
+ */
+function getControllerStockRate(controller: StructureController | undefined) {
+  if (!controller) {
+    return 0;
   }
+  const contollerContainer = getContollerContainer(controller);
+  const mainSpawn = getMainSpawn(controller.room);
+  // upgraderが取りに行くリンク(spawn横の中継用は除く)
+  const controllerLinks = findMyStructures(controller.room).link.filter((l) => {
+    return l.pos.inRangeTo(controller, 3) && !(mainSpawn && l.pos.inRangeTo(mainSpawn, 1));
+  });
+
+  const stores = _.compact([contollerContainer && !("progress" in contollerContainer) ? contollerContainer : undefined, ...controllerLinks]);
+  return _.max([0, ...stores.map((s) => s.store.energy / s.store.getCapacity(RESOURCE_ENERGY))]);
+}
+
+function getContollerContainer(controller: StructureController | undefined) {
+  if (!controller) {
+    return undefined;
+  }
+  const { container } = findMyStructures(controller.room);
+  const containerSite = getSitesInRoom(controller.room).filter((s) => s.structureType === STRUCTURE_CONTAINER);
+  // 中心地がある
+  const mainSpawn = getMainSpawn(controller.room);
+  if (mainSpawn) {
+    return controller.pos.findClosestByRange([...container, ...containerSite], {
+      filter: (s: StructureContainer | ConstructionSite) => controller.pos.inRangeTo(s, 3),
+    });
+  }
+  return undefined;
 }

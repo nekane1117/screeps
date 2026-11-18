@@ -28,6 +28,8 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     });
     return customMove(creep, target, {
       maxRooms: 0,
+      swampCost: 3,
+      plainCost: 2,
       ...opt,
     });
   };
@@ -263,9 +265,10 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           ...[creep.room.terminal, creep.room.storage].filter(
             (t) => t && t.store.energy > t.room.energyCapacityAvailable + creep.store.getCapacity(RESOURCE_ENERGY),
           ),
+          ...creep.room.find(FIND_RUINS, { filter: (r) => r.store.energy >= capacityThreshold }),
         ]),
         {
-          filter: (s: StructureContainer | StructureLink | StructureStorage | StructureTerminal) => {
+          filter: (s: StructureContainer | StructureLink | StructureStorage | StructureTerminal | Ruin) => {
             // いっぱいあるやつからだけ出す
             return s.store.energy >= capacityThreshold;
           },
