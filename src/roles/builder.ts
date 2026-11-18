@@ -28,8 +28,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     });
     return customMove(creep, target, {
       maxRooms: 0,
-      swampCost: 3,
-      plainCost: 2,
       ...opt,
     });
   };
@@ -121,11 +119,13 @@ const behavior: CreepBehavior = (creep: Creeps) => {
 
     // #region エネルギー残量チェック ###########################################################################################
 
+    const { carrier = [] } = getCreepsInRoom(creep.room);
+
     // 建設以降の処理はエネルギーが十分溜まってるときだけやる
     if (
       creep.room.find(FIND_HOSTILE_CREEPS).length > 0 ||
       (creep.room.storage
-        ? _([creep.room.storage.store.energy, ...(getCreepsInRoom(creep.room).carrier || []).map((c) => c.store.energy)])
+        ? _([creep.room.storage.store.energy, ...carrier.map((c) => c.store.energy)])
             .compact()
             .sum()
         : creep.room.energyAvailable) >= creep.room.energyCapacityAvailable
@@ -277,8 +277,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
 
     creep.memory.storeId = creep.memory.storeId || creep.room.storage?.id;
+    const { harvester = [] } = getCreepsInRoom(creep.room);
 
-    if (!creep.memory.storeId && container.filter((c) => c.store.energy > 0).length === 0) {
+    if (harvester.length === 0 && !creep.memory.storeId && container.filter((c) => c.store.energy > 0).length === 0) {
       const source = creep.pos.findClosestByRange(FIND_SOURCES_ACTIVE, {
         filter: (s) => s.room.name === creep.memory.baseRoom,
       });
@@ -328,7 +329,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     // #endregion
   }
   // withdraw
-  withdrawBy(creep, ["harvester", "upgrader"]);
+  withdrawBy(creep, ["harvester", "upgrader", "hauler"]);
 
   // 落っこちてるものを拾う
   pickUpAll(creep);
@@ -385,6 +386,20 @@ function boost(creep: Builder) {
 
 //#region findBuildTarget
 function findBuildTarget(creep: Builder) {
+  //最優先旗
+  const orangeFlags = Object.values(Game.flags).filter((f) => f.color === COLOR_ORANGE && f.pos.roomName === creep.memory.baseRoom);
+
+  if (orangeFlags.length > 0) {
+    const site = creep.pos.findClosestByPath([
+      // 最優先があっても自分が大きくなれる場合はそっちを優先したい
+      ...Object.values(Game.constructionSites).filter((s) => s.structureType === STRUCTURE_SPAWN || s.structureType === STRUCTURE_EXTENSION),
+      ...orangeFlags.map((f) => f.pos.lookFor(LOOK_CONSTRUCTION_SITES)).flat(),
+    ]);
+    if (site) {
+      return site.id;
+    }
+  }
+
   return _(getSitesInRoom(Game.rooms[creep.memory.baseRoom]))
     .sortBy((s) => {
       // 最大サイズharvesterが確保できてるとき
@@ -423,7 +438,18 @@ function findBuildTarget(creep: Builder) {
             return priority.length;
           }
         } else {
-          return 0;
+          const { spawn } = findMyStructures(creep.room);
+          if (spawn.length === 0) {
+            if (s.structureType === STRUCTURE_SPAWN) {
+              return 1;
+            } else if (s.structureType === STRUCTURE_EXTENSION) {
+              return 2;
+            } else {
+              return 3;
+            }
+          } else {
+            return 0;
+          }
         }
       };
       return getPriority() * 1000000 + (s.progressTotal - s.progress) * (s.pos.getRangeTo(creep) + 1);
@@ -432,14 +458,23 @@ function findBuildTarget(creep: Builder) {
 }
 //#endregion
 
+const WALL_ROAD_DECAY = 15000;
 function findRepairTarget(creep: Builder) {
+  const terrain = creep.room.getTerrain();
+  const { all, road } = findMyStructures(creep.room);
+
+  // トンネルはdacayが15000とめちゃくちゃデカいので優先する
+  const damagedTonnel = road.filter((r) => terrain.get(r.pos.x, r.pos.y) === TERRAIN_MASK_WALL && r.hits < WALL_ROAD_DECAY * 2);
+  if (damagedTonnel.length) {
+    return _(damagedTonnel).min((t) => t.hits).id;
+  }
+
   return _(
-    findMyStructures(creep.room).all.filter((s) => {
+    all.filter((s) => {
       // 閾値
-      if (s.structureType === STRUCTURE_ROAD && s.room.memory.roadMap[s.pos.y * 50 + s.pos.x] < 0) {
+      if (s.structureType === STRUCTURE_ROAD && terrain.get(s.pos.x, s.pos.y) !== TERRAIN_MASK_WALL && s.room.memory.roadMap[s.pos.y * 50 + s.pos.x] < 0) {
         return false;
       }
-
       return s.hits < Math.min(s.hitsMax, 3000000) - getRepairPower(creep);
     }),
   )

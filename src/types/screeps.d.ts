@@ -1,5 +1,6 @@
 /// <reference types="screeps" />
-declare type ROLES = "harvester" | "carrier" | "gatherer" | "builder" | "upgrader" | "claimer" | "mineralHarvester" | "defender" | "labManager";
+declare type ROLES =
+  "builder" | "carrier" | "claimer" | "defender" | "gatherer" | "harvester" | "hauler" | "labManager" | "mineralHarvester" | "upgrader" | "upgradeHauler";
 declare interface CreepMemory {
   role: ROLES;
   baseRoom: string;
@@ -44,13 +45,38 @@ declare interface Harvester extends Creep {
 
 declare interface HarvesterMemory extends CreepMemory {
   role: "harvester";
-  /** 今何してるか
-   * D : 資源を持ってきてるところ
-   * H : 収集中
+  harvestTargetId: Source["id"];
+}
+
+declare interface Hauler extends Creep {
+  memory: HaulerMemory;
+}
+
+declare interface HaulerMemory extends CreepMemory {
+  role: "hauler";
+  /**
+   * Mode : Gather or Delivery
    */
-  mode: "D" | "H";
-  harvestTargetId?: Source["id"];
-  transferId?: Id<HasStore> | null;
+  mode: "G" | "D";
+  sourceId: Source["id"];
+  targetId?: Id<Resource | AnyStoreStructure | Tombstone | Ruin>;
+  transferId?: AnyStoreStructure["id"] | null | Creep["id"];
+}
+
+declare interface UpgradeHauler extends Creep {
+  memory: UpgradeHaulerMemory;
+}
+
+declare interface UpgradeHaulerMemory extends CreepMemory {
+  role: "upgradeHauler";
+  /**
+   * Mode : Gather or Delivery
+   */
+  mode: "G" | "D";
+  controllerId: Id<StructureController>;
+  /** 資源をもらいに行く先 */
+  storeId?: AnyStoreStructure["id"] | null;
+  transferId?: AnyStoreStructure["id"] | null;
 }
 
 declare type MyStructureCache = {
@@ -107,6 +133,11 @@ declare interface RoomMemory {
   carrySize?: Partial<{
     [r in ROLES]: number;
   }>;
+  /** Measure carry size */
+  analysis?: Partial<{
+    upgradePerTick: number;
+    buildPerTick: number;
+  }>;
   roadMap: number[];
 
   /** 固定で道路を置くところの配列 */
@@ -124,9 +155,11 @@ declare type CreepsCache = Partial<{
   defender: Defender[];
   gatherer: Gatherer[];
   harvester: Harvester[];
+  hauler: Hauler[];
   labManager: LabManager[];
   mineralHarvester: MineralHarvester[];
   upgrader: Upgrader[];
+  upgradeHauler: UpgradeHauler[];
 }> & {
   timestamp: number;
 };
@@ -267,6 +300,10 @@ declare interface Memory {
   factories: Record<Id<StructureFactory>, FactoryMemory>;
   terminals: Record<Id<StructureTerminal>, TerminalMemory>;
   do: boolean;
+  /** 前回tickの実時刻(ms) */
+  lastTickAt?: number;
+  /** 1tickあたりの実時間(ms)の移動平均 */
+  msPerTick?: number;
 }
 
 declare interface FactoryMemory {

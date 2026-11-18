@@ -1,6 +1,6 @@
 import { TRANSFER_THRESHOLD } from "../constants";
-import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, pickUpAll, withdrawBy } from "../utils/creep";
 import { findMyStructures, getCapacityRate, getLabs } from "../utils";
+import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, pickUpAll, withdrawBy } from "../utils/creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
   const { room } = creep;
@@ -8,8 +8,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   const moveMeTo = (target: RoomPosition | _HasRoomPosition, opt?: MoveToOpts) => {
     customMove(creep, target, {
       ignoreCreeps: true,
-      swampCost: 3,
-      plainCost: 2,
       ...opt,
     });
   };
@@ -100,11 +98,11 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   }
 
   // 取り出していいやつら
-  const { link, container, storage, terminal, factory } = findMyStructures(room);
+  const { container, link, storage, terminal, factory } = findMyStructures(room);
 
   // つっかえるので中央のリンクは最優先
   if (!creep.memory.storeId) {
-    creep.memory.storeId = link.find((l) => getCapacityRate(l) > 0.5 && center.pos.inRangeTo(l, 3))?.id;
+    creep.memory.storeId = link.find((l) => l.store.energy > CARRY_CAPACITY && center.pos.inRangeTo(l, 3))?.id;
   }
   // コントローラー用コンテナ
   const controllerContaeiner = creep.room.controller?.pos.findClosestByRange(container, {
@@ -112,11 +110,18 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   });
 
   if (!creep.memory.storeId) {
+    const { hauler = [] } = getCreepsInRoom(creep.room);
+
     // 連結する
-    const allTargets = _([...container.filter((c) => c.id !== controllerContaeiner?.id), storage, factory, terminal]).compact();
+    const allTargets: (StructureFactory | StructureStorage | StructureTerminal | StructureContainer | undefined)[] = hauler.length
+      ? []
+      : container.filter((c) => c.id !== controllerContaeiner?.id);
+
+    allTargets.push(storage, factory, terminal);
 
     // 一番あるやつ
-    creep.memory.storeId = allTargets
+    creep.memory.storeId = _(allTargets)
+      .compact()
       .filter((s) => s.store.energy > 0)
       .sortBy((s) => {
         if (s.structureType === STRUCTURE_STORAGE || s.structureType === STRUCTURE_FACTORY || s.structureType === STRUCTURE_TERMINAL) {
@@ -128,9 +133,6 @@ const behavior: CreepBehavior = (creep: Creeps) => {
       .last()?.id;
   }
 
-  if (!creep.memory.storeId) {
-    creep.memory.storeId = controllerContaeiner?.id;
-  }
   //#endregion
   // region 取り出し処理###############################################################################################
   if (creep.memory.storeId && creep.memory.mode === "G") {
@@ -258,20 +260,18 @@ function isCarrier(creep: Creeps): creep is Carrier {
  * 共通エネルギー溜める順
  */
 export function findTransferTarget(room: Room) {
-  const canter = room.storage || getMainSpawn(room);
-  if (!canter) {
-    console.log(room.name, "center not found");
-    return null;
-  }
+  // 中心は並べ替えの基準にしか使わないので、無いときはcontrollerか部屋の真ん中で代用する
+  const center = (room.storage || getMainSpawn(room) || room.controller)?.pos ?? new RoomPosition(25, 25, room.name);
   const { extension, spawn, tower, container, factory } = findMyStructures(room);
   const controllerContaeiner = room.controller && _(room.controller.pos.findInRange(container, 3)).first();
+  const { builder = [], upgrader = [] } = getCreepsInRoom(room);
   return _([
     //spawnかextension
     ..._([...extension, ...spawn])
       .filter((s) => s.store.getFreeCapacity(RESOURCE_ENERGY))
       .sortBy((e) => {
         return (
-          Math.atan2(e.pos.y - canter.pos.y, canter.pos.x - e.pos.x) +
+          Math.atan2(e.pos.y - center.y, center.x - e.pos.x) +
           (_(Object.values(getCreepsInRoom(room)) || [])
             .flatten<Creeps>()
             .find((c) => c.memory && "transferId" in c.memory && c.memory.transferId === e.id)
@@ -293,9 +293,8 @@ export function findTransferTarget(room: Room) {
     //貯蓄順
     (factory?.store.energy || 0) <= _.floor(TRANSFER_THRESHOLD, -2) ? factory : null,
     room.storage,
-    ..._.flatten<Creeps>(Object.values(getCreepsInRoom(room)).filter((c) => typeof c !== "number")).filter(
-      (c) => (c.memory.role === "builder" || c.memory.role === "upgrader") && c.store.getFreeCapacity(RESOURCE_ENERGY) > 0,
-    ),
+    ...builder.filter((c) => c.store.getFreeCapacity(RESOURCE_ENERGY) > 0),
+    ...upgrader.filter((c) => c.store.getFreeCapacity(RESOURCE_ENERGY) > 0),
   ])
     .compact()
     .filter((s) => !("my" in s) || s.my)

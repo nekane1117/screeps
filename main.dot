@@ -8,9 +8,11 @@ strict digraph "dependency-cruiser output"{
     subgraph "cluster_src" {label="src" "src/constants.ts" [label=<constants.ts> tooltip="constants.ts" URL="src/constants.ts" fillcolor="#ddfeff"] }
     "src/constants.ts" -> "src/utils/common.ts" [xlabel="no-circular" tooltip="no-circular" arrowhead="normalnoneodot" fontcolor="orange" color="orange"]
     subgraph "cluster_src" {label="src" subgraph "cluster_src/flags" {label="flags" "src/flags/index.ts" [label=<index.ts> tooltip="index.ts" URL="src/flags/index.ts" fillcolor="#ddfeff"] } }
+    "src/flags/index.ts" -> "src/flags/orange.ts"
     "src/flags/index.ts" -> "src/flags/purple.ts"
     "src/flags/index.ts" -> "src/flags/red.ts"
     "src/flags/index.ts" -> "src/flags/white.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/flags" {label="flags" "src/flags/orange.ts" [label=<orange.ts> tooltip="orange.ts" URL="src/flags/orange.ts" fillcolor="#ddfeff"] } }
     subgraph "cluster_src" {label="src" subgraph "cluster_src/flags" {label="flags" "src/flags/purple.ts" [label=<purple.ts> tooltip="purple.ts" URL="src/flags/purple.ts" fillcolor="#ddfeff"] } }
     subgraph "cluster_src" {label="src" subgraph "cluster_src/flags" {label="flags" "src/flags/red.ts" [label=<red.ts> tooltip="red.ts" URL="src/flags/red.ts" fillcolor="#ddfeff"] } }
     "src/flags/red.ts" -> "src/utils/index.ts"
@@ -43,6 +45,10 @@ strict digraph "dependency-cruiser output"{
     subgraph "cluster_src" {label="src" subgraph "cluster_src/roles" {label="roles" "src/roles/harvester.ts" [label=<harvester.ts> tooltip="harvester.ts" URL="src/roles/harvester.ts" fillcolor="#ddfeff"] } }
     "src/roles/harvester.ts" -> "src/utils/index.ts"
     "src/roles/harvester.ts" -> "src/utils/creep.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/roles" {label="roles" "src/roles/hauler.ts" [label=<hauler.ts> tooltip="hauler.ts" URL="src/roles/hauler.ts" fillcolor="#ddfeff"] } }
+    "src/roles/hauler.ts" -> "src/utils/index.ts"
+    "src/roles/hauler.ts" -> "src/utils/creep.ts"
+    "src/roles/hauler.ts" -> "src/roles/carrier.ts"
     subgraph "cluster_src" {label="src" subgraph "cluster_src/roles" {label="roles" "src/roles/index.ts" [label=<index.ts> tooltip="index.ts" URL="src/roles/index.ts" fillcolor="#ddfeff"] } }
     "src/roles/index.ts" -> "src/roles/builder.ts"
     "src/roles/index.ts" -> "src/roles/carrier.ts"
@@ -50,8 +56,10 @@ strict digraph "dependency-cruiser output"{
     "src/roles/index.ts" -> "src/roles/defender.ts"
     "src/roles/index.ts" -> "src/roles/gatherer.ts"
     "src/roles/index.ts" -> "src/roles/harvester.ts"
+    "src/roles/index.ts" -> "src/roles/hauler.ts"
     "src/roles/index.ts" -> "src/roles/labManager.ts"
     "src/roles/index.ts" -> "src/roles/mineralHarvester.ts"
+    "src/roles/index.ts" -> "src/roles/upgradeHauler.ts"
     "src/roles/index.ts" -> "src/roles/upgrader.ts"
     subgraph "cluster_src" {label="src" subgraph "cluster_src/roles" {label="roles" "src/roles/labManager.ts" [label=<labManager.ts> tooltip="labManager.ts" URL="src/roles/labManager.ts" fillcolor="#ddfeff"] } }
     "src/roles/labManager.ts" -> "src/constants.ts"
@@ -61,6 +69,9 @@ strict digraph "dependency-cruiser output"{
     "src/roles/mineralHarvester.ts" -> "src/constants.ts"
     "src/roles/mineralHarvester.ts" -> "src/utils/index.ts"
     "src/roles/mineralHarvester.ts" -> "src/utils/creep.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/roles" {label="roles" "src/roles/upgradeHauler.ts" [label=<upgradeHauler.ts> tooltip="upgradeHauler.ts" URL="src/roles/upgradeHauler.ts" fillcolor="#ddfeff"] } }
+    "src/roles/upgradeHauler.ts" -> "src/utils/index.ts"
+    "src/roles/upgradeHauler.ts" -> "src/utils/creep.ts"
     subgraph "cluster_src" {label="src" subgraph "cluster_src/roles" {label="roles" "src/roles/upgrader.ts" [label=<upgrader.ts> tooltip="upgrader.ts" URL="src/roles/upgrader.ts" fillcolor="#ddfeff"] } }
     "src/roles/upgrader.ts" -> "src/utils/index.ts"
     "src/roles/upgrader.ts" -> "src/utils/creep.ts"
@@ -69,11 +80,15 @@ strict digraph "dependency-cruiser output"{
     "src/room/index.ts" -> "src/utils/index.ts"
     "src/room/index.ts" -> "src/utils/creep.ts"
     "src/room/index.ts" -> "src/room/labManager.ts"
+    "src/room/index.ts" -> "src/room/source.ts"
     subgraph "cluster_src" {label="src" subgraph "cluster_src/room" {label="room" "src/room/labManager.ts" [label=<labManager.ts> tooltip="labManager.ts" URL="src/room/labManager.ts" fillcolor="#ddfeff"] } }
     "src/room/labManager.ts" -> "src/constants.ts"
     "src/room/labManager.ts" -> "src/utils/index.ts"
     "src/room/labManager.ts" -> "src/utils/common.ts"
     "src/room/labManager.ts" -> "src/utils/creep.ts"
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/room" {label="room" "src/room/source.ts" [label=<source.ts> tooltip="source.ts" URL="src/room/source.ts" fillcolor="#ddfeff"] } }
+    "src/room/source.ts" -> "src/utils/index.ts"
+    "src/room/source.ts" -> "src/utils/creep.ts"
     subgraph "cluster_src" {label="src" subgraph "cluster_src/structures" {label="structures" "src/structures/controller.ts" [label=<controller.ts> tooltip="controller.ts" URL="src/structures/controller.ts" fillcolor="#ddfeff"] } }
     "src/structures/controller.ts" -> "src/utils/index.ts"
     "src/structures/controller.ts" -> "src/utils/creep.ts"
