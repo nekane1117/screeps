@@ -1,5 +1,5 @@
 import { findMyStructures, getSitesInRoom, getSpawnsInRoom } from "../utils";
-import { filterBodiesByCost, getCreepsInRoom, getMainSpawn } from "../utils/creep";
+import { filterBodiesByCost, getCreepsInRoom, getMainSpawn, toColor } from "../utils/creep";
 import { StructureBehavior } from "./util";
 
 const behavior: StructureBehavior = (controller: Structure) => {
@@ -7,23 +7,46 @@ const behavior: StructureBehavior = (controller: Structure) => {
     return console.log("type is invalid", controller);
   }
 
-  const showSummary = (texts: string[]) => {
-    texts.forEach((text, i) => {
+  const showSummary = (texts: (string | undefined)[]) => {
+    const actual = _.compact(texts);
+    actual.forEach((text, i) => {
       const center = getMainSpawn(controller.room) || controller;
-      controller.room.visual.text(text, Math.max(center.pos.x - 3, 1), Math.max(1, center.pos.y - texts.length) + i, { align: "left" });
+      controller.room.visual.text(
+        text,
+        Math.max(Math.min(center.pos.x - 3, 50 - Math.max(...texts.map((t) => t?.length || 0)) / 3), 1),
+        Math.max(1, center.pos.y - actual.length) + i,
+        { align: "left" },
+      );
     });
   };
 
+  controller.room.visual.rect(controller.pos.x - 3.5, controller.pos.y - 3.5, 7, 7, {
+    lineStyle: "dotted",
+    fill: "",
+    stroke: toColor(controller),
+  });
+
+  const upgradeRate = controller.room.memory.analysis?.upgradePerTick || 0;
+  const buildRate = controller.room.memory.analysis?.buildPerTick || 0;
+  const income = findMyStructures(controller.room).source.length * (SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME);
+  const upgradeRemain = controller.progressTotal - controller.progress;
+  const sites = getSitesInRoom(controller.room);
+  const buildRemain = _.sum(sites, (s) => s.progressTotal - s.progress);
   showSummary([
     `energy  : ${controller.room.energyAvailable} / ${controller.room.energyCapacityAvailable}`,
     `bucket  : ${Game.cpu.bucket?.toLocaleString()}`,
     `progress:${(controller.progressTotal - controller.progress).toLocaleString()}`,
+    `upgrade : ${upgradeRate.toFixed(1)}/t (${Math.round((upgradeRate / income) * 100)}%) ETA ${upgradeRate > 0 ? `${Math.round(upgradeRemain / upgradeRate).toLocaleString()}t${Memory.msPerTick ? ` (${(((upgradeRemain / upgradeRate) * Memory.msPerTick) / 3600000).toFixed(1)}h)` : ""}` : "-"}`,
+    sites.length
+      ? `build : ${buildRate.toFixed(1)}/t (${Math.round((buildRate / income) * 100)}%) ETA ${buildRate > 0 ? `${Math.round(buildRemain / buildRate).toLocaleString()}t${Memory.msPerTick ? ` (${(((buildRemain / buildRate) * Memory.msPerTick) / 3600000).toFixed(1)}h)` : ""}` : "-"}`
+      : undefined,
+    `tick    : ${Memory.msPerTick ? `${(Memory.msPerTick / 1000).toFixed(2)}s (${Math.round(3600000 / Memory.msPerTick).toLocaleString()}/h)` : "-"}`,
   ]);
 
   // upgradeのサイズを枚tick更新する
-  updateUpgraderSize(controller.room);
+  updateEventAnalysis(controller.room);
 
-  const { harvester = [], carrier = [] } = getCreepsInRoom(controller.room);
+  const { harvester = [], carrier = [], upgradeHauler = [] } = getCreepsInRoom(controller.room);
   // 中心地がある
   const mainSpawn = getMainSpawn(controller.room);
   if (mainSpawn) {
@@ -43,6 +66,41 @@ const behavior: StructureBehavior = (controller: Structure) => {
               mode: "G",
               role: "upgrader",
             } as UpgraderMemory,
+          });
+        }
+      }
+
+      // 居ないかつコンテナができてて空いているかつストレージにいっぱいあるときはもっと持ってこさせる
+      if (
+        upgradeHauler.length == 0 &&
+        getSitesInRoom(controller.room).length === 0 &&
+        controller.room.energyAvailable === controller.room.energyCapacityAvailable &&
+        "store" in myContainer &&
+        myContainer.store.energy / myContainer.store.getCapacity(RESOURCE_ENERGY) < 0.2
+      ) {
+        const spawn = _(getSpawnsInRoom(controller.room)).find((s) => !s.spawning);
+
+        // 往復分(バッファ1.5倍)を持った最大のボディを作る
+        const maxBody: BodyPartConstant[] = [MOVE, WORK];
+        for (let i = 1; i < controller.pos.getRangeTo(mainSpawn) * 2 * 1.5; i++) {
+          maxBody.push(MOVE, CARRY);
+        }
+
+        // この部屋で実際に作れる大きさ
+        let cost = 0;
+        const body = maxBody.filter((b) => {
+          cost += BODYPART_COST[b];
+          return cost <= controller.room.energyAvailable;
+        });
+
+        if (spawn && body.length > 0) {
+          spawn.spawnCreep(body, `Uh_${controller.room.name}_${Game.time}`, {
+            memory: {
+              baseRoom: controller.room.name,
+              controllerId: controller.id,
+              mode: "G",
+              role: "upgradeHauler",
+            } as UpgradeHaulerMemory,
           });
         }
       }
@@ -100,25 +158,54 @@ function isC(s: Structure): s is StructureController {
   return s.structureType === STRUCTURE_CONTROLLER;
 }
 
-function updateUpgraderSize(room: Room) {
+function updateEventAnalysis(room: Room) {
   const memory = room.memory;
 
-  if (!memory.carrySize) {
-    memory.carrySize = {};
+  if (!memory.analysis) {
+    memory.analysis = {};
   }
 
-  if (!memory.carrySize.upgrader) {
-    memory.carrySize.upgrader = 50;
+  if (!memory.analysis.upgradePerTick) {
+    memory.analysis.upgradePerTick = 0;
   }
 
-  const border = CREEP_LIFE_TIME / 4;
-  memory.carrySize.upgrader =
-    (memory.carrySize.upgrader * border +
-      _(room.getEventLog())
-        .map((e) => e.event === EVENT_UPGRADE_CONTROLLER && e.data.energySpent)
-        .compact()
-        .sum()) /
-    (border + 1);
+  if (!memory.analysis.buildPerTick) {
+    memory.analysis.buildPerTick = 0;
+  }
+
+  const border = CREEP_LIFE_TIME;
+  const spent = room.getEventLog().reduce(
+    (a, c) => {
+      switch (c.event) {
+        case EVENT_BUILD:
+          a[EVENT_BUILD] += c.data.amount;
+          break;
+        case EVENT_UPGRADE_CONTROLLER:
+          a[EVENT_UPGRADE_CONTROLLER] += c.data.energySpent;
+          break;
+        default:
+          break;
+      }
+      return a;
+    },
+    {
+      [EVENT_ATTACK]: 0,
+      [EVENT_OBJECT_DESTROYED]: 0,
+      [EVENT_ATTACK_CONTROLLER]: 0,
+      [EVENT_BUILD]: 0,
+      [EVENT_HARVEST]: 0,
+      [EVENT_HEAL]: 0,
+      [EVENT_REPAIR]: 0,
+      [EVENT_RESERVE_CONTROLLER]: 0,
+      [EVENT_UPGRADE_CONTROLLER]: 0,
+      [EVENT_EXIT]: 0,
+      [EVENT_POWER]: 0,
+      [EVENT_TRANSFER]: 0,
+    },
+  );
+
+  memory.analysis.upgradePerTick = (memory.analysis.upgradePerTick * border + spent[EVENT_UPGRADE_CONTROLLER]) / (border + 1);
+  memory.analysis.buildPerTick = (memory.analysis.buildPerTick * border + spent[EVENT_BUILD]) / (border + 1);
 }
 
 function getUpgraderBody(room: Room): BodyPartConstant[] {

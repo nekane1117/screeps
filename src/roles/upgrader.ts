@@ -1,4 +1,4 @@
-import { findMyStructures, getLabs } from "../utils";
+import { findMyStructures, getLabs, getSitesInRoom } from "../utils";
 import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, pickUpAll } from "../utils/creep";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
@@ -25,12 +25,9 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     changeMode(creep, "G");
   }
 
-  const { link, container } = findMyStructures(creep.room);
+  const { source } = findMyStructures(creep.room);
+  const mainSpawn = getMainSpawn(creep.room);
 
-  const links = link.filter((l) => {
-    const s = getMainSpawn(creep.room);
-    return !(s && l.pos.inRangeTo(s, 1));
-  });
   // https://docs.screeps.com/simultaneous-actions.html
 
   // signController
@@ -43,109 +40,97 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     }
   }
 
-  // upgradeController
-  creep.memory.worked = creep.upgradeController(controller);
+  if ((creep.room.controller && creep.room.controller?.ticksToDowngrade < 200000) || getSitesInRoom(creep.room).length === 0) {
+    // upgradeController
+    creep.memory.worked = creep.upgradeController(controller);
 
-  switch (creep.memory.worked) {
-    // 資源不足
-    case ERR_NOT_ENOUGH_RESOURCES:
-      changeMode(creep, "G");
-      break;
-    case ERR_NOT_IN_RANGE:
-      if (creep.memory.mode === "W") {
-        moveMeTo(controller, { range: 3 });
-      }
-      break;
-    // 有りえない系
-    case ERR_NOT_OWNER:
-    case ERR_INVALID_TARGET:
-    case ERR_NO_BODYPART:
-      console.log(`${creep.name} upgradeController returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
-      creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
-      break;
-    // 問題ない系
-    case OK:
-    case ERR_BUSY:
-    default:
-      break;
-  }
-
-  if (creep.memory.storeId && (Game.getObjectById(creep.memory.storeId)?.store.energy || 0) <= 0) {
-    creep.memory.storeId = undefined;
+    switch (creep.memory.worked) {
+      // 資源不足
+      case ERR_NOT_ENOUGH_RESOURCES:
+        changeMode(creep, "G");
+        break;
+      case ERR_NOT_IN_RANGE:
+        if (creep.memory.mode === "W") {
+          moveMeTo(controller, { range: 3 });
+        }
+        break;
+      // 有りえない系
+      case ERR_NOT_OWNER:
+      case ERR_INVALID_TARGET:
+      case ERR_NO_BODYPART:
+        console.log(`${creep.name} upgradeController returns ${RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
+        creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
+        break;
+      // 問題ない系
+      case OK:
+      case ERR_BUSY:
+      default:
+        break;
+    }
+  } else {
+    creep.memory.worked = undefined;
   }
 
   // withdraw
-  if (
-    creep.memory.storeId ||
-    (creep.memory.storeId = _([...links, ...container])
-      .compact()
-      .filter((c: StructureLink | StructureContainer) => {
-        return c.store.energy > 0 && c.room.controller?.pos.inRangeTo(c, 3);
-      })
-      .sort((c) => {
-        switch (c.structureType) {
-          case "link":
-            return 0;
+  const store = findStore(creep);
+  // 取得したstoreのidを保存
+  creep.memory.storeId = store?.id;
+  if (store) {
+    creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);
+    switch (creep.memory.collected) {
+      case ERR_INVALID_TARGET: // 対象が変
+        creep.memory.storeId = undefined;
+        break;
 
-          default:
-            return 1;
+      // 満タンまで取った
+      case ERR_FULL:
+        changeMode(creep, "W");
+        break;
+      case ERR_NOT_IN_RANGE:
+        if (creep.memory.mode === "G") {
+          const moved = moveMeTo(store);
+          if (moved !== OK) {
+            console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`);
+            creep.say(RETURN_CODE_DECODER[moved.toString()]);
+          }
         }
-      })
-      .first()?.id)
-  ) {
-    const store = Game.getObjectById(creep.memory.storeId);
-    if (store) {
-      creep.memory.collected = creep.withdraw(store, RESOURCE_ENERGY);
-      switch (creep.memory.collected) {
-        case ERR_INVALID_TARGET: // 対象が変
-          creep.memory.storeId = undefined;
-          break;
-
-        // 満タンまで取った
-        case ERR_FULL:
-          changeMode(creep, "W");
-          break;
-        case ERR_NOT_IN_RANGE:
-          if (creep.memory.mode === "G") {
-            const moved = moveMeTo(store);
-            if (moved !== OK) {
-              console.log(`${creep.name} ${RETURN_CODE_DECODER[moved.toString()]}`);
-              creep.say(RETURN_CODE_DECODER[moved.toString()]);
-            }
-          }
-          break;
-        // 有りえない系
-        case ERR_NOT_OWNER:
-        case ERR_INVALID_ARGS:
-          console.log(`${creep.name} build returns ${creep.memory.worked && RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
-          if (creep.memory.worked) {
-            creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
-          }
-          break;
-        // 問題ない系
-        case OK:
-        case ERR_BUSY:
-        case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
-        default:
-          break;
-      }
+        break;
+      // 有りえない系
+      case ERR_NOT_OWNER:
+      case ERR_INVALID_ARGS:
+        console.log(`${creep.name} build returns ${creep.memory.worked && RETURN_CODE_DECODER[creep.memory.worked.toString()]}`);
+        if (creep.memory.worked) {
+          creep.say(RETURN_CODE_DECODER[creep.memory.worked.toString()]);
+        }
+        break;
+      // 問題ない系
+      case OK:
+      case ERR_BUSY:
+      case ERR_NOT_ENOUGH_RESOURCES: // 空っぽ
+      default:
+        break;
     }
     // withdraw
     // 落っこちてるものを拾う
     pickUpAll(creep);
-  } else {
-    creep.say("NO STORE");
+  } else if (store === undefined) {
+    // 空なので余剰
+    creep.say("EMPTY");
     const { upgrader = [] } = getCreepsInRoom(creep.room);
-
+    const workLimit = source.length * 10;
+    let works = 0;
+    // 余剰なupgrader
+    const excessiveUpgrader = _(upgrader)
+      .sortBy((u) => -(u.ticksToLive || Infinity))
+      .filter((u) => {
+        // エネルギー切れかつworkの上限workの合計が上限以上は余剰
+        // 端数分は生きててほしいので判定してから足しこむ
+        const result = u.store.energy === 0 && works >= workLimit;
+        works += u.getActiveBodyparts(WORK);
+        return result;
+      });
     // 余剰なupgraderを捨てる
-    if (
-      upgrader.length > 1 &&
-      creep ===
-        _(upgrader)
-          .filter((u) => u.store.energy === 0)
-          .min((u) => -(u.ticksToLive || 0))
-    ) {
-      const mainSpawn = getMainSpawn(creep.room);
+    if (excessiveUpgrader.include(creep)) {
       if (mainSpawn) {
         if (creep.pos.isNearTo(mainSpawn)) {
           mainSpawn.recycleCreep(creep);
@@ -153,6 +138,12 @@ const behavior: CreepBehavior = (creep: Creeps) => {
           moveMeTo(mainSpawn);
         }
       }
+    }
+  } else {
+    // そう毎度起こるはずじゃないので手当たり次第に建築する
+    const site = (creep.room.controller || creep).pos.findClosestByRange(FIND_CONSTRUCTION_SITES);
+    if (site) {
+      creep.build(site);
     }
   }
 };
@@ -211,3 +202,52 @@ function boost(creep: Upgrader) {
 }
 
 const SIGN = "Please see github nekane1117/screeps";
+
+/**
+ * 取得先を探す処理  
+ * - 正しいときはそのまま返す
+ * - 無いか空だと探す(コントローラー(一応フォールバックで自分)を起点に３マス以内)
+ * - 周囲にコンテナが存在しないときはnull
+ * - 存在するが空の時はundefined
+ */
+function findStore(u: Upgrader) {
+  const { container = [], link: links = [] } = findMyStructures(u.room);
+  const memory: Readonly<UpgraderMemory> = u.memory;
+
+  // いったん指定のものを見る
+  const storage = memory.storeId && Game.getObjectById(memory.storeId);
+
+  // まだ中身があるならそれで
+  if ((storage?.store.energy || 0) > CARRY_CAPACITY) {
+    return storage;
+  }
+
+  // 書き換えが要るとき
+
+  // そもそも存在するか(コントローラーから射程３以内)
+  const exists = [...links, ...container].filter((c) => c.pos.inRangeTo((u.room.controller || u).pos, 3));
+  if (exists.length > 0) {
+    // 存在はするが中身はあるか
+    const filled = exists.filter((c) => c.store.energy > CARRY_CAPACITY);
+    if (filled.length > 0) {
+      // リンクを優先的に取る
+      return _(filled)
+        .sortBy((c) => {
+          switch (c.structureType) {
+            case "link":
+              return 0;
+
+            default:
+              return 1;
+          }
+        })
+        .first();
+    } else {
+      // 空のときはundefinedを返す
+      return undefined;
+    }
+  } else {
+    // そもそもないときはnullを返す
+    return null;
+  }
+}

@@ -49,7 +49,10 @@ export const findMyStructures = (room: Room) => {
               structures.factory = s;
               break;
             default:
-              (structures[s.structureType] as AnyStructure[]).push(s);
+              // そもそも所有権を持たないオブジェクトか自分の
+              if (!("my" in s) || s.my) {
+                (structures[s.structureType] as AnyStructure[]).push(s);
+              }
               break;
           }
           return structures;
@@ -168,7 +171,7 @@ export function getTerminals() {
 }
 
 let indent = -1;
-export function logUsage<T = unknown>(title: string, func: () => T, threthold = 0) {
+export function logUsage<T = unknown>(title: string, func: () => T, threthold = 0.3) {
   if (indent > 10) {
     indent = -1;
   }

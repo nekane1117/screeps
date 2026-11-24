@@ -80,10 +80,11 @@ export function randomWalk(creep: Creep) {
 
 export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
   builder: _.range(50).map((i) => {
-    const b = [WORK, MOVE, CARRY, MOVE];
+    const b = [MOVE, WORK, MOVE, CARRY];
     return b[i % b.length];
   }),
   claimer: [CLAIM, MOVE],
+  hauler: [],
   carrier: [],
   labManager: [MOVE, CARRY, CARRY],
   defender: _.range(50).map((i) => {
@@ -166,7 +167,65 @@ export const IDEAL_BODY: Record<ROLES, BodyPartConstant[]> = Object.freeze({
       .slice(0, 50)
       .run(),
   ],
-  upgrader: [WORK, MOVE, CARRY, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE, WORK, WORK, MOVE],
+  upgrader: [
+    WORK,
+    MOVE,
+    CARRY,
+    MOVE,
+    WORK,
+    WORK,
+    MOVE,
+    WORK,
+    WORK,
+    MOVE,
+    WORK,
+    WORK,
+    MOVE,
+    WORK,
+    WORK,
+    MOVE,
+    WORK,
+    WORK,
+    MOVE,
+    WORK,
+    WORK,
+    MOVE,
+    WORK,
+    WORK,
+    MOVE,
+    WORK,
+    WORK,
+    MOVE,
+    WORK,
+    WORK,
+    MOVE,
+    WORK,
+    WORK,
+    MOVE,
+    WORK,
+    WORK,
+    MOVE,
+    WORK,
+    WORK,
+    MOVE,
+    WORK,
+    WORK,
+    MOVE,
+    WORK,
+    WORK,
+    MOVE,
+    WORK,
+    WORK,
+    MOVE,
+    WORK,
+  ],
+  upgradeHauler: [
+    MOVE,
+    WORK,
+    ..._.range(24)
+      .map(() => [MOVE, CARRY])
+      .flat(),
+  ],
 });
 
 export const RETURN_CODE_DECODER = Object.freeze({
@@ -196,8 +255,7 @@ export const customMove: CustomMove = (creep, target, opt) => {
   }
 
   creep.memory.moved = creep.moveTo(target, {
-    plainCost: 2,
-    swampCost: 10,
+    swampCost: 3,
     serializeMemory: false,
     ignoreCreeps: !(creep.memory.__avoidCreep || creep.pos.inRangeTo(target, DEFAULT_CREEP_RANGE[creep.memory.role] + 2)),
     ...opt,
@@ -216,9 +274,10 @@ export const customMove: CustomMove = (creep, target, opt) => {
     if (dx !== undefined && dy !== undefined && isInRange(creep.pos.x + dx) && isInRange(creep.pos.y + dy)) {
       const blocker = _.first(creep.room.lookForAt(LOOK_CREEPS, creep.pos.x + dx, creep.pos.y + dy));
       if (blocker && blocker?.memory?.moved !== OK) {
-        const pull = creep.pull(blocker);
+        const pull = blocker.getActiveBodyparts(MOVE) > 0 ? blocker.move(creep) : creep.pull(blocker);
         const move = blocker.move(creep);
         creep.memory._move = undefined;
+        creep.memory.__avoidCreep = true;
         blocker.memory._move = undefined;
         blocker.memory.__avoidCreep = true;
         if (pull || move) {
@@ -268,39 +327,30 @@ export function getMainSpawn(room: Room): StructureSpawn | undefined {
   }
 }
 
-export function pickUpAll(creep: Creep, resourceType: ResourceConstant = RESOURCE_ENERGY) {
-  //withdraw
+export function pickUpAll(creep: Creep, resourceType: ResourceConstant = RESOURCE_ENERGY): ScreepsReturnCode | null {
   // 通りがかりに落っこちてるリソースを拾う
-
-  let result: CreepActionReturnCode | undefined = undefined;
-  creep.pos
-    .findInRange(FIND_DROPPED_RESOURCES, 1, {
-      filter: (s) => s.resourceType === resourceType,
-    })
-    .forEach((resource) => {
-      if (creep.pickup(resource) === OK) {
-        result = OK;
-      }
-    });
+  const dropped = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES, {
+    filter: (s) => s.resourceType === resourceType && creep.pos.isNearTo(s),
+  });
+  const pickupResult = dropped ? creep.pickup(dropped) : null;
+  if (pickupResult !== null) {
+    return pickupResult;
+  }
 
   // 通りがかりの墓から拾う
-  [
+  const discarded = creep.pos.findClosestByRange([
     ...creep.pos.findInRange(FIND_TOMBSTONES, 1, {
       filter(s: Tombstone) {
-        return s.store.getUsedCapacity() > 0;
+        return s.store.getUsedCapacity(resourceType) > 0;
       },
     }),
     ...creep.pos.findInRange(FIND_RUINS, 1, {
       filter(s: Ruin) {
-        return s.store.getUsedCapacity() > 0;
+        return s.store.getUsedCapacity(resourceType) > 0;
       },
     }),
-  ].forEach((tombstone) => {
-    if (creep.withdraw(tombstone, resourceType)) {
-      result = OK;
-    }
-  });
-  return result;
+  ]);
+  return discarded && creep.withdraw(discarded, resourceType);
 }
 
 /**
@@ -314,7 +364,8 @@ export function withdrawBy(creep: Creep, roles: ROLES[], type: ResourceConstant 
     .map((t) => t.transfer(creep, type));
 }
 
-export function toColor({ id }: Creeps) {
+type HasId = { id: string };
+export function toColor({ id }: HasId) {
   return `#${id.slice(-6)}`;
 }
 
@@ -337,7 +388,7 @@ export function moveRoom(creep: Creeps, fromRoom: string, toRoom: string) {
           return 1;
         } else {
           // それ以外は遠回り
-          return 2.5;
+          return 5;
         }
       },
     }));
@@ -401,9 +452,11 @@ const DEFAULT_CREEP_RANGE: Record<ROLES, number> = {
   defender: 3,
   gatherer: 1,
   harvester: 1,
+  hauler: 1,
   labManager: 1,
   mineralHarvester: 1,
   upgrader: 1,
+  upgradeHauler: 1,
 };
 
 export function getRepairPower(creep: Creeps) {

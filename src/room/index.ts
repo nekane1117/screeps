@@ -1,7 +1,8 @@
-import labManager from "./labManager";
 import linkBehavior from "../structures/links";
-import { RETURN_CODE_DECODER, filterBodiesByCost, getCarrierBody, getCreepsInRoom, getMainSpawn } from "../utils/creep";
 import { findMyStructures, getSitesInRoom, getSpawnsInRoom, logUsage } from "../utils";
+import { filterBodiesByCost, getCarrierBody, getCreepsInRoom, getMainSpawn } from "../utils/creep";
+import labManager from "./labManager";
+import sourceBehavior from "./source";
 
 export function roomBehavior(room: Room) {
   // Roomとしてやっておくこと
@@ -31,76 +32,9 @@ export function roomBehavior(room: Room) {
     });
   }
 
-  const sources = room.find(FIND_SOURCES);
   // sourceがあるとき
-  if (sources.length > 0) {
-    if (
-      harvester.length === 0 ||
-      (_.sum(harvester.filter((h) => (h.ticksToLive || Infinity) > h.body.length * CREEP_SPAWN_TIME).map((c) => c.body.filter((b) => b.type === WORK).length)) <
-        6 &&
-        harvester.length < 2)
-    ) {
-      const spawn = (() => {
-        const spawns = getSpawnsInRoom(room);
-        // 部屋にある時は部屋のだけ
-        if (spawns.length > 0) {
-          return spawns.find((s) => !s.spawning);
-        } else {
-          return logUsage(
-            "find spawn",
-            () =>
-              _(Object.values(Game.spawns))
-                .filter((s) => s.room.energyAvailable === s.room.energyCapacityAvailable)
-                .map((spawn) => {
-                  return {
-                    spawn,
-                    cost: PathFinder.search(sources[0].pos, spawn.pos).cost,
-                  };
-                })
-                .min((v) => v.cost).spawn,
-          );
-        }
-      })();
+  room.find(FIND_SOURCES).forEach(sourceBehavior);
 
-      if (!spawn) {
-        console.log(`${room.name} can't find spawn`);
-        return ERR_NOT_FOUND;
-      }
-
-      if (spawn.room.energyAvailable >= (harvester.length == 0 ? 300 : spawn.room.energyCapacityAvailable)) {
-        const name = `H_${room.name}_${Game.time}`;
-        let total = 0;
-        const bodies = (
-          sources.length === 1 || spawn.room.energyCapacityAvailable < dynamicMinCost
-            ? [WORK, MOVE, CARRY, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE, MOVE]
-            : (_(_.range(50 / 3))
-                .map(() => [WORK, MOVE, CARRY])
-                .flatten()
-                .run() as BodyPartConstant[])
-        )
-          .slice(0, 50)
-          .map((body) => {
-            return {
-              body,
-              total: (total += BODYPART_COST[body]),
-            };
-          })
-          .filter((v) => v.total <= spawn.room.energyAvailable)
-          .map((v) => v.body);
-
-        const spawned = spawn.spawnCreep(bodies, name, {
-          memory: {
-            role: "harvester",
-            mode: "H",
-            baseRoom: room.name,
-          } as HarvesterMemory,
-        });
-        if (spawned !== OK) {
-          console.log(`spawn ${spawn.name}:${RETURN_CODE_DECODER[spawned]}: ${JSON.stringify(bodies)}`);
-        }
-      }
-    }
-  }
   //#region updateRoadMap
   logUsage("updateRoadMap", () => updateRoadMap(room));
   //#endregion
@@ -194,7 +128,7 @@ export function roomBehavior(room: Room) {
       }
     })();
     if (spawn && spawn.room.energyAvailable === spawn.room.energyCapacityAvailable) {
-      spawn.spawnCreep(filterBodiesByCost("builder", spawn.room.energyCapacityAvailable).bodies, `B_${room.name}_${Game.time}`, {
+      spawn.spawnCreep(filterBodiesByCost("builder", Math.floor(spawn.room.energyCapacityAvailable / 250) * 250).bodies, `B_${room.name}_${Game.time}`, {
         memory: {
           mode: "G",
           baseRoom: room.name,
@@ -432,5 +366,3 @@ function checkSpawnBuilder(room: Room) {
     ) < requireWorkCount
   );
 }
-
-const dynamicMinCost = 1000;

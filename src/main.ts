@@ -8,6 +8,8 @@ import { ObjectKeys } from "./utils/common";
 
 module.exports.loop = function () {
   console.log(`start ${Game.time}`);
+  // bucket不足で止まってるtickも含めて測るので最初にやる
+  updateTickRate();
   if (Game.cpu.bucket === undefined || Game.cpu.bucket > 200) {
     Memory.do = true;
   } else if (Game.cpu.bucket < 100) {
@@ -110,3 +112,19 @@ module.exports.loop = function () {
   });
   console.log(`end ${Game.time} usage : ${Game.cpu.getUsed()}`);
 };
+
+/**
+ * 1tickあたりの実時間を測る(shardや負荷で変わるので固定値は無い)
+ * 直近100tickくらいの移動平均
+ */
+function updateTickRate() {
+  const now = Date.now();
+  if (Memory.lastTickAt) {
+    const ms = now - Memory.lastTickAt;
+    // コード更新直後などで大きく空いたtickは捨てる
+    if (ms < 60000) {
+      Memory.msPerTick = Math.round(((Memory.msPerTick || ms) * 99 + ms) / 100);
+    }
+  }
+  Memory.lastTickAt = now;
+}
