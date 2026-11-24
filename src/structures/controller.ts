@@ -173,7 +173,7 @@ function updateEventAnalysis(room: Room) {
     memory.analysis.buildPerTick = 0;
   }
 
-  const border = CREEP_LIFE_TIME;
+  const border = CREEP_LIFE_TIME / 4;
   const spent = room.getEventLog().reduce(
     (a, c) => {
       switch (c.event) {

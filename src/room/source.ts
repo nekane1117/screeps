@@ -34,6 +34,20 @@ function manageHarvester(source: Source) {
   const room: Readonly<Room> = source.room;
   const { harvester: allHarvester = [] } = getCreepsInRoom(room);
 
+  const warkable = NEIGHBORS.filter(([dy, dx]) => {
+    const pos = source.room.getPositionAt(source.pos.x + dx, source.pos.y + dy);
+    // 場所がないときはnull
+    if (pos === null) {
+      return false;
+    }
+
+    // 壁でなくてOBSTACLE_OBJECT_TYPESがない場所
+    return (
+      pos.lookFor(LOOK_TERRAIN).every((t) => t !== "wall") &&
+      pos.lookFor(LOOK_STRUCTURES).every((s) => OBSTACLE_OBJECT_TYPES.every((o) => o !== s.structureType))
+    );
+  });
+
   // harvester存在チェック
   const harvester = allHarvester.filter((h) => {
     // 自分を見ていてまだ生きてるやつ
@@ -42,8 +56,11 @@ function manageHarvester(source: Source) {
     return h.memory.harvestTargetId === source.id && (h.ticksToLive ?? Infinity) > HARVESTER_FIXED_BODY.length * CREEP_SPAWN_TIME + 25;
   });
 
-  if (harvester.length) {
-    // いるならOK
+  // 歩ける場所以上いるまたはsourceの出力よりWORKが多い
+  if (
+    harvester.length >= warkable.length ||
+    _.sum(harvester, (h) => h.getActiveBodyparts(WORK)) >= SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME / HARVEST_POWER
+  ) {
     return OK;
   }
 
@@ -190,3 +207,14 @@ function getRequestHaulerBody(requestCapacity: number) {
   }
   return bodies.slice(0, 50);
 }
+
+const NEIGHBORS = [
+  [-1, -1],
+  [-1, 0],
+  [-1, 1],
+  [0, -1],
+  [0, 1],
+  [1, -1],
+  [1, 0],
+  [1, 1],
+];

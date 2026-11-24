@@ -1918,7 +1918,7 @@ var behavior12 = (creep) => {
   if (!creep.memory.storeId) {
     for (const req of requesting) {
       if (req.memory.expectedType) {
-        const s = creep.pos.findClosestByPath(_.compact([creep.room.terminal, factory, creep.room.storage]), {
+        const s = creep.pos.findClosestByRange(_.compact([creep.room.terminal, factory, creep.room.storage]), {
           filter: (s2) => s2.store.getUsedCapacity(req.memory.expectedType) > 0
         });
         if (s) {
@@ -2737,10 +2737,17 @@ function getBodies(cost) {
 function manageHarvester(source) {
   const room = source.room;
   const { harvester: allHarvester = [] } = getCreepsInRoom(room);
+  const warkable = NEIGHBORS.filter(([dy, dx]) => {
+    const pos = source.room.getPositionAt(source.pos.x + dx, source.pos.y + dy);
+    if (pos === null) {
+      return false;
+    }
+    return pos.lookFor(LOOK_TERRAIN).every((t) => t !== "wall") && pos.lookFor(LOOK_STRUCTURES).every((s) => OBSTACLE_OBJECT_TYPES.every((o) => o !== s.structureType));
+  });
   const harvester = allHarvester.filter((h) => {
     return h.memory.harvestTargetId === source.id && (h.ticksToLive ?? Infinity) > HARVESTER_FIXED_BODY.length * CREEP_SPAWN_TIME + 25;
   });
-  if (harvester.length) {
+  if (harvester.length >= warkable.length || _.sum(harvester, (h) => h.getActiveBodyparts(WORK)) >= SOURCE_ENERGY_CAPACITY / ENERGY_REGEN_TIME / HARVEST_POWER) {
     return OK;
   }
   const spawn = findSpawn(source);
@@ -2840,6 +2847,16 @@ function getRequestHaulerBody(requestCapacity) {
   }
   return bodies.slice(0, 50);
 }
+var NEIGHBORS = [
+  [-1, -1],
+  [-1, 0],
+  [-1, 1],
+  [0, -1],
+  [0, 1],
+  [1, -1],
+  [1, 0],
+  [1, 1]
+];
 
 // src/room/index.ts
 function roomBehavior(room) {
@@ -2859,6 +2876,14 @@ function roomBehavior(room) {
     };
   }
   const { carrier: carriers = [], harvester = [], gatherer = [] } = getCreepsInRoom(room);
+  const mainSpawn = getMainSpawn(room);
+  if (mainSpawn) {
+    room.visual.rect(mainSpawn.pos.x - 2.5, mainSpawn.pos.y - 1.5, 7, 5, {
+      lineStyle: "dotted",
+      fill: "",
+      stroke: toColor(mainSpawn)
+    });
+  }
   if (room.storage) {
     room.visual.text(room.storage.store.energy.toString(), room.storage.pos.x, room.storage.pos.y, {
       font: 0.25
@@ -3014,7 +3039,7 @@ function createStructures(room) {
 function updateRoadMap(room) {
   const { road: roads, spawn, source } = findMyStructures(room);
   room.memory.roadMap = (room.memory.roadMap || _.range(2500).map(() => 0)).map((usage, i) => {
-    const value = Math.min(10, Math.max(-10, usage - 10 / 2e3));
+    const value = Math.round(Math.min(10, Math.max(-10, usage - 10 / 2e3)) * 1e3) / 1e3;
     const x = i % 50;
     const y = Math.floor(i / 50);
     if (value > 0) {
@@ -3199,7 +3224,7 @@ function updateEventAnalysis(room) {
   if (!memory.analysis.buildPerTick) {
     memory.analysis.buildPerTick = 0;
   }
-  const border = CREEP_LIFE_TIME;
+  const border = CREEP_LIFE_TIME / 4;
   const spent = room.getEventLog().reduce(
     (a, c) => {
       switch (c.event) {
@@ -3614,7 +3639,19 @@ module.exports.loop = function() {
                 });
                 behaviors[c.memory.role]?.(c);
                 if (c.getActiveBodyparts(WORK)) {
-                  c.pos.lookFor(LOOK_STRUCTURES).filter((s) => [STRUCTURE_CONTAINER, STRUCTURE_ROAD].includes(s.structureType) && s.hits < s.hitsMax).forEach((s) => c.repair(s));
+                  c.pos.lookFor(LOOK_STRUCTURES).filter((s) => {
+                    if (s.hits < s.hitsMax) {
+                      if (s.structureType === STRUCTURE_CONTAINER) {
+                        return true;
+                      } else if (s.structureType === STRUCTURE_ROAD && room.memory.roadMap[c.pos.y * 50 + c.pos.x] > 0) {
+                        return true;
+                      } else {
+                        return false;
+                      }
+                    } else {
+                      return false;
+                    }
+                  }).forEach((s) => c.repair(s));
                 }
                 if (c.memory.moved === OK) {
                   if (c.room.memory.roadMap) {

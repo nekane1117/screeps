@@ -137,7 +137,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
   if (!creep.memory.storeId) {
     for (const req of requesting) {
       if (req.memory.expectedType) {
-        const s = creep.pos.findClosestByPath(_.compact([creep.room.terminal, factory, creep.room.storage]), {
+        const s = creep.pos.findClosestByRange(_.compact([creep.room.terminal, factory, creep.room.storage]), {
           filter: (s) => s.store.getUsedCapacity(req.memory.expectedType) > 0,
         });
         if (s) {
