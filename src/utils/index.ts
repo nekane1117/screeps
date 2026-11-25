@@ -1,4 +1,4 @@
-import { ROAD_DECAY_AMOUNT_SWAMP, ROAD_DECAY_AMOUNT_WALL } from "../constants";
+import { ROAD_DECAY_AMOUNT_SWAMP, ROAD_DECAY_AMOUNT_WALL, ROOM_SIZE } from "../constants";
 
 export function getCapacityRate(s: AnyCreep | Structure, type: ResourceConstant = RESOURCE_ENERGY) {
   if ("store" in s) {
@@ -246,4 +246,11 @@ export function getSurplusEnergy(room: Room) {
     .flatten<StructureContainer | StructureStorage | StructureTerminal | StructureLink>()
     .compact()
     .sum((s) => s.store.energy);
+}
+
+export function getRoadUsage(room: Room, pos: number | RoomPosition) {
+  const index = typeof pos === "number" ? pos : pos.y * ROOM_SIZE + pos.x;
+
+  const value = room.memory.roadMap[index];
+  return value === undefined ? -10 : value;
 }

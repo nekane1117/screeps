@@ -1,5 +1,5 @@
 import linkBehavior from "../structures/links";
-import { findMyStructures, getSitesInRoom, getSpawnsInRoom, logUsage } from "../utils";
+import { findMyStructures, getRoadUsage, getSitesInRoom, getSpawnsInRoom, logUsage } from "../utils";
 import { filterBodiesByCost, getCarrierBody, getCreepsInRoom, getMainSpawn, toColor } from "../utils/creep";
 import labManager from "./labManager";
 import sourceBehavior from "./source";
@@ -280,8 +280,21 @@ function createStructures(room: Room) {
 function updateRoadMap(room: Room) {
   const { road: roads, spawn, source } = findMyStructures(room);
 
-  room.memory.roadMap = (room.memory.roadMap || _.range(2500).map(() => 0)).map((usage, i) => {
-    const value = Math.round(Math.min(10, Math.max(-10, usage - 10 / 2000)) * 1000) / 1000;
+  // 旧型との変換
+  if (!room.memory.roadMap || Array.isArray(room.memory.roadMap)) {
+    room.memory.roadMap = {};
+  }
+
+  Object.keys(room.memory.roadMap || {}).forEach((key) => {
+    // numberに戻す
+    const i = Number(key);
+    // 今の値を取る
+    const value = Math.round(Math.min(10, Math.max(-10, getRoadUsage(room, i) - 10 / 2000)) * 1000) / 1000;
+    room.memory.roadMap[i] = value;
+    // -10になったら消す
+    if (value === -10) {
+      delete room.memory.roadMap[i];
+    }
     const x = i % 50;
     const y = Math.floor(i / 50);
     if (value > 0) {
