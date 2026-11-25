@@ -138,7 +138,7 @@ declare interface RoomMemory {
     upgradePerTick: number;
     buildPerTick: number;
   }>;
-  roadMap: number[];
+  roadMap: Partial<Record<number, number>>;
 
   /** 固定で道路を置くところの配列 */
   staticRoad: { x: number; y: number }[];

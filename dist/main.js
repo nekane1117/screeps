@@ -121,6 +121,7 @@ var REVERSE_REACTIONS = {
 var ALL_REACTIONS = _(ObjectKeys(REVERSE_REACTIONS)).sortBy((r) => r === "G" ? 0 : r.length);
 var ROAD_DECAY_AMOUNT_SWAMP = 500;
 var ROAD_DECAY_AMOUNT_WALL = 15e3;
+var ROOM_SIZE = 50;
 
 // src/utils/index.ts
 function getCapacityRate(s, type = RESOURCE_ENERGY) {
@@ -295,6 +296,11 @@ function getDecayAmount(s) {
     default:
       return 0;
   }
+}
+function getRoadUsage(room, pos) {
+  const index = typeof pos === "number" ? pos : pos.y * ROOM_SIZE + pos.x;
+  const value = room.memory.roadMap[index];
+  return value === void 0 ? -10 : value;
 }
 
 // src/utils/creep.ts
@@ -1016,7 +1022,7 @@ var behavior6 = (creep) => {
     }
     if (!creep.memory.firstAidId) {
       creep.memory.firstAidId = _([...road, ...rampart, ...container]).filter((s) => {
-        if (s.structureType === STRUCTURE_ROAD && s.room.memory.roadMap[s.pos.y * 50 + s.pos.x] < 0) {
+        if (s.structureType === STRUCTURE_ROAD && getRoadUsage(s.room, s.pos) < 0) {
           return false;
         }
         return s.hits <= getDecayAmount(s) * 10;
@@ -1303,7 +1309,7 @@ function findRepairTarget(creep) {
   }
   return _(
     all.filter((s) => {
-      if (s.structureType === STRUCTURE_ROAD && terrain.get(s.pos.x, s.pos.y) !== TERRAIN_MASK_WALL && s.room.memory.roadMap[s.pos.y * 50 + s.pos.x] < 0) {
+      if (s.structureType === STRUCTURE_ROAD && terrain.get(s.pos.x, s.pos.y) !== TERRAIN_MASK_WALL && getRoadUsage(s.room, s.pos) < 0) {
         return false;
       }
       return s.hits < Math.min(s.hitsMax, 3e6) - getRepairPower(creep);
@@ -3038,8 +3044,16 @@ function createStructures(room) {
 }
 function updateRoadMap(room) {
   const { road: roads, spawn, source } = findMyStructures(room);
-  room.memory.roadMap = (room.memory.roadMap || _.range(2500).map(() => 0)).map((usage, i) => {
-    const value = Math.round(Math.min(10, Math.max(-10, usage - 10 / 2e3)) * 1e3) / 1e3;
+  if (!room.memory.roadMap || Array.isArray(room.memory.roadMap)) {
+    room.memory.roadMap = {};
+  }
+  Object.keys(room.memory.roadMap || {}).forEach((key) => {
+    const i = Number(key);
+    const value = Math.round(Math.min(10, Math.max(-10, getRoadUsage(room, i) - 10 / 2e3)) * 1e3) / 1e3;
+    room.memory.roadMap[i] = value;
+    if (value === -10) {
+      delete room.memory.roadMap[i];
+    }
     const x = i % 50;
     const y = Math.floor(i / 50);
     if (value > 0) {
@@ -3542,7 +3556,7 @@ function behaviors4(tower) {
         if (s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL) {
           return s.hits < RAMPART_DECAY_AMOUNT * 10;
         } else if (s.structureType === STRUCTURE_ROAD) {
-          if (tower.room.memory.roadMap[s.pos.y * 50 + s.pos.x] < 0) {
+          if (getRoadUsage(tower.room, tower.pos) < 0) {
             return false;
           }
           switch (_.first(s.pos.lookFor(LOOK_TERRAIN))) {
@@ -3643,7 +3657,7 @@ module.exports.loop = function() {
                     if (s.hits < s.hitsMax) {
                       if (s.structureType === STRUCTURE_CONTAINER) {
                         return true;
-                      } else if (s.structureType === STRUCTURE_ROAD && room.memory.roadMap[c.pos.y * 50 + c.pos.x] > 0) {
+                      } else if (s.structureType === STRUCTURE_ROAD && getRoadUsage(c.room, c.pos) > 0) {
                         return true;
                       } else {
                         return false;
@@ -3655,7 +3669,7 @@ module.exports.loop = function() {
                 }
                 if (c.memory.moved === OK) {
                   if (c.room.memory.roadMap) {
-                    c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
+                    c.room.memory.roadMap[c.pos.y * 50 + c.pos.x] = getRoadUsage(c.room, c.pos) + 1;
                   }
                   c.memory.__avoidCreep = false;
                 }
@@ -3681,6 +3695,7 @@ module.exports.loop = function() {
     });
     Object.values(Memory.rooms).forEach((mem) => {
       delete mem.find;
+      delete mem.creeps;
     });
     ObjectKeys(Memory.factories).forEach((id) => {
       if (!Game.getObjectById(id)) {

@@ -1,4 +1,5 @@
 import { ROAD_DECAY_AMOUNT_SWAMP, ROAD_DECAY_AMOUNT_WALL } from "../constants";
+import { getRoadUsage } from "../utils";
 
 export default function behaviors(tower: Structure) {
   if (!isTower(tower)) {
@@ -21,7 +22,7 @@ export default function behaviors(tower: Structure) {
         if (s.structureType === STRUCTURE_RAMPART || s.structureType === STRUCTURE_WALL) {
           return s.hits < RAMPART_DECAY_AMOUNT * 10;
         } else if (s.structureType === STRUCTURE_ROAD) {
-          if (tower.room.memory.roadMap[s.pos.y * 50 + s.pos.x] < 0) {
+          if (getRoadUsage(tower.room, tower.pos) < 0) {
             return false;
           }
 

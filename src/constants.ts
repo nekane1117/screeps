@@ -65,3 +65,5 @@ export const ALL_REACTIONS = _(ObjectKeys(REVERSE_REACTIONS)).sortBy((r) => (r =
 
 export const ROAD_DECAY_AMOUNT_SWAMP = 500;
 export const ROAD_DECAY_AMOUNT_WALL = 15000;
+
+export const ROOM_SIZE = 50;

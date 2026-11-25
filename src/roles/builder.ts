@@ -1,6 +1,6 @@
 import { findTransferTarget } from "./carrier";
 import { RETURN_CODE_DECODER, customMove, getCreepsInRoom, getMainSpawn, getRepairPower, pickUpAll, toColor, withdrawBy } from "../utils/creep";
-import { findMyStructures, getDecayAmount, getLabs, getSitesInRoom } from "../utils";
+import { findMyStructures, getDecayAmount, getLabs, getRoadUsage, getSitesInRoom } from "../utils";
 // import { findMyStructures } from "../utils";
 
 const behavior: CreepBehavior = (creep: Creeps) => {
@@ -78,7 +78,7 @@ const behavior: CreepBehavior = (creep: Creeps) => {
     if (!creep.memory.firstAidId) {
       creep.memory.firstAidId = _([...road, ...rampart, ...container])
         .filter((s: Structure) => {
-          if (s.structureType === STRUCTURE_ROAD && s.room.memory.roadMap[s.pos.y * 50 + s.pos.x] < 0) {
+          if (s.structureType === STRUCTURE_ROAD && getRoadUsage(s.room, s.pos) < 0) {
             return false;
           }
 
@@ -472,7 +472,7 @@ function findRepairTarget(creep: Builder) {
   return _(
     all.filter((s) => {
       // 閾値
-      if (s.structureType === STRUCTURE_ROAD && terrain.get(s.pos.x, s.pos.y) !== TERRAIN_MASK_WALL && s.room.memory.roadMap[s.pos.y * 50 + s.pos.x] < 0) {
+      if (s.structureType === STRUCTURE_ROAD && terrain.get(s.pos.x, s.pos.y) !== TERRAIN_MASK_WALL && getRoadUsage(s.room, s.pos) < 0) {
         return false;
       }
       return s.hits < Math.min(s.hitsMax, 3000000) - getRepairPower(creep);

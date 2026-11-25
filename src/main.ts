@@ -3,7 +3,7 @@ import { behaviors } from "./roles";
 import { roomBehavior } from "./room";
 import structures from "./structures";
 import { toColor } from "./utils/creep";
-import { findMyStructures, isHighway, logUsage } from "./utils";
+import { findMyStructures, getRoadUsage, isHighway, logUsage } from "./utils";
 import { ObjectKeys } from "./utils/common";
 
 module.exports.loop = function () {
@@ -69,7 +69,7 @@ module.exports.loop = function () {
                         if (s.hits < s.hitsMax) {
                           if (s.structureType === STRUCTURE_CONTAINER) {
                             return true;
-                          } else if (s.structureType === STRUCTURE_ROAD && room.memory.roadMap[c.pos.y * 50 + c.pos.x] > 0) {
+                          } else if (s.structureType === STRUCTURE_ROAD && getRoadUsage(c.room, c.pos) > 0) {
                             return true;
                           } else {
                             return false;
@@ -83,7 +83,8 @@ module.exports.loop = function () {
                   // 現在地の履歴を更新する
                   if (c.memory.moved === OK) {
                     if (c.room.memory.roadMap) {
-                      c.room.memory.roadMap[c.pos.y * 50 + c.pos.x]++;
+                      // 無いところは-10としてカウントする
+                      c.room.memory.roadMap[c.pos.y * 50 + c.pos.x] = getRoadUsage(c.room, c.pos) + 1;
                     }
                     c.memory.__avoidCreep = false;
                   }
@@ -110,6 +111,7 @@ module.exports.loop = function () {
     });
     Object.values(Memory.rooms).forEach((mem) => {
       delete mem.find;
+      delete mem.creeps;
     });
     ObjectKeys(Memory.factories).forEach((id: Id<StructureFactory>) => {
       if (!Game.getObjectById(id)) {

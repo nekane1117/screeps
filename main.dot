@@ -116,6 +116,7 @@ strict digraph "dependency-cruiser output"{
     "src/structures/terminal.ts" -> "src/utils/creep.ts"
     subgraph "cluster_src" {label="src" subgraph "cluster_src/structures" {label="structures" "src/structures/tower.ts" [label=<tower.ts> tooltip="tower.ts" URL="src/structures/tower.ts" fillcolor="#ddfeff"] } }
     "src/structures/tower.ts" -> "src/constants.ts"
+    "src/structures/tower.ts" -> "src/utils/index.ts"
     subgraph "cluster_src" {label="src" subgraph "cluster_src/structures" {label="structures" "src/structures/util.ts" [label=<util.ts> tooltip="util.ts" URL="src/structures/util.ts" fillcolor="#ddfeff"] } }
     subgraph "cluster_src" {label="src" subgraph "cluster_src/types" {label="types" "src/types/global.d.ts" [label=<global.d.ts> tooltip="global.d.ts" URL="src/types/global.d.ts" fillcolor="#ddfeff"] } }
     "src/types/global.d.ts" -> "node_modules/@types/lodash" [penwidth="1.0"]
