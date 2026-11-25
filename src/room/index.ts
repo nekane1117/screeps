@@ -1,6 +1,6 @@
 import linkBehavior from "../structures/links";
 import { findMyStructures, getSitesInRoom, getSpawnsInRoom, logUsage } from "../utils";
-import { filterBodiesByCost, getCarrierBody, getCreepsInRoom, getMainSpawn } from "../utils/creep";
+import { filterBodiesByCost, getCarrierBody, getCreepsInRoom, getMainSpawn, toColor } from "../utils/creep";
 import labManager from "./labManager";
 import sourceBehavior from "./source";
 
@@ -25,6 +25,15 @@ export function roomBehavior(room: Room) {
   }
 
   const { carrier: carriers = [], harvester = [], gatherer = [] } = getCreepsInRoom(room);
+
+  const mainSpawn = getMainSpawn(room);
+  if (mainSpawn) {
+    room.visual.rect(mainSpawn.pos.x - 2.5, mainSpawn.pos.y - 1.5, 7, 5, {
+      lineStyle: "dotted",
+      fill: "",
+      stroke: toColor(mainSpawn),
+    });
+  }
 
   if (room.storage) {
     room.visual.text(room.storage.store.energy.toString(), room.storage.pos.x, room.storage.pos.y, {
@@ -272,7 +281,7 @@ function updateRoadMap(room: Room) {
   const { road: roads, spawn, source } = findMyStructures(room);
 
   room.memory.roadMap = (room.memory.roadMap || _.range(2500).map(() => 0)).map((usage, i) => {
-    const value = Math.min(10, Math.max(-10, usage - 10 / 2000));
+    const value = Math.round(Math.min(10, Math.max(-10, usage - 10 / 2000)) * 1000) / 1000;
     const x = i % 50;
     const y = Math.floor(i / 50);
     if (value > 0) {

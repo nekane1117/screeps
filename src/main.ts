@@ -65,7 +65,19 @@ module.exports.loop = function () {
                   if (c.getActiveBodyparts(WORK)) {
                     c.pos
                       .lookFor(LOOK_STRUCTURES)
-                      .filter((s) => ([STRUCTURE_CONTAINER, STRUCTURE_ROAD] as StructureConstant[]).includes(s.structureType) && s.hits < s.hitsMax)
+                      .filter((s) => {
+                        if (s.hits < s.hitsMax) {
+                          if (s.structureType === STRUCTURE_CONTAINER) {
+                            return true;
+                          } else if (s.structureType === STRUCTURE_ROAD && room.memory.roadMap[c.pos.y * 50 + c.pos.x] > 0) {
+                            return true;
+                          } else {
+                            return false;
+                          }
+                        } else {
+                          return false;
+                        }
+                      })
                       .forEach((s) => c.repair(s));
                   }
                   // 現在地の履歴を更新する
